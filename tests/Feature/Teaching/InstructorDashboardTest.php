@@ -93,7 +93,17 @@ class InstructorDashboardTest extends TestCase
             ->get('/dashboard')
             ->assertInertia(fn (Assert $page) => $page
                 ->where('teaching.totals.subjects', 1)
-                ->where('showAcademicOverview', true));
+                // Monitoring panels also need academic_monitoring.view.
+                ->where('showAcademicOverview', false)
+                ->where('showAcademicAlerts', false));
+
+        $role->permissions()->attach(Permission::query()->where('code', PermissionCode::ViewAcademicMonitoring->value)->sole());
+
+        $this->actingAs($this->alpha->fresh())
+            ->get('/dashboard')
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('showAcademicOverview', true)
+                ->where('showAcademicAlerts', true));
 
         $this->actingAs($this->alpha->fresh())->get('/my-classes')->assertOk();
     }

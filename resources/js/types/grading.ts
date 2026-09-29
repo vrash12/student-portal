@@ -65,6 +65,9 @@ export interface SubjectGrade {
     categories: CategoryGrade[];
 }
 
+/** A subject grade without the per-category breakdown (monitoring payloads). */
+export type SubjectResult = Omit<SubjectGrade, 'categories'>;
+
 /** Passing and warning grades of an academic period (0–100). */
 export interface GradingThresholds {
     passingGrade: number;

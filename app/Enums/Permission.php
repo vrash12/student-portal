@@ -29,6 +29,7 @@ enum Permission: string
     case TeachClasses = 'classes.teach';
     case ConfigureGrading = 'grading.configure';
     case RecordGrades = 'grades.record';
+    case ViewAcademicMonitoring = 'academic_monitoring.view';
 
     public function label(): string
     {
@@ -47,6 +48,7 @@ enum Permission: string
             self::TeachClasses => 'Teach assigned classes',
             self::ConfigureGrading => 'Configure grading rules',
             self::RecordGrades => 'Record grades for assigned subjects',
+            self::ViewAcademicMonitoring => 'View academic monitoring',
         };
     }
 
@@ -67,6 +69,7 @@ enum Permission: string
             self::TeachClasses => 'Can be assigned to teach subjects, and view the classes and candidates they teach.',
             self::ConfigureGrading => 'Set the grading categories and weights used for each subject of a class, and the passing and warning grades that decide academic standing in each academic period.',
             self::RecordGrades => 'Create assessments, record and finalize scores, and correct finalized scores for the subjects they are assigned to teach.',
+            self::ViewAcademicMonitoring => 'See academic standings and the candidates who need attention: every candidate for users who can view all candidates, otherwise only the classes and subjects the user teaches. Candidate profiles follow their own permissions.',
         };
     }
 
@@ -80,6 +83,7 @@ enum Permission: string
             self::ViewAllCandidates, self::ManageCandidates => 'Candidates',
             self::TeachClasses => 'Teaching',
             self::ConfigureGrading, self::RecordGrades => 'Grading',
+            self::ViewAcademicMonitoring => 'Monitoring',
         };
     }
 }

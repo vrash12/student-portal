@@ -12,9 +12,11 @@ use App\Models\ClassSubject;
 use App\Services\CandidateService;
 use App\Services\Grading\GradeCalculationService;
 use App\Services\Grading\GradingThresholds;
+use App\Services\Monitoring\CandidateAcademicRecord;
 use App\Support\AcademicOptions;
 use App\Support\QueryFilters;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -79,7 +81,7 @@ class CandidateController extends Controller
         return redirect()->route('candidates.show', $candidate);
     }
 
-    public function show(Request $request, Candidate $candidate, GradeCalculationService $grades): Response
+    public function show(Request $request, Candidate $candidate, GradeCalculationService $grades, CandidateAcademicRecord $record): Response
     {
         $candidate->load(['user', 'classBatch.academicPeriod']);
         $viewer = $request->user();
@@ -88,7 +90,7 @@ class CandidateController extends Controller
         // class, so they only see the subjects (and grades) they teach there.
         $seesAllSubjects = $viewer->hasPermission(Permission::ViewAllCandidates);
 
-        $offerings = $candidate->classBatch === null ? collect() : ClassSubject::query()
+        $offerings = $candidate->classBatch === null ? new EloquentCollection : ClassSubject::query()
             ->where('class_batch_id', $candidate->class_batch_id)
             ->when(! $seesAllSubjects, fn (Builder $offerings) => $offerings->whereHas(
                 'instructorAssignments',
@@ -130,6 +132,11 @@ class CandidateController extends Controller
         // subjects they do not teach.
         $overallStanding = $grades->overallStanding($subjectGrades);
         $thresholds = $candidate->classBatch === null ? null : GradingThresholds::forPeriod($candidate->classBatch->academicPeriod);
+        // Withdrawn candidates keep their grades but are not monitored.
+        $monitored = $candidate->classBatch !== null && $candidate->isGradableIn($candidate->classBatch->id);
+        $subjectResults = $offerings
+            ->map(fn (ClassSubject $offering): array => ['offering' => $offering, 'grade' => $subjectGrades[$offering->id]])
+            ->all();
 
         return Inertia::render('staff/candidates/show', [
             'candidate' => [
@@ -150,10 +157,13 @@ class CandidateController extends Controller
                 // "all": every subject of the class; "taught": only the viewer's subjects.
                 'scope' => $seesAllSubjects ? 'all' : 'taught',
                 'thresholds' => $thresholds?->toArray(),
-                // Withdrawn candidates keep their grades but are not monitored.
-                'monitored' => $candidate->classBatch !== null && $candidate->isGradableIn($candidate->classBatch->id),
+                'monitored' => $monitored,
                 'canConfigureThresholds' => $viewer->hasPermission(Permission::ConfigureGrading),
             ],
+            // The same definition of a concern as academic monitoring.
+            'warnings' => $monitored ? $record->warnings($subjectResults) : [],
+            'assessmentResults' => $record->assessmentResults($candidate, $offerings, $monitored),
+            'recentActivity' => $record->recentActivity($candidate, $offerings->modelKeys(), $monitored),
             'canEdit' => $canManage,
             // Instructors return to the class they teach, not the full candidate list.
             'canBrowseCandidates' => $viewer->can('viewAny', Candidate::class),

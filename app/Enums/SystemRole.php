@@ -66,6 +66,7 @@ enum SystemRole: string
             Permission::ViewAllCandidates,
             Permission::ManageCandidates,
             Permission::ConfigureGrading,
+            Permission::ViewAcademicMonitoring,
         ];
 
         return match ($this) {
@@ -75,6 +76,7 @@ enum SystemRole: string
                 Permission::AccessStaffArea,
                 Permission::TeachClasses,
                 Permission::RecordGrades,
+                Permission::ViewAcademicMonitoring,
             ],
             self::Candidate => [
                 Permission::AccessExamPortal,

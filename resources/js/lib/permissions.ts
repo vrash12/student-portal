@@ -22,6 +22,7 @@ export const Permission = {
     TeachClasses: 'classes.teach',
     ConfigureGrading: 'grading.configure',
     RecordGrades: 'grades.record',
+    ViewAcademicMonitoring: 'academic_monitoring.view',
 } as const;
 
 export type PermissionCode = (typeof Permission)[keyof typeof Permission];

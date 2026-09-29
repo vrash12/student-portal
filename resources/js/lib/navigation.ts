@@ -1,4 +1,5 @@
 import {
+    Activity,
     BookOpen,
     CalendarRange,
     GraduationCap,
@@ -57,6 +58,12 @@ export const staffNavigation: NavigationSection[] = [
     {
         label: 'Academics',
         items: [
+            {
+                label: 'Academic Monitoring',
+                href: routes.monitoring.index(),
+                icon: Activity,
+                permission: Permission.ViewAcademicMonitoring,
+            },
             { label: terms.candidate.plural, href: routes.candidates.index(), icon: GraduationCap, permission: Permission.ViewAllCandidates },
             { label: terms.classBatch.plural, href: routes.classes.index(), icon: UsersRound, permission: Permission.ManageClassBatches },
             { label: 'Subjects', href: routes.subjects.index(), icon: BookOpen, permission: Permission.ManageSubjects },

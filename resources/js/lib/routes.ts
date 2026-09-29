@@ -1,3 +1,10 @@
+/** Appends a query string of the non-empty values. */
+function withQuery(path: string, query: Record<string, string> = {}): string {
+    const search = new URLSearchParams(Object.entries(query).filter(([, value]) => value !== '')).toString();
+
+    return search === '' ? path : `${path}?${search}`;
+}
+
 /**
  * Application URLs used by the frontend. Keep in sync with routes/web.php.
  */
@@ -6,6 +13,9 @@ export const routes = {
     login: () => '/login',
     logout: () => '/logout',
     dashboard: () => '/dashboard',
+    monitoring: {
+        index: (query?: Record<string, string>) => withQuery('/monitoring', query),
+    },
     users: {
         index: () => '/users',
         create: () => '/users/create',

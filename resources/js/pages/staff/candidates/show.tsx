@@ -1,7 +1,14 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { ChartColumn, Pencil } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { GradeStatusBadge, OverallStandingValue, StandingCell, ThresholdSummary } from '@/components/grading/standing';
+import { GradeStatusBadge, StandingCell, ThresholdSummary } from '@/components/grading/standing';
+import {
+    AcademicSummary,
+    AssessmentResults,
+    RecentActivity,
+    type ActivityEntry,
+    type SubjectResults,
+} from '@/components/monitoring/candidate-academic-record';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader, type BreadcrumbItem } from '@/components/ui/page-header';
@@ -12,6 +19,7 @@ import { formatGrade, useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import type { GradingThresholds, OverallStanding, SubjectGrade } from '@/types/grading';
+import type { SubjectConcern } from '@/types/monitoring';
 
 interface SubjectPerformance {
     classSubjectId: number;
@@ -49,12 +57,27 @@ interface CandidateShowProps {
         /** The viewer may set the period's passing and warning grades. */
         canConfigureThresholds: boolean;
     };
+    /** Subjects needing attention, most serious first (empty when not monitored). */
+    warnings: SubjectConcern[];
+    /** Results of finalized assessments, by visible subject. */
+    assessmentResults: SubjectResults[];
+    recentActivity: ActivityEntry[];
     canEdit: boolean;
     /** Administrators browse all candidates; instructors arrive from a class they teach. */
     canBrowseCandidates: boolean;
 }
 
-export default function CandidateShow({ candidate, subjects, performance, standing, canEdit, canBrowseCandidates }: CandidateShowProps) {
+export default function CandidateShow({
+    candidate,
+    subjects,
+    performance,
+    standing,
+    warnings,
+    assessmentResults,
+    recentActivity,
+    canEdit,
+    canBrowseCandidates,
+}: CandidateShowProps) {
     const formatDate = useDateFormatter();
     const classTerm = terms.classBatch.singular;
     const overallLabel = standing.scope === 'all' ? 'Overall Standing' : 'Standing in Your Subjects';
@@ -72,6 +95,7 @@ export default function CandidateShow({ candidate, subjects, performance, standi
         candidate.classBatch !== null && standing.canConfigureThresholds && standing.monitored && standing.thresholds === null
             ? routes.academicPeriods.thresholds(candidate.classBatch.periodId)
             : null;
+    const instructorsBySubject = new Map(subjects.map((subject) => [subject.code, subject.instructors]));
 
     const breadcrumbs: BreadcrumbItem[] = canBrowseCandidates
         ? [{ label: 'Candidates', href: routes.candidates.index() }, { label: candidate.name }]
@@ -104,67 +128,16 @@ export default function CandidateShow({ candidate, subjects, performance, standi
                 }
             />
 
-            <div className="grid gap-6 lg:grid-cols-2">
-                <Panel title="Candidate Information">
-                    <dl className="grid gap-4 sm:grid-cols-2">
-                        <Detail label="Candidate Number">{candidate.candidateNumber}</Detail>
-                        <Detail label="Status">
-                            <StatusBadge tone={candidate.status.tone}>{candidate.status.label}</StatusBadge>
-                        </Detail>
-                        <Detail label={overallLabel}>
-                            {showsStanding ? (
-                                <OverallStandingValue overall={standing.overall} />
-                            ) : (
-                                <span className="font-normal text-ink-muted">Not available</span>
-                            )}
-                        </Detail>
-                        <Detail label={classTerm}>{candidate.classBatch?.name ?? 'Not assigned'}</Detail>
-                        <Detail label="Academic Period">{candidate.classBatch?.period ?? '—'}</Detail>
-                        <Detail label="Record Created">{formatDate.date(candidate.createdAt)}</Detail>
-                        <Detail label="Last Updated">{formatDate.dateTime(candidate.updatedAt)}</Detail>
-                    </dl>
-                </Panel>
-
-                {candidate.account !== null && (
-                    <Panel title="Sign-In Account">
-                        <dl className="grid gap-4 sm:grid-cols-2">
-                            <Detail label="Username">{candidate.account.username}</Detail>
-                            <Detail label="Account Status">
-                                {candidate.account.isActive ? (
-                                    <StatusBadge tone="success">Active</StatusBadge>
-                                ) : (
-                                    <StatusBadge tone="neutral">Deactivated</StatusBadge>
-                                )}
-                            </Detail>
-                            <Detail label="Last Sign-In">
-                                {candidate.account.lastLoginAt ? formatDate.dateTime(candidate.account.lastLoginAt) : 'Never'}
-                            </Detail>
-                        </dl>
-                    </Panel>
-                )}
-
-                <Panel title="Subjects" description={`Subjects taken through the candidate's ${classTerm.toLowerCase()}.`}>
-                    {subjects.length === 0 ? (
-                        <p className="text-sm text-ink-muted">
-                            {candidate.classBatch === null
-                                ? `Assign the candidate to a ${classTerm.toLowerCase()} to list their subjects.`
-                                : `No subjects have been added to ${candidate.classBatch.name} yet.`}
-                        </p>
-                    ) : (
-                        <ul className="divide-y divide-line">
-                            {subjects.map((subject) => (
-                                <li key={subject.code} className="flex flex-col gap-0.5 py-3 first:pt-0 last:pb-0">
-                                    <p className="font-medium text-ink">
-                                        {subject.name} <span className="font-normal text-ink-muted">({subject.code})</span>
-                                    </p>
-                                    <p className="text-sm text-ink-muted">
-                                        {subject.instructors.length > 0 ? subject.instructors.join(', ') : 'No instructor assigned'}
-                                    </p>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </Panel>
+            <div className="flex flex-col gap-6">
+                <AcademicSummary
+                    label={overallLabel}
+                    overall={standing.overall}
+                    showsStanding={showsStanding}
+                    unavailableReason={unavailableReason}
+                    thresholdsHref={thresholdsHref}
+                    warnings={warnings}
+                    hasClass={candidate.classBatch !== null}
+                />
 
                 <Panel
                     title="Academic Performance"
@@ -177,20 +150,10 @@ export default function CandidateShow({ candidate, subjects, performance, standi
                                     Standing uses the <ThresholdSummary thresholds={standing.thresholds} /> of {candidate.classBatch.period}.
                                 </>
                             )}
-                            {unavailableReason !== null && ` ${unavailableReason}`}
-                            {thresholdsHref !== null && (
-                                <>
-                                    {' '}
-                                    <Link href={thresholdsHref} className="font-medium text-primary-700 underline">
-                                        Set passing and warning grades
-                                    </Link>
-                                </>
-                            )}
                             {standing.scope === 'taught' && ' Only the subjects you teach are shown.'}
                         </>
                     }
                     bodyClassName={performance.length === 0 ? undefined : 'p-0'}
-                    className="lg:col-span-2"
                 >
                     {performance.length === 0 ? (
                         <EmptyState
@@ -214,33 +177,79 @@ export default function CandidateShow({ candidate, subjects, performance, standi
                                 </Th>
                             </TableHead>
                             <TableBody>
-                                {performance.map((subject) => (
-                                    <Tr key={subject.classSubjectId}>
-                                        <Td className="text-ink">
-                                            <span className="font-medium">{subject.name}</span> <span className="text-ink-muted">({subject.code})</span>
-                                        </Td>
-                                        <Td align="right" numeric className="font-semibold text-ink">
-                                            {formatGrade(subject.result.grade)}
-                                        </Td>
-                                        <Td>
-                                            {showsStanding ? <StandingCell result={subject.result} /> : <GradeStatusBadge result={subject.result} />}
-                                        </Td>
-                                        <Td align="right">
-                                            {subject.canOpenGradebook && candidate.classBatch !== null && (
-                                                <RowAction
-                                                    href={routes.teaching.gradebook(candidate.classBatch.id, subject.classSubjectId)}
-                                                    label={`Gradebook for ${subject.name}`}
-                                                >
-                                                    Gradebook
-                                                </RowAction>
-                                            )}
-                                        </Td>
-                                    </Tr>
-                                ))}
+                                {performance.map((subject) => {
+                                    const instructors = instructorsBySubject.get(subject.code) ?? [];
+
+                                    return (
+                                        <Tr key={subject.classSubjectId}>
+                                            <Td className="text-ink">
+                                                <span className="font-medium">{subject.name}</span> <span className="text-ink-muted">({subject.code})</span>
+                                                <span className="block text-xs text-ink-muted">
+                                                    {instructors.length > 0 ? instructors.join(', ') : 'No instructor assigned'}
+                                                </span>
+                                            </Td>
+                                            <Td align="right" numeric className="font-semibold text-ink">
+                                                {formatGrade(subject.result.grade)}
+                                            </Td>
+                                            <Td>
+                                                {showsStanding ? <StandingCell result={subject.result} /> : <GradeStatusBadge result={subject.result} />}
+                                            </Td>
+                                            <Td align="right">
+                                                {subject.canOpenGradebook && candidate.classBatch !== null && (
+                                                    <RowAction
+                                                        href={routes.teaching.gradebook(candidate.classBatch.id, subject.classSubjectId)}
+                                                        label={`Gradebook for ${subject.name}`}
+                                                    >
+                                                        Gradebook
+                                                    </RowAction>
+                                                )}
+                                            </Td>
+                                        </Tr>
+                                    );
+                                })}
                             </TableBody>
                         </Table>
                     )}
                 </Panel>
+
+                {assessmentResults.length > 0 && <AssessmentResults subjects={assessmentResults} />}
+
+                <div className="grid gap-6 lg:grid-cols-2">
+                    {candidate.classBatch !== null && <RecentActivity entries={recentActivity} />}
+
+                    <div className="flex flex-col gap-6">
+                        <Panel title="Candidate Information">
+                            <dl className="grid gap-4 sm:grid-cols-2">
+                                <Detail label="Candidate Number">{candidate.candidateNumber}</Detail>
+                                <Detail label="Status">
+                                    <StatusBadge tone={candidate.status.tone}>{candidate.status.label}</StatusBadge>
+                                </Detail>
+                                <Detail label={classTerm}>{candidate.classBatch?.name ?? 'Not assigned'}</Detail>
+                                <Detail label="Academic Period">{candidate.classBatch?.period ?? '—'}</Detail>
+                                <Detail label="Record Created">{formatDate.date(candidate.createdAt)}</Detail>
+                                <Detail label="Last Updated">{formatDate.dateTime(candidate.updatedAt)}</Detail>
+                            </dl>
+                        </Panel>
+
+                        {candidate.account !== null && (
+                            <Panel title="Sign-In Account">
+                                <dl className="grid gap-4 sm:grid-cols-2">
+                                    <Detail label="Username">{candidate.account.username}</Detail>
+                                    <Detail label="Account Status">
+                                        {candidate.account.isActive ? (
+                                            <StatusBadge tone="success">Active</StatusBadge>
+                                        ) : (
+                                            <StatusBadge tone="neutral">Deactivated</StatusBadge>
+                                        )}
+                                    </Detail>
+                                    <Detail label="Last Sign-In">
+                                        {candidate.account.lastLoginAt ? formatDate.dateTime(candidate.account.lastLoginAt) : 'Never'}
+                                    </Detail>
+                                </dl>
+                            </Panel>
+                        )}
+                    </div>
+                </div>
             </div>
         </>
     );

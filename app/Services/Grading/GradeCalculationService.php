@@ -9,6 +9,8 @@ use App\Models\AssessmentScore;
 use App\Models\Candidate;
 use App\Models\ClassSubject;
 use App\Support\DecimalValue;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -267,18 +269,8 @@ final class GradeCalculationService
                     : null,
             ]);
 
-        $categories = AssessmentCategory::query()
-            ->whereIn('class_subject_id', $classSubjectIds)
-            ->orderBy('position')
-            ->orderBy('id')
-            ->get(['id', 'class_subject_id', 'name', 'weight'])
-            ->groupBy('class_subject_id');
-
-        $assessments = Assessment::query()
-            ->whereIn('class_subject_id', $classSubjectIds)
-            ->finalized()
-            ->get(['id', 'class_subject_id', 'assessment_category_id', 'max_score'])
-            ->groupBy('class_subject_id');
+        $categories = $this->categoriesFor($classSubjectIds);
+        $assessments = $this->finalizedAssessmentsFor($classSubjectIds);
 
         $scores = [];
         if ($assessments->isNotEmpty()) {
@@ -306,6 +298,71 @@ final class GradeCalculationService
     }
 
     /**
+     * Grades of many candidates across many class subjects (monitoring), in
+     * a fixed number of queries however many there are. Each candidate is
+     * calculated only in the class subjects of their own class; standing
+     * follows forOffering() (gradable candidates only, the thresholds of the
+     * class's period).
+     *
+     * @param  EloquentCollection<int, ClassSubject>  $offerings
+     * @param  EloquentCollection<int, Candidate>  $candidates
+     * @return array<int, array<int, SubjectGrade>> candidate id => class subject id => grade
+     */
+    public function forClasses(EloquentCollection $offerings, EloquentCollection $candidates): array
+    {
+        if ($offerings->isEmpty() || $candidates->isEmpty()) {
+            return [];
+        }
+
+        $offerings->loadMissing('classBatch.academicPeriod');
+        $offeringIds = $offerings->modelKeys();
+        $categories = $this->categoriesFor($offeringIds);
+        $assessments = $this->finalizedAssessmentsFor($offeringIds);
+
+        // Plain rows (no models): a whole period can mean tens of thousands
+        // of scores. Filtered by assessment only; other candidates' rows are
+        // skipped below.
+        $population = array_flip($candidates->modelKeys());
+        $scores = [];
+        if ($assessments->isNotEmpty()) {
+            AssessmentScore::query()
+                ->toBase()
+                ->whereIn('assessment_id', $assessments->flatten()->pluck('id')->all())
+                ->whereNotNull('score')
+                ->get(['assessment_id', 'candidate_id', 'score'])
+                ->each(function (object $row) use (&$scores, $population): void {
+                    if (isset($population[$row->candidate_id])) {
+                        $scores[(int) $row->candidate_id][(int) $row->assessment_id] = (float) $row->score;
+                    }
+                });
+        }
+
+        $schemes = [];
+        $counted = [];
+        $thresholds = [];
+        foreach ($offerings as $offering) {
+            $schemes[$offering->id] = array_map(self::categoryWeight(...), $categories->get($offering->id)?->all() ?? []);
+            $counted[$offering->id] = array_map(self::countedAssessment(...), $assessments->get($offering->id)?->all() ?? []);
+            $thresholds[$offering->id] = GradingThresholds::forPeriod($offering->classBatch->academicPeriod);
+        }
+
+        $byClass = $offerings->groupBy('class_batch_id');
+        $grades = [];
+        foreach ($candidates as $candidate) {
+            foreach ($byClass->get($candidate->class_batch_id, collect()) as $offering) {
+                $grades[$candidate->id][$offering->id] = $this->subjectGrade(
+                    $schemes[$offering->id],
+                    $counted[$offering->id],
+                    $scores[$candidate->id] ?? [],
+                    $candidate->isGradableIn($offering->class_batch_id) ? $thresholds[$offering->id] : null,
+                );
+            }
+        }
+
+        return $grades;
+    }
+
+    /**
      * @return list<CategoryWeight>
      */
     public function scheme(ClassSubject $offering): array
@@ -325,6 +382,37 @@ final class GradeCalculationService
     public static function round(float $value): float
     {
         return round(round($value, 10), self::DECIMALS);
+    }
+
+    /**
+     * Grading categories of several class subjects, in scheme order.
+     *
+     * @param  list<int>  $classSubjectIds
+     * @return Collection<int, Collection<int, AssessmentCategory>> keyed by class subject id
+     */
+    private function categoriesFor(array $classSubjectIds): Collection
+    {
+        return AssessmentCategory::query()
+            ->whereIn('class_subject_id', $classSubjectIds)
+            ->orderBy('position')
+            ->orderBy('id')
+            ->get(['id', 'class_subject_id', 'name', 'weight'])
+            ->groupBy('class_subject_id');
+    }
+
+    /**
+     * Finalized assessments of several class subjects.
+     *
+     * @param  list<int>  $classSubjectIds
+     * @return Collection<int, Collection<int, Assessment>> keyed by class subject id
+     */
+    private function finalizedAssessmentsFor(array $classSubjectIds): Collection
+    {
+        return Assessment::query()
+            ->whereIn('class_subject_id', $classSubjectIds)
+            ->finalized()
+            ->get(['id', 'class_subject_id', 'assessment_category_id', 'max_score'])
+            ->groupBy('class_subject_id');
     }
 
     /**

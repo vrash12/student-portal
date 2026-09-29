@@ -16,7 +16,7 @@ final class QueryFilters
 
     public static function search(Request $request, string $key = 'search'): string
     {
-        return Str::limit(trim((string) $request->query($key, '')), self::MAX_SEARCH_LENGTH, '');
+        return Str::limit(trim(self::value($request, $key)), self::MAX_SEARCH_LENGTH, '');
     }
 
     /**
@@ -24,7 +24,7 @@ final class QueryFilters
      */
     public static function oneOf(Request $request, string $key, array $allowed): string
     {
-        $value = (string) $request->query($key, '');
+        $value = self::value($request, $key);
 
         return in_array($value, $allowed, true) ? $value : '';
     }
@@ -34,9 +34,20 @@ final class QueryFilters
      */
     public static function id(Request $request, string $key): string
     {
-        $value = (string) $request->query($key, '');
+        $value = self::value($request, $key);
 
         return ctype_digit($value) && (int) $value > 0 ? $value : '';
+    }
+
+    /**
+     * The raw string value. Arrays (`?key[]=...`) are ignored like any other
+     * invalid value instead of causing an error.
+     */
+    private static function value(Request $request, string $key): string
+    {
+        $value = $request->query($key);
+
+        return is_string($value) ? $value : '';
     }
 
     /**

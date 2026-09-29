@@ -44,6 +44,14 @@ export function useQueryFilters<TFilters extends Record<string, string>>(url: st
         [apply],
     );
 
+    /** Changes several filters in one visit, e.g. a class and the subject that depends on it. */
+    const updateMany = useCallback(
+        (patch: Partial<TFilters>, options: { debounce?: boolean } = {}) => {
+            apply({ ...latest.current, ...patch }, options.debounce ?? false);
+        },
+        [apply],
+    );
+
     const reset = useCallback(() => {
         const cleared = Object.fromEntries(Object.keys(latest.current).map((key) => [key, ''])) as TFilters;
         apply(cleared, false);
@@ -51,5 +59,5 @@ export function useQueryFilters<TFilters extends Record<string, string>>(url: st
 
     const isFiltered = Object.values(values).some((value) => value !== '');
 
-    return { values, update, reset, isFiltered };
+    return { values, update, updateMany, reset, isFiltered };
 }

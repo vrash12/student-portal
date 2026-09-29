@@ -1,6 +1,6 @@
 import { StatusBadge } from '@/components/ui/status-badge';
 import { formatGrade } from '@/lib/format';
-import type { GradingThresholds, OverallStanding, StatusValue, SubjectGrade } from '@/types/grading';
+import type { GradingThresholds, OverallStanding, StatusValue, SubjectResult } from '@/types/grading';
 
 /**
  * A server-decided academic standing as a badge, or a dash when there is
@@ -25,7 +25,7 @@ export function StandingBadge({ standing }: { standing: StatusValue | null }) {
  * provisional grade also says how much of the weight it is based on, since
  * the grade status may be showing missing scores instead.
  */
-export function StandingCell({ result }: { result: SubjectGrade }) {
+export function StandingCell({ result }: { result: SubjectResult }) {
     return (
         <div className="flex flex-col items-start gap-0.5">
             <StandingBadge standing={result.standing} />
@@ -42,7 +42,7 @@ export function StandingCell({ result }: { result: SubjectGrade }) {
  * The grade status alone, used where no standing can be shown because the
  * academic period has no passing and warning grades.
  */
-export function GradeStatusBadge({ result }: { result: SubjectGrade }) {
+export function GradeStatusBadge({ result }: { result: SubjectResult }) {
     return (
         <StatusBadge tone={result.status.tone}>
             {result.status.label}

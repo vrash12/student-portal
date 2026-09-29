@@ -93,12 +93,12 @@ Always distinguish:
 
 ## Current Milestone
 
-**Milestones 0–5: complete** (Milestone 5 = grading thresholds and academic standing).
-**Next: Milestone 6 (Academic Monitoring and Early Warning).** A reviewed design exists; see "Next Recommended Task".
+**Milestones 0–6: complete** (Milestone 6 = academic monitoring and early warning, committed 2026-09-30).
+**Milestones 7 (Question Bank) and 8 (Quiz & Examination Builder): next, developed in parallel** (see "Next Recommended Task").
 
 ## Current Status
 
-Foundation, sign-in, roles and permissions, staff accounts, academic structure, candidate records, organization branding, the instructor dashboard with My Classes, grade management (grading setup, assessments, score entry, finalization, corrections with reasons, change history), and the grade calculation engine with configurable passing/warning grades and academic standing are implemented. The full test suite passes (491 tests, 5,183 assertions).
+Foundation, sign-in, roles and permissions, staff accounts, academic structure, candidate records, organization branding, the instructor dashboard with My Classes, grade management (grading setup, assessments, score entry, finalization, corrections with reasons, change history), the grade calculation engine with configurable passing/warning grades and academic standing, and academic monitoring (/monitoring, dashboard Academic Overview and Academic Alerts, candidate profile warnings and history) are implemented. The full test suite passes (605 tests).
 
 ## Last Updated
 
@@ -167,7 +167,31 @@ Foundation, sign-in, roles and permissions, staff accounts, academic structure, 
 - [x] Independent review: design critique (3 lenses, ~25 findings applied before coding), 3 parallel test writers (129 test methods, no bugs found), 3 reviewers + adversarial verifiers: 5 confirmed findings, all fixed (instructor dashboard copy without thresholds, admin overview copy without an active period, thresholds preview no longer a live region, form state after a save that returns to the same page, also in Grading Setup, and invalid UTF-8 input now cleaned by the global `ReplaceInvalidUtf8` middleware), with regression tests in `StandingReviewRegressionTest`
 - [x] Verified in the browser (page text): thresholds form (preview, equal values, order error, reason rule, save + audit), periods list, admin and instructor profiles, gradebook, instructor dashboard
 
+### Milestone 6 — Academic monitoring and early warning
+
+- [x] Permission `academic_monitoring.view` (Super Admin, Academic Admin, Instructor)
+- [x] `app/Services/Monitoring/`: `MonitoringScope` (only entry point: `candidates.view_all` → every class subject of the period; active teaching staff → only their assigned class subjects, checked after `canTeach()`; anyone else → empty), `AcademicMonitoring` (evaluate, counts, filter, sort, subjects requiring attention), `MonitoredCandidate`, `SubjectConcerns`, `MonitoringPresenter`, `CandidateAcademicRecord`
+- [x] Bulk engine `GradeCalculationService::forClasses(offerings, candidates)` in a fixed number of queries
+- [x] Page `GET /monitoring` (sidebar "Academic Monitoring"): counts that reconcile (Monitored, Failing, At Risk, Incomplete, Passing, No Standing Yet), filters class / subject / standing / search, sorts, overall vs subject view, PHP pagination (25), labels "Standing in Your Subjects" for the taught scope
+- [x] Dashboard: administrator Academic Overview and instructor Academic Alerts with real data (up to 5 candidates requiring attention)
+- [x] Candidate profile: Academic Summary, Current Warnings, Assessment Results, Recent Academic Activity
+- [x] Independent review (results recovered from the previous session's workflow journal): 3 test writers (99 tests: `MonitoringPage`, `MonitoringDashboardAndProfile`, `MonitoringEngine`) and 4 reviewers with adversarial verifiers. The 3 bugs found by tests are fixed: array query values (`?class[]=1`) no longer cause a 500 in `App\Support\QueryFilters` (shared by every list page); huge page numbers on /monitoring return an empty page; Assessment Results are sorted by the displayed (institution-timezone) date. The other confirmed findings were deferred at the owner's request (see Carried forward)
+
 ### Carried forward
+
+- **Milestone 6 review findings, confirmed but not fixed** (the owner asked on 2026-09-30 to commit Milestone 6 and move on; all low except the first, which is medium):
+  1. `CandidateAcademicRecord::recentActivity()`: "Result finalized" entries show the current (corrected) score instead of the score at finalization, contradicting the correction entry.
+  2. Comment-only corrections of finalized scores appear as score corrections ("6.00 → 6.00").
+  3. Dashboard Academic Alerts links open /monitoring in the all-candidates scope for custom roles holding `candidates.view_all` + `classes.teach` (counts do not match the panel).
+  4. /monitoring echoes `standing` back as active when the period has no thresholds (Reset enabled for a hidden filter).
+  5. /monitoring counts area says "No standings yet for the 0 monitored candidates" when nobody is monitored.
+  6. Standing count links: small tap targets, no visible link affordance on touch, current card marked by border colour only.
+  7. Class and Lowest Grade columns are hidden below 1280px although the list may be sorted by lowest grade.
+  8. "View candidates" links under Subjects Requiring Attention keep the current search.
+  9. Withdrawn candidates: Recent Academic Activity takes the 8 newest assessments before dropping those without a result, so it can say "No academic activity yet"; a subject can untruthfully say "No finalized assessments yet".
+  10. New Milestone 6 copy hardcodes "class"/"classes" instead of `terms.classBatch`.
+  11. The empty ("none") monitoring scope shows the administrator empty-state text.
+  12. Academic Alerts renders "0 failing, 0 at risk" as links to empty lists.
 
 - Quick navigation from the instructor dashboard to the question bank (Milestone 7) and examinations (Milestone 8), once those modules exist (AGENTS.md §73).
 - Academic Alerts (at-risk/failing counts) on the instructor dashboard and the administrator Academic Overview: still honest "not available yet" panels; Milestone 6 fills them.
@@ -176,25 +200,31 @@ Foundation, sign-in, roles and permissions, staff accounts, academic structure, 
 
 # Work In Progress
 
-None for Milestone 5 (see "Next Recommended Task" for Milestone 6).
+None. Milestone 6 is committed. Milestones 7 and 8 start next (see "Next Recommended Task").
 
 ---
-
 # Next Recommended Task
 
-Implement **Milestone 6 (Academic Monitoring and Early Warning)**. Design (reviewed by a 3-lens critique):
-
-1. Permission `academic_monitoring.view` (Super Admin, Academic Admin, Instructor). `MonitoringScope::for(User)` is the only entry point: `candidates.view_all` holders see every class subject of the period; otherwise active teaching staff see only the class subjects they are assigned to (checked after `canTeach()`, so leftover assignments of former instructors grant nothing); anyone else gets an empty scope. Class and subject filters may only narrow that offering set. Every value (overall standing, counts, lowest grade, sort, subjects of concern) is computed from that set only, so nothing leaks about other instructors' subjects.
-2. Population: candidates gradable in the scoped classes of the selected period (not withdrawn). Period filter: any period for administrators; for teaching staff only periods they teach in (requested if allowed, else the first, like My Classes).
-3. Engine: bulk `GradeCalculationService::forClasses(offerings, candidates)` → [candidateId][classSubjectId] => SubjectGrade in a fixed number of queries.
-4. Page `GET /monitoring` (sidebar "Academic Monitoring", first in Academics): counts (Monitored, Failing, At Risk, Incomplete, Passing, No Standing Yet; they reconcile) for period + class + subject; filters class / subject / standing / search, sort (most serious first, lowest grade, highest grade, name); overall view vs subject view; filter options from the scope only (invalid values ignored and echoed as ''); PHP pagination with `LengthAwarePaginator::resolveCurrentPage()`, 25 per page, path + query string kept. Labels "Standing in Your Subjects" when the scope is taught subjects.
-5. Dashboards: administrator Academic Overview (needs `academic_monitoring.view` + `candidates.view_all`) and instructor Academic Alerts (needs `academic_monitoring.view` + `canTeach()`): active-period counts and up to 5 candidates requiring attention (number, name, class, standing, lowest grade and subject, profile link only).
-6. Candidate profile: Current Warnings, Recent Assessments (finalized only, no comments), Recent Academic Activity (corrections of finalized scores with reason, visible subjects only).
-7. Tests: scope and tampering (class/subject/period outside scope), counts, filters, sorts, pagination edge cases (page=-1/abc/huge), no thresholds, withdrawn excluded, dashboards, profile additions, fixed query counts.
+**Milestones 7 (Question Bank) and 8 (Quiz & Examination Builder), in parallel**, as requested by the owner on 2026-09-30:
+shared contract first, then one branch/worktree per milestone, shared files (permissions, navigation, shared routes, shared types) changed only centrally, M7 integrated first, M8 integrated against the finished Question Bank, separate commits. Do not start Milestone 9.
 
 ---
 
 # Files Recently Changed
+
+Milestone 6:
+
+```text
+new:      app/Http/Controllers/Staff/AcademicMonitoringController.php
+          app/Services/Monitoring/{MonitoringScope,AcademicMonitoring,MonitoredCandidate,SubjectConcerns,MonitoringPresenter,CandidateAcademicRecord}.php
+          resources/js/pages/staff/monitoring/index.tsx, resources/js/components/monitoring/*, resources/js/types/monitoring.ts
+          tests/Feature/Monitoring/{AcademicMonitoring,MonitoringPage,MonitoringDashboardAndProfile,MonitoringEngine}Test.php
+modified: app/Enums/{Permission,SystemRole}.php, app/Services/Grading/GradeCalculationService.php (forClasses), app/Support/QueryFilters.php
+          app/Http/Controllers/Staff/{Candidate,Dashboard}Controller.php, routes/web.php
+          resources/js/pages/staff/{dashboard,candidates/show}.tsx, resources/js/components/grading/standing.tsx
+          resources/js/lib/{navigation,permissions,routes,use-query-filters}.ts, resources/js/types/grading.ts
+          tests/Feature/Auth/AreaAccessTest.php, tests/Feature/Teaching/InstructorDashboardTest.php, SESSION_HANDOFF.md
+```
 
 Milestone 5 (earlier milestones: see `git log`):
 
@@ -443,9 +473,15 @@ tests/Feature/Grading/GradingThresholdConfigurationTest.php  page auth, props, v
 tests/Feature/Grading/AcademicStandingIntegrationTest.php    gradebook/profile standing, recalculation, withdrawn, instructor privacy, periods, seeder
 tests/Feature/Grading/StandingEngineDatabaseTest.php         engine with the database: periods, boundaries, query counts, locking
 tests/Feature/Grading/StandingReviewRegressionTest.php       fixes from the review
+
+Milestone 6:
+tests/Feature/Monitoring/AcademicMonitoringTest.php             scope, counts, filters, dashboards, profile (author's tests)
+tests/Feature/Monitoring/MonitoringPageTest.php                 /monitoring authorization, tampering, counts, filters, sorts, pagination edge cases
+tests/Feature/Monitoring/MonitoringDashboardAndProfileTest.php  dashboard panels by permission, attention list, profile additions, query counts
+tests/Feature/Monitoring/MonitoringEngineTest.php               scope and bulk engine with the database
 ```
 
-Status: **491 passed, 0 failed** (5,183 assertions). `npm run types`, `npm run build`, and Pint pass.
+Status at the Milestone 6 commit: **605 passed, 0 failed**.
 
 `tests/TestCase.php` uses RefreshDatabase, seeds `AccessControlSeeder` once, calls `withoutVite()`, and **refuses to refresh any database whose name does not end in `_testing`**. Parallel test runs can use separate databases: `DB_DATABASE=academic_system_x_testing php artisan test` (phpunit.xml does not override an existing `DB_DATABASE`).
 
@@ -575,15 +611,17 @@ Commits: 0ff5cc3 first commit (README only)
          c5b0f40 Milestone 2
          98dbcba Milestone 3
          7e45a45 Milestone 4
-         plus the Milestone 5 commit "Add grading thresholds and academic standing (Milestone 5)" (see `git log`)
-Not pushed by the coding agent.
+         4f95774 Milestone 5
+         then    "Add academic monitoring and early warning (Milestone 6)"
+main is ahead of origin/main (Milestones 4–6 are local only).
+Push only when the owner asks.
 ```
 
 ---
 
 # Uncommitted or Incomplete Code
 
-None. Milestones 0–5 are complete and committed.
+None. Milestones 0–6 are committed.
 
 ---
 
@@ -597,7 +635,7 @@ At the start of the next session, the coding agent should verify:
 3. php artisan migrate:status shows no pending migrations
 4. php artisan test passes
 5. npm run types and npm run build pass
-6. Current milestone (Milestone 6 next)
+6. Current milestones (7 and 8, in parallel)
 ```
 
 Do not immediately start generating new code before checking the existing state.

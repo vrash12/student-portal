@@ -4,6 +4,7 @@ use App\Enums\Permission;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Portal\PortalHomeController;
+use App\Http\Controllers\Staff\AcademicMonitoringController;
 use App\Http\Controllers\Staff\AcademicPeriodController;
 use App\Http\Controllers\Staff\AccountPasswordController;
 use App\Http\Controllers\Staff\AssessmentController;
@@ -38,6 +39,11 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     // Staff area: administrators and instructors.
     Route::middleware('can:'.Permission::AccessStaffArea->value)->group(function (): void {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+        // Academic monitoring, scoped by MonitoringScope (all candidates, or the subjects taught).
+        Route::get('monitoring', AcademicMonitoringController::class)
+            ->name('academic-monitoring.index')
+            ->can(Permission::ViewAcademicMonitoring->value);
 
         Route::get('users', [UserController::class, 'index'])->name('users.index')->can('viewAny', User::class);
         Route::get('users/create', [UserController::class, 'create'])->name('users.create')->can('create', User::class);

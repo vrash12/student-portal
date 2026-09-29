@@ -1,5 +1,7 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { BellRing, CalendarClock, ChartColumn, ClipboardList } from 'lucide-react';
+import { AttentionList } from '@/components/monitoring/attention-list';
+import { StandingCounts } from '@/components/monitoring/standing-counts';
 import { Alert } from '@/components/ui/alert';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -12,6 +14,7 @@ import { formatCalendarDate } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import type { StatusValue } from '@/types/grading';
+import type { MonitoringSummary } from '@/types/monitoring';
 
 interface RoleAccountCount {
     code: string;
@@ -48,15 +51,28 @@ interface TeachingOverview {
 interface DashboardProps {
     /** Present only for teaching staff (classes.teach). */
     teaching: TeachingOverview | null;
-    /** Institution-wide academic overview, for users who may view all candidates. */
+    /** Institution-wide academic overview: academic monitoring plus "view all candidates". */
     showAcademicOverview: boolean;
+    /** Active-period standings of every candidate; null when no period is active. */
+    academicOverview: MonitoringSummary | null;
+    /** Academic alerts over the subjects the user teaches: academic monitoring plus teaching. */
+    showAcademicAlerts: boolean;
+    academicAlerts: MonitoringSummary | null;
     /** The active period has no passing and warning grades; present only for users who can set them. */
     thresholdSetup: { periodId: number; periodName: string } | null;
     /** Present only for users allowed to view accounts. */
     accountSummary: RoleAccountCount[] | null;
 }
 
-export default function Dashboard({ teaching, showAcademicOverview, thresholdSetup, accountSummary }: DashboardProps) {
+export default function Dashboard({
+    teaching,
+    showAcademicOverview,
+    academicOverview,
+    showAcademicAlerts,
+    academicAlerts,
+    thresholdSetup,
+    accountSummary,
+}: DashboardProps) {
     const { app, auth } = usePage().props;
     const userName = auth.user?.name ?? '';
 
@@ -67,22 +83,10 @@ export default function Dashboard({ teaching, showAcademicOverview, thresholdSet
             <PageHeader title="Dashboard" description={`${greeting(app.timezone)}, ${userName}.`} />
 
             <div className="flex flex-col gap-6">
-                {teaching !== null && <TeachingSection teaching={teaching} />}
+                {teaching !== null && <TeachingSection teaching={teaching} alerts={showAcademicAlerts ? academicAlerts : undefined} />}
 
                 {showAcademicOverview ? (
-                    <Panel title="Academic Overview">
-                        <EmptyState
-                            icon={ChartColumn}
-                            headingLevel="h3"
-                            title="The academic overview is not available yet"
-                            description={
-                                thresholdSetup === null
-                                    ? 'Counts of passing, at-risk, failing, and incomplete candidates will be shown here. A candidate’s current standing is shown on their profile once their academic period has passing and warning grades.'
-                                    : `Counts of passing, at-risk, failing, and incomplete candidates will be shown here. Academic standing needs passing and warning grades for ${thresholdSetup.periodName}, which have not been set yet.`
-                            }
-                            action={thresholdSetup !== null && <ThresholdSetupLink setup={thresholdSetup} />}
-                        />
-                    </Panel>
+                    <AcademicOverview summary={academicOverview} thresholdSetup={thresholdSetup} />
                 ) : (
                     thresholdSetup !== null && (
                         <Alert title={`Passing and warning grades are not set for ${thresholdSetup.periodName}`}>
@@ -108,7 +112,159 @@ export default function Dashboard({ teaching, showAcademicOverview, thresholdSet
     );
 }
 
-function TeachingSection({ teaching }: { teaching: TeachingOverview }) {
+/**
+ * Institution-wide standings of the active period (UI_UX_DESIGN.md §18):
+ * counts first, then the candidates requiring attention.
+ */
+function AcademicOverview({
+    summary,
+    thresholdSetup,
+}: {
+    summary: MonitoringSummary | null;
+    thresholdSetup: { periodId: number; periodName: string } | null;
+}) {
+    if (summary === null) {
+        return (
+            <Panel title="Academic Overview">
+                <EmptyState
+                    icon={CalendarClock}
+                    headingLevel="h3"
+                    title="No active academic period"
+                    description="Standings of the active period appear here. Set an academic period as active to see them."
+                />
+            </Panel>
+        );
+    }
+
+    if (!summary.hasThresholds) {
+        return (
+            <Panel title="Academic Overview" description={summary.period.name}>
+                <EmptyState
+                    icon={ChartColumn}
+                    headingLevel="h3"
+                    title="Academic standing is not available yet"
+                    description={`Passing and warning grades have not been set for ${summary.period.name}. Standings, and the candidates requiring attention, appear here once they are set.`}
+                    action={thresholdSetup !== null && <ThresholdSetupLink setup={thresholdSetup} />}
+                />
+            </Panel>
+        );
+    }
+
+    const { counts } = summary;
+
+    return (
+        <Panel
+            title="Academic Overview"
+            description={`${summary.period.name} · each candidate’s most serious subject standing`}
+            actions={
+                <ButtonLink href={routes.monitoring.index()} variant="secondary">
+                    Open Academic Monitoring
+                </ButtonLink>
+            }
+        >
+            {counts.monitored === 0 || counts.noStanding === counts.monitored ? (
+                <p className="text-sm text-ink">
+                    {counts.monitored === 0
+                        ? `No candidates are assigned to the classes of ${summary.period.name} yet.`
+                        : `No standings yet for the ${counts.monitored} monitored ${counts.monitored === 1 ? 'candidate' : 'candidates'}: standings appear once assessments are finalized.`}
+                </p>
+            ) : (
+                <div className="flex flex-col gap-5">
+                    <StandingCounts
+                        counts={counts}
+                        totalLabel="Monitored Candidates"
+                        standings={['failing', 'at_risk', 'incomplete', 'passing']}
+                        hrefFor={(standing) => routes.monitoring.index({ standing })}
+                    />
+                    <section aria-labelledby="attention-heading" className="-mx-5 -mb-5 border-t border-line">
+                        <h3 id="attention-heading" className="px-5 pt-4 text-sm font-semibold text-ink">
+                            Candidates Requiring Attention
+                        </h3>
+                        {summary.requiringAttention.length === 0 ? (
+                            <p className="px-5 pb-4 pt-1 text-sm text-ink-muted">No candidates are failing or at risk in {summary.period.name}.</p>
+                        ) : (
+                            <AttentionList candidates={summary.requiringAttention} />
+                        )}
+                    </section>
+                </div>
+            )}
+        </Panel>
+    );
+}
+
+/**
+ * The instructor's own alerts: distinct candidates failing or at risk in
+ * the subjects they teach in the active period (UI_UX_DESIGN.md §19).
+ */
+function AcademicAlerts({ summary, period }: { summary: MonitoringSummary | null; period: { name: string } }) {
+    const ready = summary !== null && summary.hasThresholds;
+
+    return (
+        <Panel
+            title="Academic Alerts"
+            headingLevel="h3"
+            bodyClassName="p-0"
+            actions={
+                ready && (
+                    <RowAction href={routes.monitoring.index()} label="View all in Academic Monitoring">
+                        View all
+                    </RowAction>
+                )
+            }
+        >
+            {!ready ? (
+                <EmptyState
+                    icon={BellRing}
+                    headingLevel="h4"
+                    title="Academic standing is not available yet"
+                    description={`Passing and warning grades have not been set for ${period.name}. An academic administrator sets them for each period.`}
+                />
+            ) : (
+                <AlertsBody summary={summary} />
+            )}
+        </Panel>
+    );
+}
+
+function AlertsBody({ summary }: { summary: MonitoringSummary }) {
+    const { counts } = summary;
+
+    if (counts.monitored === 0 || counts.noStanding === counts.monitored) {
+        return (
+            <p className="px-5 py-4 text-sm text-ink">
+                {counts.monitored === 0
+                    ? 'No candidates are assigned to the classes you teach yet.'
+                    : 'No standings yet in your subjects: standings appear once assessments are finalized.'}
+            </p>
+        );
+    }
+
+    const concerned = counts.failing + counts.atRisk;
+
+    return (
+        <>
+            <p className="px-5 py-4 text-sm text-ink">
+                <span className="font-semibold tabular-nums">{concerned}</span> of <span className="tabular-nums">{counts.monitored}</span> monitored{' '}
+                {counts.monitored === 1 ? 'candidate is' : 'candidates are'} failing or at risk in your subjects:{' '}
+                <Link href={routes.monitoring.index({ standing: 'failing' })} className="font-medium text-primary-700 underline">
+                    <span className="tabular-nums">{counts.failing}</span> failing
+                </Link>
+                ,{' '}
+                <Link href={routes.monitoring.index({ standing: 'at_risk' })} className="font-medium text-primary-700 underline">
+                    <span className="tabular-nums">{counts.atRisk}</span> at risk
+                </Link>
+                .
+            </p>
+            {summary.requiringAttention.length > 0 && (
+                <div className="border-t border-line">
+                    <AttentionList candidates={summary.requiringAttention} showGradebook />
+                </div>
+            )}
+        </>
+    );
+}
+
+function TeachingSection({ teaching, alerts }: { teaching: TeachingOverview; alerts?: MonitoringSummary | null }) {
     const { singular, plural } = terms.classBatch;
 
     if (teaching.period === null) {
@@ -189,18 +345,7 @@ function TeachingSection({ teaching }: { teaching: TeachingOverview }) {
                 </Panel>
 
                 <div className="flex flex-col gap-6">
-                    <Panel title="Academic Alerts" headingLevel="h3">
-                        <EmptyState
-                            icon={BellRing}
-                            headingLevel="h4"
-                            title="Academic alerts are not available yet"
-                            description={
-                                teaching.period.hasThresholds
-                                    ? 'Candidates who are at risk or failing in your subjects will be listed here. Until then, each subject’s gradebook shows the current standing of its candidates.'
-                                    : `Candidates who are at risk or failing in your subjects will be listed here. Academic standing is not available yet: passing and warning grades have not been set for ${teaching.period.name}. An academic administrator sets them for each period.`
-                            }
-                        />
-                    </Panel>
+{alerts !== undefined && <AcademicAlerts summary={alerts} period={teaching.period} />}
                     <UpcomingAssessments assessments={teaching.upcomingAssessments} />
                 </div>
             </div>
