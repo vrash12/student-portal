@@ -1,0 +1,99 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+
+/*
+ * Design tokens (UI_UX_DESIGN.md §80).
+ *
+ * Tailwind's default palette is cleared so every color in the interface
+ * comes from this list. Contrast notes are against white (#ffffff).
+ */
+@theme {
+    --color-*: initial;
+
+    --color-white: #ffffff;
+    --color-black: #000000;
+
+    /* Surfaces */
+    --color-canvas: #f4f6f5; /* page background */
+    --color-surface: #ffffff; /* cards, tables, forms */
+    --color-surface-muted: #f8f9f9; /* table headers, subtle panels */
+    --color-overlay: rgb(15 23 20 / 0.45); /* dialog/drawer backdrop */
+
+    /* Lines */
+    --color-line: #dde2e0; /* dividers and container borders */
+    --color-line-strong: #879390; /* form control borders, 3.2:1 */
+
+    /* Text */
+    --color-ink: #17201c; /* primary text */
+    --color-ink-muted: #4f5b56; /* secondary text, 7.1:1 */
+    --color-ink-subtle: #66726d; /* helper text, 5.0:1 */
+
+    /* Primary: restrained institutional green */
+    --color-primary-50: #eef6f1;
+    --color-primary-100: #d7eadf;
+    --color-primary-200: #b0d5bf;
+    --color-primary-600: #1f6b4a; /* primary actions, 6.4:1 with white text */
+    --color-primary-700: #185a3d;
+    --color-primary-800: #134a32;
+    --color-primary-900: #0f3a28;
+
+    /* Status (always paired with a text label or icon) */
+    --color-success-bg: #e9f5ee;
+    --color-success-border: #b7dcc6;
+    --color-success-fg: #17613b;
+
+    --color-warning-bg: #fdf2e0;
+    --color-warning-border: #f1cf99;
+    --color-warning-fg: #8a4b00;
+
+    --color-danger-bg: #fdeceb;
+    --color-danger-border: #f3bcb7;
+    --color-danger-fg: #a8231a;
+    --color-danger-600: #b42318; /* destructive buttons, 6.3:1 with white text */
+    --color-danger-700: #912018;
+
+    --color-info-bg: #eaf1fb;
+    --color-info-border: #bcd2f0;
+    --color-info-fg: #1d4f8f;
+
+    --color-neutral-bg: #eef1f0;
+    --color-neutral-border: #d3d9d6;
+    --color-neutral-fg: #4f5b56;
+
+    /* Typography: Inter is bundled locally (no font CDN). */
+    --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        background-color: var(--color-canvas);
+        color: var(--color-ink);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Visible keyboard focus for every interactive element (§70). */
+    :focus-visible {
+        outline: 2px solid var(--color-primary-600);
+        outline-offset: 2px;
+    }
+
+    /* Native dialogs are used for confirmations; style their backdrop. */
+    dialog::backdrop {
+        background-color: var(--color-overlay);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
