@@ -3,7 +3,7 @@ import { ChartColumn, Pencil } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { PageHeader } from '@/components/ui/page-header';
+import { PageHeader, type BreadcrumbItem } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { StatusBadge, type StatusTone } from '@/components/ui/status-badge';
 import { useDateFormatter } from '@/lib/format';
@@ -17,17 +17,30 @@ interface CandidateShowProps {
         name: string;
         status: { label: string; tone: StatusTone };
         classBatch: { id: number; name: string; period: string } | null;
-        account: { username: string; isActive: boolean; lastLoginAt: string | null };
+        /** Only provided to users who manage candidate records. */
+        account: { username: string; isActive: boolean; lastLoginAt: string | null } | null;
         createdAt: string | null;
         updatedAt: string | null;
     };
     subjects: Array<{ code: string; name: string; instructors: string[] }>;
     canEdit: boolean;
+    /** Administrators browse all candidates; instructors arrive from a class they teach. */
+    canBrowseCandidates: boolean;
 }
 
-export default function CandidateShow({ candidate, subjects, canEdit }: CandidateShowProps) {
+export default function CandidateShow({ candidate, subjects, canEdit, canBrowseCandidates }: CandidateShowProps) {
     const formatDate = useDateFormatter();
     const classTerm = terms.classBatch.singular;
+
+    const breadcrumbs: BreadcrumbItem[] = canBrowseCandidates
+        ? [{ label: 'Candidates', href: routes.candidates.index() }, { label: candidate.name }]
+        : [
+              { label: `My ${terms.classBatch.plural}`, href: routes.teaching.classes.index() },
+              ...(candidate.classBatch
+                  ? [{ label: candidate.classBatch.name, href: routes.teaching.classes.show(candidate.classBatch.id) }]
+                  : []),
+              { label: candidate.name },
+          ];
 
     return (
         <>
@@ -40,7 +53,7 @@ export default function CandidateShow({ candidate, subjects, canEdit }: Candidat
                         Candidate {candidate.candidateNumber} <StatusBadge tone={candidate.status.tone}>{candidate.status.label}</StatusBadge>
                     </>
                 }
-                breadcrumbs={[{ label: 'Candidates', href: routes.candidates.index() }, { label: candidate.name }]}
+                breadcrumbs={breadcrumbs}
                 actions={
                     canEdit && (
                         <ButtonLink href={routes.candidates.edit(candidate.id)} icon={<Pencil className="size-4" aria-hidden="true" />}>
@@ -64,21 +77,23 @@ export default function CandidateShow({ candidate, subjects, canEdit }: Candidat
                     </dl>
                 </Panel>
 
-                <Panel title="Sign-In Account">
-                    <dl className="grid gap-4 sm:grid-cols-2">
-                        <Detail label="Username">{candidate.account.username}</Detail>
-                        <Detail label="Account Status">
-                            {candidate.account.isActive ? (
-                                <StatusBadge tone="success">Active</StatusBadge>
-                            ) : (
-                                <StatusBadge tone="neutral">Deactivated</StatusBadge>
-                            )}
-                        </Detail>
-                        <Detail label="Last Sign-In">
-                            {candidate.account.lastLoginAt ? formatDate.dateTime(candidate.account.lastLoginAt) : 'Never'}
-                        </Detail>
-                    </dl>
-                </Panel>
+                {candidate.account !== null && (
+                    <Panel title="Sign-In Account">
+                        <dl className="grid gap-4 sm:grid-cols-2">
+                            <Detail label="Username">{candidate.account.username}</Detail>
+                            <Detail label="Account Status">
+                                {candidate.account.isActive ? (
+                                    <StatusBadge tone="success">Active</StatusBadge>
+                                ) : (
+                                    <StatusBadge tone="neutral">Deactivated</StatusBadge>
+                                )}
+                            </Detail>
+                            <Detail label="Last Sign-In">
+                                {candidate.account.lastLoginAt ? formatDate.dateTime(candidate.account.lastLoginAt) : 'Never'}
+                            </Detail>
+                        </dl>
+                    </Panel>
+                )}
 
                 <Panel title="Subjects" description={`Subjects taken through the candidate's ${classTerm.toLowerCase()}.`}>
                     {subjects.length === 0 ? (

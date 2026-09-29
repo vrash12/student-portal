@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/cn';
-import { isActivePath, staffNavigation } from '@/lib/navigation';
+import { activeItemHref, staffNavigation } from '@/lib/navigation';
 import { usePermissions } from '@/lib/permissions';
 import { routes } from '@/lib/routes';
 
@@ -74,6 +74,8 @@ function OrganizationName() {
 function SidebarContent({ inDrawer = false }: { inDrawer?: boolean }) {
     const { url, props } = usePage();
     const { can } = usePermissions();
+    const visibleItems = staffNavigation.flatMap((section) => section.items).filter((item) => can(item.permission));
+    const activeHref = activeItemHref(url, visibleItems);
 
     return (
         <div className="flex h-full flex-col">
@@ -102,7 +104,7 @@ function SidebarContent({ inDrawer = false }: { inDrawer?: boolean }) {
                             )}
                             <ul className="space-y-1">
                                 {items.map((item) => {
-                                    const active = isActivePath(url, item.href);
+                                    const active = item.href === activeHref;
 
                                     return (
                                         <li key={item.href}>

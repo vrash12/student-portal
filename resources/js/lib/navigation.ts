@@ -3,6 +3,7 @@ import {
     CalendarRange,
     GraduationCap,
     LayoutDashboard,
+    School,
     ShieldCheck,
     UserRoundCog,
     Users,
@@ -19,6 +20,12 @@ export interface NavigationItem {
     icon: LucideIcon;
     /** Item is shown only when the user holds this permission. */
     permission: PermissionCode;
+    /**
+     * Extra URL prefixes that highlight this item when no visible item
+     * matches directly (e.g. instructors reach candidate profiles from
+     * My Classes, without having the Candidates item).
+     */
+    activeFor?: string[];
 }
 
 export interface NavigationSection {
@@ -34,6 +41,18 @@ export const staffNavigation: NavigationSection[] = [
     {
         label: null,
         items: [{ label: 'Dashboard', href: routes.dashboard(), icon: LayoutDashboard, permission: Permission.AccessStaffArea }],
+    },
+    {
+        label: 'Teaching',
+        items: [
+            {
+                label: `My ${terms.classBatch.plural}`,
+                href: routes.teaching.classes.index(),
+                icon: School,
+                permission: Permission.TeachClasses,
+                activeFor: [routes.candidates.index()],
+            },
+        ],
     },
     {
         label: 'Academics',
@@ -69,4 +88,19 @@ export function isActivePath(currentUrl: string, href: string): boolean {
     const path = currentUrl.split('?')[0] ?? currentUrl;
 
     return path === href || path.startsWith(`${href}/`);
+}
+
+/**
+ * The single item to highlight: a direct match first, otherwise an item that
+ * claims the URL through `activeFor`.
+ */
+export function activeItemHref(currentUrl: string, visibleItems: NavigationItem[]): string | null {
+    const direct = visibleItems.find((item) => isActivePath(currentUrl, item.href));
+    if (direct !== undefined) {
+        return direct.href;
+    }
+
+    const claimed = visibleItems.find((item) => item.activeFor?.some((prefix) => isActivePath(currentUrl, prefix)));
+
+    return claimed?.href ?? null;
 }

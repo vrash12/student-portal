@@ -60,7 +60,7 @@ enum Permission: string
             self::ManageInstructorAssignments => 'Assign instructors to the subjects of each class.',
             self::ViewAllCandidates => 'View every candidate record, regardless of class assignment.',
             self::ManageCandidates => 'Create and update candidate records and their sign-in accounts.',
-            self::TeachClasses => 'Can be assigned to teach subjects to classes.',
+            self::TeachClasses => 'Can be assigned to teach subjects, and view the classes and candidates they teach.',
         };
     }
 

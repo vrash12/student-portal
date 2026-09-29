@@ -25,6 +25,7 @@ class AreaAccessTest extends TestCase
             'users' => ['/users'],
             'roles' => ['/roles'],
             'account password' => ['/account/password'],
+            'my classes' => ['/my-classes'],
             'examination portal' => ['/portal'],
         ];
     }

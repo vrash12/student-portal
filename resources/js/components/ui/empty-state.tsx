@@ -6,7 +6,7 @@ interface EmptyStateProps {
     title: string;
     description: ReactNode;
     action?: ReactNode;
-    headingLevel?: 'h2' | 'h3';
+    headingLevel?: 'h2' | 'h3' | 'h4';
 }
 
 /**

@@ -8,7 +8,7 @@
 
         <title inertia>{{ config('institution.system_name') }}</title>
 
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        <link rel="icon" href="{{ config('institution.favicon_url') }}">
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])

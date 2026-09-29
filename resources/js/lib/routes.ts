@@ -52,6 +52,12 @@ export const routes = {
         store: () => '/instructor-assignments',
         destroy: (assignmentId: number) => `/instructor-assignments/${assignmentId}`,
     },
+    teaching: {
+        classes: {
+            index: () => '/my-classes',
+            show: (classId: number) => `/my-classes/${classId}`,
+        },
+    },
     candidates: {
         index: () => '/candidates',
         create: () => '/candidates/create',

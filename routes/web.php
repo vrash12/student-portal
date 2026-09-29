@@ -14,6 +14,7 @@ use App\Http\Controllers\Staff\InstructorAssignmentController;
 use App\Http\Controllers\Staff\InstructorController;
 use App\Http\Controllers\Staff\RoleController;
 use App\Http\Controllers\Staff\SubjectController;
+use App\Http\Controllers\Staff\TeachingClassController;
 use App\Http\Controllers\Staff\UserController;
 use App\Models\Candidate;
 use App\Models\User;
@@ -81,6 +82,15 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::post('instructor-assignments', [InstructorAssignmentController::class, 'store'])->name('instructor-assignments.store');
             Route::delete('instructor-assignments/{instructorAssignment}', [InstructorAssignmentController::class, 'destroy'])->name('instructor-assignments.destroy');
         });
+
+        // Teaching staff: read-only view of the classes they teach.
+        Route::middleware('can:'.Permission::TeachClasses->value)
+            ->prefix('my-classes')
+            ->name('teaching.classes.')
+            ->group(function (): void {
+                Route::get('/', [TeachingClassController::class, 'index'])->name('index');
+                Route::get('{classBatch}', [TeachingClassController::class, 'show'])->name('show')->can('viewTeaching', 'classBatch');
+            });
 
         // Candidates.
         Route::get('candidates', [CandidateController::class, 'index'])->name('candidates.index')->can('viewAny', Candidate::class);

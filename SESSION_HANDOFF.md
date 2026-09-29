@@ -93,12 +93,12 @@ Always distinguish:
 
 ## Current Milestone
 
-**Milestones 0, 1, and 2: complete.**
-**Next: Milestone 3 (Instructor Dashboard): not started.**
+**Milestones 0, 1, 2, and 3: complete.**
+**Next: Milestone 4 (Grade Management): not started.**
 
 ## Current Status
 
-Foundation, sign-in, roles and permissions, staff accounts, academic structure (periods, subjects, classes/batches, subject offerings, instructor assignments), and candidate records with sign-in accounts are implemented. The full test suite passes (132 tests, 770 assertions).
+Foundation, sign-in, roles and permissions, staff accounts, academic structure, candidate records, organization branding, and the instructor dashboard with My Classes are implemented. The full test suite passes (155 tests, 1,024 assertions).
 
 ## Last Updated
 
@@ -139,6 +139,22 @@ Foundation, sign-in, roles and permissions, staff accounts, academic structure (
 - [x] Demo data: `DemoAcademicSeeder` (period, Subjects 1–4, Sample Batch A/B, 8 assignments, candidates `2026-0001`…`2026-0010`)
 - [x] Verified in the browser: classes list, class detail, assigning an instructor, candidate search and profile, permission-aware sidebar
 
+### Milestone 3 — Instructor dashboard
+
+- [x] Dashboard sections by permission: `teaching` (classes.teach), `showAcademicOverview` (candidates.view_all), `accountSummary` (users.view)
+- [x] Teaching overview (`App\Services\TeachingOverview`): active-period assignments, metrics (distinct subjects, classes, enrolled candidates), My Subjects list with links
+- [x] My Classes: `/my-classes` (period selector limited to periods the instructor taught in, active period by default, period always named) and `/my-classes/{classBatch}` (subjects they teach there, candidates with search/status filter)
+- [x] Instructor access to candidate profiles for classes they teach (`CandidatePolicy::view` → `User::teachesClass`); account panel hidden, only the subjects they teach are listed, breadcrumbs via My Classes, sidebar highlights My Classes
+- [x] Honest "not available yet" panels for Academic Alerts and Upcoming Assessments
+- [x] Organization branding: Philippine Army Officer Candidate School name and seal (configuration only)
+- [x] Independent review (5 reviewers + 5 skeptics + completeness check): 15 confirmed findings, all fixed with tests
+- [x] Verified in the browser at desktop and tablet widths: dashboard, My Classes, class view, candidate profile, sign-in page with seal
+
+### Milestone 3 items carried forward (must be added when the modules exist)
+
+- Quick navigation from the instructor dashboard to grades (Milestone 4), question bank (Milestone 7), and examinations (Milestone 8). Not added now because links to missing modules are forbidden (AGENTS.md §73).
+- Real Upcoming Assessments (Milestones 4/8) and Academic Alerts (at-risk/failing, Milestones 5–6) on the instructor dashboard, replacing the "not available yet" panels. Keep alerts above the fold at tablet width.
+
 ---
 
 # Work In Progress
@@ -149,25 +165,43 @@ None. There is no partially completed code.
 
 # Next Recommended Task
 
-Start **Milestone 3 (Instructor Dashboard)**:
+Start **Milestone 4 (Grade Management)**. Read its deliverables in MILESTONES.md and the grading rules in AGENTS.md §14–15 and §36 first. Suggested order:
 
-1. Instructor dashboard (`staff/dashboard` already exists; branch the content by permission, not role): "My Subjects" from `instructor_assignments` in the active period (subject, class, candidate count), with quick links.
-2. Instructor-scoped candidate access: extend `CandidatePolicy::view` so a user with `classes.teach` can open candidates in classes they are assigned to. Add an "assigned classes" list for instructors (read-only class detail scoped to their assignments, or a dedicated "My Classes" page). Never widen `candidates.view_all`.
-3. Upcoming assessments and academic alerts depend on Milestones 4–5. Show honest empty states until then; do not fake numbers.
-4. Tests: instructor sees only their own assignments; instructor cannot open unassigned classes or candidates; dashboard counts come from the database.
+1. Data model: assessment categories with configurable weights per class subject (no hardcoded percentages), assessments (belong to a class subject; maximum score; category), and candidate scores (raw score, CHECK 0 ≤ score ≤ maximum). Draft vs finalized state.
+2. Permissions: add, for example, `grades.encode_assigned` (instructors, scoped by assignment) and `grades.manage_all` (administrators), plus the matching `SystemRole` defaults, `resources/js/lib/permissions.ts` entries, and navigation. Rank rule still applies.
+3. Grade entry screen from My Classes (instructor) with server-side validation; percentages and weighted scores calculated only in the backend (the Milestone 5 `GradeCalculationService`; do not duplicate formulas in controllers or React).
+4. Grade change history: previous value, new value, actor, time, and a required reason when changing a finalized grade (AGENTS.md §36). Use `AuditLogger` plus a dedicated history table if needed.
+5. Block removing a subject from a class once it has assessments (`ClassBatchService::removeSubject`).
+6. Add the dashboard's quick link to grades (carried forward from Milestone 3).
+7. Tests: instructors cannot encode grades outside their assignments; invalid scores rejected; finalized grades need a reason; history recorded.
 
 Start by inspecting:
 
-- `app/Http/Controllers/Staff/DashboardController.php`, `resources/js/pages/staff/dashboard.tsx`
-- `app/Policies/CandidatePolicy.php`, `app/Models/User.php` (`teachingAssignments`, `canTeach`)
-- `app/Models/InstructorAssignment.php`, `app/Models/ClassSubject.php`
-- `resources/js/lib/navigation.ts`, `resources/js/lib/permissions.ts`
+- `app/Models/ClassSubject.php`, `app/Models/InstructorAssignment.php`, `app/Services/TeachingOverview.php`
+- `app/Policies/CandidatePolicy.php`, `app/Policies/ClassBatchPolicy.php`, `app/Models/User.php` (`teachesClass`)
+- `resources/js/pages/staff/teaching/classes/show.tsx` (entry point for instructors)
 
 ---
 
 # Files Recently Changed
 
-Milestone 2 (this session, after the Milestone 0–1 commit):
+Milestone 3 (after the Milestone 2 commit):
+
+```text
+app/Services/TeachingOverview.php (new), app/Policies/ClassBatchPolicy.php (new)
+app/Http/Controllers/Staff/TeachingClassController.php (new), DashboardController.php, CandidateController.php
+app/Models/{User (teachesClass), Candidate (matching scope), ClassBatch (policy)}.php
+app/Policies/CandidatePolicy.php, app/Enums/Permission.php (classes.teach description)
+config/institution.php (favicon_url), resources/views/app.blade.php, .env.example, public/branding/*
+routes/web.php (my-classes)
+resources/js/pages/staff/dashboard.tsx, pages/staff/teaching/classes/{index,show}.tsx (new), pages/staff/candidates/show.tsx
+resources/js/components/ui/{metric-card (new), panel, empty-state}.tsx, layouts/{staff,auth}-layout.tsx
+resources/js/lib/{navigation (activeFor, activeItemHref), routes}.ts
+tests/Feature/Teaching/* (new), tests/Feature/Auth/AreaAccessTest.php
+SESSION_HANDOFF.md
+```
+
+Milestone 2:
 
 ```text
 app/Enums/{Permission,SystemRole,AuditAction,CandidateStatus}.php
@@ -235,6 +269,7 @@ DELETE /classes/{classBatch}/subjects/{classSubject} (scoped)    class_batches.m
 GET  /instructors, /instructors/{instructor}                     instructor_assignments.manage
 POST /instructor-assignments, DELETE /instructor-assignments/{instructorAssignment}
      /candidates (index, create, store, show, edit, update)      CandidatePolicy
+GET  /my-classes, /my-classes/{classBatch}        classes.teach; show also ClassBatchPolicy::viewTeaching
 GET  /portal                                      exam_portal.access
      fallback                                     404 inside the web middleware group
 ```
@@ -285,6 +320,7 @@ Decisions made in this session:
 - Audit logs are append-only; `AuditLogger::recordChanges()` stores only changed values (previous and new).
 - Toasts use Inertia v3 flash data; default layouts are chosen by page-name prefix in `resources/js/app.tsx`.
 - No SSR, no Inertia DevTools, `QUEUE_CONNECTION=sync`.
+- **Branding (confirmed 2026-09-29):** organization is the Philippine Army Officer Candidate School; its seal was supplied by the project owner. Configured through `ORGANIZATION_NAME`, `ORGANIZATION_LOGO_URL` (`/branding/logo.jpg`, 256px) and `ORGANIZATION_FAVICON_URL` (`/branding/favicon.png`); `public/branding/logo-512.png` is reserved for the PWA icons (Milestone 9). Components never reference the organization directly.
 - Timestamps stored in UTC, displayed in `INSTITUTION_TIMEZONE` (local: Asia/Manila). Calendar dates use `formatCalendarDate()` (no timezone shift).
 - `Model::shouldBeStrict()` outside production. Tests call `withoutVite()` so they never depend on built assets.
 
@@ -299,6 +335,10 @@ Decisions made in this session:
 - Shared building blocks: `Table`/`Th`/`Td`/`RowAction`, `FilterBar` + `SearchField`, `FormSection` + `FormActions`, `ConfirmAction` (button + confirmation + request), `ConfirmDialog`, `Pagination` (singular/plural nouns).
 - Destructive or significant actions require confirmation: deactivating accounts, setting the active period, removing subjects and instructor assignments.
 - Per-item form labels carry screen-reader-only context (for example "Assign Instructor to Subject 1").
+- `MetricCard` (inside a `<dl>`) for dashboard numbers: one number, one label, neutral styling.
+- Heading levels follow nesting: `Panel` and `EmptyState` take `headingLevel` (h3/h4 inside a titled section). Link accessible names start with their visible text (WCAG 2.5.3).
+- Sidebar highlights exactly one item (`activeItemHref`); items can claim extra URL prefixes with `activeFor` (My Classes claims `/candidates` for instructors).
+- Sidebar section order: Dashboard; Teaching (My Classes); Academics; Administration.
 - Dashboards and profiles show honest empty states where later milestones will add data.
 
 ---
@@ -312,8 +352,12 @@ UserPolicy:
 - viewAny: users.view; create: users.manage
 - update: users.manage AND staff account AND (own account OR target role ranked below actor)
 CandidatePolicy:
-- viewAny/view: candidates.view_all (Milestone 3 adds instructor access to assigned classes)
+- viewAny: candidates.view_all (instructors browse through My Classes instead)
+- view: candidates.view_all, OR User::teachesClass(candidate's class) (active + classes.teach + an assignment in that class)
 - create/update: candidates.manage
+ClassBatchPolicy::viewTeaching: User::teachesClass(class)
+Candidate profile for instructors: no account panel; subjects limited to those the viewer teaches
+Assignments of past periods keep access to those classes (history); removing the assignment or losing classes.teach ends it
 Assignments: instructor must hold classes.teach and be active (Form Request + service check)
 Inactive users: hold no permissions; EnsureAccountIsActive signs them out
 Shared props: id, name, username, role (code, name), the user's own permission codes
@@ -333,10 +377,13 @@ tests/Feature/Academic/SubjectTest.php
 tests/Feature/Academic/ClassBatchTest.php           offerings, scoped removal
 tests/Feature/Academic/InstructorAssignmentTest.php eligibility, duplicates, directory
 tests/Feature/Candidates/CandidateManagementTest.php account sync, sign-in, sessions, DB status check
+tests/Feature/Teaching/InstructorDashboardTest.php  metrics, custom roles, losing classes.teach
+tests/Feature/Teaching/TeachingClassTest.php        scoping, periods, unrelated class 403, past periods
+tests/Feature/Teaching/InstructorCandidateAccessTest.php  scoped profiles, subjects, no edits
 tests/Unit/PermissionCatalogueTest.php              TS/PHP permission sync, role invariants
 ```
 
-Status: **132 passed, 0 failed** (770 assertions). `npm run types`, `npm run build`, and Pint pass.
+Status: **155 passed, 0 failed** (1,024 assertions). `npm run types`, `npm run build`, and Pint pass.
 
 `tests/TestCase.php` uses RefreshDatabase, seeds `AccessControlSeeder` once, calls `withoutVite()`, and **refuses to refresh any database whose name does not end in `_testing`** (the XAMPP root account can see other projects' databases on this machine).
 
@@ -377,11 +424,11 @@ Status: Informational
 
 Details: Pages load slowly when requests overlap during browser testing. Production uses a real web server.
 
-### Issue: Instructors cannot yet see their classes or candidates
+### Issue: Changing an instructor's role keeps their teaching assignments
 
-Status: Planned (Milestone 3)
+Status: Open (low)
 
-Details: Instructors currently see only the dashboard. Candidate and class pages require administrator permissions.
+Details: Access ends immediately (every teaching check requires classes.teach), but the old assignments still appear on the administrator class and instructor pages. Decide in a later milestone whether role changes should remove or flag assignments.
 
 ---
 
@@ -407,7 +454,7 @@ Do not hardcode these until confirmed:
 - candidate password rules on shared tablets;
 - session timeout behaviour during examinations;
 - exam navigation restrictions and whether candidates may see scores immediately;
-- official branding (organization name, logo, colors);
+- brand colors (the interface still uses the placeholder institutional green);
 - internal deployment environment (hostname, HTTPS certificate).
 
 ---
@@ -430,8 +477,8 @@ Reason: the split between the administrator roles is not specified.
 ASSUMPTION: A class belongs to exactly one academic period, fixed at creation.
 Reason: simplest consistent model until requirements say otherwise.
 
-ASSUMPTION: Branding uses placeholders ("Organization Name" and a neutral mark).
-Reason: official branding has not been approved.
+ASSUMPTION: Brand colors use the placeholder institutional green.
+Reason: official colors have not been supplied (name and seal are confirmed).
 ```
 
 ---
@@ -443,14 +490,15 @@ Branch: main (tracks origin/main)
 Remote: origin https://github.com/vrash12/student-portal.git
 Commits: 0ff5cc3 first commit (README only)
          ad168a7 Milestones 0–1
-         plus the Milestone 2 commit (see `git log`)
+         c5b0f40 Milestone 2
+         plus the Milestone 3 commit (see `git log`)
 ```
 
 ---
 
 # Uncommitted or Incomplete Code
 
-None. Milestones 0–2 are complete and committed.
+None. Milestones 0–3 are complete and committed.
 
 ---
 
@@ -464,7 +512,7 @@ At the start of the next session, the coding agent should verify:
 3. php artisan migrate:status shows no pending migrations
 4. php artisan test passes
 5. npm run types and npm run build pass
-6. Current milestone (Milestone 3 next)
+6. Current milestone (Milestone 4 next)
 ```
 
 Do not immediately start generating new code before checking the existing state.

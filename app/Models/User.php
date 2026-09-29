@@ -100,6 +100,21 @@ class User extends Authenticatable
     }
 
     /**
+     * Whether this user currently teaches at least one subject of the class.
+     * Instructor access to class and candidate records is scoped by this.
+     */
+    public function teachesClass(int $classBatchId): bool
+    {
+        if (! $this->canTeach()) {
+            return false;
+        }
+
+        return $this->teachingAssignments()
+            ->whereHas('classSubject', fn (Builder $offerings) => $offerings->where('class_batch_id', $classBatchId))
+            ->exists();
+    }
+
+    /**
      * Accounts whose role makes them teaching staff (active or not).
      *
      * @param  Builder<User>  $query

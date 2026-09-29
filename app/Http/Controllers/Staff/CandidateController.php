@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Enums\CandidateStatus;
+use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Candidates\StoreCandidateRequest;
 use App\Http\Requests\Candidates\UpdateCandidateRequest;
@@ -34,14 +35,7 @@ class CandidateController extends Controller
 
         $candidates = Candidate::query()
             ->with('classBatch')
-            ->when($filters['search'] !== '', function (Builder $query) use ($filters): void {
-                $term = QueryFilters::likeTerm($filters['search']);
-                $query->where(fn (Builder $match) => $match
-                    ->where('candidate_number', 'like', $term)
-                    ->orWhere('first_name', 'like', $term)
-                    ->orWhere('last_name', 'like', $term)
-                    ->orWhereRaw("concat(`first_name`, ' ', `last_name`) like ?", [$term]));
-            })
+            ->when($filters['search'] !== '', fn (Builder $query) => $query->matching($filters['search']))
             ->when($filters['class'] !== '', fn (Builder $query) => $query->where('class_batch_id', (int) $filters['class']))
             ->when($filters['status'] !== '', fn (Builder $query) => $query->where('status', $filters['status']))
             ->orderBy('last_name')
@@ -86,9 +80,19 @@ class CandidateController extends Controller
     public function show(Request $request, Candidate $candidate): Response
     {
         $candidate->load(['user', 'classBatch.academicPeriod']);
+        $viewer = $request->user();
+
+        // Viewers without "view all" reach this page by teaching the candidate's
+        // class, so they only see the subjects they teach there. Later
+        // milestones add per-subject grades to this list.
+        $seesAllSubjects = $viewer->hasPermission(Permission::ViewAllCandidates);
 
         $subjects = $candidate->classBatch === null ? [] : ClassSubject::query()
             ->where('class_batch_id', $candidate->class_batch_id)
+            ->when(! $seesAllSubjects, fn (Builder $offerings) => $offerings->whereHas(
+                'instructorAssignments',
+                fn (Builder $assignments) => $assignments->where('instructor_id', $viewer->id),
+            ))
             ->with(['subject', 'instructors'])
             ->get()
             ->sortBy(fn (ClassSubject $offering): string => $offering->subject->name)
@@ -100,19 +104,24 @@ class CandidateController extends Controller
             ->values()
             ->all();
 
+        $canManage = $viewer->can('update', $candidate);
+
         return Inertia::render('staff/candidates/show', [
             'candidate' => [
                 ...$this->details($candidate),
-                'account' => [
+                // Sign-in account details are administrative; instructors do not need them.
+                'account' => $canManage ? [
                     'username' => $candidate->user->username,
                     'isActive' => $candidate->user->is_active,
                     'lastLoginAt' => $candidate->user->last_login_at?->toIso8601String(),
-                ],
+                ] : null,
                 'createdAt' => $candidate->created_at?->toIso8601String(),
                 'updatedAt' => $candidate->updated_at?->toIso8601String(),
             ],
             'subjects' => $subjects,
-            'canEdit' => $request->user()->can('update', $candidate),
+            'canEdit' => $canManage,
+            // Instructors return to the class they teach, not the full candidate list.
+            'canBrowseCandidates' => $viewer->can('viewAny', Candidate::class),
         ]);
     }
 
