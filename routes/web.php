@@ -143,6 +143,9 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             });
         });
 
+        // Question bank (Milestone 7), in its own route file.
+        require __DIR__.'/question-bank.php';
+
         // Candidates.
         Route::get('candidates', [CandidateController::class, 'index'])->name('candidates.index')->can('viewAny', Candidate::class);
         Route::get('candidates/create', [CandidateController::class, 'create'])->name('candidates.create')->can('create', Candidate::class);

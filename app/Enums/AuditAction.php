@@ -39,6 +39,10 @@ enum AuditAction: string
     case AssessmentScoresRecorded = 'assessment.scores_recorded';
     case AssessmentScoreCorrected = 'assessment_score.corrected';
     case GradingThresholdsUpdated = 'grading_thresholds.updated';
+    case QuestionCreated = 'question.created';
+    case QuestionUpdated = 'question.updated';
+    case QuestionActivated = 'question.activated';
+    case QuestionDeactivated = 'question.deactivated';
 
     public function label(): string
     {
@@ -75,6 +79,10 @@ enum AuditAction: string
             self::AssessmentScoresRecorded => 'Recorded assessment scores',
             self::AssessmentScoreCorrected => 'Corrected finalized score',
             self::GradingThresholdsUpdated => 'Updated passing and warning grades',
+            self::QuestionCreated => 'Created question',
+            self::QuestionUpdated => 'Updated question',
+            self::QuestionActivated => 'Activated question',
+            self::QuestionDeactivated => 'Deactivated question',
         };
     }
 }

@@ -23,6 +23,7 @@ export const Permission = {
     ConfigureGrading: 'grading.configure',
     RecordGrades: 'grades.record',
     ViewAcademicMonitoring: 'academic_monitoring.view',
+    ManageQuestionBank: 'question_bank.manage',
 } as const;
 
 export type PermissionCode = (typeof Permission)[keyof typeof Permission];

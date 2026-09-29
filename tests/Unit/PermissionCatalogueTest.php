@@ -44,7 +44,7 @@ class PermissionCatalogueTest extends TestCase
      */
     public function test_super_administrator_holds_every_administrative_permission(): void
     {
-        $roleSpecific = [Permission::AccessExamPortal, Permission::TeachClasses, Permission::RecordGrades];
+        $roleSpecific = [Permission::AccessExamPortal, Permission::TeachClasses, Permission::RecordGrades, Permission::ManageQuestionBank];
         $administrative = array_values(array_filter(
             Permission::cases(),
             fn (Permission $permission): bool => ! in_array($permission, $roleSpecific, true),
@@ -90,6 +90,21 @@ class PermissionCatalogueTest extends TestCase
                 in_array($role, [SystemRole::SuperAdministrator, SystemRole::AcademicAdministrator], true),
                 in_array(Permission::ConfigureGrading, $role->defaultPermissions(), true),
                 "{$role->label()}: configure grading",
+            );
+        }
+    }
+
+    /**
+     * Question content and correct answers are confidential: by default only
+     * instructors, for the subjects they teach, manage the question bank.
+     */
+    public function test_only_instructors_manage_the_question_bank_by_default(): void
+    {
+        foreach (SystemRole::cases() as $role) {
+            $this->assertSame(
+                $role === SystemRole::Instructor,
+                in_array(Permission::ManageQuestionBank, $role->defaultPermissions(), true),
+                "{$role->label()}: manage question bank",
             );
         }
     }

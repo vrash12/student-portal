@@ -1,9 +1,5 @@
-/** Appends a query string of the non-empty values. */
-function withQuery(path: string, query: Record<string, string> = {}): string {
-    const search = new URLSearchParams(Object.entries(query).filter(([, value]) => value !== '')).toString();
-
-    return search === '' ? path : `${path}?${search}`;
-}
+import { questionBankRoutes } from '@/lib/question-bank-routes';
+import { withQuery } from '@/lib/url';
 
 /**
  * Application URLs used by the frontend. Keep in sync with routes/web.php.
@@ -16,6 +12,7 @@ export const routes = {
     monitoring: {
         index: (query?: Record<string, string>) => withQuery('/monitoring', query),
     },
+    questionBank: questionBankRoutes,
     users: {
         index: () => '/users',
         create: () => '/users/create',

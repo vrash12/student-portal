@@ -11,6 +11,7 @@ use App\Models\Candidate;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
 use App\Models\InstructorAssignment;
+use App\Models\Question;
 use App\Models\Role;
 use App\Models\Subject;
 use App\Models\User;
@@ -63,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
             'assessment_category' => AssessmentCategory::class,
             'assessment' => Assessment::class,
             'assessment_score' => AssessmentScore::class,
+            'question' => Question::class,
         ]);
     }
 

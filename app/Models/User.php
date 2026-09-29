@@ -128,6 +128,42 @@ class User extends Authenticatable
     }
 
     /**
+     * Whether this user currently teaches the subject in at least one class
+     * (any academic period). Question bank access is scoped by this.
+     */
+    public function teachesSubject(int $subjectId): bool
+    {
+        if (! $this->canTeach()) {
+            return false;
+        }
+
+        return $this->teachingAssignments()
+            ->whereHas('classSubject', fn (Builder $offerings) => $offerings->where('subject_id', $subjectId))
+            ->exists();
+    }
+
+    /**
+     * Ids of the subjects this user currently teaches in at least one class
+     * (any academic period), in ascending order. Empty when the user cannot teach.
+     *
+     * @return list<int>
+     */
+    public function taughtSubjectIds(): array
+    {
+        if (! $this->canTeach()) {
+            return [];
+        }
+
+        return ClassSubject::query()
+            ->whereHas('instructorAssignments', fn (Builder $assignments) => $assignments->where('instructor_id', $this->id))
+            ->distinct()
+            ->orderBy('subject_id')
+            ->pluck('subject_id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->all();
+    }
+
+    /**
      * Accounts whose role makes them teaching staff (active or not).
      *
      * @param  Builder<User>  $query

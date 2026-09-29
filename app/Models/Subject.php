@@ -46,6 +46,24 @@ class Subject extends Model
     }
 
     /**
+     * The subject's question bank (Milestone 7).
+     *
+     * @return HasMany<Question, $this>
+     */
+    public function questions(): HasMany
+    {
+        return $this->hasMany(Question::class);
+    }
+
+    /**
+     * @return HasMany<QuestionTopic, $this>
+     */
+    public function questionTopics(): HasMany
+    {
+        return $this->hasMany(QuestionTopic::class)->orderBy('name');
+    }
+
+    /**
      * @param  Builder<Subject>  $query
      */
     #[Scope]
