@@ -38,6 +38,7 @@ enum AuditAction: string
     case AssessmentFinalized = 'assessment.finalized';
     case AssessmentScoresRecorded = 'assessment.scores_recorded';
     case AssessmentScoreCorrected = 'assessment_score.corrected';
+    case GradingThresholdsUpdated = 'grading_thresholds.updated';
 
     public function label(): string
     {
@@ -73,6 +74,7 @@ enum AuditAction: string
             self::AssessmentFinalized => 'Finalized assessment',
             self::AssessmentScoresRecorded => 'Recorded assessment scores',
             self::AssessmentScoreCorrected => 'Corrected finalized score',
+            self::GradingThresholdsUpdated => 'Updated passing and warning grades',
         };
     }
 }

@@ -1,20 +1,24 @@
+import { ROUNDING_NOTE, StandingBadge, StandingRanges, ThresholdSummary } from '@/components/grading/standing';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { formatGrade, formatPercent } from '@/lib/format';
-import type { CandidateSummary, SubjectGrade } from '@/types/grading';
+import type { CandidateSummary, GradingThresholds, SubjectGrade } from '@/types/grading';
 
 interface GradeBreakdownDialogProps {
     subjectName: string;
+    /** Passing and warning grades the standing is based on; null when not set up. */
+    thresholds: GradingThresholds | null;
     entry: { candidate: CandidateSummary; result: SubjectGrade } | null;
     onClose: () => void;
 }
 
 /**
  * How a candidate's subject grade was calculated: each category's percentage
- * and weighted score, all as calculated by the server.
+ * and weighted score, and the resulting standing, all as calculated by the
+ * server.
  */
-export function GradeBreakdownDialog({ subjectName, entry, onClose }: GradeBreakdownDialogProps) {
+export function GradeBreakdownDialog({ subjectName, thresholds, entry, onClose }: GradeBreakdownDialogProps) {
     return (
         <Dialog
             open={entry !== null}
@@ -28,21 +32,27 @@ export function GradeBreakdownDialog({ subjectName, entry, onClose }: GradeBreak
                 </Button>
             }
         >
-            {entry !== null && <Breakdown result={entry.result} />}
+            {entry !== null && <Breakdown result={entry.result} thresholds={thresholds} />}
         </Dialog>
     );
 }
 
-function Breakdown({ result }: { result: SubjectGrade }) {
+function Breakdown({ result, thresholds }: { result: SubjectGrade; thresholds: GradingThresholds | null }) {
     return (
         <div className="flex flex-col gap-5">
-            <dl className="grid gap-4 rounded-lg border border-line bg-surface-muted px-4 py-3 sm:grid-cols-3">
+            <dl className="grid gap-4 rounded-lg border border-line bg-surface-muted px-4 py-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                     <dt className="text-sm text-ink-muted">Current Grade</dt>
                     <dd className="mt-0.5 text-2xl font-semibold tabular-nums text-ink">{formatGrade(result.grade)}</dd>
                 </div>
                 <div>
-                    <dt className="text-sm text-ink-muted">Status</dt>
+                    <dt className="text-sm text-ink-muted">Standing</dt>
+                    <dd className="mt-1">
+                        <StandingBadge standing={result.standing} />
+                    </dd>
+                </div>
+                <div>
+                    <dt className="text-sm text-ink-muted">Grade Status</dt>
                     <dd className="mt-1">
                         <StatusBadge tone={result.status.tone}>{result.status.label}</StatusBadge>
                     </dd>
@@ -52,6 +62,12 @@ function Breakdown({ result }: { result: SubjectGrade }) {
                     <dd className="mt-0.5 font-medium tabular-nums text-ink">{result.assessedWeight}%</dd>
                 </div>
             </dl>
+
+            {thresholds === null && (
+                <p className="text-sm text-ink-muted">
+                    Standing is not available: passing and warning grades have not been set for this academic period.
+                </p>
+            )}
 
             <div className="overflow-x-auto">
                 <table className="w-full min-w-[32rem] text-left text-sm">
@@ -108,13 +124,28 @@ function Breakdown({ result }: { result: SubjectGrade }) {
                         assessments that have a score until the missing {result.missingScores === 1 ? 'score is' : 'scores are'} recorded.
                     </p>
                 )}
-                {result.pendingCategories > 0 && result.grade !== null && (
+                {result.isProvisional && (
                     <p>
                         The current grade is based on the {result.assessedWeight}% of the grading weight assessed so far. It becomes the final grade
                         once every category has finalized assessments.
                     </p>
                 )}
             </div>
+
+            {thresholds !== null && (
+                <section aria-labelledby="standing-ranges-heading" className="flex flex-col gap-2 border-t border-line pt-4">
+                    <h3 id="standing-ranges-heading" className="text-sm font-semibold text-ink">
+                        How Standing Is Decided
+                    </h3>
+                    <p className="text-sm text-ink-muted">
+                        Standing uses the <ThresholdSummary thresholds={thresholds} /> of this academic period. {ROUNDING_NOTE}
+                    </p>
+                    <StandingRanges
+                        passingHundredths={Math.round(thresholds.passingGrade * 100)}
+                        warningHundredths={Math.round(thresholds.warningGrade * 100)}
+                    />
+                </section>
+            )}
         </div>
     );
 }

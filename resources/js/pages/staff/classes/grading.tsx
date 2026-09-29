@@ -1,7 +1,8 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { CircleAlert, CircleCheck, Plus, Trash2 } from 'lucide-react';
 import { useRef, type FormEvent } from 'react';
 import { OfferingDescription } from '@/components/grading/offering-context';
+import { ThresholdSummary } from '@/components/grading/standing';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { FormField, TextArea, TextInput } from '@/components/ui/form-field';
@@ -9,7 +10,7 @@ import { FormActions, FormSection } from '@/components/ui/form-section';
 import { PageHeader, type BreadcrumbItem } from '@/components/ui/page-header';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
-import type { GradingCategory, OfferingContext } from '@/types/grading';
+import type { GradingCategory, GradingThresholds, OfferingContext } from '@/types/grading';
 
 interface CategoryRow {
     /** Client-only list key; not sent to the server. */
@@ -27,6 +28,9 @@ interface GradingSetupFormData {
 interface GradingSetupProps {
     offering: OfferingContext;
     categories: GradingCategory[];
+    /** Passing and warning grades of the class's academic period; null when not set up. */
+    thresholds: GradingThresholds | null;
+    periodId: number;
     /** Changing the setup then changes official grades, so a reason is required. */
     hasFinalizedAssessments: boolean;
     totalWeight: number;
@@ -34,7 +38,16 @@ interface GradingSetupProps {
     can: { viewClass: boolean };
 }
 
-export default function GradingSetup({ offering, categories, hasFinalizedAssessments, totalWeight, maxCategories, can }: GradingSetupProps) {
+export default function GradingSetup({
+    offering,
+    categories,
+    thresholds,
+    periodId,
+    hasFinalizedAssessments,
+    totalWeight,
+    maxCategories,
+    can,
+}: GradingSetupProps) {
     const nextKey = useRef(0);
     const newRow = (): CategoryRow => {
         nextKey.current += 1;
@@ -109,8 +122,11 @@ export default function GradingSetup({ offering, categories, hasFinalizedAssessm
                     return;
                 }
                 const saved = (page.props as unknown as GradingSetupProps).categories;
-                form.setDefaults({ categories: rowsFrom(saved), reason: '' });
-                form.reset();
+                const next = { categories: rowsFrom(saved), reason: '' };
+                // Set both explicitly: reset() from this closure would restore
+                // the defaults of the render that submitted, not these.
+                form.setDefaults(next);
+                form.setData(next);
             },
         });
     };
@@ -129,6 +145,21 @@ export default function GradingSetup({ offering, categories, hasFinalizedAssessm
                     }
                     breadcrumbs={breadcrumbs}
                 />
+
+                {/* Outside the form, so following the link is not mistaken for part of saving. */}
+                <p className="mb-6 text-sm text-ink-muted">
+                    {thresholds === null ? (
+                        <>Academic standing is not shown yet: passing and warning grades have not been set for {offering.period.name}. </>
+                    ) : (
+                        <>
+                            Academic standing in this subject uses the <ThresholdSummary thresholds={thresholds} /> of {offering.period.name}.{' '}
+                        </>
+                    )}
+                    <Link href={routes.academicPeriods.thresholds(periodId)} className="font-medium text-primary-700 underline">
+                        {thresholds === null ? 'Set passing and warning grades' : 'Change passing and warning grades'}
+                    </Link>
+                    {form.isDirty && '. Save your changes first: leaving this page discards them.'}
+                </p>
 
                 <form onSubmit={submit} noValidate className="flex flex-col gap-6">
                     {hasFinalizedAssessments && (

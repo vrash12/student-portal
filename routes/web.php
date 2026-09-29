@@ -14,6 +14,7 @@ use App\Http\Controllers\Staff\ClassSubjectController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\GradebookController;
 use App\Http\Controllers\Staff\GradingSchemeController;
+use App\Http\Controllers\Staff\GradingThresholdController;
 use App\Http\Controllers\Staff\InstructorAssignmentController;
 use App\Http\Controllers\Staff\InstructorController;
 use App\Http\Controllers\Staff\RoleController;
@@ -85,6 +86,14 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::get('instructors/{instructor}', [InstructorController::class, 'show'])->name('instructors.show');
             Route::post('instructor-assignments', [InstructorAssignmentController::class, 'store'])->name('instructor-assignments.store');
             Route::delete('instructor-assignments/{instructorAssignment}', [InstructorAssignmentController::class, 'destroy'])->name('instructor-assignments.destroy');
+        });
+
+        // Passing and warning grades of an academic period (administrative).
+        Route::middleware('can:'.Permission::ConfigureGrading->value)->group(function (): void {
+            Route::get('academic-periods/{academicPeriod}/grading-thresholds', [GradingThresholdController::class, 'edit'])
+                ->name('academic-periods.thresholds.edit');
+            Route::put('academic-periods/{academicPeriod}/grading-thresholds', [GradingThresholdController::class, 'update'])
+                ->name('academic-periods.thresholds.update');
         });
 
         // Grading setup of a class subject (administrative).

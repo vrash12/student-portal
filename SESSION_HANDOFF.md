@@ -93,16 +93,16 @@ Always distinguish:
 
 ## Current Milestone
 
-**Milestones 0–4: complete.**
-**Next: Milestone 5 (Grade Calculation Engine): the engine exists; thresholds and academic standing are not started.**
+**Milestones 0–5: complete** (Milestone 5 = grading thresholds and academic standing).
+**Next: Milestone 6 (Academic Monitoring and Early Warning).** A reviewed design exists; see "Next Recommended Task".
 
 ## Current Status
 
-Foundation, sign-in, roles and permissions, staff accounts, academic structure, candidate records, organization branding, the instructor dashboard with My Classes, and grade management (grading setup, assessments, score entry, finalization, corrections with reasons, change history, and the grade calculation engine) are implemented. The full test suite passes (335 tests, 3,379 assertions).
+Foundation, sign-in, roles and permissions, staff accounts, academic structure, candidate records, organization branding, the instructor dashboard with My Classes, grade management (grading setup, assessments, score entry, finalization, corrections with reasons, change history), and the grade calculation engine with configurable passing/warning grades and academic standing are implemented. The full test suite passes (491 tests, 5,183 assertions).
 
 ## Last Updated
 
-**Date:** 2026-09-29
+**Date:** 2026-09-30
 
 **Updated by:** Claude Code (Opus 5.5)
 
@@ -154,53 +154,66 @@ Foundation, sign-in, roles and permissions, staff accounts, academic structure, 
 - [x] Independent review: 4 parallel test writers (156 tests) + 3 reviewers + 3 adversarial verifiers. 3 test-found bugs and 18 findings, all confirmed and fixed with regression tests (`GradingReviewRegressionTest`)
 - [x] Verified in the browser: dashboard, gradebook (grades checked by hand), score sheet (invalid row, save, change, conflict resolution), finalization, correction with reason, breakdown, admin class page, grading setup validation, admin profile, tablet width
 
+### Milestone 5 — Grade calculation engine: thresholds and academic standing
+
+- [x] Passing and warning grades per academic period (`academic_periods.passing_grade`, `warning_grade`, decimal(5,2), both null = not set; CHECK both-or-neither and 0 < passing ≤ warning ≤ 100). No built-in default
+- [x] Page **Academic Periods → Thresholds** (`/academic-periods/{period}/grading-thresholds`, permission `grading.configure` only): labelled range preview, reason required once thresholds are set and the period has finalized assessments, no-op saves not audited, audit `grading_thresholds.updated` (previous/new/reason). A new period's form is prefilled from the most recent other period with thresholds (saved only when the user saves). Thresholds cannot be cleared once set
+- [x] `AcademicStanding` (Passing, At Risk, Failing, Incomplete) decided only by `GradeCalculationService::standing()`: below passing = Failing; passing ≤ grade < warning = At Risk; ≥ warning = Passing, or Incomplete if scores are missing; no grade + missing scores = Incomplete; otherwise no standing. Grade compared as displayed (2 decimals) in whole hundredths. Provisional grades get a current standing (`isProvisional`)
+- [x] Standing only for candidates gradable in the class (not withdrawn), in both `forOffering()` and `forCandidate(Candidate, ...)`
+- [x] `overallStanding(SubjectGrade[])` → `OverallStanding` (most serious, basedOnSubjects/totalSubjects, isProvisional)
+- [x] Standing shown in the gradebook ("Current Standing" column; Milestone 4 "Grade Status" column kept when the period has no thresholds), grade breakdown ("How Standing Is Decided"), candidate profile (Overall Standing / "Standing in Your Subjects" for instructors, per-subject standing, honest reasons when not available, link to set thresholds for administrators), academic periods list (thresholds column), class grading setup (thresholds note with link)
+- [x] Dashboard: administrators get a "Set Passing and Warning Grades" link when the active period has none; instructor copy states whether the active period has thresholds (`teaching.period.hasThresholds`)
+- [x] Demo: `DemoGradingSeeder` sets 75/80 on the demo period through the service, only when not set (gives Passing, At Risk, Failing and Incomplete examples)
+- [x] Independent review: design critique (3 lenses, ~25 findings applied before coding), 3 parallel test writers (129 test methods, no bugs found), 3 reviewers + adversarial verifiers: 5 confirmed findings, all fixed (instructor dashboard copy without thresholds, admin overview copy without an active period, thresholds preview no longer a live region, form state after a save that returns to the same page, also in Grading Setup, and invalid UTF-8 input now cleaned by the global `ReplaceInvalidUtf8` middleware), with regression tests in `StandingReviewRegressionTest`
+- [x] Verified in the browser (page text): thresholds form (preview, equal values, order error, reason rule, save + audit), periods list, admin and instructor profiles, gradebook, instructor dashboard
+
 ### Carried forward
 
 - Quick navigation from the instructor dashboard to the question bank (Milestone 7) and examinations (Milestone 8), once those modules exist (AGENTS.md §73).
-- Academic Alerts (at-risk/failing counts) on the instructor dashboard and the administrator Academic Overview: still honest "not available yet" panels; they need academic standing (Milestone 5) and monitoring (Milestone 6).
+- Academic Alerts (at-risk/failing counts) on the instructor dashboard and the administrator Academic Overview: still honest "not available yet" panels; Milestone 6 fills them.
 
 ---
 
 # Work In Progress
 
-None. Milestone 4 is complete and committed.
+None for Milestone 5 (see "Next Recommended Task" for Milestone 6).
 
 ---
 
 # Next Recommended Task
 
-Start **Milestone 5 (Grade Calculation Engine)**. `GradeCalculationService` already covers weighting, missing scores, and final grade; what is missing is passing/warning thresholds and academic standing. Planned design (confirm against AGENTS.md §15–17 and MILESTONES.md Milestone 5):
+Implement **Milestone 6 (Academic Monitoring and Early Warning)**. Design (reviewed by a 3-lens critique):
 
-1. Thresholds per academic period: `academic_periods.passing_grade` and `academic_periods.warning_grade` (decimal 5,2, both null = not configured; CHECK 0 < passing ≤ warning ≤ 100). Configured by `grading.configure` on a separate page (`/academic-periods/{period}/grading-thresholds`), audited. No hardcoded default: without thresholds, standing shows "not set up". Demo seeder may set demo values.
-2. `AcademicStanding` enum: Passing (grade ≥ warning), At Risk (passing ≤ grade < warning), Failing (grade < passing), Incomplete (missing scores). No standing when there is no grade yet or no thresholds. Provisional grades get a current standing (early warning).
-3. Overall candidate standing = most serious subject standing (Failing > At Risk > Incomplete > Passing). Note: the AGENTS.md §17 example looks average-based; record as needing confirmation.
-4. Show standing in the gradebook (badge column; grade status becomes secondary text), the grade breakdown, and the candidate profile (per subject + overall). Standing is computed on read, so score and threshold changes recalculate it automatically.
-5. Tests: standing boundaries, thresholds validation/authorization/audit, recalculation after score and threshold changes, overall standing.
+1. Permission `academic_monitoring.view` (Super Admin, Academic Admin, Instructor). `MonitoringScope::for(User)` is the only entry point: `candidates.view_all` holders see every class subject of the period; otherwise active teaching staff see only the class subjects they are assigned to (checked after `canTeach()`, so leftover assignments of former instructors grant nothing); anyone else gets an empty scope. Class and subject filters may only narrow that offering set. Every value (overall standing, counts, lowest grade, sort, subjects of concern) is computed from that set only, so nothing leaks about other instructors' subjects.
+2. Population: candidates gradable in the scoped classes of the selected period (not withdrawn). Period filter: any period for administrators; for teaching staff only periods they teach in (requested if allowed, else the first, like My Classes).
+3. Engine: bulk `GradeCalculationService::forClasses(offerings, candidates)` → [candidateId][classSubjectId] => SubjectGrade in a fixed number of queries.
+4. Page `GET /monitoring` (sidebar "Academic Monitoring", first in Academics): counts (Monitored, Failing, At Risk, Incomplete, Passing, No Standing Yet; they reconcile) for period + class + subject; filters class / subject / standing / search, sort (most serious first, lowest grade, highest grade, name); overall view vs subject view; filter options from the scope only (invalid values ignored and echoed as ''); PHP pagination with `LengthAwarePaginator::resolveCurrentPage()`, 25 per page, path + query string kept. Labels "Standing in Your Subjects" when the scope is taught subjects.
+5. Dashboards: administrator Academic Overview (needs `academic_monitoring.view` + `candidates.view_all`) and instructor Academic Alerts (needs `academic_monitoring.view` + `canTeach()`): active-period counts and up to 5 candidates requiring attention (number, name, class, standing, lowest grade and subject, profile link only).
+6. Candidate profile: Current Warnings, Recent Assessments (finalized only, no comments), Recent Academic Activity (corrections of finalized scores with reason, visible subjects only).
+7. Tests: scope and tampering (class/subject/period outside scope), counts, filters, sorts, pagination edge cases (page=-1/abc/huge), no thresholds, withdrawn excluded, dashboards, profile additions, fixed query counts.
 
 ---
 
 # Files Recently Changed
 
-Milestone 4 (earlier milestones: see `git log`):
+Milestone 5 (earlier milestones: see `git log`):
 
 ```text
-app/Enums/{AssessmentStatus,GradeStatus,ScoreRevisionKind}.php (new); Permission, SystemRole, AuditAction
-app/Models/{Assessment,AssessmentCategory,AssessmentScore,AssessmentScoreRevision}.php (new); ClassSubject, Candidate (gradableIn), User (teachesOffering)
-app/Services/Grading/* (new): GradeCalculationService, CategoryWeight, CountedAssessment, CategoryGrade, SubjectGrade,
-    GradingSchemeService, AssessmentService, ScoreRecordingService, Gradebook (read model)
-app/Services/{ClassBatchService (removeSubject), TeachingOverview (upcomingAssessments, classSubjectId)}.php
-app/Policies/{ClassSubjectPolicy,AssessmentPolicy}.php (new)
-app/Http/Requests/Grading/* (new); app/Http/Controllers/Staff/{Gradebook,Assessment,AssessmentScore,GradingScheme}Controller.php (new)
-app/Http/Controllers/Staff/{Candidate (performance), ClassBatch (grading summary), ClassSubject (removal error)}Controller.php
-app/Support/DecimalValue.php (new); app/Providers/AppServiceProvider.php (morph map)
-database/migrations/2026_09_29_000700_create_grading_tables.php; database/seeders/{DemoGradingSeeder (new), DatabaseSeeder}.php
+app/Enums/AcademicStanding.php (new); AuditAction (GradingThresholdsUpdated), Permission (grading.configure description), GradeStatus, CandidateStatus (docs)
+app/Services/Grading/{GradingThresholds,GradingThresholdService,OverallStanding}.php (new); GradeCalculationService (standing, overallStanding,
+    thresholdsFor, forOffering/forCandidate standing rules, forCandidate now takes a Candidate), SubjectGrade (standing, isProvisional), Gradebook (thresholds)
+app/Services/TeachingOverview.php (period.hasThresholds)
+app/Http/Middleware/ReplaceInvalidUtf8.php (new, global middleware in bootstrap/app.php)
+app/Http/Controllers/Staff/GradingThresholdController.php (new), app/Http/Requests/Grading/GradingThresholdsRequest.php (new)
+app/Http/Controllers/Staff/{AcademicPeriod, Candidate, Dashboard, Gradebook, GradingScheme}Controller.php; app/Models/AcademicPeriod.php (casts, docs)
+database/migrations/2026_09_29_000800_add_grading_thresholds_to_academic_periods.php (new); database/seeders/DemoGradingSeeder.php
 routes/web.php
-resources/js/pages/staff/teaching/{gradebook/show, assessments/{create,edit,show}}.tsx, pages/staff/classes/grading.tsx (new)
-resources/js/pages/staff/{dashboard, candidates/show, classes/show, teaching/classes/show}.tsx
-resources/js/components/grading/* (new), components/ui/dialog.tsx (new), components/ui/{confirm-action (disabled), table (RowAction nowrap)}.tsx
-resources/js/lib/{routes,permissions,format}.ts, resources/js/types/grading.ts (new)
-tests/Feature/Grading/* (new), tests/Unit/GradeCalculationServiceTest.php (new); AreaAccessTest, TeachingClassTest, PermissionCatalogueTest updated
-.claude/launch.json (second preview config on port 8001), README.md
+resources/js/components/grading/standing.tsx (new), grade-breakdown-dialog.tsx; resources/js/pages/staff/academic-periods/thresholds.tsx (new)
+resources/js/pages/staff/{academic-periods/index, candidates/show, classes/grading, dashboard, teaching/gradebook/show}.tsx
+resources/js/lib/routes.ts, resources/js/types/grading.ts
+tests/Unit/AcademicStandingTest.php (new), tests/Feature/Grading/{GradingThresholdConfiguration, AcademicStandingIntegration,
+    StandingEngineDatabase, StandingReviewRegression}Test.php (new); GradeCalculationServiceTest, GradebookAndIntegrationTest updated
+.claude/launch.json (third preview config laravel-alt2 on port 8002), README.md
 ```
 
 ---
@@ -243,6 +256,11 @@ assessment_scores  id, assessment_id FK restrict, candidate_id FK restrict, scor
                  CHECK score IS NULL OR score >= 0   (score <= max_score is enforced by the service under a row lock)
 assessment_score_revisions  id, assessment_score_id FK restrict, kind (recorded|updated|corrected), previous_score,
                  new_score, comment, reason, changed_by FK users, created_at; CHECK kind; CHECK corrected => reason
+
+Milestone 5 (2026_09_29_000800_add_grading_thresholds_to_academic_periods):
+academic_periods + passing_grade decimal(5,2) null, warning_grade decimal(5,2) null
+                 CHECK academic_periods_grading_thresholds_check: both null, or both set with 0 < passing <= warning <= 100
+                 (explicit IS NOT NULL tests: an unknown CHECK result would pass). down() drops the constraint (DROP CONSTRAINT) first.
 sessions, cache, cache_locks, jobs, job_batches, failed_jobs   Laravel defaults
 ```
 
@@ -278,6 +296,9 @@ GET  /assessments/{assessment}                   assessments.show (AssessmentPol
 GET  /assessments/{assessment}/edit, PUT /assessments/{assessment}, DELETE /assessments/{assessment},
 POST /assessments/{assessment}/finalize, PUT /assessments/{assessment}/scores, POST /assessments/{assessment}/corrections
                                                  AssessmentPolicy::manage (all under classes.teach)
+
+Milestone 5:
+GET|PUT /academic-periods/{academicPeriod}/grading-thresholds   academic-periods.thresholds.edit|update (can:grading.configure only)
 ```
 
 Frontend URL helpers: `resources/js/lib/routes.ts` (keep in sync with `routes/web.php`).
@@ -290,7 +311,8 @@ Frontend URL helpers: `resources/js/lib/routes.ts` (keep in sync with `routes/we
 User                 belongsTo Role; hasOne Candidate; hasMany InstructorAssignment (teachingAssignments)
                      scopes: teachingStaff(), eligibleToTeach(); teachesClass(), teachesOffering()
 Role                 belongsToMany Permission; hasMany User; rank decides who may assign it
-AcademicPeriod       hasMany ClassBatch; scope active()
+AcademicPeriod       hasMany ClassBatch; scope active(); passing_grade / warning_grade (decimal:2 casts, not fillable;
+                     change only through GradingThresholdService)
 ClassBatch           belongsTo AcademicPeriod; hasMany Candidate; hasMany ClassSubject
 ClassSubject         belongsTo ClassBatch, Subject; hasMany InstructorAssignment, AssessmentCategory (ordered), Assessment
 InstructorAssignment belongsTo ClassSubject, User (instructor)
@@ -345,6 +367,16 @@ Milestone 4:
 - A subject cannot be removed from a class once it has assessments.
 - Grading is not locked when a period ends (instructors keep access to past-period subjects they taught).
 
+Milestone 5:
+
+- **Thresholds per academic period** (not per class subject): one institutional policy per period; changing it for a new period never rewrites past standings. No built-in default; a new period's form is prefilled from the most recent other period (explicit save).
+- **Standing is computed on read** by `GradeCalculationService` only (nothing stored), so any score, finalization, correction, weight, or threshold change shows immediately.
+- **Standing rules:** see Completed Work. Missing scores never hide a warning (Failing / At Risk kept), and Passing is never claimed while scores are missing (Incomplete). Comparison uses the displayed grade in whole hundredths.
+- **Overall standing = most serious subject standing** over the subjects shown (instructors: only the subjects they teach). Needs owner confirmation (see Requirements).
+- **Withdrawn candidates keep grades but have no standing** (every later assessment would count as missing). Candidates are judged only in their current class.
+- Once thresholds are set and the period has finalized assessments, a change requires a reason (audited). Thresholds cannot be cleared.
+- `subjectGrade()` and `SubjectGrade` take thresholds / standing as required nullable arguments so no caller drops standing by omission.
+
 ---
 
 # UI/UX Decisions
@@ -359,6 +391,8 @@ Milestone 4:
 - Destructive or significant actions require confirmation: deactivating accounts, setting the active period, removing subjects and assignments, finalizing and deleting assessments.
 - Heading levels follow nesting; link accessible names start with their visible text (WCAG 2.5.3).
 - Dashboards and profiles show honest empty states where later milestones will add data.
+- Standing components in `resources/js/components/grading/standing.tsx`: `StandingBadge` (dash + sr-only "No standing yet"), `StandingCell` (badge + "Grade: <status> · N% of weight assessed"), `GradeStatusBadge` (used when the period has no thresholds), `ThresholdSummary`, `StandingRanges` (shared by the thresholds preview and the breakdown), `OverallStandingValue` ("Most serious subject standing · based on X of Y subjects"), `ROUNDING_NOTE`.
+- Thresholds are always displayed with two decimals (like grades); form inputs use the compact form ("75").
 
 ---
 
@@ -369,11 +403,13 @@ Gate:    every Permission enum case is a Gate ability (AppServiceProvider)
 UserPolicy: viewAny users.view; create users.manage; update users.manage AND staff AND (self OR lower rank)
 CandidatePolicy: viewAny candidates.view_all; view candidates.view_all OR User::teachesClass; create/update candidates.manage
 ClassBatchPolicy::viewTeaching: User::teachesClass(class)
+Thresholds: routes gated by grading.configure only; values not mass assignable; service locks the period row; DB CHECK is final
 ClassSubjectPolicy: viewGradebook = teachesOffering; recordGrades = grades.record AND teachesOffering; configureGrading = grading.configure
 AssessmentPolicy: view = teachesOffering(assessment's subject); manage = grades.record AND teachesOffering
 teachesOffering = active + classes.teach + an assignment to that class subject (administrators do not open gradebooks)
 Services re-check class membership, max score, and draft/finalized state under row locks; candidate ids from the client are never trusted
 Form Requests only trim strings (arrays are rejected by the rules, not turned into 500s)
+ReplaceInvalidUtf8 (global): invalid UTF-8 in any input is replaced with "?" so crafted requests cannot cause database errors
 Audit entries never contain secrets; score audit values contain candidate numbers, not names
 Inactive users: hold no permissions; EnsureAccountIsActive signs them out
 Shared props: id, name, username, role (code, name), the user's own permission codes
@@ -400,9 +436,16 @@ tests/Feature/Grading/AssessmentLifecycleTest.php   create/edit/delete/finalize,
 tests/Feature/Grading/ScoreRecordingTest.php        draft scores, conflicts, corrections, history, DB checks
 tests/Feature/Grading/GradebookAndIntegrationTest.php  gradebook, profile, dashboard, seeder
 tests/Feature/Grading/GradingReviewRegressionTest.php  fixes from the review
+
+Milestone 5:
+tests/Unit/AcademicStandingTest.php                         boundaries, rounding, missing scores, provisional, overall rule, §17 example
+tests/Feature/Grading/GradingThresholdConfigurationTest.php  page auth, props, validation, reason rule, no-op, audit, CHECK, mass assignment, index, dashboard
+tests/Feature/Grading/AcademicStandingIntegrationTest.php    gradebook/profile standing, recalculation, withdrawn, instructor privacy, periods, seeder
+tests/Feature/Grading/StandingEngineDatabaseTest.php         engine with the database: periods, boundaries, query counts, locking
+tests/Feature/Grading/StandingReviewRegressionTest.php       fixes from the review
 ```
 
-Status: **335 passed, 0 failed** (3,379 assertions). `npm run types`, `npm run build`, and Pint pass.
+Status: **491 passed, 0 failed** (5,183 assertions). `npm run types`, `npm run build`, and Pint pass.
 
 `tests/TestCase.php` uses RefreshDatabase, seeds `AccessControlSeeder` once, calls `withoutVite()`, and **refuses to refresh any database whose name does not end in `_testing`**. Parallel test runs can use separate databases: `DB_DATABASE=academic_system_x_testing php artisan test` (phpunit.xml does not override an existing `DB_DATABASE`).
 
@@ -419,7 +462,9 @@ vendor/bin/pint
 php artisan serve
 ```
 
-Claude Code preview configurations are in `.claude/launch.json`: `laravel` (port 8000) and `laravel-alt` (port 8001, for when another session already uses 8000).
+Claude Code preview configurations are in `.claude/launch.json`: `laravel` (port 8000), `laravel-alt` (8001) and `laravel-alt2` (8002), for when other sessions already use a port.
+
+If tests fail with "No connection could be made" on port 3306, XAMPP's MySQL is not running: start it in the XAMPP Control Panel (or run `C:/xampp-new/mysql_start.bat`).
 
 ---
 
@@ -473,7 +518,12 @@ Do not hardcode these until confirmed:
 - missing-score policy (currently: never zero, reported as Missing Scores; instructors may record 0);
 - whether corrections of finalized scores need administrator approval (currently: assigned instructors, with a reason);
 - whether grading locks when an academic period ends (currently: not locked);
-- overall candidate standing rule for Milestone 5 (planned: most serious subject standing; the AGENTS.md §17 example suggests an average);
+- overall candidate standing rule (implemented: most serious subject standing; the AGENTS.md §17 example suggests an average);
+- actual passing and warning grades per period (demo data uses 75 / 80);
+- whether Incomplete should outrank At Risk / Failing when scores are missing (implemented: warnings are kept, Incomplete replaces only Passing);
+- whether a Passing standing on a provisional grade (not every category assessed) is acceptable (implemented: yes, labelled with the weight assessed);
+- whether withdrawn candidates should have any standing (implemented: none; grades are kept);
+- whether thresholds may ever be cleared once set (implemented: no);
 - candidate identifier format (letters, numbers, `.`, `-`, `_`, up to 30 characters);
 - candidate enrollment statuses (Enrolled, On Leave, Withdrawn, Completed);
 - exact Class / Batch terminology;
@@ -524,7 +574,8 @@ Commits: 0ff5cc3 first commit (README only)
          ad168a7 Milestones 0–1
          c5b0f40 Milestone 2
          98dbcba Milestone 3
-         plus the Milestone 4 commit (see `git log`)
+         7e45a45 Milestone 4
+         plus the Milestone 5 commit "Add grading thresholds and academic standing (Milestone 5)" (see `git log`)
 Not pushed by the coding agent.
 ```
 
@@ -532,7 +583,7 @@ Not pushed by the coding agent.
 
 # Uncommitted or Incomplete Code
 
-None. Milestones 0–4 are complete and committed.
+None. Milestones 0–5 are complete and committed.
 
 ---
 
@@ -546,7 +597,7 @@ At the start of the next session, the coding agent should verify:
 3. php artisan migrate:status shows no pending migrations
 4. php artisan test passes
 5. npm run types and npm run build pass
-6. Current milestone (Milestone 5 next)
+6. Current milestone (Milestone 6 next)
 ```
 
 Do not immediately start generating new code before checking the existing state.

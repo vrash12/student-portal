@@ -13,6 +13,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * At most one period is active; this is guaranteed by a unique index on the
  * generated `active_marker` column. Change it through AcademicPeriodService.
+ *
+ * The passing and warning grades decide academic standing in the period's
+ * classes. They are not mass assignable; change them through
+ * App\Services\Grading\GradingThresholdService.
  */
 #[Fillable(['name', 'starts_on', 'ends_on'])]
 class AcademicPeriod extends Model
@@ -36,6 +40,8 @@ class AcademicPeriod extends Model
             'starts_on' => 'immutable_date',
             'ends_on' => 'immutable_date',
             'is_active' => 'boolean',
+            'passing_grade' => 'decimal:2',
+            'warning_grade' => 'decimal:2',
         ];
     }
 

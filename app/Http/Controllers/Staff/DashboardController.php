@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Staff;
 
 use App\Enums\Permission;
 use App\Http\Controllers\Controller;
+use App\Models\AcademicPeriod;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Grading\GradingThresholds;
 use App\Services\TeachingOverview;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -26,8 +28,24 @@ class DashboardController extends Controller
         return Inertia::render('staff/dashboard', [
             'teaching' => $user->canTeach() ? $teaching->dashboard($user) : null,
             'showAcademicOverview' => $user->hasPermission(Permission::ViewAllCandidates),
+            'thresholdSetup' => $user->hasPermission(Permission::ConfigureGrading) ? $this->missingThresholds() : null,
             'accountSummary' => $user->can('viewAny', User::class) ? $this->accountSummary() : null,
         ]);
+    }
+
+    /**
+     * The active period when it has no passing and warning grades yet, so
+     * users who can set them are pointed to the page. Null otherwise.
+     *
+     * @return array{periodId: int, periodName: string}|null
+     */
+    private function missingThresholds(): ?array
+    {
+        $period = AcademicPeriod::query()->active()->first();
+
+        return $period === null || GradingThresholds::forPeriod($period) !== null
+            ? null
+            : ['periodId' => $period->id, 'periodName' => $period->name];
     }
 
     /**

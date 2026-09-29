@@ -11,6 +11,7 @@ use App\Models\Candidate;
 use App\Models\ClassSubject;
 use App\Services\CandidateService;
 use App\Services\Grading\GradeCalculationService;
+use App\Services\Grading\GradingThresholds;
 use App\Support\AcademicOptions;
 use App\Support\QueryFilters;
 use Illuminate\Database\Eloquent\Builder;
@@ -108,7 +109,7 @@ class CandidateController extends Controller
 
         // One batched calculation for all subjects, and one lookup of the
         // subjects the viewer teaches (the gradebook access rule).
-        $subjectGrades = $grades->forCandidate($candidate->id, $offerings->pluck('id')->all());
+        $subjectGrades = $grades->forCandidate($candidate, $offerings->pluck('id')->all());
         $taughtOfferingIds = $viewer->canTeach()
             ? $viewer->teachingAssignments()->pluck('class_subject_id')->map(fn (mixed $id): int => (int) $id)->all()
             : [];
@@ -125,6 +126,11 @@ class CandidateController extends Controller
 
         $canManage = $viewer->can('update', $candidate);
 
+        // Over the subjects shown only, so instructors learn nothing about
+        // subjects they do not teach.
+        $overallStanding = $grades->overallStanding($subjectGrades);
+        $thresholds = $candidate->classBatch === null ? null : GradingThresholds::forPeriod($candidate->classBatch->academicPeriod);
+
         return Inertia::render('staff/candidates/show', [
             'candidate' => [
                 ...$this->details($candidate),
@@ -139,6 +145,15 @@ class CandidateController extends Controller
             ],
             'subjects' => $subjects,
             'performance' => $performance,
+            'standing' => [
+                'overall' => $overallStanding->toArray(),
+                // "all": every subject of the class; "taught": only the viewer's subjects.
+                'scope' => $seesAllSubjects ? 'all' : 'taught',
+                'thresholds' => $thresholds?->toArray(),
+                // Withdrawn candidates keep their grades but are not monitored.
+                'monitored' => $candidate->classBatch !== null && $candidate->isGradableIn($candidate->classBatch->id),
+                'canConfigureThresholds' => $viewer->hasPermission(Permission::ConfigureGrading),
+            ],
             'canEdit' => $canManage,
             // Instructors return to the class they teach, not the full candidate list.
             'canBrowseCandidates' => $viewer->can('viewAny', Candidate::class),
@@ -170,7 +185,7 @@ class CandidateController extends Controller
     }
 
     /**
-     * @return array{id: int, candidateNumber: string, firstName: string, lastName: string, name: string, status: array{value: string, label: string, tone: string}, classBatch: array{id: int, name: string, period: string}|null}
+     * @return array{id: int, candidateNumber: string, firstName: string, lastName: string, name: string, status: array{value: string, label: string, tone: string}, classBatch: array{id: int, name: string, period: string, periodId: int}|null}
      */
     private function details(Candidate $candidate): array
     {
@@ -185,6 +200,7 @@ class CandidateController extends Controller
                 'id' => $candidate->classBatch->id,
                 'name' => $candidate->classBatch->name,
                 'period' => $candidate->classBatch->academicPeriod->name,
+                'periodId' => $candidate->classBatch->academic_period_id,
             ],
         ];
     }

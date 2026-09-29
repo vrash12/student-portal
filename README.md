@@ -54,7 +54,7 @@ Requirements: PHP 8.3+ with `pdo_mysql`, Composer 2, Node.js 22 or newer, and XA
 
 ## Demo accounts (local development only)
 
-The demo seeders create clearly fictional data: staff accounts, one active academic period, Subjects 1–4, two sample batches with instructor assignments, ten candidates, and demo grading data (a sample grading setup for each taught subject, two finalized assessments, one partly scored draft, and one upcoming examination). The demo weights are sample data only; real grading rules are set by administrators in the application. All accounts use the password `password` unless `DEMO_ACCOUNT_PASSWORD` is set in `.env` before seeding. The demo seeders refuse to run in production.
+The demo seeders create clearly fictional data: staff accounts, one active academic period, Subjects 1–4, two sample batches with instructor assignments, ten candidates, and demo grading data (demo passing and warning grades of 75 and 80 for the demo period, a sample grading setup for each taught subject, two finalized assessments, one partly scored draft, and one upcoming examination). The demo weights and thresholds are sample data only; real grading rules are set by administrators in the application (Academic Periods → Thresholds, and Classes → subject → Grading Setup). All accounts use the password `password` unless `DEMO_ACCOUNT_PASSWORD` is set in `.env` before seeding. The demo seeders refuse to run in production.
 
 | Username | Role |
 | --- | --- |

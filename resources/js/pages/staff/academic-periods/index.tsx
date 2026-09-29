@@ -7,8 +7,9 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
-import { formatCalendarDate } from '@/lib/format';
+import { formatCalendarDate, formatGrade } from '@/lib/format';
 import { routes } from '@/lib/routes';
+import type { GradingThresholds } from '@/types/grading';
 
 interface PeriodRow {
     id: number;
@@ -17,9 +18,16 @@ interface PeriodRow {
     endsOn: string;
     isActive: boolean;
     classCount: number;
+    /** Passing and warning grades; null when not set up. */
+    thresholds: GradingThresholds | null;
 }
 
-export default function AcademicPeriodsIndex({ periods }: { periods: PeriodRow[] }) {
+interface AcademicPeriodsIndexProps {
+    periods: PeriodRow[];
+    can: { configureGrading: boolean };
+}
+
+export default function AcademicPeriodsIndex({ periods, can }: AcademicPeriodsIndexProps) {
     const [activating, setActivating] = useState<PeriodRow | null>(null);
     const [processing, setProcessing] = useState(false);
     const currentPeriod = periods.find((period) => period.isActive) ?? null;
@@ -73,6 +81,7 @@ export default function AcademicPeriodsIndex({ periods }: { periods: PeriodRow[]
                             <Th>Period</Th>
                             <Th>Dates</Th>
                             <Th>Status</Th>
+                            <Th>Grading Thresholds</Th>
                             <Th align="right">Classes</Th>
                             <Th align="right">
                                 <span className="sr-only">Actions</span>
@@ -92,6 +101,16 @@ export default function AcademicPeriodsIndex({ periods }: { periods: PeriodRow[]
                                             <StatusBadge tone="neutral">Inactive</StatusBadge>
                                         )}
                                     </Td>
+                                    <Td>
+                                        {period.thresholds === null ? (
+                                            <StatusBadge tone="neutral">Not Set</StatusBadge>
+                                        ) : (
+                                            <span className="whitespace-nowrap text-ink">
+                                                Passing <span className="tabular-nums">{formatGrade(period.thresholds.passingGrade)}</span> · Warning{' '}
+                                                <span className="tabular-nums">{formatGrade(period.thresholds.warningGrade)}</span>
+                                            </span>
+                                        )}
+                                    </Td>
                                     <Td align="right" numeric>
                                         {period.classCount}
                                     </Td>
@@ -101,6 +120,11 @@ export default function AcademicPeriodsIndex({ periods }: { periods: PeriodRow[]
                                                 <Button variant="ghost" size="sm" onClick={() => setActivating(period)}>
                                                     Set Active
                                                 </Button>
+                                            )}
+                                            {can.configureGrading && (
+                                                <RowAction href={routes.academicPeriods.thresholds(period.id)} label={`Thresholds for ${period.name}`}>
+                                                    Thresholds
+                                                </RowAction>
                                             )}
                                             <RowAction href={routes.academicPeriods.edit(period.id)} label={`Edit ${period.name}`}>
                                                 Edit

@@ -26,6 +26,7 @@ export const routes = {
         edit: (periodId: number) => `/academic-periods/${periodId}/edit`,
         update: (periodId: number) => `/academic-periods/${periodId}`,
         activate: (periodId: number) => `/academic-periods/${periodId}/activate`,
+        thresholds: (periodId: number) => `/academic-periods/${periodId}/grading-thresholds`,
     },
     subjects: {
         index: () => '/subjects',

@@ -272,7 +272,10 @@ class GradebookAndIntegrationTest extends TestCase
                     'assessedWeight' => 100,
                     'missingScores' => 0,
                     'pendingCategories' => 0,
+                    'isProvisional' => false,
                     'status' => ['value' => 'complete', 'label' => 'Complete', 'tone' => 'success'],
+                    // The fixture period has no passing and warning grades.
+                    'standing' => null,
                     'categories' => [
                         [
                             'categoryId' => $this->quizzes->id,

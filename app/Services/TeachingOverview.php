@@ -9,6 +9,7 @@ use App\Models\Candidate;
 use App\Models\ClassBatch;
 use App\Models\InstructorAssignment;
 use App\Models\User;
+use App\Services\Grading\GradingThresholds;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -23,7 +24,7 @@ final class TeachingOverview
 
     /**
      * @return array{
-     *     period: array{id: int, name: string}|null,
+     *     period: array{id: int, name: string, hasThresholds: bool}|null,
      *     assignments: list<array{id: int, classSubjectId: int, subject: array{code: string, name: string}, classBatch: array{id: int, name: string}, enrolledCount: int}>,
      *     totals: array{subjects: int, classes: int, enrolledCandidates: int},
      *     upcomingAssessments: list<array{id: int, title: string, assessedOn: string, subject: string, classBatch: string, status: array{value: string, label: string, tone: string}}>
@@ -47,7 +48,8 @@ final class TeachingOverview
         $enrolled = $this->enrolledCounts($classIds);
 
         return [
-            'period' => ['id' => $period->id, 'name' => $period->name],
+            // Academic standing (shown in gradebooks) needs the period's passing and warning grades.
+            'period' => ['id' => $period->id, 'name' => $period->name, 'hasThresholds' => GradingThresholds::forPeriod($period) !== null],
             'assignments' => $assignments->map(fn (InstructorAssignment $assignment): array => [
                 'id' => $assignment->id,
                 'classSubjectId' => $assignment->class_subject_id,

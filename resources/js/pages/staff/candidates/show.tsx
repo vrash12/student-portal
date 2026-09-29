@@ -1,6 +1,7 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { ChartColumn, Pencil } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { GradeStatusBadge, OverallStandingValue, StandingCell, ThresholdSummary } from '@/components/grading/standing';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader, type BreadcrumbItem } from '@/components/ui/page-header';
@@ -10,7 +11,7 @@ import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components
 import { formatGrade, useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
-import type { SubjectGrade } from '@/types/grading';
+import type { GradingThresholds, OverallStanding, SubjectGrade } from '@/types/grading';
 
 interface SubjectPerformance {
     classSubjectId: number;
@@ -28,7 +29,7 @@ interface CandidateShowProps {
         candidateNumber: string;
         name: string;
         status: { label: string; tone: StatusTone };
-        classBatch: { id: number; name: string; period: string } | null;
+        classBatch: { id: number; name: string; period: string; periodId: number } | null;
         /** Only provided to users who manage candidate records. */
         account: { username: string; isActive: boolean; lastLoginAt: string | null } | null;
         createdAt: string | null;
@@ -36,14 +37,41 @@ interface CandidateShowProps {
     };
     subjects: Array<{ code: string; name: string; instructors: string[] }>;
     performance: SubjectPerformance[];
+    standing: {
+        /** Most serious subject standing over the subjects shown, decided by the server. */
+        overall: OverallStanding;
+        /** "all": every subject of the class; "taught": only the subjects the viewer teaches. */
+        scope: 'all' | 'taught';
+        /** Passing and warning grades of the class's academic period; null when not set up. */
+        thresholds: GradingThresholds | null;
+        /** False for withdrawn candidates (and candidates without a class): grades only, no standing. */
+        monitored: boolean;
+        /** The viewer may set the period's passing and warning grades. */
+        canConfigureThresholds: boolean;
+    };
     canEdit: boolean;
     /** Administrators browse all candidates; instructors arrive from a class they teach. */
     canBrowseCandidates: boolean;
 }
 
-export default function CandidateShow({ candidate, subjects, performance, canEdit, canBrowseCandidates }: CandidateShowProps) {
+export default function CandidateShow({ candidate, subjects, performance, standing, canEdit, canBrowseCandidates }: CandidateShowProps) {
     const formatDate = useDateFormatter();
     const classTerm = terms.classBatch.singular;
+    const overallLabel = standing.scope === 'all' ? 'Overall Standing' : 'Standing in Your Subjects';
+    const showsStanding = standing.monitored && standing.thresholds !== null;
+    // Why no standing is shown, when it is not.
+    const unavailableReason =
+        candidate.classBatch === null
+            ? null
+            : !standing.monitored
+              ? `Standing is not monitored for ${candidate.status.label.toLowerCase()} candidates.`
+              : standing.thresholds === null
+                ? `Academic standing is not available: passing and warning grades have not been set for ${candidate.classBatch.period}.`
+                : null;
+    const thresholdsHref =
+        candidate.classBatch !== null && standing.canConfigureThresholds && standing.monitored && standing.thresholds === null
+            ? routes.academicPeriods.thresholds(candidate.classBatch.periodId)
+            : null;
 
     const breadcrumbs: BreadcrumbItem[] = canBrowseCandidates
         ? [{ label: 'Candidates', href: routes.candidates.index() }, { label: candidate.name }]
@@ -82,6 +110,13 @@ export default function CandidateShow({ candidate, subjects, performance, canEdi
                         <Detail label="Candidate Number">{candidate.candidateNumber}</Detail>
                         <Detail label="Status">
                             <StatusBadge tone={candidate.status.tone}>{candidate.status.label}</StatusBadge>
+                        </Detail>
+                        <Detail label={overallLabel}>
+                            {showsStanding ? (
+                                <OverallStandingValue overall={standing.overall} />
+                            ) : (
+                                <span className="font-normal text-ink-muted">Not available</span>
+                            )}
                         </Detail>
                         <Detail label={classTerm}>{candidate.classBatch?.name ?? 'Not assigned'}</Detail>
                         <Detail label="Academic Period">{candidate.classBatch?.period ?? '—'}</Detail>
@@ -133,7 +168,27 @@ export default function CandidateShow({ candidate, subjects, performance, canEdi
 
                 <Panel
                     title="Academic Performance"
-                    description="Current grades from finalized assessments. Academic standing appears once passing and warning thresholds are set up."
+                    description={
+                        <>
+                            Current grades from finalized assessments.
+                            {showsStanding && standing.thresholds !== null && candidate.classBatch !== null && (
+                                <>
+                                    {' '}
+                                    Standing uses the <ThresholdSummary thresholds={standing.thresholds} /> of {candidate.classBatch.period}.
+                                </>
+                            )}
+                            {unavailableReason !== null && ` ${unavailableReason}`}
+                            {thresholdsHref !== null && (
+                                <>
+                                    {' '}
+                                    <Link href={thresholdsHref} className="font-medium text-primary-700 underline">
+                                        Set passing and warning grades
+                                    </Link>
+                                </>
+                            )}
+                            {standing.scope === 'taught' && ' Only the subjects you teach are shown.'}
+                        </>
+                    }
                     bodyClassName={performance.length === 0 ? undefined : 'p-0'}
                     className="lg:col-span-2"
                 >
@@ -153,7 +208,7 @@ export default function CandidateShow({ candidate, subjects, performance, canEdi
                             <TableHead>
                                 <Th>Subject</Th>
                                 <Th align="right">Current Grade</Th>
-                                <Th>Grade Status</Th>
+                                <Th>{showsStanding ? 'Current Standing' : 'Grade Status'}</Th>
                                 <Th align="right">
                                     <span className="sr-only">Actions</span>
                                 </Th>
@@ -168,10 +223,7 @@ export default function CandidateShow({ candidate, subjects, performance, canEdi
                                             {formatGrade(subject.result.grade)}
                                         </Td>
                                         <Td>
-                                            <StatusBadge tone={subject.result.status.tone}>
-                                                {subject.result.status.label}
-                                                {subject.result.missingScores > 0 && ` (${subject.result.missingScores})`}
-                                            </StatusBadge>
+                                            {showsStanding ? <StandingCell result={subject.result} /> : <GradeStatusBadge result={subject.result} />}
                                         </Td>
                                         <Td align="right">
                                             {subject.canOpenGradebook && candidate.classBatch !== null && (

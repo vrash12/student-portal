@@ -30,6 +30,7 @@ class GradeCalculationServiceTest extends TestCase
             [new CategoryWeight(1, 'Quiz', 20), new CategoryWeight(2, 'Midterm', 30), new CategoryWeight(3, 'Practical', 50)],
             [new CountedAssessment(10, 1, 100), new CountedAssessment(20, 2, 100), new CountedAssessment(30, 3, 100)],
             [10 => 90.0, 20 => 80.0, 30 => 95.0],
+            null,
         );
 
         // 18.00 + 24.00 + 47.50
@@ -46,6 +47,7 @@ class GradeCalculationServiceTest extends TestCase
             [new CategoryWeight(1, 'Quizzes', 40), new CategoryWeight(2, 'Examinations', 60)],
             [new CountedAssessment(10, 1, 20), new CountedAssessment(11, 1, 25), new CountedAssessment(20, 2, 100)],
             [10 => 18.0, 11 => 20.0, 20 => 70.0],
+            null,
         );
 
         $quizzes = $grade->categories[0];
@@ -64,6 +66,7 @@ class GradeCalculationServiceTest extends TestCase
             [new CategoryWeight(1, 'Quizzes', 50), new CategoryWeight(2, 'Examinations', 50)],
             [new CountedAssessment(10, 1, 10), new CountedAssessment(11, 1, 10), new CountedAssessment(20, 2, 100)],
             [10 => 8.0, 20 => 90.0],
+            null,
         );
 
         // Quiz 2 is missing: Quizzes stays 8/10 = 80%, not 8/20 = 40%.
@@ -80,6 +83,7 @@ class GradeCalculationServiceTest extends TestCase
             [new CategoryWeight(1, 'Quizzes', 100)],
             [new CountedAssessment(10, 1, 10), new CountedAssessment(11, 1, 10)],
             [10 => 0.0, 11 => 10.0],
+            null,
         );
 
         $this->assertSame(50.0, $grade->grade);
@@ -98,6 +102,7 @@ class GradeCalculationServiceTest extends TestCase
             ],
             [new CountedAssessment(10, 1, 50), new CountedAssessment(30, 3, 100)],
             [10 => 45.0, 30 => 70.0],
+            null,
         );
 
         // (90% x 20 + 70% x 30) / 50 = (18 + 21) / 50 = 78.00
@@ -111,7 +116,7 @@ class GradeCalculationServiceTest extends TestCase
 
     public function test_no_finalized_assessments_means_no_grade(): void
     {
-        $grade = $this->calculator->subjectGrade([new CategoryWeight(1, 'Quizzes', 100)], [], []);
+        $grade = $this->calculator->subjectGrade([new CategoryWeight(1, 'Quizzes', 100)], [], [], null);
 
         $this->assertNull($grade->grade);
         $this->assertSame(0.0, $grade->assessedWeight);
@@ -120,7 +125,7 @@ class GradeCalculationServiceTest extends TestCase
 
     public function test_an_unconfigured_subject_has_no_grade(): void
     {
-        $grade = $this->calculator->subjectGrade([], [new CountedAssessment(10, 1, 10)], [10 => 5.0]);
+        $grade = $this->calculator->subjectGrade([], [new CountedAssessment(10, 1, 10)], [10 => 5.0], null);
 
         $this->assertNull($grade->grade);
         $this->assertSame([], $grade->categories);
@@ -133,6 +138,7 @@ class GradeCalculationServiceTest extends TestCase
             [new CategoryWeight(1, 'Quizzes', 100)],
             [new CountedAssessment(10, 1, 10)],
             [10 => null],
+            null,
         );
 
         $this->assertNull($grade->grade);
@@ -148,6 +154,7 @@ class GradeCalculationServiceTest extends TestCase
             [new CategoryWeight(1, 'A', 50), new CategoryWeight(2, 'B', 50)],
             [new CountedAssessment(10, 1, 100), new CountedAssessment(20, 2, 100)],
             [10 => 84.49, 20 => 84.5],
+            null,
         );
 
         $this->assertSame(84.5, $grade->grade);
@@ -161,10 +168,10 @@ class GradeCalculationServiceTest extends TestCase
             [10 => 5.5, 11 => 8.25, 20 => 41.75],
         ];
 
-        $first = $this->calculator->subjectGrade(...$inputs);
+        $first = $this->calculator->subjectGrade(...$inputs, thresholds: null);
 
         for ($run = 0; $run < 5; $run++) {
-            $this->assertEquals($first, $this->calculator->subjectGrade(...$inputs));
+            $this->assertEquals($first, $this->calculator->subjectGrade(...$inputs, thresholds: null));
         }
         // 13.75 / 16 = 85.9375% x 33.33 + 69.5833...% x 66.67 = 28.6427 + 46.3912 = 75.03
         $this->assertSame(75.03, $first->grade);
@@ -176,6 +183,7 @@ class GradeCalculationServiceTest extends TestCase
             [new CategoryWeight(2, 'Second', 50), new CategoryWeight(1, 'First', 50)],
             [new CountedAssessment(10, 1, 10), new CountedAssessment(99, 99, 10)],
             [10 => 10.0, 99 => 0.0],
+            null,
         );
 
         $this->assertSame(['Second', 'First'], array_map(fn ($category) => $category->name, $grade->categories));

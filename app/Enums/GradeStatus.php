@@ -4,8 +4,9 @@ namespace App\Enums;
 
 /**
  * How complete a candidate's calculated subject grade is. This describes the
- * data behind the grade, not academic standing (Passing, At Risk, Failing),
- * which is decided from configurable thresholds in a later milestone.
+ * data behind the grade, not academic standing (Passing, At Risk, Failing,
+ * Incomplete; see AcademicStanding), which is decided from the passing and
+ * warning grades of the academic period.
  */
 enum GradeStatus: string
 {

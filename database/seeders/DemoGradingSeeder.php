@@ -9,6 +9,7 @@ use App\Models\ClassSubject;
 use App\Models\User;
 use App\Services\Grading\AssessmentService;
 use App\Services\Grading\GradingSchemeService;
+use App\Services\Grading\GradingThresholdService;
 use App\Services\Grading\ScoreRecordingService;
 use App\Support\DecimalValue;
 use Illuminate\Database\Seeder;
@@ -16,14 +17,16 @@ use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 /**
- * Synthetic grading data for local development and demonstrations: a
- * grading scheme for every taught subject of the active period, two
- * finalized assessments, one partly scored draft, and one upcoming
- * examination. Scores are deterministic and clearly fictional, and are
- * written through the grading services so revisions and audit entries exist.
+ * Synthetic grading data for local development and demonstrations: demo
+ * passing and warning grades for the active period, a grading scheme for
+ * every taught subject of it, two finalized assessments, one partly scored
+ * draft, and one upcoming examination. Scores are deterministic and clearly
+ * fictional, and are written through the grading services so revisions and
+ * audit entries exist.
  *
- * The weights below are demo data only; real grading rules are configured by
- * administrators in the application. Idempotent. Never runs in production.
+ * The weights and thresholds below are demo data only; real grading rules
+ * are configured by administrators in the application. Idempotent. Never
+ * runs in production.
  *
  * Requires DemoAcademicSeeder to have run first.
  */
@@ -58,10 +61,19 @@ class DemoGradingSeeder extends Seeder
      */
     private const SEAT_LEVELS = [0.93, 0.86, 0.79, 0.71, 0.58];
 
+    /**
+     * Demo passing and warning grades for the demo period. Sample values
+     * only; real thresholds are set by administrators in the application.
+     */
+    private const DEMO_PASSING_GRADE = '75';
+
+    private const DEMO_WARNING_GRADE = '80';
+
     public function __construct(
         private readonly GradingSchemeService $schemes,
         private readonly AssessmentService $assessments,
         private readonly ScoreRecordingService $scores,
+        private readonly GradingThresholdService $thresholds,
     ) {}
 
     public function run(): void
@@ -73,6 +85,11 @@ class DemoGradingSeeder extends Seeder
         $period = AcademicPeriod::query()->active()->first();
         if ($period === null) {
             return;
+        }
+
+        // Idempotent: thresholds an administrator already set are kept.
+        if ($period->passing_grade === null) {
+            $this->thresholds->save($period, self::DEMO_PASSING_GRADE, self::DEMO_WARNING_GRADE, reason: null);
         }
 
         $offerings = ClassSubject::query()

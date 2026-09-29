@@ -65,7 +65,7 @@ enum Permission: string
             self::ViewAllCandidates => 'View every candidate record, regardless of class assignment.',
             self::ManageCandidates => 'Create and update candidate records and their sign-in accounts.',
             self::TeachClasses => 'Can be assigned to teach subjects, and view the classes and candidates they teach.',
-            self::ConfigureGrading => 'Set the grading categories and weights used for each subject of a class.',
+            self::ConfigureGrading => 'Set the grading categories and weights used for each subject of a class, and the passing and warning grades that decide academic standing in each academic period.',
             self::RecordGrades => 'Create assessments, record and finalize scores, and correct finalized scores for the subjects they are assigned to teach.',
         };
     }

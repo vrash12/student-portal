@@ -3,6 +3,7 @@ import { ClipboardList, GraduationCap, Plus, SearchX } from 'lucide-react';
 import { useState } from 'react';
 import { GradeBreakdownDialog } from '@/components/grading/grade-breakdown-dialog';
 import { gradebookBreadcrumbs, OfferingDescription, WeightSummary } from '@/components/grading/offering-context';
+import { GradeStatusBadge, StandingCell, ThresholdSummary } from '@/components/grading/standing';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -17,7 +18,14 @@ import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import { useQueryFilters } from '@/lib/use-query-filters';
 import type { Paginated } from '@/types';
-import type { AssessmentSummary, CandidateSummary, GradingCategory, OfferingContext, SubjectGrade } from '@/types/grading';
+import type {
+    AssessmentSummary,
+    CandidateSummary,
+    GradingCategory,
+    GradingThresholds,
+    OfferingContext,
+    SubjectGrade,
+} from '@/types/grading';
 
 interface GradeRow {
     candidate: CandidateSummary;
@@ -27,6 +35,8 @@ interface GradeRow {
 interface GradebookProps {
     offering: OfferingContext;
     scheme: GradingCategory[];
+    /** Passing and warning grades of the class's academic period; null when not set up. */
+    thresholds: GradingThresholds | null;
     assessments: AssessmentSummary[];
     /** Candidates who can currently be graded in the class. */
     gradableCount: number;
@@ -35,7 +45,7 @@ interface GradebookProps {
     can: { recordGrades: boolean };
 }
 
-export default function Gradebook({ offering, scheme, assessments, gradableCount, grades, filters, can }: GradebookProps) {
+export default function Gradebook({ offering, scheme, thresholds, assessments, gradableCount, grades, filters, can }: GradebookProps) {
     const { values, update, reset, isFiltered } = useQueryFilters(routes.teaching.gradebook(offering.classBatch.id, offering.id), filters);
     const [breakdownFor, setBreakdownFor] = useState<GradeRow | null>(null);
     const classTerm = terms.classBatch.singular.toLowerCase();
@@ -148,10 +158,25 @@ export default function Gradebook({ offering, scheme, assessments, gradableCount
                             Calculated from finalized assessments.{' '}
                             <span className="tabular-nums">{gradableCount}</span> {gradableCount === 1 ? 'candidate' : 'candidates'} in this{' '}
                             {classTerm}.
+                            {thresholds !== null && (
+                                <>
+                                    {' '}
+                                    Standing uses the <ThresholdSummary thresholds={thresholds} /> of {offering.period.name}.
+                                </>
+                            )}
                         </>
                     }
                     bodyClassName="p-0"
                 >
+                    {thresholds === null && isConfigured && (
+                        <div className="border-b border-line px-5 py-4">
+                            <Alert title="Academic standing is not available yet">
+                                Passing and warning grades have not been set for {offering.period.name}. An academic administrator sets them for
+                                each academic period. Grades are still calculated.
+                            </Alert>
+                        </div>
+                    )}
+
                     <FilterBar onReset={reset} canReset={isFiltered}>
                         <SearchField
                             placeholder="Search candidates by number or name…"
@@ -192,7 +217,7 @@ export default function Gradebook({ offering, scheme, assessments, gradableCount
                                     </Th>
                                 ))}
                                 <Th align="right">Current Grade</Th>
-                                <Th>Status</Th>
+                                <Th>{thresholds === null ? 'Grade Status' : 'Current Standing'}</Th>
                                 <Th align="right">
                                     <span className="sr-only">Actions</span>
                                 </Th>
@@ -213,10 +238,7 @@ export default function Gradebook({ offering, scheme, assessments, gradableCount
                                             {formatGrade(row.result.grade)}
                                         </Td>
                                         <Td>
-                                            <StatusBadge tone={row.result.status.tone}>
-                                                {row.result.status.label}
-                                                {row.result.missingScores > 0 && ` (${row.result.missingScores})`}
-                                            </StatusBadge>
+                                            {thresholds === null ? <GradeStatusBadge result={row.result} /> : <StandingCell result={row.result} />}
                                         </Td>
                                         <Td align="right">
                                             <div className="flex justify-end gap-1">
@@ -245,7 +267,12 @@ export default function Gradebook({ offering, scheme, assessments, gradableCount
                 </Panel>
             </div>
 
-            <GradeBreakdownDialog subjectName={offering.subject.name} entry={breakdownFor} onClose={() => setBreakdownFor(null)} />
+            <GradeBreakdownDialog
+                subjectName={offering.subject.name}
+                thresholds={thresholds}
+                entry={breakdownFor}
+                onClose={() => setBreakdownFor(null)}
+            />
         </>
     );
 }

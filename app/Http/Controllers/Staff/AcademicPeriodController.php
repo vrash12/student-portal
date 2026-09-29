@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\AcademicPeriodRequest;
 use App\Models\AcademicPeriod;
 use App\Services\AcademicPeriodService;
+use App\Services\Grading\GradingThresholds;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,7 +17,7 @@ class AcademicPeriodController extends Controller
 {
     public function __construct(private readonly AcademicPeriodService $periods) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $periods = AcademicPeriod::query()
             ->withCount('classBatches')
@@ -23,10 +26,16 @@ class AcademicPeriodController extends Controller
             ->map(fn (AcademicPeriod $period): array => [
                 ...$this->present($period),
                 'classCount' => (int) $period->class_batches_count,
+                'thresholds' => GradingThresholds::forPeriod($period)?->toArray(),
             ])
             ->all();
 
-        return Inertia::render('staff/academic-periods/index', ['periods' => $periods]);
+        return Inertia::render('staff/academic-periods/index', [
+            'periods' => $periods,
+            'can' => [
+                'configureGrading' => $request->user()->hasPermission(Permission::ConfigureGrading),
+            ],
+        ]);
     }
 
     public function create(): Response

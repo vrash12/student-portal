@@ -47,14 +47,37 @@ export interface CategoryGrade {
     weightedScore: number | null;
 }
 
-/** A candidate's subject grade, calculated by the server. */
+/** A candidate's subject grade and academic standing, calculated by the server. */
 export interface SubjectGrade {
     grade: number | null;
     assessedWeight: number;
     missingScores: number;
     pendingCategories: number;
+    /** The grade (and standing) is current, not final: some categories have no finalized assessment yet. */
+    isProvisional: boolean;
+    /** How complete the data behind the grade is (Complete, In Progress, Missing Scores, ...). */
     status: StatusValue;
+    /**
+     * Passing, At Risk, Failing, or Incomplete. Null when the academic period
+     * has no passing and warning grades, or when there is nothing to judge yet.
+     */
+    standing: StatusValue | null;
     categories: CategoryGrade[];
+}
+
+/** Passing and warning grades of an academic period (0–100). */
+export interface GradingThresholds {
+    passingGrade: number;
+    warningGrade: number;
+}
+
+/** A candidate's standing across a set of subjects, decided by the server. */
+export interface OverallStanding {
+    /** The most serious subject standing; null when no subject has one. */
+    standing: StatusValue | null;
+    basedOnSubjects: number;
+    totalSubjects: number;
+    isProvisional: boolean;
 }
 
 export interface AssessmentSummary {

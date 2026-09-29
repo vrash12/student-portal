@@ -28,6 +28,7 @@ class GradebookController extends Controller
         return Inertia::render('staff/teaching/gradebook/show', [
             'offering' => $this->gradebook->offering($classSubject),
             'scheme' => $this->gradebook->scheme($classSubject),
+            'thresholds' => $this->gradebook->thresholds($classSubject),
             'assessments' => $this->gradebook->assessments($classSubject),
             'gradableCount' => $this->gradebook->gradableCount($classSubject),
             'grades' => $this->gradebook->candidateGrades($classSubject, $filters['search'], self::CANDIDATES_PER_PAGE),

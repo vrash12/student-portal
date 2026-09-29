@@ -30,6 +30,9 @@ class GradingSchemeController extends Controller
         return Inertia::render('staff/classes/grading', [
             'offering' => $this->gradebook->offering($classSubject),
             'categories' => $this->gradebook->scheme($classSubject),
+            // Standing in this subject uses the period's passing and warning grades.
+            'thresholds' => $this->gradebook->thresholds($classSubject),
+            'periodId' => $classSubject->classBatch->academic_period_id,
             'hasFinalizedAssessments' => $classSubject->assessments()->finalized()->exists(),
             'totalWeight' => GradingSchemeService::TOTAL_WEIGHT,
             'maxCategories' => GradingSchemeRequest::MAX_CATEGORIES,

@@ -62,6 +62,17 @@ final class Gradebook
     }
 
     /**
+     * Passing and warning grades used for academic standing in this subject,
+     * or null when the period has none yet.
+     *
+     * @return array{passingGrade: float, warningGrade: float}|null
+     */
+    public function thresholds(ClassSubject $offering): ?array
+    {
+        return $this->calculator->thresholdsFor($offering)?->toArray();
+    }
+
+    /**
      * Candidates who can currently be graded in the class.
      */
     public function gradableCount(ClassSubject $offering): int
