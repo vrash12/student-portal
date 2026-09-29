@@ -1,0 +1,1 @@
+import { Head } from '@inertiajs/react'; import { PageHeader } from '@/components/ui/page-header'; export default function ExaminationShow({examination}:any){return <><Head title={examination?.title ?? 'Examination'}/><PageHeader title={examination?.title ?? 'Examination'} description="Review questions and publish when ready."/></>}

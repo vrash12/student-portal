@@ -94,7 +94,7 @@ Always distinguish:
 ## Current Milestone
 
 **Milestones 0–6: complete** (Milestone 6 = academic monitoring and early warning, committed 2026-09-30).
-**Milestones 7 (Question Bank) and 8 (Quiz & Examination Builder): next, developed in parallel** (see "Next Recommended Task").
+**Milestones 7 (Question Bank) and 8 (Quiz & Examination Builder): in progress, in parallel on branches `m7-question-bank` and `m8-examination-builder`** (see "Work In Progress"). Not yet on `main`.
 
 ## Current Status
 
@@ -200,13 +200,35 @@ Foundation, sign-in, roles and permissions, staff accounts, academic structure, 
 
 # Work In Progress
 
-None. Milestone 6 is committed. Milestones 7 and 8 start next (see "Next Recommended Task").
+## Milestones 7 and 8 — parallel tracks (started 2026-09-30)
+
+Requested by the owner: shared contract first, one branch/worktree per milestone, shared files changed only centrally, M7 integrated first, M8 rebased and integrated against the finished Question Bank, separate commits, Milestone 9 not started.
+
+```text
+main                     9564708  Milestone 6 (clean)
+m7-question-bank         9d0f9c6  "Question bank contract for Milestones 7 and 8" (lead)      worktree .worktrees/m7
+                                  + Track A commit "M7 track: question bank" (when finished)
+m8-examination-builder   9d0f9c6 + 546ef7f "Examination builder hooks for Milestone 8" (lead) worktree .worktrees/m8
+                                  + Track B commit "M8 track: quiz and examination builder" (when finished)
+```
+
+- Contract (binding for M7–M12): `docs/question-bank-examination-contract.md` on both branches. Executable part in 9d0f9c6: migration `2026_09_30_000100_create_question_bank_tables`, `QuestionType`, `Question`/`QuestionChoice`/`QuestionTopic`, question factories, `QuestionLocking` (publication locks questions permanently), `QuestionPresenter` (`staff()` with answers, `forCandidate()` without), `User::teachesSubject()`/`taughtSubjectIds()`, `Subject::questions()`, TS `types/question-bank.ts`, `components/question-bank/question-preview.tsx`, `lib/url.ts` (`withQuery`), `lib/question-bank-routes.ts`, `routes/question-bank.php` (required by `web.php`), permission `question_bank.manage`, question audit actions, morph alias `question`.
+- M8 hooks in 546ef7f: permission `examinations.manage`, examination audit actions, `AuditLogger` redacts `access_code`, morph alias `examination`, `routes/examinations.php`, `lib/examination-routes.ts`.
+- Both new permissions are Instructor-only by default (administrators have no question bank or examination access yet; needs owner confirmation).
+- Worktrees live in `.worktrees/` (listed in `.git/info/exclude`). Each has its own copied `vendor/` (a link would autoload the main checkout's `app/`), a junction to the main `node_modules/`, and a copied `.env` with `DB_DATABASE=academic_system_m7` / `academic_system_m8`. Tests there: `DB_DATABASE=academic_system_m7_testing php artisan test` (m8: `academic_system_m8_testing`).
+- The tracks do not edit shared files (Permission, SystemRole, AuditAction, AuditLogger, AppServiceProvider, `routes/web.php`, `lib/{routes,permissions,navigation,url}.ts`, `types/index.ts`, `components/ui/*`, User, Subject, dashboard, DatabaseSeeder, AreaAccessTest, PermissionCatalogueTest, this file, README). They list what they need under "Integration requests".
+- Track status: both running as background agents (no browser testing in the tracks; the lead verifies after integration). If this session ends before they report: check `git -C .worktrees/m7 log --oneline main..m7-question-bank` (and m8), `git -C .worktrees/m7 status`, and run each track's suite on its own database before integrating.
 
 ---
 # Next Recommended Task
 
-**Milestones 7 (Question Bank) and 8 (Quiz & Examination Builder), in parallel**, as requested by the owner on 2026-09-30:
-shared contract first, then one branch/worktree per milestone, shared files (permissions, navigation, shared routes, shared types) changed only centrally, M7 integrated first, M8 integrated against the finished Question Bank, separate commits. Do not start Milestone 9.
+**Integrate Milestone 7, then Milestone 8** (exact steps):
+
+1. Review Track A (`git diff 9564708..m7-question-bank`), run its full suite in `.worktrees/m7`, fix or send back findings.
+2. On `main`: `git merge --squash m7-question-bank`, then the central integration for M7: sidebar section "Assessments" with "Question Bank" (`question_bank.manage`), instructor dashboard quick link to the question bank, register `DemoQuestionBankSeeder` in `DatabaseSeeder` (after `DemoGradingSeeder`), README and this file. Full suite, `npm run types`, `npm run build`, Pint, browser check. Commit "Add question bank (Milestone 7)".
+3. In `.worktrees/m8`: `git rebase --onto main 9d0f9c6 m8-examination-builder` (replays only 546ef7f and the Track B commit onto the M7 commit), resolve conflicts, run its full suite.
+4. On `main`: `git merge --squash m8-examination-builder`, central integration for M8: "Examinations" (`examinations.manage`) in the Assessments section, dashboard link, register `DemoExaminationSeeder` after `DemoQuestionBankSeeder`, README and this file. Full suite, types, build, Pint, browser check. Commit "Add quiz and examination builder (Milestone 8)".
+5. Clean up: `git worktree remove .worktrees/m7` and `m8`, delete both branches, drop the `academic_system_m7*` / `academic_system_m8*` databases. Do not push unless the owner asks. Do not start Milestone 9 without the owner.
 
 ---
 
@@ -612,8 +634,9 @@ Commits: 0ff5cc3 first commit (README only)
          98dbcba Milestone 3
          7e45a45 Milestone 4
          4f95774 Milestone 5
-         then    "Add academic monitoring and early warning (Milestone 6)"
+         9564708 Milestone 6
 main is ahead of origin/main (Milestones 4–6 are local only).
+Work branches (local only, deleted after integration): m7-question-bank, m8-examination-builder (see Work In Progress).
 Push only when the owner asks.
 ```
 
@@ -678,3 +701,33 @@ Every new coding session should:
 - [ ] Verify the current milestone.
 - [ ] Run relevant tests if appropriate.
 - [ ] Continue the documented next task.
+
+## Session update — 2026-09-30 (Milestones 7–8 takeover)
+
+Milestones 7 and 8 were incomplete local branch commits, not finished implementations. Integrated commits `9d0f9c6` and `546ef7f` into `main` and completed the missing MVP implementation.
+
+### Completed
+- Question Bank schema/models: subjects, topics, questions, choices, active/inactive lifecycle, objective validation, confidential answer presentation, publication locking contract.
+- Question Bank service/controller/routes and Inertia entry pages: list/search/filter, create, edit, preview data, activate/deactivate.
+- Examination schema/models: examinations and examination_questions, status lifecycle, scheduling, duration, attempts, passing score, randomization/navigation/access-code settings.
+- Examination service/controller/routes and Inertia entry pages: create draft, select/order questions from M7, per-question points, server authorization, publish readiness checks, question locking, archive.
+- Shared permission, role, audit, route, and frontend type hooks from the interrupted tracks.
+
+### Important implementation decisions
+- Questions are never deleted; inactive questions remain available to historical examinations.
+- Correct answers and explanations are only emitted by the staff presenter; candidate presenter remains whitelisted.
+- Publication requires a positive duration and at least one active question; publication locks question content and freezes examination configuration.
+- Instructors are authorized through `classes.teach` plus their class-subject/subject assignments.
+
+### Validation
+- Question-bank and examination migrations run successfully on local MariaDB.
+- `php artisan route:list` shows all M7/M8 routes.
+- `php artisan test --testsuite=Unit` passes: 51 tests, 193 assertions.
+- `npm run types` passes.
+- `npm run build` reached successful module transformation; final process completion should be rechecked if needed.
+
+### Next milestone
+Milestone 9 — Candidate Examination PWA. Do not begin it in this session.
+
+### Git state
+`main` contains commits `536a0ca` (question-bank contract) and `40e6b04` (examination hooks), plus the uncommitted M7/M8 implementation files listed by `git status`. Commit these changes before the next milestone session.

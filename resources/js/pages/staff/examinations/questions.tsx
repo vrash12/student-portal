@@ -1,0 +1,1 @@
+import { Head } from '@inertiajs/react'; import { PageHeader } from '@/components/ui/page-header'; export default function ExaminationQuestions(){return <><Head title="Examination Questions"/><PageHeader title="Questions" description="Select and order questions from the question bank."/></>}

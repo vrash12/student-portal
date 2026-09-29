@@ -1,0 +1,1 @@
+import { Head } from '@inertiajs/react'; import { PageHeader } from '@/components/ui/page-header'; export default function ExaminationCreate(){return <><Head title="Create Examination"/><PageHeader title="Create Examination" description="Start a draft examination."/></>}

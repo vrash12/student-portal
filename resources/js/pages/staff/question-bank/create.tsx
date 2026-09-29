@@ -1,0 +1,1 @@
+import { Head } from '@inertiajs/react'; import { PageHeader } from '@/components/ui/page-header'; export default function QuestionBankCreate(){return <><Head title="Create Question"/><PageHeader title="Create Question" description="Add a reusable question to a subject."/><p className="text-muted">Use the question form to configure type, choices, and the correct answer.</p></>}

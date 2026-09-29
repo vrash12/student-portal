@@ -1,0 +1,1 @@
+import { Head } from '@inertiajs/react'; import { PageHeader } from '@/components/ui/page-header'; export default function QuestionBankEdit(){return <><Head title="Edit Question"/><PageHeader title="Edit Question" description="Update question content and settings."/></>}
