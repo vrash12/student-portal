@@ -7,9 +7,13 @@ use App\Policies\UserPolicy;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
@@ -57,6 +61,69 @@ class User extends Authenticatable
     }
 
     /**
+     * The candidate record, for accounts with the Candidate role.
+     *
+     * @return HasOne<Candidate, $this>
+     */
+    public function candidate(): HasOne
+    {
+        return $this->hasOne(Candidate::class);
+    }
+
+    /**
+     * Subjects and classes this user teaches.
+     *
+     * @return HasMany<InstructorAssignment, $this>
+     */
+    public function teachingAssignments(): HasMany
+    {
+        return $this->hasMany(InstructorAssignment::class, 'instructor_id');
+    }
+
+    /**
+     * Whether the account may be assigned to teach (active and eligible).
+     */
+    public function canTeach(): bool
+    {
+        return $this->hasPermission(Permission::TeachClasses);
+    }
+
+    /**
+     * Whether the account's role makes it teaching staff, regardless of
+     * whether the account is currently active.
+     */
+    public function isTeachingStaff(): bool
+    {
+        $this->loadMissing('role.permissions');
+
+        return $this->role->grants(Permission::TeachClasses);
+    }
+
+    /**
+     * Accounts whose role makes them teaching staff (active or not).
+     *
+     * @param  Builder<User>  $query
+     */
+    #[Scope]
+    protected function teachingStaff(Builder $query): void
+    {
+        $query->whereHas('role.permissions', function (Builder $permissions): void {
+            $permissions->where('code', Permission::TeachClasses->value);
+        });
+    }
+
+    /**
+     * Active teaching staff who can receive new assignments.
+     *
+     * @param  Builder<User>  $query
+     */
+    #[Scope]
+    protected function eligibleToTeach(Builder $query): void
+    {
+        $query->teachingStaff()->where('is_active', true);
+    }
+
+    /**
      * Effective permission check. Deactivated accounts hold no permissions.
      */
     public function hasPermission(Permission $permission): bool
@@ -98,13 +165,13 @@ class User extends Authenticatable
     }
 
     /**
-     * A user may only grant a role whose permissions they already hold,
-     * which prevents privilege escalation through role assignment.
+     * A user may only assign roles ranked below their own role, which
+     * prevents privilege escalation through role assignment.
      */
-    public function canGrantRole(Role $role): bool
+    public function canAssignRole(Role $role): bool
     {
-        $role->loadMissing('permissions');
+        $this->loadMissing('role');
 
-        return array_diff($role->permissionCodes(), $this->permissionCodes()) === [];
+        return $this->is_active && $this->role->rank > $role->rank;
     }
 }

@@ -20,6 +20,7 @@ class Role extends Model
     {
         return [
             'is_system' => 'boolean',
+            'rank' => 'integer',
         ];
     }
 

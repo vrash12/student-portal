@@ -4,12 +4,19 @@ namespace Tests\Feature;
 
 use App\Enums\Permission as PermissionCode;
 use App\Enums\SystemRole;
+use App\Models\AcademicPeriod;
+use App\Models\Candidate;
+use App\Models\ClassBatch;
+use App\Models\InstructorAssignment;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\Subject;
 use App\Models\User;
 use Database\Seeders\AccessControlSeeder;
+use Database\Seeders\DemoAcademicSeeder;
 use Database\Seeders\DemoAccountsSeeder;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -22,6 +29,7 @@ class SeederTest extends TestCase
 
             $this->assertTrue($role->is_system);
             $this->assertSame($systemRole->label(), $role->name);
+            $this->assertSame($systemRole->rank(), $role->rank);
             $this->assertEqualsCanonicalizing(
                 array_map(fn (PermissionCode $permission): string => $permission->value, $systemRole->defaultPermissions()),
                 $role->permissionCodes(),
@@ -57,29 +65,61 @@ class SeederTest extends TestCase
 
         $this->seed(AccessControlSeeder::class);
 
-        $this->assertSame([PermissionCode::AccessStaffArea->value], $instructor->fresh()->permissionCodes());
+        $this->assertEqualsCanonicalizing(
+            array_map(fn (PermissionCode $permission): string => $permission->value, SystemRole::Instructor->defaultPermissions()),
+            $instructor->fresh()->permissionCodes(),
+        );
+        $this->assertNotContains(PermissionCode::ManageUsers->value, $instructor->fresh()->permissionCodes());
     }
 
-    public function test_demo_accounts_are_fictional_and_created_once(): void
+    public function test_demo_data_is_fictional_and_created_once(): void
     {
-        $this->seed(DemoAccountsSeeder::class);
-        $count = User::query()->count();
+        $this->seed([DemoAccountsSeeder::class, DemoAcademicSeeder::class]);
+        $counts = fn (): array => [
+            User::query()->count(),
+            Candidate::query()->count(),
+            ClassBatch::query()->count(),
+            Subject::query()->count(),
+            InstructorAssignment::query()->count(),
+        ];
+        $before = $counts();
 
-        $this->seed(DemoAccountsSeeder::class);
+        $this->seed([DemoAccountsSeeder::class, DemoAcademicSeeder::class]);
 
-        $this->assertSame($count, User::query()->count());
+        $this->assertSame($before, $counts());
         $this->assertDatabaseHas('users', ['username' => 'admin', 'name' => 'System Administrator']);
         $this->assertDatabaseHas('users', ['username' => 'instructor.alpha', 'name' => 'Instructor Alpha']);
-        $this->assertSame(10, User::query()->whereRelation('role', 'code', SystemRole::Candidate->value)->count());
-        $this->assertDatabaseHas('users', ['username' => 'candidate001', 'name' => 'Candidate 001']);
+        $this->assertSame([14, 10, 2, 4, 8], $before);
+        $this->assertDatabaseHas('subjects', ['code' => 'SUBJ-1', 'name' => 'Subject 1']);
+        $this->assertSame(1, AcademicPeriod::query()->active()->count());
+
+        $candidate = Candidate::query()->with('user')->where('candidate_number', '2026-0001')->sole();
+        $this->assertSame('2026-0001', $candidate->user->username);
+        $this->assertSame('Candidate 001', $candidate->user->name);
+        $this->assertSame(SystemRole::Candidate->value, $candidate->user->role->code);
     }
 
-    public function test_demo_accounts_are_never_seeded_in_production(): void
+    /**
+     * @return array<string, array{class-string}>
+     */
+    public static function demoSeeders(): array
+    {
+        return [
+            'accounts' => [DemoAccountsSeeder::class],
+            'academic structure' => [DemoAcademicSeeder::class],
+        ];
+    }
+
+    /**
+     * @param  class-string  $seeder
+     */
+    #[DataProvider('demoSeeders')]
+    public function test_demo_data_is_never_seeded_in_production(string $seeder): void
     {
         $this->app->detectEnvironment(fn (): string => 'production');
 
         $this->expectException(RuntimeException::class);
 
-        $this->app->make(DemoAccountsSeeder::class)->run();
+        $this->app->make($seeder)->run();
     }
 }

@@ -7,6 +7,7 @@ import {
     type InputHTMLAttributes,
     type ReactNode,
     type SelectHTMLAttributes,
+    type TextareaHTMLAttributes,
 } from 'react';
 import { cn } from '@/lib/cn';
 
@@ -24,7 +25,8 @@ function useFormField(): FieldContextValue | null {
 }
 
 interface FormFieldProps {
-    label: string;
+    /** Visible label. May include screen-reader-only context (e.g. which item it applies to). */
+    label: ReactNode;
     children: ReactNode;
     hint?: ReactNode;
     error?: string;
@@ -95,6 +97,19 @@ export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInput
         <input
             {...fieldAttributes(field)}
             className={cn(controlClasses, stateClasses(Boolean(field?.invalid)), className)}
+            {...props}
+        />
+    );
+}
+
+export function TextArea({ className, rows = 4, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+    const field = useFormField();
+
+    return (
+        <textarea
+            {...fieldAttributes(field)}
+            rows={rows}
+            className={cn(controlClasses, stateClasses(Boolean(field?.invalid)), 'h-auto py-2 pointer-coarse:h-auto', className)}
             {...props}
         />
     );

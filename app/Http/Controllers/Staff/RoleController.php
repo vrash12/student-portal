@@ -18,13 +18,14 @@ class RoleController extends Controller
         $roles = Role::query()
             ->with('permissions')
             ->withCount('users')
-            ->orderBy('id')
+            ->orderByDesc('rank')
             ->get()
             ->map(fn (Role $role): array => [
                 'id' => $role->id,
                 'code' => $role->code,
                 'name' => $role->name,
                 'description' => $role->description,
+                'rank' => $role->rank,
                 'isSystem' => $role->is_system,
                 'userCount' => (int) $role->users_count,
                 'permissions' => $role->permissionCodes(),

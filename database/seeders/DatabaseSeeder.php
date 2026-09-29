@@ -14,7 +14,10 @@ class DatabaseSeeder extends Seeder
         $this->call(AccessControlSeeder::class);
 
         if (app()->environment(['local', 'testing'])) {
-            $this->call(DemoAccountsSeeder::class);
+            $this->call([
+                DemoAccountsSeeder::class,
+                DemoAcademicSeeder::class,
+            ]);
         }
     }
 }

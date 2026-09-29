@@ -152,9 +152,46 @@ class UserManagementTest extends TestCase
 
         $this->actingAs($academicAdmin)
             ->post('/users', $this->validPayload(['role_id' => $superRole->id]))
-            ->assertSessionHasErrors(['role_id' => 'You cannot assign a role with permissions beyond your own.']);
+            ->assertSessionHasErrors(['role_id' => 'You can only assign roles ranked below your own.']);
 
         $this->assertDatabaseMissing('users', ['username' => 'new.instructor']);
+    }
+
+    public function test_academic_administrator_can_create_instructor_accounts(): void
+    {
+        $academicAdmin = $this->userWithRole(SystemRole::AcademicAdministrator);
+
+        $this->actingAs($academicAdmin)
+            ->post('/users', $this->validPayload(['role_id' => $this->role(SystemRole::Instructor)->id]))
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('users.index'));
+
+        $this->assertDatabaseHas('users', ['username' => 'new.instructor']);
+    }
+
+    public function test_academic_administrator_cannot_create_or_edit_peers(): void
+    {
+        $academicAdmin = $this->userWithRole(SystemRole::AcademicAdministrator);
+        $peer = $this->userWithRole(SystemRole::AcademicAdministrator);
+
+        $this->actingAs($academicAdmin)
+            ->post('/users', $this->validPayload(['role_id' => $this->role(SystemRole::AcademicAdministrator)->id]))
+            ->assertSessionHasErrors(['role_id' => 'You can only assign roles ranked below your own.']);
+
+        $this->actingAs($academicAdmin)->get("/users/{$peer->id}/edit")->assertForbidden();
+    }
+
+    public function test_edit_form_lists_the_accounts_current_role_even_when_not_assignable(): void
+    {
+        $academicAdmin = $this->userWithRole(SystemRole::AcademicAdministrator);
+        $ownRoleId = $academicAdmin->role_id;
+
+        $this->actingAs($academicAdmin)
+            ->get("/users/{$academicAdmin->id}/edit")
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('isOwnAccount', true)
+                ->where('roles', fn ($roles) => collect($roles)->pluck('id')->contains($ownRoleId)));
     }
 
     public function test_academic_administrator_cannot_edit_a_super_administrator(): void

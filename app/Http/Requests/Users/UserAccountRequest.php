@@ -49,7 +49,7 @@ abstract class UserAccountRequest extends FormRequest
                 'nullable', 'string', 'email', 'max:255',
                 Rule::unique('users', 'email')->ignore($target),
             ],
-            'role_id' => ['bail', 'required', 'integer', new GrantableStaffRole($this->user())],
+            'role_id' => ['bail', 'required', 'integer', new GrantableStaffRole($this->user(), $target?->role)],
             'is_active' => ['required', 'boolean'],
             'password' => [
                 $this->passwordIsRequired() ? 'required' : 'nullable',

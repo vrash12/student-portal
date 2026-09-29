@@ -1,6 +1,17 @@
-import { LayoutDashboard, ShieldCheck, Users, type LucideIcon } from 'lucide-react';
+import {
+    BookOpen,
+    CalendarRange,
+    GraduationCap,
+    LayoutDashboard,
+    ShieldCheck,
+    UserRoundCog,
+    Users,
+    UsersRound,
+    type LucideIcon,
+} from 'lucide-react';
 import { Permission, type PermissionCode } from '@/lib/permissions';
 import { routes } from '@/lib/routes';
+import { terms } from '@/lib/terminology';
 
 export interface NavigationItem {
     label: string;
@@ -16,8 +27,8 @@ export interface NavigationSection {
 }
 
 /**
- * Staff sidebar. Only implemented modules are listed; never add links to
- * features that do not exist yet (AGENTS.md §73).
+ * Staff sidebar (UI_UX_DESIGN.md §11). Only implemented modules are listed;
+ * never add links to features that do not exist yet (AGENTS.md §73).
  */
 export const staffNavigation: NavigationSection[] = [
     {
@@ -25,8 +36,28 @@ export const staffNavigation: NavigationSection[] = [
         items: [{ label: 'Dashboard', href: routes.dashboard(), icon: LayoutDashboard, permission: Permission.AccessStaffArea }],
     },
     {
+        label: 'Academics',
+        items: [
+            { label: terms.candidate.plural, href: routes.candidates.index(), icon: GraduationCap, permission: Permission.ViewAllCandidates },
+            { label: terms.classBatch.plural, href: routes.classes.index(), icon: UsersRound, permission: Permission.ManageClassBatches },
+            { label: 'Subjects', href: routes.subjects.index(), icon: BookOpen, permission: Permission.ManageSubjects },
+            {
+                label: 'Academic Periods',
+                href: routes.academicPeriods.index(),
+                icon: CalendarRange,
+                permission: Permission.ManageAcademicPeriods,
+            },
+        ],
+    },
+    {
         label: 'Administration',
         items: [
+            {
+                label: 'Instructors',
+                href: routes.instructors.index(),
+                icon: UserRoundCog,
+                permission: Permission.ManageInstructorAssignments,
+            },
             { label: 'Users', href: routes.users.index(), icon: Users, permission: Permission.ViewUsers },
             { label: 'Roles & Permissions', href: routes.roles.index(), icon: ShieldCheck, permission: Permission.ViewRoles },
         ],

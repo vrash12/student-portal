@@ -75,7 +75,7 @@ final class UserAccountService
 
             $user->save();
 
-            $this->recordProfileChanges($user, $previousProfile);
+            $this->audit->recordChanges(AuditAction::UserUpdated, $user, $previousProfile, $this->profileSnapshot($user));
 
             if ($roleChanged) {
                 $this->audit->record(
@@ -129,29 +129,6 @@ final class UserAccountService
             ->where('user_id', $user->getKey())
             ->when($exceptSessionId !== null, fn ($query) => $query->where('id', '!=', $exceptSessionId))
             ->delete();
-    }
-
-    /**
-     * @param  array<string, mixed>  $previous
-     */
-    private function recordProfileChanges(User $user, array $previous): void
-    {
-        $current = $this->profileSnapshot($user);
-        $changedKeys = array_keys(array_diff_assoc(
-            array_map(fn ($value) => (string) $value, $current),
-            array_map(fn ($value) => (string) $value, $previous),
-        ));
-
-        if ($changedKeys === []) {
-            return;
-        }
-
-        $this->audit->record(
-            AuditAction::UserUpdated,
-            $user,
-            oldValues: array_intersect_key($previous, array_flip($changedKeys)),
-            newValues: array_intersect_key($current, array_flip($changedKeys)),
-        );
     }
 
     /**

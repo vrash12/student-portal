@@ -55,6 +55,7 @@ class AccessControlSeeder extends Seeder
                 'description' => $systemRole->description(),
             ]);
             $role->is_system = true;
+            $role->rank = $systemRole->rank();
             $role->save();
 
             $role->permissions()->sync(

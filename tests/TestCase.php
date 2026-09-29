@@ -21,6 +21,17 @@ abstract class TestCase extends BaseTestCase
     protected string $seeder = AccessControlSeeder::class;
 
     /**
+     * Tests do not depend on compiled frontend assets. Inertia assertions
+     * still verify that each rendered page component exists on disk.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutVite();
+    }
+
+    /**
      * RefreshDatabase drops every table in the connection's database. Refuse
      * to run unless that database is a dedicated test database, so a cached
      * or mistaken configuration can never wipe development data.

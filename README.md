@@ -54,14 +54,14 @@ Requirements: PHP 8.3+ with `pdo_mysql`, Composer 2, Node.js 22 or newer, and XA
 
 ## Demo accounts (local development only)
 
-The demo seeder creates clearly fictional accounts. They all use the password `password` unless `DEMO_ACCOUNT_PASSWORD` is set in `.env` before seeding. The seeder refuses to run in production.
+The demo seeders create clearly fictional data: staff accounts, one active academic period, Subjects 1–4, two sample batches with instructor assignments, and ten candidates. All accounts use the password `password` unless `DEMO_ACCOUNT_PASSWORD` is set in `.env` before seeding. The demo seeders refuse to run in production.
 
 | Username | Role |
 | --- | --- |
 | `admin` | Super Administrator |
 | `academic.admin` | Academic Administrator |
 | `instructor.alpha`, `instructor.bravo` | Instructor |
-| `candidate001` … `candidate010` | Candidate |
+| `2026-0001` … `2026-0010` | Candidate (candidates sign in with their candidate number) |
 
 ## Common commands
 

@@ -62,6 +62,41 @@ final class AuditLogger
     }
 
     /**
+     * Records only the values that differ between two snapshots, with the
+     * previous and new value of each. Returns null when nothing changed.
+     *
+     * @param  array<string, mixed>  $before
+     * @param  array<string, mixed>  $after
+     */
+    public function recordChanges(
+        AuditAction $action,
+        Model $subject,
+        array $before,
+        array $after,
+        ?string $reason = null,
+    ): ?AuditLog {
+        $changedKeys = array_keys(array_filter(
+            $after,
+            fn (mixed $value, string $key): bool => ! array_key_exists($key, $before) || $before[$key] !== $value,
+            ARRAY_FILTER_USE_BOTH,
+        ));
+
+        if ($changedKeys === []) {
+            return null;
+        }
+
+        $keys = array_flip($changedKeys);
+
+        return $this->record(
+            $action,
+            $subject,
+            oldValues: array_intersect_key($before, $keys),
+            newValues: array_intersect_key($after, $keys),
+            reason: $reason,
+        );
+    }
+
+    /**
      * @param  array<string, mixed>  $values
      * @return array<string, mixed>|null
      */

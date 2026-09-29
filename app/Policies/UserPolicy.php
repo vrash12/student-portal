@@ -7,7 +7,7 @@ use App\Models\User;
 
 /**
  * Staff account management. Candidate accounts are managed through
- * candidate records (Milestone 2), not through this policy.
+ * candidate records instead.
  */
 class UserPolicy
 {
@@ -22,13 +22,15 @@ class UserPolicy
     }
 
     /**
-     * An account may only be edited by someone who could grant its role,
-     * so administrators cannot modify accounts more privileged than their own.
+     * Administrators may edit their own profile, and accounts whose role is
+     * ranked below their own. They can never modify peers or superiors.
      */
     public function update(User $actor, User $target): bool
     {
-        return $actor->hasPermission(Permission::ManageUsers)
-            && $target->isStaffAccount()
-            && $actor->canGrantRole($target->role);
+        if (! $actor->hasPermission(Permission::ManageUsers) || ! $target->isStaffAccount()) {
+            return false;
+        }
+
+        return $actor->is($target) || $actor->canAssignRole($target->role);
     }
 }

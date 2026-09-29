@@ -1,7 +1,8 @@
 import { Link, type InertiaForm } from '@inertiajs/react';
-import type { FormEvent, ReactNode } from 'react';
+import type { FormEvent } from 'react';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { CheckboxField, FormField, PasswordInput, TextInput } from '@/components/ui/form-field';
+import { FormActions, FormSection } from '@/components/ui/form-section';
 import { RadioCards } from '@/components/ui/radio-cards';
 import { routes } from '@/lib/routes';
 
@@ -148,26 +149,14 @@ export function UserForm({ form, roles, mode, isOwnAccount = false, submitLabel,
                 )}
             </FormSection>
 
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <FormActions>
                 <ButtonLink href={routes.users.index()} variant="secondary">
                     Cancel
                 </ButtonLink>
                 <Button type="submit" loading={form.processing}>
                     {submitLabel}
                 </Button>
-            </div>
+            </FormActions>
         </form>
-    );
-}
-
-function FormSection({ title, description, children }: { title: string; description: string; children: ReactNode }) {
-    return (
-        <section className="rounded-lg border border-line bg-surface">
-            <div className="border-b border-line px-5 py-4">
-                <h2 className="text-base font-semibold text-ink">{title}</h2>
-                <p className="mt-0.5 text-sm text-ink-muted">{description}</p>
-            </div>
-            <div className="flex flex-col gap-5 p-5">{children}</div>
-        </section>
     );
 }

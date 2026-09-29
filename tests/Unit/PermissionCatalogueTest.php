@@ -37,17 +37,40 @@ class PermissionCatalogueTest extends TestCase
         }
     }
 
-    public function test_super_administrator_holds_every_staff_permission(): void
+    /**
+     * Area entry for candidates and teaching eligibility are role-specific
+     * capabilities; every other permission is administrative.
+     */
+    public function test_super_administrator_holds_every_administrative_permission(): void
     {
-        $staffPermissions = array_values(array_filter(
+        $roleSpecific = [Permission::AccessExamPortal, Permission::TeachClasses];
+        $administrative = array_values(array_filter(
             Permission::cases(),
-            fn (Permission $permission): bool => $permission !== Permission::AccessExamPortal,
+            fn (Permission $permission): bool => ! in_array($permission, $roleSpecific, true),
         ));
 
         $this->assertEqualsCanonicalizing(
-            $this->values($staffPermissions),
+            $this->values($administrative),
             $this->values(SystemRole::SuperAdministrator->defaultPermissions()),
         );
+    }
+
+    public function test_role_ranks_follow_the_administrative_hierarchy(): void
+    {
+        $this->assertGreaterThan(SystemRole::AcademicAdministrator->rank(), SystemRole::SuperAdministrator->rank());
+        $this->assertGreaterThan(SystemRole::Instructor->rank(), SystemRole::AcademicAdministrator->rank());
+        $this->assertGreaterThan(SystemRole::Candidate->rank(), SystemRole::Instructor->rank());
+    }
+
+    public function test_only_instructors_are_eligible_to_teach_by_default(): void
+    {
+        foreach (SystemRole::cases() as $role) {
+            $this->assertSame(
+                $role === SystemRole::Instructor,
+                in_array(Permission::TeachClasses, $role->defaultPermissions(), true),
+                $role->label(),
+            );
+        }
     }
 
     public function test_candidates_only_receive_examination_portal_access(): void

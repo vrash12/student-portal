@@ -10,7 +10,8 @@ namespace App\Enums;
  * Roles bundle permissions and live in the database; this enum is the
  * source of truth for which permissions exist.
  *
- * Only add a permission together with the code that enforces it.
+ * Only add a permission together with the code that enforces it, and mirror
+ * it in resources/js/lib/permissions.ts.
  */
 enum Permission: string
 {
@@ -19,6 +20,13 @@ enum Permission: string
     case ViewUsers = 'users.view';
     case ManageUsers = 'users.manage';
     case ViewRoles = 'roles.view';
+    case ManageAcademicPeriods = 'academic_periods.manage';
+    case ManageSubjects = 'subjects.manage';
+    case ManageClassBatches = 'class_batches.manage';
+    case ManageInstructorAssignments = 'instructor_assignments.manage';
+    case ViewAllCandidates = 'candidates.view_all';
+    case ManageCandidates = 'candidates.manage';
+    case TeachClasses = 'classes.teach';
 
     public function label(): string
     {
@@ -28,6 +36,13 @@ enum Permission: string
             self::ViewUsers => 'View user accounts',
             self::ManageUsers => 'Manage user accounts',
             self::ViewRoles => 'View roles and permissions',
+            self::ManageAcademicPeriods => 'Manage academic periods',
+            self::ManageSubjects => 'Manage subjects',
+            self::ManageClassBatches => 'Manage classes',
+            self::ManageInstructorAssignments => 'Manage instructor assignments',
+            self::ViewAllCandidates => 'View all candidates',
+            self::ManageCandidates => 'Manage candidate records',
+            self::TeachClasses => 'Teach assigned classes',
         };
     }
 
@@ -39,6 +54,13 @@ enum Permission: string
             self::ViewUsers => 'View the list of staff user accounts.',
             self::ManageUsers => 'Create and update staff user accounts, including role assignment.',
             self::ViewRoles => 'View roles and the permissions each role grants.',
+            self::ManageAcademicPeriods => 'Create academic periods and choose the active period.',
+            self::ManageSubjects => 'Create, edit, activate, and deactivate subjects.',
+            self::ManageClassBatches => 'Create and edit classes and the subjects they take.',
+            self::ManageInstructorAssignments => 'Assign instructors to the subjects of each class.',
+            self::ViewAllCandidates => 'View every candidate record, regardless of class assignment.',
+            self::ManageCandidates => 'Create and update candidate records and their sign-in accounts.',
+            self::TeachClasses => 'Can be assigned to teach subjects to classes.',
         };
     }
 
@@ -47,6 +69,10 @@ enum Permission: string
         return match ($this) {
             self::AccessStaffArea, self::AccessExamPortal => 'Access',
             self::ViewUsers, self::ManageUsers, self::ViewRoles => 'Administration',
+            self::ManageAcademicPeriods, self::ManageSubjects, self::ManageClassBatches,
+            self::ManageInstructorAssignments => 'Academic Structure',
+            self::ViewAllCandidates, self::ManageCandidates => 'Candidates',
+            self::TeachClasses => 'Teaching',
         };
     }
 }

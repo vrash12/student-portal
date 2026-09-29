@@ -3,7 +3,13 @@
 namespace App\Providers;
 
 use App\Enums\Permission;
+use App\Models\AcademicPeriod;
+use App\Models\Candidate;
+use App\Models\ClassBatch;
+use App\Models\ClassSubject;
+use App\Models\InstructorAssignment;
 use App\Models\Role;
+use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -45,6 +51,12 @@ class AppServiceProvider extends ServiceProvider
         Relation::enforceMorphMap([
             'user' => User::class,
             'role' => Role::class,
+            'academic_period' => AcademicPeriod::class,
+            'subject' => Subject::class,
+            'class_batch' => ClassBatch::class,
+            'class_subject' => ClassSubject::class,
+            'instructor_assignment' => InstructorAssignment::class,
+            'candidate' => Candidate::class,
         ]);
     }
 

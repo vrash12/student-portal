@@ -9,6 +9,7 @@ interface RoleSummary {
     code: string;
     name: string;
     description: string | null;
+    rank: number;
     isSystem: boolean;
     userCount: number;
     permissions: string[];
@@ -36,7 +37,7 @@ export default function RolesIndex({ roles, permissionGroups }: RolesIndexProps)
 
             <Alert className="mb-6">
                 System roles and their permissions are defined by the application. Editing role permissions is not
-                available in this version.
+                available in this version. Administrators can only assign roles ranked below their own.
             </Alert>
 
             <div className="overflow-x-auto rounded-lg border border-line bg-surface">
@@ -51,7 +52,7 @@ export default function RolesIndex({ roles, permissionGroups }: RolesIndexProps)
                                 <th key={role.id} scope="col" className="px-4 py-3 text-center align-bottom">
                                     <span className="block text-sm font-semibold text-ink">{role.name}</span>
                                     <span className="block text-xs font-normal text-ink-muted tabular-nums">
-                                        {role.userCount} {role.userCount === 1 ? 'account' : 'accounts'}
+                                        Rank {role.rank} · {role.userCount} {role.userCount === 1 ? 'account' : 'accounts'}
                                     </span>
                                 </th>
                             ))}

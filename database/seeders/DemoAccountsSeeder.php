@@ -9,15 +9,14 @@ use Illuminate\Database\Seeder;
 use RuntimeException;
 
 /**
- * Clearly fictional demo accounts for local development and demonstrations.
+ * Clearly fictional staff accounts for local development and demonstrations.
+ * Candidate accounts are created with their records by DemoAcademicSeeder.
  *
  * All accounts share the password from DEMO_ACCOUNT_PASSWORD, falling back
  * to the documented development default. Never runs in production.
  */
 class DemoAccountsSeeder extends Seeder
 {
-    private const CANDIDATE_COUNT = 10;
-
     public function run(): void
     {
         if (app()->isProduction()) {
@@ -35,11 +34,6 @@ class DemoAccountsSeeder extends Seeder
 
         foreach ($staff as [$username, $name, $role]) {
             $this->account($username, $name, $role, $password);
-        }
-
-        for ($number = 1; $number <= self::CANDIDATE_COUNT; $number++) {
-            $padded = str_pad((string) $number, 3, '0', STR_PAD_LEFT);
-            $this->account("candidate{$padded}", "Candidate {$padded}", SystemRole::Candidate, $password);
         }
     }
 

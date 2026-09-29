@@ -13,6 +13,13 @@ export const Permission = {
     ViewUsers: 'users.view',
     ManageUsers: 'users.manage',
     ViewRoles: 'roles.view',
+    ManageAcademicPeriods: 'academic_periods.manage',
+    ManageSubjects: 'subjects.manage',
+    ManageClassBatches: 'class_batches.manage',
+    ManageInstructorAssignments: 'instructor_assignments.manage',
+    ViewAllCandidates: 'candidates.view_all',
+    ManageCandidates: 'candidates.manage',
+    TeachClasses: 'classes.teach',
 } as const;
 
 export type PermissionCode = (typeof Permission)[keyof typeof Permission];

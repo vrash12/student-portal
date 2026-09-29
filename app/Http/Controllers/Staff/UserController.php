@@ -8,10 +8,10 @@ use App\Http\Requests\Users\UpdateUserRequest;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\UserAccountService;
+use App\Support\QueryFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,15 +27,19 @@ class UserController extends Controller
 
     public function index(Request $request): Response
     {
-        $staffRoles = Role::query()->staff()->orderBy('id')->get(['id', 'code', 'name']);
-        $filters = $this->filters($request, $staffRoles->pluck('code')->all());
+        $staffRoles = Role::query()->staff()->orderByDesc('rank')->get(['id', 'code', 'name']);
+        $filters = [
+            'search' => QueryFilters::search($request),
+            'role' => QueryFilters::oneOf($request, 'role', $staffRoles->pluck('code')->all()),
+            'status' => QueryFilters::oneOf($request, 'status', ['active', 'inactive']),
+        ];
         $actor = $request->user();
 
         $users = User::query()
             ->with('role.permissions')
             ->whereHas('role', fn (Builder $roles) => $roles->staff())
             ->when($filters['search'] !== '', function (Builder $query) use ($filters): void {
-                $term = '%'.addcslashes($filters['search'], '%_\\').'%';
+                $term = QueryFilters::likeTerm($filters['search']);
                 $query->where(fn (Builder $match) => $match
                     ->where('name', 'like', $term)
                     ->orWhere('username', 'like', $term));
@@ -93,7 +97,7 @@ class UserController extends Controller
                 'lastLoginAt' => $user->last_login_at?->toIso8601String(),
                 'createdAt' => $user->created_at?->toIso8601String(),
             ],
-            'roles' => $this->assignableRoles($request->user()),
+            'roles' => $this->assignableRoles($request->user(), keepRoleId: $user->role_id),
             'isOwnAccount' => $request->user()->is($user),
         ]);
     }
@@ -108,18 +112,18 @@ class UserController extends Controller
     }
 
     /**
-     * Staff roles the acting user is allowed to grant.
+     * Staff roles the acting user may assign, plus the account's current role
+     * when editing (keeping a role is always allowed).
      *
      * @return list<array{id: int, name: string, description: ?string}>
      */
-    private function assignableRoles(User $actor): array
+    private function assignableRoles(User $actor, ?int $keepRoleId = null): array
     {
         return Role::query()
             ->staff()
-            ->with('permissions')
-            ->orderBy('id')
+            ->orderByDesc('rank')
             ->get()
-            ->filter(fn (Role $role): bool => $actor->canGrantRole($role))
+            ->filter(fn (Role $role): bool => $role->id === $keepRoleId || $actor->canAssignRole($role))
             ->map(fn (Role $role): array => [
                 'id' => $role->id,
                 'name' => $role->name,
@@ -127,25 +131,5 @@ class UserController extends Controller
             ])
             ->values()
             ->all();
-    }
-
-    /**
-     * Query-string filters, normalized. Unknown values are ignored rather
-     * than trusted.
-     *
-     * @param  list<string>  $roleCodes
-     * @return array{search: string, role: string, status: string}
-     */
-    private function filters(Request $request, array $roleCodes): array
-    {
-        $search = Str::limit(trim((string) $request->query('search', '')), 100, '');
-        $role = (string) $request->query('role', '');
-        $status = (string) $request->query('status', '');
-
-        return [
-            'search' => $search,
-            'role' => in_array($role, $roleCodes, true) ? $role : '',
-            'status' => in_array($status, ['active', 'inactive'], true) ? $status : '',
-        ];
     }
 }
