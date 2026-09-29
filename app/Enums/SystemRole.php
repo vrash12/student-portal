@@ -78,6 +78,7 @@ enum SystemRole: string
                 Permission::RecordGrades,
                 Permission::ViewAcademicMonitoring,
                 Permission::ManageQuestionBank,
+                Permission::ManageExaminations,
             ],
             self::Candidate => [
                 Permission::AccessExamPortal,

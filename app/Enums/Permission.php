@@ -31,6 +31,7 @@ enum Permission: string
     case RecordGrades = 'grades.record';
     case ViewAcademicMonitoring = 'academic_monitoring.view';
     case ManageQuestionBank = 'question_bank.manage';
+    case ManageExaminations = 'examinations.manage';
 
     public function label(): string
     {
@@ -51,6 +52,7 @@ enum Permission: string
             self::RecordGrades => 'Record grades for assigned subjects',
             self::ViewAcademicMonitoring => 'View academic monitoring',
             self::ManageQuestionBank => 'Manage the question bank',
+            self::ManageExaminations => 'Manage quizzes and examinations',
         };
     }
 
@@ -73,6 +75,7 @@ enum Permission: string
             self::RecordGrades => 'Create assessments, record and finalize scores, and correct finalized scores for the subjects they are assigned to teach.',
             self::ViewAcademicMonitoring => 'See academic standings and the candidates who need attention: every candidate for users who can view all candidates, otherwise only the classes and subjects the user teaches. Candidate profiles follow their own permissions.',
             self::ManageQuestionBank => 'Create, edit, preview, activate, and deactivate questions, including their correct answers, for the subjects they are assigned to teach.',
+            self::ManageExaminations => 'Create quizzes and examinations for the class subjects they are assigned to teach, choose their questions from the question bank, configure them, and publish them.',
         };
     }
 
@@ -87,7 +90,7 @@ enum Permission: string
             self::TeachClasses => 'Teaching',
             self::ConfigureGrading, self::RecordGrades => 'Grading',
             self::ViewAcademicMonitoring => 'Monitoring',
-            self::ManageQuestionBank => 'Assessments',
+            self::ManageQuestionBank, self::ManageExaminations => 'Assessments',
         };
     }
 }

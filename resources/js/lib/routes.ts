@@ -1,3 +1,4 @@
+import { examinationRoutes } from '@/lib/examination-routes';
 import { questionBankRoutes } from '@/lib/question-bank-routes';
 import { withQuery } from '@/lib/url';
 
@@ -13,6 +14,7 @@ export const routes = {
         index: (query?: Record<string, string>) => withQuery('/monitoring', query),
     },
     questionBank: questionBankRoutes,
+    examinations: examinationRoutes,
     users: {
         index: () => '/users',
         create: () => '/users/create',

@@ -27,6 +27,7 @@ final class AuditLogger
         'remember_token',
         'token',
         'secret',
+        'access_code',
     ];
 
     public function __construct(private readonly Request $request) {}

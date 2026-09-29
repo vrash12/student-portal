@@ -10,6 +10,7 @@ use App\Models\AssessmentScore;
 use App\Models\Candidate;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
+use App\Models\Examination;
 use App\Models\InstructorAssignment;
 use App\Models\Question;
 use App\Models\Role;
@@ -65,6 +66,8 @@ class AppServiceProvider extends ServiceProvider
             'assessment' => Assessment::class,
             'assessment_score' => AssessmentScore::class,
             'question' => Question::class,
+            // Created by the examination builder (Milestone 8).
+            'examination' => Examination::class,
         ]);
     }
 

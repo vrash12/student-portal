@@ -43,6 +43,14 @@ enum AuditAction: string
     case QuestionUpdated = 'question.updated';
     case QuestionActivated = 'question.activated';
     case QuestionDeactivated = 'question.deactivated';
+    case ExaminationCreated = 'examination.created';
+    case ExaminationUpdated = 'examination.updated';
+    case ExaminationQuestionsUpdated = 'examination.questions_updated';
+    case ExaminationSettingsUpdated = 'examination.settings_updated';
+    case ExaminationPublished = 'examination.published';
+    case ExaminationUnpublished = 'examination.unpublished';
+    case ExaminationArchived = 'examination.archived';
+    case ExaminationDeleted = 'examination.deleted';
 
     public function label(): string
     {
@@ -83,6 +91,14 @@ enum AuditAction: string
             self::QuestionUpdated => 'Updated question',
             self::QuestionActivated => 'Activated question',
             self::QuestionDeactivated => 'Deactivated question',
+            self::ExaminationCreated => 'Created examination',
+            self::ExaminationUpdated => 'Updated examination details',
+            self::ExaminationQuestionsUpdated => 'Changed examination questions',
+            self::ExaminationSettingsUpdated => 'Updated examination settings',
+            self::ExaminationPublished => 'Published examination',
+            self::ExaminationUnpublished => 'Returned examination to draft',
+            self::ExaminationArchived => 'Archived examination',
+            self::ExaminationDeleted => 'Deleted draft examination',
         };
     }
 }
