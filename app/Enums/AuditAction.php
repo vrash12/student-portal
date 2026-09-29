@@ -31,6 +31,13 @@ enum AuditAction: string
     case CandidateCreated = 'candidate.created';
     case CandidateUpdated = 'candidate.updated';
     case CandidatePasswordReset = 'candidate.password_reset';
+    case GradingSchemeUpdated = 'grading_scheme.updated';
+    case AssessmentCreated = 'assessment.created';
+    case AssessmentUpdated = 'assessment.updated';
+    case AssessmentDeleted = 'assessment.deleted';
+    case AssessmentFinalized = 'assessment.finalized';
+    case AssessmentScoresRecorded = 'assessment.scores_recorded';
+    case AssessmentScoreCorrected = 'assessment_score.corrected';
 
     public function label(): string
     {
@@ -59,6 +66,13 @@ enum AuditAction: string
             self::CandidateCreated => 'Created candidate',
             self::CandidateUpdated => 'Updated candidate',
             self::CandidatePasswordReset => 'Reset candidate password',
+            self::GradingSchemeUpdated => 'Updated grading setup',
+            self::AssessmentCreated => 'Created assessment',
+            self::AssessmentUpdated => 'Updated assessment',
+            self::AssessmentDeleted => 'Deleted draft assessment',
+            self::AssessmentFinalized => 'Finalized assessment',
+            self::AssessmentScoresRecorded => 'Recorded assessment scores',
+            self::AssessmentScoreCorrected => 'Corrected finalized score',
         };
     }
 }

@@ -8,6 +8,7 @@ use App\Models\ClassBatch;
 use App\Models\ClassSubject;
 use App\Models\Subject;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Classes / batches and the subjects they take.
@@ -64,22 +65,34 @@ final class ClassBatchService
 
     /**
      * Removes the subject from the class together with its instructor
-     * assignments. Once assessments exist (Milestone 4), offerings with
-     * recorded assessments must not be removable.
+     * assignments and grading categories. A subject that has assessments
+     * cannot be removed, because its grades are academic history.
+     *
+     * @throws ValidationException
      */
     public function removeSubject(ClassSubject $offering): void
     {
         DB::transaction(function () use ($offering): void {
-            $offering->loadMissing(['classBatch', 'subject', 'instructors']);
+            // Locking the offering blocks assessments from being created for
+            // it until the removal is complete.
+            $locked = ClassSubject::query()->with(['classBatch', 'subject', 'instructors', 'assessmentCategories'])->lockForUpdate()->findOrFail($offering->getKey());
 
-            $this->audit->record(AuditAction::ClassSubjectRemoved, $offering, oldValues: [
-                'class' => $offering->classBatch->name,
-                'subject' => $offering->subject->name,
-                'instructors' => $offering->instructors->pluck('name')->values()->all(),
+            if ($locked->assessments()->exists()) {
+                throw ValidationException::withMessages([
+                    'offering' => "{$locked->subject->name} has assessments in {$locked->classBatch->name} and cannot be removed. Its grades are part of the academic record.",
+                ]);
+            }
+
+            $this->audit->record(AuditAction::ClassSubjectRemoved, $locked, oldValues: [
+                'class' => $locked->classBatch->name,
+                'subject' => $locked->subject->name,
+                'instructors' => $locked->instructors->pluck('name')->values()->all(),
+                'grading_categories' => $locked->assessmentCategories->pluck('name')->values()->all(),
             ]);
 
-            $offering->instructorAssignments()->delete();
-            $offering->delete();
+            $locked->instructorAssignments()->delete();
+            $locked->assessmentCategories()->delete();
+            $locked->delete();
         });
     }
 }

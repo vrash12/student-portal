@@ -70,7 +70,7 @@ export function RowAction({ href, label, children }: { href: string; label: stri
         <Link
             href={href}
             aria-label={label}
-            className="inline-flex h-9 items-center rounded-md px-3 font-medium text-primary-700 hover:bg-primary-50 pointer-coarse:h-11"
+            className="inline-flex h-9 items-center whitespace-nowrap rounded-md px-3 font-medium text-primary-700 hover:bg-primary-50 pointer-coarse:h-11"
         >
             {children}
         </Link>

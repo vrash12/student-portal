@@ -9,6 +9,7 @@ use App\Models\ClassSubject;
 use App\Models\Subject;
 use App\Services\ClassBatchService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 /**
@@ -33,7 +34,15 @@ class ClassSubjectController extends Controller
         $classSubject->loadMissing('subject');
         $subjectName = $classSubject->subject->name;
 
-        $this->classes->removeSubject($classSubject);
+        try {
+            $this->classes->removeSubject($classSubject);
+        } catch (ValidationException $exception) {
+            // Removal is triggered from a confirmation dialog, not a form, so
+            // the reason is shown as a notification.
+            Inertia::flash('toast', ['type' => 'error', 'message' => $exception->validator->errors()->first()]);
+
+            return redirect()->route('classes.show', $classBatch);
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$subjectName} removed from {$classBatch->name}."]);
 

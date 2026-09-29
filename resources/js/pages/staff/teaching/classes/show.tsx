@@ -1,5 +1,5 @@
-import { Head } from '@inertiajs/react';
-import { GraduationCap, SearchX } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { ChevronRight, GraduationCap, SearchX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FilterBar, SearchField } from '@/components/ui/filter-bar';
@@ -22,7 +22,7 @@ interface CandidateRow {
 
 interface TeachingClassProps {
     classBatch: { id: number; name: string; period: { name: string; isActive: boolean } };
-    subjects: Array<{ code: string; name: string }>;
+    subjects: Array<{ classSubjectId: number; code: string; name: string }>;
     candidates: Paginated<CandidateRow>;
     filters: { search: string; status: string; [key: string]: string };
     statusOptions: Array<{ value: string; label: string }>;
@@ -51,10 +51,18 @@ export default function TeachingClass({ classBatch, subjects, candidates, filter
                 <h2 id="subjects-you-teach" className="text-sm font-semibold text-ink">
                     Subjects You Teach in This {singular}
                 </h2>
-                <ul className="mt-2 flex flex-wrap gap-2">
+                <p className="mt-0.5 text-sm text-ink-muted">Open a subject's gradebook to create assessments and record scores.</p>
+                <ul className="mt-3 flex flex-wrap gap-2">
                     {subjects.map((subject) => (
-                        <li key={subject.code} className="rounded-md border border-line bg-surface-muted px-3 py-1 text-sm text-ink">
-                            {subject.name} <span className="text-ink-muted">({subject.code})</span>
+                        <li key={subject.classSubjectId}>
+                            <Link
+                                href={routes.teaching.gradebook(classBatch.id, subject.classSubjectId)}
+                                className="inline-flex items-center gap-1.5 rounded-md border border-line-strong bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-muted pointer-coarse:py-2.5"
+                            >
+                                {subject.name} <span className="font-normal text-ink-muted">({subject.code})</span>
+                                <span className="font-normal text-primary-700">Gradebook</span>
+                                <ChevronRight className="size-4 text-ink-muted" aria-hidden="true" />
+                            </Link>
                         </li>
                     ))}
                 </ul>

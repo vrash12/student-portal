@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Candidate record. The linked user account (Candidate role) signs in with
@@ -58,6 +59,36 @@ class Candidate extends Model
     public function classBatch(): BelongsTo
     {
         return $this->belongsTo(ClassBatch::class);
+    }
+
+    /**
+     * @return HasMany<AssessmentScore, $this>
+     */
+    public function assessmentScores(): HasMany
+    {
+        return $this->hasMany(AssessmentScore::class);
+    }
+
+    /**
+     * Whether scores may be recorded for this candidate in the class. Withdrawn
+     * candidates keep the scores already recorded but receive no new ones.
+     */
+    public function isGradableIn(int $classBatchId): bool
+    {
+        return $this->class_batch_id !== null
+            && (int) $this->class_batch_id === $classBatchId
+            && $this->status !== CandidateStatus::Withdrawn;
+    }
+
+    /**
+     * Candidates who can be graded in a class: assigned to it and not withdrawn.
+     *
+     * @param  Builder<Candidate>  $query
+     */
+    #[Scope]
+    protected function gradableIn(Builder $query, int $classBatchId): void
+    {
+        $query->where('class_batch_id', $classBatchId)->where('status', '!=', CandidateStatus::Withdrawn->value);
     }
 
     /**

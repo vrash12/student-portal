@@ -1,6 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
-import { BookOpen, GraduationCap, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { BookOpen, GraduationCap, Pencil, Plus, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import type { FormEvent } from 'react';
+import { WeightSummary } from '@/components/grading/offering-context';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { ConfirmAction } from '@/components/ui/confirm-action';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -26,6 +27,9 @@ interface Offering {
     id: number;
     subject: { code: string; name: string; isActive: boolean };
     instructors: AssignedInstructor[];
+    /** Grading categories and weights; empty when grading is not set up. */
+    grading: Array<{ name: string; weight: string }>;
+    assessmentCount: number;
 }
 
 interface CandidateRow {
@@ -47,7 +51,7 @@ interface ClassShowProps {
     candidates: Paginated<CandidateRow>;
     subjectOptions: Array<{ id: number; code: string; name: string }>;
     instructorOptions: InstructorOption[];
-    can: { manageAssignments: boolean; viewCandidates: boolean };
+    can: { manageAssignments: boolean; viewCandidates: boolean; configureGrading: boolean };
 }
 
 export default function ClassShow({ classBatch, offerings, candidates, subjectOptions, instructorOptions, can }: ClassShowProps) {
@@ -94,6 +98,7 @@ export default function ClassShow({ classBatch, offerings, candidates, subjectOp
                                         offering={offering}
                                         instructorOptions={instructorOptions}
                                         canManageAssignments={can.manageAssignments}
+                                        canConfigureGrading={can.configureGrading}
                                     />
                                 ))}
                             </ul>
@@ -193,10 +198,12 @@ interface OfferingItemProps {
     offering: Offering;
     instructorOptions: InstructorOption[];
     canManageAssignments: boolean;
+    canConfigureGrading: boolean;
 }
 
-function OfferingItem({ classBatch, offering, instructorOptions, canManageAssignments }: OfferingItemProps) {
+function OfferingItem({ classBatch, offering, instructorOptions, canManageAssignments, canConfigureGrading }: OfferingItemProps) {
     const { subject, instructors } = offering;
+    const hasAssessments = offering.assessmentCount > 0;
     const assignedIds = new Set(instructors.map((instructor) => instructor.id));
     const availableInstructors = instructorOptions.filter((option) => !assignedIds.has(option.id));
 
@@ -210,26 +217,56 @@ function OfferingItem({ classBatch, offering, instructorOptions, canManageAssign
                         {!subject.isActive && ' · Subject is inactive'}
                     </p>
                 </div>
-                <ConfirmAction
-                    href={routes.classes.removeSubject(classBatch.id, offering.id)}
-                    method="delete"
-                    ariaLabel={`Remove ${subject.name} from ${classBatch.name}`}
-                    icon={<Trash2 className="size-4" aria-hidden="true" />}
-                    title="Remove subject?"
-                    description={
-                        <>
-                            <p>
-                                {subject.name} will be removed from {classBatch.name}.
-                            </p>
-                            {instructors.length > 0 && (
-                                <p>Its instructor assignments ({instructors.map((instructor) => instructor.name).join(', ')}) will also be removed.</p>
-                            )}
-                        </>
-                    }
-                    confirmLabel="Remove Subject"
-                >
-                    Remove
-                </ConfirmAction>
+                <div className="flex flex-wrap items-center gap-1">
+                    {canConfigureGrading && (
+                        <ButtonLink
+                            href={routes.classes.grading(classBatch.id, offering.id)}
+                            variant="ghost"
+                            size="sm"
+                            icon={<SlidersHorizontal className="size-4" aria-hidden="true" />}
+                            aria-label={`Grading setup for ${subject.name}`}
+                        >
+                            Grading Setup
+                        </ButtonLink>
+                    )}
+                    <ConfirmAction
+                        href={routes.classes.removeSubject(classBatch.id, offering.id)}
+                        method="delete"
+                        ariaLabel={`Remove ${subject.name} from ${classBatch.name}`}
+                        icon={<Trash2 className="size-4" aria-hidden="true" />}
+                        disabled={hasAssessments}
+                        title="Remove subject?"
+                        description={
+                            <>
+                                <p>
+                                    {subject.name} will be removed from {classBatch.name}.
+                                </p>
+                                {instructors.length > 0 && (
+                                    <p>Its instructor assignments ({instructors.map((instructor) => instructor.name).join(', ')}) will also be removed.</p>
+                                )}
+                                {offering.grading.length > 0 && <p>Its grading setup will also be removed.</p>}
+                            </>
+                        }
+                        confirmLabel="Remove Subject"
+                    >
+                        Remove
+                    </ConfirmAction>
+                </div>
+            </div>
+
+            <div>
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-subtle">Grading</p>
+                {offering.grading.length === 0 ? (
+                    <p className="text-sm text-ink-muted">Not set up yet. Instructors can create assessments once the categories and weights are set.</p>
+                ) : (
+                    <WeightSummary categories={offering.grading} />
+                )}
+                {hasAssessments && (
+                    <p className="mt-1.5 text-sm text-ink-muted">
+                        {offering.assessmentCount} {offering.assessmentCount === 1 ? 'assessment' : 'assessments'} recorded. This subject can no longer be
+                        removed from the {terms.classBatch.singular.toLowerCase()}.
+                    </p>
+                )}
             </div>
 
             <div>

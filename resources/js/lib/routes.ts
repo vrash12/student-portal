@@ -43,6 +43,7 @@ export const routes = {
         update: (classId: number) => `/classes/${classId}`,
         addSubject: (classId: number) => `/classes/${classId}/subjects`,
         removeSubject: (classId: number, classSubjectId: number) => `/classes/${classId}/subjects/${classSubjectId}`,
+        grading: (classId: number, classSubjectId: number) => `/classes/${classId}/subjects/${classSubjectId}/grading`,
     },
     instructors: {
         index: () => '/instructors',
@@ -57,6 +58,20 @@ export const routes = {
             index: () => '/my-classes',
             show: (classId: number) => `/my-classes/${classId}`,
         },
+        gradebook: (classId: number, classSubjectId: number) => `/my-classes/${classId}/subjects/${classSubjectId}`,
+        assessments: {
+            create: (classId: number, classSubjectId: number) => `/my-classes/${classId}/subjects/${classSubjectId}/assessments/create`,
+            store: (classId: number, classSubjectId: number) => `/my-classes/${classId}/subjects/${classSubjectId}/assessments`,
+        },
+    },
+    assessments: {
+        show: (assessmentId: number) => `/assessments/${assessmentId}`,
+        edit: (assessmentId: number) => `/assessments/${assessmentId}/edit`,
+        update: (assessmentId: number) => `/assessments/${assessmentId}`,
+        destroy: (assessmentId: number) => `/assessments/${assessmentId}`,
+        finalize: (assessmentId: number) => `/assessments/${assessmentId}/finalize`,
+        scores: (assessmentId: number) => `/assessments/${assessmentId}/scores`,
+        corrections: (assessmentId: number) => `/assessments/${assessmentId}/corrections`,
     },
     candidates: {
         index: () => '/candidates',

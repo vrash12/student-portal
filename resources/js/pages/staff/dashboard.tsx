@@ -4,9 +4,12 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { MetricCard } from '@/components/ui/metric-card';
 import { PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { RowAction } from '@/components/ui/table';
+import { formatCalendarDate } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
+import type { StatusValue } from '@/types/grading';
 
 interface RoleAccountCount {
     code: string;
@@ -16,15 +19,27 @@ interface RoleAccountCount {
 
 interface TeachingAssignment {
     id: number;
+    /** Identifies the subject's gradebook in this class. */
+    classSubjectId: number;
     subject: { code: string; name: string };
     classBatch: { id: number; name: string };
     enrolledCount: number;
+}
+
+interface UpcomingAssessment {
+    id: number;
+    title: string;
+    assessedOn: string;
+    subject: string;
+    classBatch: string;
+    status: StatusValue;
 }
 
 interface TeachingOverview {
     period: { id: number; name: string } | null;
     assignments: TeachingAssignment[];
     totals: { subjects: number; classes: number; enrolledCandidates: number };
+    upcomingAssessments: UpcomingAssessment[];
 }
 
 interface DashboardProps {
@@ -54,8 +69,8 @@ export default function Dashboard({ teaching, showAcademicOverview, accountSumma
                         <EmptyState
                             icon={ChartColumn}
                             headingLevel="h3"
-                            title="Academic monitoring is not set up yet"
-                            description="Candidate standings, at-risk alerts, and upcoming assessments will appear here once grades are recorded in the system."
+                            title="Academic monitoring is not available yet"
+                            description="Candidate standings and at-risk alerts will appear here once passing and warning thresholds are set up for grading."
                         />
                     </Panel>
                 )}
@@ -134,12 +149,20 @@ function TeachingSection({ teaching }: { teaching: TeachingOverview }) {
                                             <span className="tabular-nums">{assignment.enrolledCount}</span> enrolled
                                         </p>
                                     </div>
-                                    <RowAction
-                                        href={routes.teaching.classes.show(assignment.classBatch.id)}
-                                        label={`View ${singular} ${assignment.classBatch.name}`}
-                                    >
-                                        View {singular}
-                                    </RowAction>
+                                    <div className="flex flex-wrap gap-1">
+                                        <RowAction
+                                            href={routes.teaching.gradebook(assignment.classBatch.id, assignment.classSubjectId)}
+                                            label={`Gradebook for ${assignment.subject.name}, ${assignment.classBatch.name}`}
+                                        >
+                                            Gradebook
+                                        </RowAction>
+                                        <RowAction
+                                            href={routes.teaching.classes.show(assignment.classBatch.id)}
+                                            label={`View ${singular} ${assignment.classBatch.name}`}
+                                        >
+                                            View {singular}
+                                        </RowAction>
+                                    </div>
                                 </li>
                             ))}
                         </ul>
@@ -152,20 +175,53 @@ function TeachingSection({ teaching }: { teaching: TeachingOverview }) {
                             icon={BellRing}
                             headingLevel="h4"
                             title="Academic alerts are not available yet"
-                            description="Candidates who are at risk or failing in your subjects will be listed here once grades are recorded."
+                            description="Candidates who are at risk or failing in your subjects will be listed here once passing and warning thresholds are set up."
                         />
                     </Panel>
-                    <Panel title="Upcoming Assessments" headingLevel="h3">
-                        <EmptyState
-                            icon={CalendarClock}
-                            headingLevel="h4"
-                            title="Upcoming assessments are not available yet"
-                            description="Upcoming quizzes and examinations for your subjects will be listed here once assessments are set up."
-                        />
-                    </Panel>
+                    <UpcomingAssessments assessments={teaching.upcomingAssessments} />
                 </div>
             </div>
         </section>
+    );
+}
+
+function UpcomingAssessments({ assessments }: { assessments: UpcomingAssessment[] }) {
+    return (
+        <Panel
+            title="Upcoming Assessments"
+            description="Dated assessments of your subjects, from today."
+            headingLevel="h3"
+            bodyClassName={assessments.length === 0 ? undefined : 'p-0'}
+        >
+            {assessments.length === 0 ? (
+                <EmptyState
+                    icon={CalendarClock}
+                    headingLevel="h4"
+                    title="No upcoming assessments"
+                    description="Assessments with a date from today onward appear here. Set a date when you create an assessment."
+                />
+            ) : (
+                <ul className="divide-y divide-line">
+                    {assessments.map((assessment) => (
+                        <li key={assessment.id} className="flex items-start justify-between gap-3 px-5 py-3">
+                            <div className="min-w-0">
+                                <p className="font-medium text-ink">{assessment.title}</p>
+                                <p className="text-sm text-ink-muted">
+                                    {assessment.subject} · {assessment.classBatch}
+                                </p>
+                                <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-ink">
+                                    {formatCalendarDate(assessment.assessedOn)}
+                                    <StatusBadge tone={assessment.status.tone}>{assessment.status.label}</StatusBadge>
+                                </p>
+                            </div>
+                            <RowAction href={routes.assessments.show(assessment.id)} label={`Open ${assessment.title}, ${assessment.subject}`}>
+                                Open
+                            </RowAction>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </Panel>
     );
 }
 

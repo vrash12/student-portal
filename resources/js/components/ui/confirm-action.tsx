@@ -17,6 +17,7 @@ interface ConfirmActionProps {
     tone?: 'danger' | 'primary';
     method: 'post' | 'delete';
     href: string;
+    disabled?: boolean;
 }
 
 /**
@@ -35,6 +36,7 @@ export function ConfirmAction({
     tone = 'danger',
     method,
     href,
+    disabled = false,
 }: ConfirmActionProps) {
     const [open, setOpen] = useState(false);
     const [processing, setProcessing] = useState(false);
@@ -53,7 +55,7 @@ export function ConfirmAction({
 
     return (
         <>
-            <Button variant={variant} size={size} icon={icon} aria-label={ariaLabel} onClick={() => setOpen(true)}>
+            <Button variant={variant} size={size} icon={icon} aria-label={ariaLabel} disabled={disabled} onClick={() => setOpen(true)}>
                 {children}
             </Button>
             <ConfirmDialog

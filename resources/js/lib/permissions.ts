@@ -20,6 +20,8 @@ export const Permission = {
     ViewAllCandidates: 'candidates.view_all',
     ManageCandidates: 'candidates.manage',
     TeachClasses: 'classes.teach',
+    ConfigureGrading: 'grading.configure',
+    RecordGrades: 'grades.record',
 } as const;
 
 export type PermissionCode = (typeof Permission)[keyof typeof Permission];

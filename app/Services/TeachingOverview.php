@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\CandidateStatus;
 use App\Models\AcademicPeriod;
+use App\Models\Assessment;
 use App\Models\Candidate;
 use App\Models\ClassBatch;
 use App\Models\InstructorAssignment;
@@ -18,11 +19,14 @@ use Illuminate\Support\Collection;
  */
 final class TeachingOverview
 {
+    private const UPCOMING_ASSESSMENTS_LIMIT = 5;
+
     /**
      * @return array{
      *     period: array{id: int, name: string}|null,
-     *     assignments: list<array{id: int, subject: array{code: string, name: string}, classBatch: array{id: int, name: string}, enrolledCount: int}>,
-     *     totals: array{subjects: int, classes: int, enrolledCandidates: int}
+     *     assignments: list<array{id: int, classSubjectId: int, subject: array{code: string, name: string}, classBatch: array{id: int, name: string}, enrolledCount: int}>,
+     *     totals: array{subjects: int, classes: int, enrolledCandidates: int},
+     *     upcomingAssessments: list<array{id: int, title: string, assessedOn: string, subject: string, classBatch: string, status: array{value: string, label: string, tone: string}}>
      * }
      */
     public function dashboard(User $instructor): array
@@ -30,7 +34,12 @@ final class TeachingOverview
         $period = AcademicPeriod::query()->active()->first();
 
         if ($period === null) {
-            return ['period' => null, 'assignments' => [], 'totals' => ['subjects' => 0, 'classes' => 0, 'enrolledCandidates' => 0]];
+            return [
+                'period' => null,
+                'assignments' => [],
+                'totals' => ['subjects' => 0, 'classes' => 0, 'enrolledCandidates' => 0],
+                'upcomingAssessments' => [],
+            ];
         }
 
         $assignments = $this->assignmentsIn($instructor, $period->id);
@@ -41,6 +50,7 @@ final class TeachingOverview
             'period' => ['id' => $period->id, 'name' => $period->name],
             'assignments' => $assignments->map(fn (InstructorAssignment $assignment): array => [
                 'id' => $assignment->id,
+                'classSubjectId' => $assignment->class_subject_id,
                 'subject' => [
                     'code' => $assignment->classSubject->subject->code,
                     'name' => $assignment->classSubject->subject->name,
@@ -58,7 +68,45 @@ final class TeachingOverview
                 // Each candidate belongs to one class, so summing distinct classes counts distinct candidates.
                 'enrolledCandidates' => (int) $classIds->sum(fn (int $classId): int => $enrolled->get($classId, 0)),
             ],
+            'upcomingAssessments' => $this->upcomingAssessments(
+                $assignments->map(fn (InstructorAssignment $assignment): int => $assignment->class_subject_id)->all(),
+            ),
         ];
+    }
+
+    /**
+     * The next dated assessments (today or later, in the institution's
+     * timezone) of the given class subjects.
+     *
+     * @param  list<int>  $classSubjectIds
+     * @return list<array{id: int, title: string, assessedOn: string, subject: string, classBatch: string, status: array{value: string, label: string, tone: string}}>
+     */
+    private function upcomingAssessments(array $classSubjectIds): array
+    {
+        if ($classSubjectIds === []) {
+            return [];
+        }
+
+        $today = now()->setTimezone((string) config('institution.timezone'))->toDateString();
+
+        return Assessment::query()
+            ->with(['classSubject.subject:id,name', 'classSubject.classBatch:id,name'])
+            ->whereIn('class_subject_id', $classSubjectIds)
+            ->where('assessed_on', '>=', $today)
+            ->orderBy('assessed_on')
+            ->orderBy('title')
+            ->limit(self::UPCOMING_ASSESSMENTS_LIMIT)
+            ->get()
+            ->map(fn (Assessment $assessment): array => [
+                'id' => $assessment->id,
+                'title' => $assessment->title,
+                'assessedOn' => $assessment->assessed_on->toDateString(),
+                'subject' => $assessment->classSubject->subject->name,
+                'classBatch' => $assessment->classSubject->classBatch->name,
+                'status' => $assessment->status->toArray(),
+            ])
+            ->values()
+            ->all();
     }
 
     /**
@@ -115,9 +163,10 @@ final class TeachingOverview
     }
 
     /**
-     * Subjects of one class that the instructor teaches.
+     * Subjects of one class that the instructor teaches, with the class
+     * subject id that identifies each gradebook.
      *
-     * @return list<array{code: string, name: string}>
+     * @return list<array{classSubjectId: int, code: string, name: string}>
      */
     public function subjectsTaughtIn(User $instructor, ClassBatch $classBatch): array
     {
@@ -126,6 +175,7 @@ final class TeachingOverview
             ->whereHas('classSubject', fn (Builder $offerings) => $offerings->where('class_batch_id', $classBatch->id))
             ->get()
             ->map(fn (InstructorAssignment $assignment): array => [
+                'classSubjectId' => $assignment->class_subject_id,
                 'code' => $assignment->classSubject->subject->code,
                 'name' => $assignment->classSubject->subject->name,
             ])

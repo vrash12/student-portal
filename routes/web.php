@@ -6,10 +6,14 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Portal\PortalHomeController;
 use App\Http\Controllers\Staff\AcademicPeriodController;
 use App\Http\Controllers\Staff\AccountPasswordController;
+use App\Http\Controllers\Staff\AssessmentController;
+use App\Http\Controllers\Staff\AssessmentScoreController;
 use App\Http\Controllers\Staff\CandidateController;
 use App\Http\Controllers\Staff\ClassBatchController;
 use App\Http\Controllers\Staff\ClassSubjectController;
 use App\Http\Controllers\Staff\DashboardController;
+use App\Http\Controllers\Staff\GradebookController;
+use App\Http\Controllers\Staff\GradingSchemeController;
 use App\Http\Controllers\Staff\InstructorAssignmentController;
 use App\Http\Controllers\Staff\InstructorController;
 use App\Http\Controllers\Staff\RoleController;
@@ -83,14 +87,46 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::delete('instructor-assignments/{instructorAssignment}', [InstructorAssignmentController::class, 'destroy'])->name('instructor-assignments.destroy');
         });
 
-        // Teaching staff: read-only view of the classes they teach.
-        Route::middleware('can:'.Permission::TeachClasses->value)
-            ->prefix('my-classes')
-            ->name('teaching.classes.')
-            ->group(function (): void {
-                Route::get('/', [TeachingClassController::class, 'index'])->name('index');
-                Route::get('{classBatch}', [TeachingClassController::class, 'show'])->name('show')->can('viewTeaching', 'classBatch');
+        // Grading setup of a class subject (administrative).
+        Route::get('classes/{classBatch}/subjects/{classSubject}/grading', [GradingSchemeController::class, 'edit'])
+            ->name('classes.grading.edit')
+            ->scopeBindings()
+            ->can('configureGrading', 'classSubject');
+        Route::put('classes/{classBatch}/subjects/{classSubject}/grading', [GradingSchemeController::class, 'update'])
+            ->name('classes.grading.update')
+            ->scopeBindings()
+            ->can('configureGrading', 'classSubject');
+
+        // Teaching staff: the classes they teach, and grading of their subjects.
+        Route::middleware('can:'.Permission::TeachClasses->value)->group(function (): void {
+            Route::prefix('my-classes')->name('teaching.')->group(function (): void {
+                Route::get('/', [TeachingClassController::class, 'index'])->name('classes.index');
+                Route::get('{classBatch}', [TeachingClassController::class, 'show'])->name('classes.show')->can('viewTeaching', 'classBatch');
+
+                Route::get('{classBatch}/subjects/{classSubject}', [GradebookController::class, 'show'])
+                    ->name('gradebooks.show')
+                    ->scopeBindings()
+                    ->can('viewGradebook', 'classSubject');
+                Route::get('{classBatch}/subjects/{classSubject}/assessments/create', [AssessmentController::class, 'create'])
+                    ->name('assessments.create')
+                    ->scopeBindings()
+                    ->can('recordGrades', 'classSubject');
+                Route::post('{classBatch}/subjects/{classSubject}/assessments', [AssessmentController::class, 'store'])
+                    ->name('assessments.store')
+                    ->scopeBindings()
+                    ->can('recordGrades', 'classSubject');
             });
+
+            Route::get('assessments/{assessment}', [AssessmentController::class, 'show'])->name('assessments.show')->can('view', 'assessment');
+            Route::middleware('can:manage,assessment')->group(function (): void {
+                Route::get('assessments/{assessment}/edit', [AssessmentController::class, 'edit'])->name('assessments.edit');
+                Route::put('assessments/{assessment}', [AssessmentController::class, 'update'])->name('assessments.update');
+                Route::delete('assessments/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
+                Route::post('assessments/{assessment}/finalize', [AssessmentController::class, 'finalize'])->name('assessments.finalize');
+                Route::put('assessments/{assessment}/scores', [AssessmentScoreController::class, 'update'])->name('assessments.scores.update');
+                Route::post('assessments/{assessment}/corrections', [AssessmentScoreController::class, 'correct'])->name('assessments.corrections.store');
+            });
+        });
 
         // Candidates.
         Route::get('candidates', [CandidateController::class, 'index'])->name('candidates.index')->can('viewAny', Candidate::class);

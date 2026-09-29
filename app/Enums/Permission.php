@@ -27,6 +27,8 @@ enum Permission: string
     case ViewAllCandidates = 'candidates.view_all';
     case ManageCandidates = 'candidates.manage';
     case TeachClasses = 'classes.teach';
+    case ConfigureGrading = 'grading.configure';
+    case RecordGrades = 'grades.record';
 
     public function label(): string
     {
@@ -43,6 +45,8 @@ enum Permission: string
             self::ViewAllCandidates => 'View all candidates',
             self::ManageCandidates => 'Manage candidate records',
             self::TeachClasses => 'Teach assigned classes',
+            self::ConfigureGrading => 'Configure grading rules',
+            self::RecordGrades => 'Record grades for assigned subjects',
         };
     }
 
@@ -61,6 +65,8 @@ enum Permission: string
             self::ViewAllCandidates => 'View every candidate record, regardless of class assignment.',
             self::ManageCandidates => 'Create and update candidate records and their sign-in accounts.',
             self::TeachClasses => 'Can be assigned to teach subjects, and view the classes and candidates they teach.',
+            self::ConfigureGrading => 'Set the grading categories and weights used for each subject of a class.',
+            self::RecordGrades => 'Create assessments, record and finalize scores, and correct finalized scores for the subjects they are assigned to teach.',
         };
     }
 
@@ -73,6 +79,7 @@ enum Permission: string
             self::ManageInstructorAssignments => 'Academic Structure',
             self::ViewAllCandidates, self::ManageCandidates => 'Candidates',
             self::TeachClasses => 'Teaching',
+            self::ConfigureGrading, self::RecordGrades => 'Grading',
         };
     }
 }

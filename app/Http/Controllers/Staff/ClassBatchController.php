@@ -6,12 +6,14 @@ use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\ClassBatchRequest;
 use App\Models\AcademicPeriod;
+use App\Models\AssessmentCategory;
 use App\Models\Candidate;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
 use App\Models\Subject;
 use App\Services\ClassBatchService;
 use App\Support\AcademicOptions;
+use App\Support\DecimalValue;
 use App\Support\QueryFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -76,8 +78,10 @@ class ClassBatchController extends Controller
     {
         $classBatch->load([
             'academicPeriod',
+            'classSubjects' => fn ($offerings) => $offerings->withCount('assessments'),
             'classSubjects.subject',
             'classSubjects.instructorAssignments.instructor',
+            'classSubjects.assessmentCategories',
         ]);
 
         $offerings = $classBatch->classSubjects->sortBy(fn (ClassSubject $offering): string => $offering->subject->name);
@@ -121,6 +125,14 @@ class ClassBatchController extends Controller
                     ])
                     ->values()
                     ->all(),
+                'grading' => $offering->assessmentCategories
+                    ->map(fn (AssessmentCategory $category): array => [
+                        'name' => $category->name,
+                        'weight' => DecimalValue::display($category->weight),
+                    ])
+                    ->values()
+                    ->all(),
+                'assessmentCount' => (int) $offering->assessments_count,
             ])->values()->all(),
             'candidates' => $candidates,
             'subjectOptions' => Subject::query()
@@ -134,6 +146,7 @@ class ClassBatchController extends Controller
             'can' => [
                 'manageAssignments' => $request->user()->hasPermission(Permission::ManageInstructorAssignments),
                 'viewCandidates' => $request->user()->can('viewAny', Candidate::class),
+                'configureGrading' => $request->user()->hasPermission(Permission::ConfigureGrading),
             ],
         ]);
     }

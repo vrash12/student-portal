@@ -115,6 +115,19 @@ class User extends Authenticatable
     }
 
     /**
+     * Whether this user currently teaches the given subject of a class.
+     * Grade access is scoped by this.
+     */
+    public function teachesOffering(int $classSubjectId): bool
+    {
+        if (! $this->canTeach()) {
+            return false;
+        }
+
+        return $this->teachingAssignments()->where('class_subject_id', $classSubjectId)->exists();
+    }
+
+    /**
      * Accounts whose role makes them teaching staff (active or not).
      *
      * @param  Builder<User>  $query

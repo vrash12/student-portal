@@ -10,6 +10,7 @@ use App\Http\Requests\Candidates\UpdateCandidateRequest;
 use App\Models\Candidate;
 use App\Models\ClassSubject;
 use App\Services\CandidateService;
+use App\Services\Grading\GradeCalculationService;
 use App\Support\AcademicOptions;
 use App\Support\QueryFilters;
 use Illuminate\Database\Eloquent\Builder;
@@ -77,17 +78,16 @@ class CandidateController extends Controller
         return redirect()->route('candidates.show', $candidate);
     }
 
-    public function show(Request $request, Candidate $candidate): Response
+    public function show(Request $request, Candidate $candidate, GradeCalculationService $grades): Response
     {
         $candidate->load(['user', 'classBatch.academicPeriod']);
         $viewer = $request->user();
 
         // Viewers without "view all" reach this page by teaching the candidate's
-        // class, so they only see the subjects they teach there. Later
-        // milestones add per-subject grades to this list.
+        // class, so they only see the subjects (and grades) they teach there.
         $seesAllSubjects = $viewer->hasPermission(Permission::ViewAllCandidates);
 
-        $subjects = $candidate->classBatch === null ? [] : ClassSubject::query()
+        $offerings = $candidate->classBatch === null ? collect() : ClassSubject::query()
             ->where('class_batch_id', $candidate->class_batch_id)
             ->when(! $seesAllSubjects, fn (Builder $offerings) => $offerings->whereHas(
                 'instructorAssignments',
@@ -96,12 +96,31 @@ class CandidateController extends Controller
             ->with(['subject', 'instructors'])
             ->get()
             ->sortBy(fn (ClassSubject $offering): string => $offering->subject->name)
+            ->values();
+
+        $subjects = $offerings
             ->map(fn (ClassSubject $offering): array => [
                 'code' => $offering->subject->code,
                 'name' => $offering->subject->name,
                 'instructors' => $offering->instructors->pluck('name')->sort()->values()->all(),
             ])
-            ->values()
+            ->all();
+
+        // One batched calculation for all subjects, and one lookup of the
+        // subjects the viewer teaches (the gradebook access rule).
+        $subjectGrades = $grades->forCandidate($candidate->id, $offerings->pluck('id')->all());
+        $taughtOfferingIds = $viewer->canTeach()
+            ? $viewer->teachingAssignments()->pluck('class_subject_id')->map(fn (mixed $id): int => (int) $id)->all()
+            : [];
+
+        $performance = $offerings
+            ->map(fn (ClassSubject $offering): array => [
+                'classSubjectId' => $offering->id,
+                'code' => $offering->subject->code,
+                'name' => $offering->subject->name,
+                'result' => $subjectGrades[$offering->id]->toArray(),
+                'canOpenGradebook' => in_array($offering->id, $taughtOfferingIds, true),
+            ])
             ->all();
 
         $canManage = $viewer->can('update', $candidate);
@@ -119,6 +138,7 @@ class CandidateController extends Controller
                 'updatedAt' => $candidate->updated_at?->toIso8601String(),
             ],
             'subjects' => $subjects,
+            'performance' => $performance,
             'canEdit' => $canManage,
             // Instructors return to the class they teach, not the full candidate list.
             'canBrowseCandidates' => $viewer->can('viewAny', Candidate::class),

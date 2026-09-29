@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Enums\Permission;
 use App\Models\AcademicPeriod;
+use App\Models\Assessment;
+use App\Models\AssessmentCategory;
+use App\Models\AssessmentScore;
 use App\Models\Candidate;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
@@ -57,6 +60,9 @@ class AppServiceProvider extends ServiceProvider
             'class_subject' => ClassSubject::class,
             'instructor_assignment' => InstructorAssignment::class,
             'candidate' => Candidate::class,
+            'assessment_category' => AssessmentCategory::class,
+            'assessment' => Assessment::class,
+            'assessment_score' => AssessmentScore::class,
         ]);
     }
 

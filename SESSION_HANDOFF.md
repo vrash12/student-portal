@@ -93,12 +93,12 @@ Always distinguish:
 
 ## Current Milestone
 
-**Milestones 0, 1, 2, and 3: complete.**
-**Next: Milestone 4 (Grade Management): not started.**
+**Milestones 0–4: complete.**
+**Next: Milestone 5 (Grade Calculation Engine): the engine exists; thresholds and academic standing are not started.**
 
 ## Current Status
 
-Foundation, sign-in, roles and permissions, staff accounts, academic structure, candidate records, organization branding, and the instructor dashboard with My Classes are implemented. The full test suite passes (155 tests, 1,024 assertions).
+Foundation, sign-in, roles and permissions, staff accounts, academic structure, candidate records, organization branding, the instructor dashboard with My Classes, and grade management (grading setup, assessments, score entry, finalization, corrections with reasons, change history, and the grade calculation engine) are implemented. The full test suite passes (335 tests, 3,379 assertions).
 
 ## Last Updated
 
@@ -129,96 +129,78 @@ Foundation, sign-in, roles and permissions, staff accounts, academic structure, 
 
 ### Milestone 2 — Core academic data
 
-- [x] Academic periods: list, create, edit, set active (confirmation dialog). Only one active period, enforced by the database
-- [x] Subjects: list with search/status filter, create, edit, activate/deactivate
-- [x] Classes / batches: list by period (active period by default), create (period fixed at creation), rename, detail page
-- [x] Subject offerings: add active subjects to a class, remove (also removes its instructor assignments, with confirmation)
-- [x] Instructor assignments: assign/remove from the class page and from the instructor page; only active teaching staff are eligible
-- [x] Instructors: directory of teaching staff with assignment counts, detail page with assignments
-- [x] Candidates: list with search (number, name, full name), class and status filters; create (record + sign-in account in one transaction); edit (details, class, status, account active, password reset); profile (details, account, subjects with instructors)
+- [x] Academic periods (only one active, enforced by the database), subjects, classes / batches, subject offerings, instructor assignments, instructors directory, candidates (record + sign-in account in one transaction)
 - [x] Demo data: `DemoAcademicSeeder` (period, Subjects 1–4, Sample Batch A/B, 8 assignments, candidates `2026-0001`…`2026-0010`)
-- [x] Verified in the browser: classes list, class detail, assigning an instructor, candidate search and profile, permission-aware sidebar
 
 ### Milestone 3 — Instructor dashboard
 
-- [x] Dashboard sections by permission: `teaching` (classes.teach), `showAcademicOverview` (candidates.view_all), `accountSummary` (users.view)
-- [x] Teaching overview (`App\Services\TeachingOverview`): active-period assignments, metrics (distinct subjects, classes, enrolled candidates), My Subjects list with links
-- [x] My Classes: `/my-classes` (period selector limited to periods the instructor taught in, active period by default, period always named) and `/my-classes/{classBatch}` (subjects they teach there, candidates with search/status filter)
-- [x] Instructor access to candidate profiles for classes they teach (`CandidatePolicy::view` → `User::teachesClass`); account panel hidden, only the subjects they teach are listed, breadcrumbs via My Classes, sidebar highlights My Classes
-- [x] Honest "not available yet" panels for Academic Alerts and Upcoming Assessments
+- [x] Dashboard sections by permission; teaching overview (`App\Services\TeachingOverview`); My Classes (`/my-classes`, `/my-classes/{classBatch}`); instructor access to candidate profiles of classes they teach
 - [x] Organization branding: Philippine Army Officer Candidate School name and seal (configuration only)
-- [x] Independent review (5 reviewers + 5 skeptics + completeness check): 15 confirmed findings, all fixed with tests
-- [x] Verified in the browser at desktop and tablet widths: dashboard, My Classes, class view, candidate profile, sign-in page with seal
 
-### Milestone 3 items carried forward (must be added when the modules exist)
+### Milestone 4 — Grade management
 
-- Quick navigation from the instructor dashboard to grades (Milestone 4), question bank (Milestone 7), and examinations (Milestone 8). Not added now because links to missing modules are forbidden (AGENTS.md §73).
-- Real Upcoming Assessments (Milestones 4/8) and Academic Alerts (at-risk/failing, Milestones 5–6) on the instructor dashboard, replacing the "not available yet" panels. Keep alerts above the fold at tablet width.
+- [x] Permissions `grading.configure` (Super Admin, Academic Admin) and `grades.record` (Instructor, only for assigned subjects)
+- [x] Grading setup per class subject (admin): categories and weights, sum exactly 100, names unique (case- and accent-insensitive), categories with assessments cannot be removed, reason required once any assessment is finalized, audit with previous/new categories (with ids) and reason. Page: Classes → class → subject → **Grading Setup**
+- [x] Gradebook per class subject (instructor): grading components, assessments, candidate grades (paginated 50, search), per-candidate grade breakdown dialog. Reached from the dashboard (Gradebook link), My Classes class page, and the candidate profile
+- [x] Assessments: create/edit/delete draft, finalize (irreversible), title unique per subject, category of the same subject (also a composite FK), max score > 0, optional date
+- [x] Draft score sheet: batch save of changed rows only, atomic, optimistic conflict detection (each entry carries the value it started from; a row changed by another user must be resolved with Keep My Entry / Use Saved Value), comments, unsaved-change warning, entries kept in history state (Back/Forward), connection-error message
+- [x] Finalized scores: read-only; **Correct** dialog requires a reason; conflict detection
+- [x] Grade change history: `assessment_score_revisions` (kind recorded/updated/corrected, previous and new score, comment, reason, actor, time) + audit entries; Change History panel on the assessment page
+- [x] `GradeCalculationService` (single authority): finalized assessments only; category % = points earned / points possible; weighted score; current grade over the weight assessed so far; missing scores never counted as zero; `GradeStatus` (Not Set Up, No Grades Yet, Missing Scores, In Progress, Complete); half-up rounding at the end
+- [x] Candidate profile Academic Performance: current grade and grade status per visible subject (batched queries)
+- [x] Dashboard: Gradebook quick links and real Upcoming Assessments (dated today or later in the institution timezone, max 5)
+- [x] A subject cannot be removed from a class once it has assessments; removal also deletes its grading setup
+- [x] Demo grading data (`DemoGradingSeeder`): sample scheme, 2 finalized assessments, 1 partly scored draft, 1 upcoming examination per taught subject
+- [x] Independent review: 4 parallel test writers (156 tests) + 3 reviewers + 3 adversarial verifiers. 3 test-found bugs and 18 findings, all confirmed and fixed with regression tests (`GradingReviewRegressionTest`)
+- [x] Verified in the browser: dashboard, gradebook (grades checked by hand), score sheet (invalid row, save, change, conflict resolution), finalization, correction with reason, breakdown, admin class page, grading setup validation, admin profile, tablet width
+
+### Carried forward
+
+- Quick navigation from the instructor dashboard to the question bank (Milestone 7) and examinations (Milestone 8), once those modules exist (AGENTS.md §73).
+- Academic Alerts (at-risk/failing counts) on the instructor dashboard and the administrator Academic Overview: still honest "not available yet" panels; they need academic standing (Milestone 5) and monitoring (Milestone 6).
 
 ---
 
 # Work In Progress
 
-None. There is no partially completed code.
+None. Milestone 4 is complete and committed.
 
 ---
 
 # Next Recommended Task
 
-Start **Milestone 4 (Grade Management)**. Read its deliverables in MILESTONES.md and the grading rules in AGENTS.md §14–15 and §36 first. Suggested order:
+Start **Milestone 5 (Grade Calculation Engine)**. `GradeCalculationService` already covers weighting, missing scores, and final grade; what is missing is passing/warning thresholds and academic standing. Planned design (confirm against AGENTS.md §15–17 and MILESTONES.md Milestone 5):
 
-1. Data model: assessment categories with configurable weights per class subject (no hardcoded percentages), assessments (belong to a class subject; maximum score; category), and candidate scores (raw score, CHECK 0 ≤ score ≤ maximum). Draft vs finalized state.
-2. Permissions: add, for example, `grades.encode_assigned` (instructors, scoped by assignment) and `grades.manage_all` (administrators), plus the matching `SystemRole` defaults, `resources/js/lib/permissions.ts` entries, and navigation. Rank rule still applies.
-3. Grade entry screen from My Classes (instructor) with server-side validation; percentages and weighted scores calculated only in the backend (the Milestone 5 `GradeCalculationService`; do not duplicate formulas in controllers or React).
-4. Grade change history: previous value, new value, actor, time, and a required reason when changing a finalized grade (AGENTS.md §36). Use `AuditLogger` plus a dedicated history table if needed.
-5. Block removing a subject from a class once it has assessments (`ClassBatchService::removeSubject`).
-6. Add the dashboard's quick link to grades (carried forward from Milestone 3).
-7. Tests: instructors cannot encode grades outside their assignments; invalid scores rejected; finalized grades need a reason; history recorded.
-
-Start by inspecting:
-
-- `app/Models/ClassSubject.php`, `app/Models/InstructorAssignment.php`, `app/Services/TeachingOverview.php`
-- `app/Policies/CandidatePolicy.php`, `app/Policies/ClassBatchPolicy.php`, `app/Models/User.php` (`teachesClass`)
-- `resources/js/pages/staff/teaching/classes/show.tsx` (entry point for instructors)
+1. Thresholds per academic period: `academic_periods.passing_grade` and `academic_periods.warning_grade` (decimal 5,2, both null = not configured; CHECK 0 < passing ≤ warning ≤ 100). Configured by `grading.configure` on a separate page (`/academic-periods/{period}/grading-thresholds`), audited. No hardcoded default: without thresholds, standing shows "not set up". Demo seeder may set demo values.
+2. `AcademicStanding` enum: Passing (grade ≥ warning), At Risk (passing ≤ grade < warning), Failing (grade < passing), Incomplete (missing scores). No standing when there is no grade yet or no thresholds. Provisional grades get a current standing (early warning).
+3. Overall candidate standing = most serious subject standing (Failing > At Risk > Incomplete > Passing). Note: the AGENTS.md §17 example looks average-based; record as needing confirmation.
+4. Show standing in the gradebook (badge column; grade status becomes secondary text), the grade breakdown, and the candidate profile (per subject + overall). Standing is computed on read, so score and threshold changes recalculate it automatically.
+5. Tests: standing boundaries, thresholds validation/authorization/audit, recalculation after score and threshold changes, overall standing.
 
 ---
 
 # Files Recently Changed
 
-Milestone 3 (after the Milestone 2 commit):
+Milestone 4 (earlier milestones: see `git log`):
 
 ```text
-app/Services/TeachingOverview.php (new), app/Policies/ClassBatchPolicy.php (new)
-app/Http/Controllers/Staff/TeachingClassController.php (new), DashboardController.php, CandidateController.php
-app/Models/{User (teachesClass), Candidate (matching scope), ClassBatch (policy)}.php
-app/Policies/CandidatePolicy.php, app/Enums/Permission.php (classes.teach description)
-config/institution.php (favicon_url), resources/views/app.blade.php, .env.example, public/branding/*
-routes/web.php (my-classes)
-resources/js/pages/staff/dashboard.tsx, pages/staff/teaching/classes/{index,show}.tsx (new), pages/staff/candidates/show.tsx
-resources/js/components/ui/{metric-card (new), panel, empty-state}.tsx, layouts/{staff,auth}-layout.tsx
-resources/js/lib/{navigation (activeFor, activeItemHref), routes}.ts
-tests/Feature/Teaching/* (new), tests/Feature/Auth/AreaAccessTest.php
-SESSION_HANDOFF.md
-```
-
-Milestone 2:
-
-```text
-app/Enums/{Permission,SystemRole,AuditAction,CandidateStatus}.php
-app/Models/{AcademicPeriod,Subject,ClassBatch,ClassSubject,InstructorAssignment,Candidate,User,Role}.php
-app/Services/{AcademicPeriodService,SubjectService,ClassBatchService,InstructorAssignmentService,CandidateService,AuditLogger,UserAccountService}.php
-app/Policies/{CandidatePolicy,UserPolicy}.php, app/Rules/GrantableStaffRole.php
-app/Support/{QueryFilters,AcademicOptions}.php
-app/Http/Requests/Academic/*, app/Http/Requests/Candidates/*
-app/Http/Controllers/Staff/{AcademicPeriod,Subject,ClassBatch,ClassSubject,InstructorAssignment,Instructor,Candidate,User,Role}Controller.php
-routes/web.php, app/Providers/AppServiceProvider.php (morph map)
-database/migrations/2026_09_29_000200..000600_*, database/factories/*, database/seeders/{AccessControl,DemoAccounts,DemoAcademic,Database}Seeder.php
-resources/js/lib/{routes,navigation,permissions,terminology,format}.ts
-resources/js/components/ui/{table,filter-bar,form-section,confirm-action,form-field}.tsx
-resources/js/components/{academic,candidates}/*, resources/js/components/users/user-form.tsx
-resources/js/pages/staff/{academic-periods,subjects,classes,instructors,candidates}/*, pages/staff/roles/index.tsx
-tests/Feature/Academic/*, tests/Feature/Candidates/*, tests/TestCase.php, tests/Unit/PermissionCatalogueTest.php
-README.md, SESSION_HANDOFF.md
+app/Enums/{AssessmentStatus,GradeStatus,ScoreRevisionKind}.php (new); Permission, SystemRole, AuditAction
+app/Models/{Assessment,AssessmentCategory,AssessmentScore,AssessmentScoreRevision}.php (new); ClassSubject, Candidate (gradableIn), User (teachesOffering)
+app/Services/Grading/* (new): GradeCalculationService, CategoryWeight, CountedAssessment, CategoryGrade, SubjectGrade,
+    GradingSchemeService, AssessmentService, ScoreRecordingService, Gradebook (read model)
+app/Services/{ClassBatchService (removeSubject), TeachingOverview (upcomingAssessments, classSubjectId)}.php
+app/Policies/{ClassSubjectPolicy,AssessmentPolicy}.php (new)
+app/Http/Requests/Grading/* (new); app/Http/Controllers/Staff/{Gradebook,Assessment,AssessmentScore,GradingScheme}Controller.php (new)
+app/Http/Controllers/Staff/{Candidate (performance), ClassBatch (grading summary), ClassSubject (removal error)}Controller.php
+app/Support/DecimalValue.php (new); app/Providers/AppServiceProvider.php (morph map)
+database/migrations/2026_09_29_000700_create_grading_tables.php; database/seeders/{DemoGradingSeeder (new), DatabaseSeeder}.php
+routes/web.php
+resources/js/pages/staff/teaching/{gradebook/show, assessments/{create,edit,show}}.tsx, pages/staff/classes/grading.tsx (new)
+resources/js/pages/staff/{dashboard, candidates/show, classes/show, teaching/classes/show}.tsx
+resources/js/components/grading/* (new), components/ui/dialog.tsx (new), components/ui/{confirm-action (disabled), table (RowAction nowrap)}.tsx
+resources/js/lib/{routes,permissions,format}.ts, resources/js/types/grading.ts (new)
+tests/Feature/Grading/* (new), tests/Unit/GradeCalculationServiceTest.php (new); AreaAccessTest, TeachingClassTest, PermissionCatalogueTest updated
+.claude/launch.json (second preview config on port 8001), README.md
 ```
 
 ---
@@ -247,6 +229,20 @@ candidates       id, user_id FK unique restrict, candidate_number (unique), firs
                  class_batch_id FK nullable restrict, status, timestamps,
                  index (class_batch_id, status), index (last_name, first_name),
                  CHECK status IN ('enrolled','on_leave','withdrawn','completed')
+
+Milestone 4 (2026_09_29_000700_create_grading_tables):
+assessment_categories  id, class_subject_id FK restrict, name (100), weight decimal(5,2), position, timestamps,
+                 unique (class_subject_id, name), unique (id, class_subject_id), CHECK 0 < weight <= 100
+assessments      id, class_subject_id FK restrict, assessment_category_id, title (150), max_score decimal(6,2),
+                 assessed_on date null, status (draft|finalized), finalized_at, finalized_by FK users, created_by FK users,
+                 timestamps, unique (class_subject_id, title), index (class_subject_id, status), index assessed_on,
+                 composite FK (assessment_category_id, class_subject_id) -> assessment_categories (id, class_subject_id),
+                 CHECK max_score > 0, CHECK status, CHECK finalized <=> finalized_at and finalized_by set
+assessment_scores  id, assessment_id FK restrict, candidate_id FK restrict, score decimal(6,2) null, comment (500) null,
+                 recorded_by FK users, timestamps, unique (assessment_id, candidate_id), index candidate_id,
+                 CHECK score IS NULL OR score >= 0   (score <= max_score is enforced by the service under a row lock)
+assessment_score_revisions  id, assessment_score_id FK restrict, kind (recorded|updated|corrected), previous_score,
+                 new_score, comment, reason, changed_by FK users, created_at; CHECK kind; CHECK corrected => reason
 sessions, cache, cache_locks, jobs, job_batches, failed_jobs   Laravel defaults
 ```
 
@@ -265,13 +261,23 @@ POST /academic-periods/{academicPeriod}/activate                 academic_period
      /subjects (index, create, store, edit, update)              subjects.manage
      /classes (index, create, store, show, edit, update)         class_batches.manage
 POST   /classes/{classBatch}/subjects                            class_batches.manage
-DELETE /classes/{classBatch}/subjects/{classSubject} (scoped)    class_batches.manage
+DELETE /classes/{classBatch}/subjects/{classSubject} (scoped)    class_batches.manage (blocked with assessments)
 GET  /instructors, /instructors/{instructor}                     instructor_assignments.manage
 POST /instructor-assignments, DELETE /instructor-assignments/{instructorAssignment}
      /candidates (index, create, store, show, edit, update)      CandidatePolicy
 GET  /my-classes, /my-classes/{classBatch}        classes.teach; show also ClassBatchPolicy::viewTeaching
 GET  /portal                                      exam_portal.access
      fallback                                     404 inside the web middleware group
+
+Milestone 4:
+GET|PUT /classes/{classBatch}/subjects/{classSubject}/grading              classes.grading.edit|update (scoped; ClassSubjectPolicy::configureGrading)
+GET  /my-classes/{classBatch}/subjects/{classSubject}                      teaching.gradebooks.show (scoped; viewGradebook)
+GET  /my-classes/{classBatch}/subjects/{classSubject}/assessments/create   teaching.assessments.create (recordGrades)
+POST /my-classes/{classBatch}/subjects/{classSubject}/assessments          teaching.assessments.store (recordGrades)
+GET  /assessments/{assessment}                   assessments.show (AssessmentPolicy::view)
+GET  /assessments/{assessment}/edit, PUT /assessments/{assessment}, DELETE /assessments/{assessment},
+POST /assessments/{assessment}/finalize, PUT /assessments/{assessment}/scores, POST /assessments/{assessment}/corrections
+                                                 AssessmentPolicy::manage (all under classes.teach)
 ```
 
 Frontend URL helpers: `resources/js/lib/routes.ts` (keep in sync with `routes/web.php`).
@@ -282,15 +288,20 @@ Frontend URL helpers: `resources/js/lib/routes.ts` (keep in sync with `routes/we
 
 ```text
 User                 belongsTo Role; hasOne Candidate; hasMany InstructorAssignment (teachingAssignments)
-                     scopes: teachingStaff(), eligibleToTeach()
+                     scopes: teachingStaff(), eligibleToTeach(); teachesClass(), teachesOffering()
 Role                 belongsToMany Permission; hasMany User; rank decides who may assign it
 AcademicPeriod       hasMany ClassBatch; scope active()
 ClassBatch           belongsTo AcademicPeriod; hasMany Candidate; hasMany ClassSubject
-ClassSubject         belongsTo ClassBatch, Subject; hasMany InstructorAssignment; belongsToMany User (instructors)
+ClassSubject         belongsTo ClassBatch, Subject; hasMany InstructorAssignment, AssessmentCategory (ordered), Assessment
 InstructorAssignment belongsTo ClassSubject, User (instructor)
-Candidate            belongsTo User (account), ClassBatch; status cast to CandidateStatus
+Candidate            belongsTo User (account), ClassBatch; hasMany AssessmentScore; scope gradableIn(class); isGradableIn()
+AssessmentCategory   belongsTo ClassSubject; hasMany Assessment
+Assessment           belongsTo ClassSubject, AssessmentCategory (category), User (creator, finalizer); hasMany AssessmentScore; scope finalized()
+AssessmentScore      belongsTo Assessment, Candidate, User (recorder); hasMany AssessmentScoreRevision
+AssessmentScoreRevision  belongsTo AssessmentScore, User (changer); cannot be updated
 AuditLog             belongsTo User (actor); morphTo auditable
-Morph map: user, role, academic_period, subject, class_batch, class_subject, instructor_assignment, candidate
+Morph map: user, role, academic_period, subject, class_batch, class_subject, instructor_assignment, candidate,
+           assessment_category, assessment, assessment_score
 ```
 
 ---
@@ -303,42 +314,50 @@ Project-level decisions (in addition to AGENTS.md):
 - Database: MySQL 8.4+ or MariaDB. PostgreSQL was replaced at the owner's request on 2026-09-29. Local development uses XAMPP's MariaDB 10.4. Keep SQL portable between MySQL and MariaDB.
 - The candidate examination experience is a PWA for organization-issued tablets. Public internet access is not assumed.
 - Grades are entered manually. Imports, native Android, and advanced infrastructure are deferred.
+- Commits: one commit per milestone (confirmed by the project owner on 2026-09-29).
 
-Decisions made in this session:
+Earlier sessions:
 
-- Bare Laravel skeleton instead of the React starter kit. The skeleton's Laravel Boost AGENTS.md/CLAUDE.md files were discarded and Boost is not installed.
+- Bare Laravel skeleton instead of the React starter kit. Laravel Boost is not installed.
 - Username sign-in; email optional; no "remember me"; no email password reset (administrators reset passwords).
 - **Single role per user.** Permissions are defined in `App\Enums\Permission` and mirrored into the database by `AccessControlSeeder`, which **resets system roles to their defaults** (revisit before any role-editing UI).
-- **No privilege escalation by rank:** a user may only assign roles, and edit accounts holding roles, ranked below their own (`User::canAssignRole`, `GrantableStaffRole`). Editing one's own profile is allowed; the self-lockout guards block own role and status changes. Ranks: Super Administrator 100, Academic Administrator 80, Instructor 40, Candidate 10. (This replaced an earlier "subset of own permissions" rule, which would have stopped academic administrators from creating instructor accounts.)
+- **No privilege escalation by rank:** a user may only assign roles, and edit accounts holding roles, ranked below their own. Ranks: Super Administrator 100, Academic Administrator 80, Instructor 40, Candidate 10.
 - The area a user enters is decided by permissions (`staff_area.access`, `exam_portal.access`), never by role names.
-- **Instructors are teaching staff identified by the `classes.teach` permission** (Instructor role only by default); there is no separate instructor table. Accounts are managed in Users; teaching assignments in Classes and Instructors.
-- **Candidates:** the record and its sign-in account are created and updated together by `CandidateService`. Username = candidate number in lowercase; account name = "First Last". Changing the number changes the username and ends the candidate's sessions. Candidate accounts are not managed in the Users module.
-- **Only one active academic period**, enforced by a unique index on a stored generated column (no partial indexes in MySQL/MariaDB). `AcademicPeriodService::activate()` also locks rows.
-- A class's academic period is fixed at creation.
-- Removing a subject from a class removes its instructor assignments. Once assessments exist (Milestone 4), removal must be blocked for offerings with assessments.
+- **Instructors are teaching staff identified by the `classes.teach` permission**; there is no separate instructor table.
+- **Candidates:** record and sign-in account are created and updated together by `CandidateService`. Username = candidate number in lowercase.
+- **Only one active academic period**, enforced by a unique index on a stored generated column. A class's academic period is fixed at creation.
 - Accounts are deactivated, never deleted. Role changes, deactivation, password resets, and candidate username changes end stored sessions immediately.
-- Audit logs are append-only; `AuditLogger::recordChanges()` stores only changed values (previous and new).
-- Toasts use Inertia v3 flash data; default layouts are chosen by page-name prefix in `resources/js/app.tsx`.
-- No SSR, no Inertia DevTools, `QUEUE_CONNECTION=sync`.
-- **Branding (confirmed 2026-09-29):** organization is the Philippine Army Officer Candidate School; its seal was supplied by the project owner. Configured through `ORGANIZATION_NAME`, `ORGANIZATION_LOGO_URL` (`/branding/logo.jpg`, 256px) and `ORGANIZATION_FAVICON_URL` (`/branding/favicon.png`); `public/branding/logo-512.png` is reserved for the PWA icons (Milestone 9). Components never reference the organization directly.
-- Timestamps stored in UTC, displayed in `INSTITUTION_TIMEZONE` (local: Asia/Manila). Calendar dates use `formatCalendarDate()` (no timezone shift).
-- `Model::shouldBeStrict()` outside production. Tests call `withoutVite()` so they never depend on built assets.
+- Audit logs are append-only; `AuditLogger::recordChanges()` stores only changed values.
+- Toasts use Inertia v3 flash data; default layouts are chosen by page-name prefix in `resources/js/app.tsx`. No SSR, `QUEUE_CONNECTION=sync`.
+- **Branding (confirmed 2026-09-29):** Philippine Army Officer Candidate School; seal supplied by the owner; configured through `ORGANIZATION_*` env values; `public/branding/logo-512.png` reserved for PWA icons (Milestone 9).
+- Timestamps stored in UTC, displayed in `INSTITUTION_TIMEZONE` (local: Asia/Manila). Calendar dates use `formatCalendarDate()`.
+- `Model::shouldBeStrict()` outside production. Tests call `withoutVite()`.
+
+Milestone 4:
+
+- **Grading scheme per class subject** (not per subject or per period): each subject of each class has its own categories and weights, so history stays with the offering. Administrators set them (`grading.configure`); instructors cannot change weights.
+- **Only finalized assessments count toward grades.** Drafts are work in progress. Finalization is irreversible; afterwards a score changes only through a correction with a reason. Assigned instructors may correct finalized scores (with a reason); there is no administrator approval step yet.
+- **Calculation method:** within a category, points earned / points possible (larger assessments weigh more); grade = weighted scores over the weight assessed so far. **Missing scores are never zero**; they are reported (Missing Scores) so a grade is never silently lowered. Instructors can record 0 explicitly.
+- Grades are **computed on read** (no stored grades), so any change is reflected immediately. Floats with a 10-decimal pre-round, then half-up to 2 decimals.
+- **Gradable candidates** = assigned to the class and not withdrawn. Candidates who leave keep their scores (shown read-only on the score sheet) but get no new ones.
+- Concurrency: every state change locks the class subject row, then the assessment row (same order everywhere). Score saves and corrections carry the value the user started from (optimistic check); a row changed by someone else is rejected, and the UI makes the user choose explicitly.
+- A draft assessment can be deleted with its scores and revisions; the audit entry keeps the scores (by candidate number). Finalized assessments cannot be deleted.
+- A subject cannot be removed from a class once it has assessments.
+- Grading is not locked when a period ends (instructors keep access to past-period subjects they taught).
 
 ---
 
 # UI/UX Decisions
 
-- Staff sidebar sections: Dashboard; Academics (Candidates, Classes, Subjects, Academic Periods); Administration (Instructors, Users, Roles & Permissions). Items are filtered by permission and only implemented modules appear.
-- "Class / Batch" is displayed as "Class" through `resources/js/lib/terminology.ts`; change the term there once the institution confirms it. Code uses `ClassBatch`.
+- Staff sidebar sections: Dashboard; Teaching (My Classes); Academics (Candidates, Classes, Subjects, Academic Periods); Administration (Instructors, Users, Roles & Permissions). Items are filtered by permission and only implemented modules appear. Gradebooks have no sidebar item; they are reached from the dashboard, My Classes, and candidate profiles.
+- "Class / Batch" is displayed as "Class" through `resources/js/lib/terminology.ts`.
 - `pointer-coarse:` variants give 44px touch targets and 16px input text on tablets.
-- Status badges always pair an icon with text.
-- Shared building blocks: `Table`/`Th`/`Td`/`RowAction`, `FilterBar` + `SearchField`, `FormSection` + `FormActions`, `ConfirmAction` (button + confirmation + request), `ConfirmDialog`, `Pagination` (singular/plural nouns).
-- Destructive or significant actions require confirmation: deactivating accounts, setting the active period, removing subjects and instructor assignments.
-- Per-item form labels carry screen-reader-only context (for example "Assign Instructor to Subject 1").
-- `MetricCard` (inside a `<dl>`) for dashboard numbers: one number, one label, neutral styling.
-- Heading levels follow nesting: `Panel` and `EmptyState` take `headingLevel` (h3/h4 inside a titled section). Link accessible names start with their visible text (WCAG 2.5.3).
-- Sidebar highlights exactly one item (`activeItemHref`); items can claim extra URL prefixes with `activeFor` (My Classes claims `/candidates` for instructors).
-- Sidebar section order: Dashboard; Teaching (My Classes); Academics; Administration.
+- Status badges always pair an icon with text. Server enums send `{value, label, tone}`.
+- Shared building blocks: `Table`/`Th`/`Td`/`RowAction`, `FilterBar` + `SearchField`, `FormSection` + `FormActions`, `ConfirmAction` (now with `disabled`), `ConfirmDialog`, `Dialog` (native `<dialog>`, `busy` blocks closing), `Pagination`, `MetricCard`.
+- Grading components in `resources/js/components/grading/`: `ScoreSheet`, `CorrectionDialog`, `ScoreHistory`, `GradeBreakdownDialog`, `AssessmentForm`, `offering-context` (breadcrumbs, `WeightSummary`).
+- The browser never calculates grades; `formatGrade`/`formatPercent` only format server values. The grading-setup total is a labelled preview; the server validates.
+- Destructive or significant actions require confirmation: deactivating accounts, setting the active period, removing subjects and assignments, finalizing and deleting assessments.
+- Heading levels follow nesting; link accessible names start with their visible text (WCAG 2.5.3).
 - Dashboards and profiles show honest empty states where later milestones will add data.
 
 ---
@@ -347,18 +366,15 @@ Decisions made in this session:
 
 ```text
 Gate:    every Permission enum case is a Gate ability (AppServiceProvider)
-Routes:  each academic module is behind its own permission (see Routes)
-UserPolicy:
-- viewAny: users.view; create: users.manage
-- update: users.manage AND staff account AND (own account OR target role ranked below actor)
-CandidatePolicy:
-- viewAny: candidates.view_all (instructors browse through My Classes instead)
-- view: candidates.view_all, OR User::teachesClass(candidate's class) (active + classes.teach + an assignment in that class)
-- create/update: candidates.manage
+UserPolicy: viewAny users.view; create users.manage; update users.manage AND staff AND (self OR lower rank)
+CandidatePolicy: viewAny candidates.view_all; view candidates.view_all OR User::teachesClass; create/update candidates.manage
 ClassBatchPolicy::viewTeaching: User::teachesClass(class)
-Candidate profile for instructors: no account panel; subjects limited to those the viewer teaches
-Assignments of past periods keep access to those classes (history); removing the assignment or losing classes.teach ends it
-Assignments: instructor must hold classes.teach and be active (Form Request + service check)
+ClassSubjectPolicy: viewGradebook = teachesOffering; recordGrades = grades.record AND teachesOffering; configureGrading = grading.configure
+AssessmentPolicy: view = teachesOffering(assessment's subject); manage = grades.record AND teachesOffering
+teachesOffering = active + classes.teach + an assignment to that class subject (administrators do not open gradebooks)
+Services re-check class membership, max score, and draft/finalized state under row locks; candidate ids from the client are never trusted
+Form Requests only trim strings (arrays are rejected by the rules, not turned into 500s)
+Audit entries never contain secrets; score audit values contain candidate numbers, not names
 Inactive users: hold no permissions; EnsureAccountIsActive signs them out
 Shared props: id, name, username, role (code, name), the user's own permission codes
 ```
@@ -369,23 +385,26 @@ Shared props: id, name, username, role (code, name), the user's own permission c
 
 ```text
 tests/Feature/Auth/LoginTest.php, AreaAccessTest.php
-tests/Feature/Users/UserManagementTest.php          includes rank rules
-tests/Feature/Account/PasswordUpdateTest.php
+tests/Feature/Users/UserManagementTest.php, tests/Feature/Account/PasswordUpdateTest.php
 tests/Feature/AuditLogTest.php, SeederTest.php
-tests/Feature/Academic/AcademicPeriodTest.php       includes DB-level active/date constraints
-tests/Feature/Academic/SubjectTest.php
-tests/Feature/Academic/ClassBatchTest.php           offerings, scoped removal
-tests/Feature/Academic/InstructorAssignmentTest.php eligibility, duplicates, directory
-tests/Feature/Candidates/CandidateManagementTest.php account sync, sign-in, sessions, DB status check
-tests/Feature/Teaching/InstructorDashboardTest.php  metrics, custom roles, losing classes.teach
-tests/Feature/Teaching/TeachingClassTest.php        scoping, periods, unrelated class 403, past periods
-tests/Feature/Teaching/InstructorCandidateAccessTest.php  scoped profiles, subjects, no edits
-tests/Unit/PermissionCatalogueTest.php              TS/PHP permission sync, role invariants
+tests/Feature/Academic/{AcademicPeriod,Subject,ClassBatch,InstructorAssignment}Test.php
+tests/Feature/Candidates/CandidateManagementTest.php
+tests/Feature/Teaching/{InstructorDashboard,TeachingClass,InstructorCandidateAccess}Test.php
+tests/Unit/PermissionCatalogueTest.php              TS/PHP permission sync, role invariants (incl. grading split)
+
+Milestone 4:
+tests/Unit/GradeCalculationServiceTest.php          deterministic calculation, rounding, missing scores
+tests/Feature/Grading/BuildsGradingFixtures.php     shared fixture (Quizzes 40 / Examinations 60 on Batch A Subject 1)
+tests/Feature/Grading/GradingSchemeTest.php         setup rules, authorization, audit, subject removal, DB checks
+tests/Feature/Grading/AssessmentLifecycleTest.php   create/edit/delete/finalize, authorization, validation, DB checks
+tests/Feature/Grading/ScoreRecordingTest.php        draft scores, conflicts, corrections, history, DB checks
+tests/Feature/Grading/GradebookAndIntegrationTest.php  gradebook, profile, dashboard, seeder
+tests/Feature/Grading/GradingReviewRegressionTest.php  fixes from the review
 ```
 
-Status: **155 passed, 0 failed** (1,024 assertions). `npm run types`, `npm run build`, and Pint pass.
+Status: **335 passed, 0 failed** (3,379 assertions). `npm run types`, `npm run build`, and Pint pass.
 
-`tests/TestCase.php` uses RefreshDatabase, seeds `AccessControlSeeder` once, calls `withoutVite()`, and **refuses to refresh any database whose name does not end in `_testing`** (the XAMPP root account can see other projects' databases on this machine).
+`tests/TestCase.php` uses RefreshDatabase, seeds `AccessControlSeeder` once, calls `withoutVite()`, and **refuses to refresh any database whose name does not end in `_testing`**. Parallel test runs can use separate databases: `DB_DATABASE=academic_system_x_testing php artisan test` (phpunit.xml does not override an existing `DB_DATABASE`).
 
 ---
 
@@ -400,7 +419,7 @@ vendor/bin/pint
 php artisan serve
 ```
 
-The Claude Code preview configuration is in `.claude/launch.json` (name: `laravel`, port 8000).
+Claude Code preview configurations are in `.claude/launch.json`: `laravel` (port 8000) and `laravel-alt` (port 8001, for when another session already uses 8000).
 
 ---
 
@@ -428,7 +447,13 @@ Details: Pages load slowly when requests overlap during browser testing. Product
 
 Status: Open (low)
 
-Details: Access ends immediately (every teaching check requires classes.teach), but the old assignments still appear on the administrator class and instructor pages. Decide in a later milestone whether role changes should remove or flag assignments.
+Details: Access ends immediately (every teaching check requires classes.teach), but the old assignments still appear on the administrator pages.
+
+### Issue: CHECK constraints on status strings are case-insensitive
+
+Status: Open (low)
+
+Details: `candidates.status` and `assessments.status` use the case-insensitive utf8mb4 collation, so the CHECK would accept 'DRAFT'. The application always writes enum values, so this matters only for manual SQL.
 
 ---
 
@@ -444,17 +469,21 @@ Do not hardcode these until confirmed:
 
 - production database server (MySQL or MariaDB) and version;
 - actual subject names;
-- official grading formula, passing grade, and warning threshold;
-- candidate identifier format (candidate numbers currently allow letters, numbers, `.`, `-`, `_`, up to 30 characters);
-- candidate enrollment statuses (currently Enrolled, On Leave, Withdrawn, Completed);
+- official grading formula (currently: points-based categories, weights per class subject set by administrators), passing grade, and warning threshold;
+- missing-score policy (currently: never zero, reported as Missing Scores; instructors may record 0);
+- whether corrections of finalized scores need administrator approval (currently: assigned instructors, with a reason);
+- whether grading locks when an academic period ends (currently: not locked);
+- overall candidate standing rule for Milestone 5 (planned: most serious subject standing; the AGENTS.md §17 example suggests an average);
+- candidate identifier format (letters, numbers, `.`, `-`, `_`, up to 30 characters);
+- candidate enrollment statuses (Enrolled, On Leave, Withdrawn, Completed);
 - exact Class / Batch terminology;
 - number of academic periods;
-- whether Academic Administrators may create other Academic Administrator accounts (currently not allowed: ranks must be lower);
+- whether Academic Administrators may create other Academic Administrator accounts (currently not allowed);
 - whether Academic Administrators also teach (currently only the Instructor role holds `classes.teach`);
 - candidate password rules on shared tablets;
 - session timeout behaviour during examinations;
 - exam navigation restrictions and whether candidates may see scores immediately;
-- brand colors (the interface still uses the placeholder institutional green);
+- brand colors (placeholder institutional green);
 - internal deployment environment (hostname, HTTPS certificate).
 
 ---
@@ -479,6 +508,9 @@ Reason: simplest consistent model until requirements say otherwise.
 
 ASSUMPTION: Brand colors use the placeholder institutional green.
 Reason: official colors have not been supplied (name and seal are confirmed).
+
+ASSUMPTION: Demo grading weights (Quizzes 20, Examinations 30, Practical Exercises 30, Other Requirements 20) are sample data only.
+Reason: real weights are configured by administrators; nothing in code depends on them.
 ```
 
 ---
@@ -491,14 +523,16 @@ Remote: origin https://github.com/vrash12/student-portal.git
 Commits: 0ff5cc3 first commit (README only)
          ad168a7 Milestones 0–1
          c5b0f40 Milestone 2
-         plus the Milestone 3 commit (see `git log`)
+         98dbcba Milestone 3
+         plus the Milestone 4 commit (see `git log`)
+Not pushed by the coding agent.
 ```
 
 ---
 
 # Uncommitted or Incomplete Code
 
-None. Milestones 0–3 are complete and committed.
+None. Milestones 0–4 are complete and committed.
 
 ---
 
@@ -512,7 +546,7 @@ At the start of the next session, the coding agent should verify:
 3. php artisan migrate:status shows no pending migrations
 4. php artisan test passes
 5. npm run types and npm run build pass
-6. Current milestone (Milestone 4 next)
+6. Current milestone (Milestone 5 next)
 ```
 
 Do not immediately start generating new code before checking the existing state.

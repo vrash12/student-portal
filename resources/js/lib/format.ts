@@ -13,6 +13,19 @@ export function formatCalendarDate(ymd: string | null): string {
 }
 
 /**
+ * Formats a grade or percentage calculated by the server with two decimals
+ * ("84.50"). Formatting only: grades are never calculated in the browser.
+ */
+export function formatGrade(value: number | null): string {
+    return value === null ? EMPTY_VALUE : value.toFixed(2);
+}
+
+/** "84.50%", or a dash when there is no value. */
+export function formatPercent(value: number | null): string {
+    return value === null ? EMPTY_VALUE : `${value.toFixed(2)}%`;
+}
+
+/**
  * Formats ISO timestamps from the server in the institution's timezone.
  */
 export function useDateFormatter(): {

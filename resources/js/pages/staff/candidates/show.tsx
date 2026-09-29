@@ -6,9 +6,21 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader, type BreadcrumbItem } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { StatusBadge, type StatusTone } from '@/components/ui/status-badge';
-import { useDateFormatter } from '@/lib/format';
+import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
+import { formatGrade, useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
+import type { SubjectGrade } from '@/types/grading';
+
+interface SubjectPerformance {
+    classSubjectId: number;
+    code: string;
+    name: string;
+    /** Calculated by the server from finalized assessments. */
+    result: SubjectGrade;
+    /** The viewer teaches this subject and may open its gradebook. */
+    canOpenGradebook: boolean;
+}
 
 interface CandidateShowProps {
     candidate: {
@@ -23,12 +35,13 @@ interface CandidateShowProps {
         updatedAt: string | null;
     };
     subjects: Array<{ code: string; name: string; instructors: string[] }>;
+    performance: SubjectPerformance[];
     canEdit: boolean;
     /** Administrators browse all candidates; instructors arrive from a class they teach. */
     canBrowseCandidates: boolean;
 }
 
-export default function CandidateShow({ candidate, subjects, canEdit, canBrowseCandidates }: CandidateShowProps) {
+export default function CandidateShow({ candidate, subjects, performance, canEdit, canBrowseCandidates }: CandidateShowProps) {
     const formatDate = useDateFormatter();
     const classTerm = terms.classBatch.singular;
 
@@ -118,13 +131,63 @@ export default function CandidateShow({ candidate, subjects, canEdit, canBrowseC
                     )}
                 </Panel>
 
-                <Panel title="Academic Performance">
-                    <EmptyState
-                        icon={ChartColumn}
-                        headingLevel="h3"
-                        title="No grades recorded yet"
-                        description="Subject grades and academic standing will appear here once assessments are recorded."
-                    />
+                <Panel
+                    title="Academic Performance"
+                    description="Current grades from finalized assessments. Academic standing appears once passing and warning thresholds are set up."
+                    bodyClassName={performance.length === 0 ? undefined : 'p-0'}
+                    className="lg:col-span-2"
+                >
+                    {performance.length === 0 ? (
+                        <EmptyState
+                            icon={ChartColumn}
+                            headingLevel="h3"
+                            title="No subjects to grade"
+                            description={
+                                candidate.classBatch === null
+                                    ? `Assign the candidate to a ${classTerm.toLowerCase()} to see subject grades.`
+                                    : `Subject grades appear here once subjects are added to ${candidate.classBatch.name}.`
+                            }
+                        />
+                    ) : (
+                        <Table caption={`Subject grades of ${candidate.name}`} className="min-w-[32rem]">
+                            <TableHead>
+                                <Th>Subject</Th>
+                                <Th align="right">Current Grade</Th>
+                                <Th>Grade Status</Th>
+                                <Th align="right">
+                                    <span className="sr-only">Actions</span>
+                                </Th>
+                            </TableHead>
+                            <TableBody>
+                                {performance.map((subject) => (
+                                    <Tr key={subject.classSubjectId}>
+                                        <Td className="text-ink">
+                                            <span className="font-medium">{subject.name}</span> <span className="text-ink-muted">({subject.code})</span>
+                                        </Td>
+                                        <Td align="right" numeric className="font-semibold text-ink">
+                                            {formatGrade(subject.result.grade)}
+                                        </Td>
+                                        <Td>
+                                            <StatusBadge tone={subject.result.status.tone}>
+                                                {subject.result.status.label}
+                                                {subject.result.missingScores > 0 && ` (${subject.result.missingScores})`}
+                                            </StatusBadge>
+                                        </Td>
+                                        <Td align="right">
+                                            {subject.canOpenGradebook && candidate.classBatch !== null && (
+                                                <RowAction
+                                                    href={routes.teaching.gradebook(candidate.classBatch.id, subject.classSubjectId)}
+                                                    label={`Gradebook for ${subject.name}`}
+                                                >
+                                                    Gradebook
+                                                </RowAction>
+                                            )}
+                                        </Td>
+                                    </Tr>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
                 </Panel>
             </div>
         </>

@@ -88,7 +88,9 @@ class TeachingClassTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('staff/teaching/classes/show')
-                ->where('subjects', [['code' => 'SUBJ-1', 'name' => 'Subject 1']])
+                ->where('subjects.0.code', 'SUBJ-1')
+                ->where('subjects.0.name', 'Subject 1')
+                ->has('subjects', 1)
                 ->has('candidates.data', 3));
     }
 

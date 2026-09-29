@@ -38,12 +38,13 @@ class PermissionCatalogueTest extends TestCase
     }
 
     /**
-     * Area entry for candidates and teaching eligibility are role-specific
-     * capabilities; every other permission is administrative.
+     * Area entry for candidates, teaching eligibility, and recording grades
+     * for assigned subjects are role-specific capabilities; every other
+     * permission is administrative.
      */
     public function test_super_administrator_holds_every_administrative_permission(): void
     {
-        $roleSpecific = [Permission::AccessExamPortal, Permission::TeachClasses];
+        $roleSpecific = [Permission::AccessExamPortal, Permission::TeachClasses, Permission::RecordGrades];
         $administrative = array_values(array_filter(
             Permission::cases(),
             fn (Permission $permission): bool => ! in_array($permission, $roleSpecific, true),
@@ -69,6 +70,26 @@ class PermissionCatalogueTest extends TestCase
                 $role === SystemRole::Instructor,
                 in_array(Permission::TeachClasses, $role->defaultPermissions(), true),
                 $role->label(),
+            );
+        }
+    }
+
+    /**
+     * Instructors record grades for their assigned subjects; administrators
+     * configure the grading rules but do not encode grades.
+     */
+    public function test_grading_permissions_are_split_between_instructors_and_administrators(): void
+    {
+        foreach (SystemRole::cases() as $role) {
+            $this->assertSame(
+                $role === SystemRole::Instructor,
+                in_array(Permission::RecordGrades, $role->defaultPermissions(), true),
+                "{$role->label()}: record grades",
+            );
+            $this->assertSame(
+                in_array($role, [SystemRole::SuperAdministrator, SystemRole::AcademicAdministrator], true),
+                in_array(Permission::ConfigureGrading, $role->defaultPermissions(), true),
+                "{$role->label()}: configure grading",
             );
         }
     }
