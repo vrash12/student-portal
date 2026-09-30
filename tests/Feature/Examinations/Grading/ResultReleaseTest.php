@@ -207,7 +207,9 @@ class ResultReleaseTest extends TestCase
         $this->assertNull($pdf['examinations'][0]['score']);
         $this->assertNull($pdf['examinations'][0]['percentage']);
         $this->assertNull($pdf['examinations'][0]['passed']);
-        $this->assertStringNotContainsString('10.5', view('pdf.candidate-record', [...$pdf, 'logo' => null])->render());
+        // Only the document content matters; the stylesheet has unrelated numbers such as font sizes.
+        $html = preg_replace('~<style>.*?</style>~s', '', view('pdf.candidate-record', [...$pdf, 'logo' => null])->render());
+        $this->assertStringNotContainsString('10.5', $html);
     }
 
     public function test_released_graded_result_is_visible_to_its_candidate(): void

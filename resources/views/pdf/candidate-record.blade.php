@@ -4,33 +4,42 @@
     <meta charset="UTF-8">
     <title>{{ $title }}</title>
     <style>
-        @page { margin: 36pt 38pt 54pt; }
-        body { font-family: "DejaVu Sans", sans-serif; font-size: 9pt; color: #17252d; line-height: 1.45; }
-        .masthead { position: relative; text-align: center; min-height: 65pt; padding: 0 66pt 12pt; border-bottom: 2pt solid #235842; }
-        .logo { position: absolute; left: 0; top: 0; width: 54pt; height: 54pt; }
-        .organization { font-size: 14pt; font-weight: bold; margin: 0 0 3pt; }
-        .system { font-size: 8pt; color: #58676d; }
-        h1 { font-size: 16pt; letter-spacing: 1pt; text-transform: uppercase; margin: 10pt 0 0; }
-        .meta { width: 100%; margin: 10pt 0 14pt; font-size: 7.5pt; color: #58676d; }
-        .meta td { padding: 0; }
-        .right { text-align: right; }
-        h2 { font-size: 9pt; text-transform: uppercase; letter-spacing: 0.6pt; background: #edf3ef; border: 1pt solid #cad8cf; padding: 6pt 8pt; margin: 16pt 0 0; page-break-after: avoid; }
-        .information { width: 100%; table-layout: fixed; border-collapse: collapse; border: 1pt solid #d6ded9; }
-        .information td { width: 50%; padding: 7pt 9pt; vertical-align: top; border-bottom: 0.5pt solid #e5eae7; }
-        .label { color: #64716b; font-size: 7.5pt; }
-        .value { font-size: 9pt; font-weight: bold; overflow-wrap: break-word; }
-        .records { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .records th { text-align: left; font-size: 7.5pt; padding: 6pt; background: #f3f5f4; border-bottom: 1pt solid #aebdb3; }
-        .records td { padding: 7pt 6pt; vertical-align: top; border-bottom: 0.5pt solid #d6ded9; font-size: 8pt; overflow-wrap: break-word; }
-        .records .numeric { text-align: right; }
+        /* Letter landscape (792 x 612 pt), compact like the printed registration form. */
+        @page { margin: 22pt 26pt 30pt; }
+        body { font-family: "DejaVu Sans", sans-serif; font-size: 7pt; color: #17252d; line-height: 1.25; }
+        .page-break { page-break-before: always; }
+        .masthead { position: relative; text-align: center; height: 44pt; }
+        .logo { position: absolute; left: 0; top: 0; width: 42pt; height: 42pt; }
+        .organization { font-size: 11.5pt; font-weight: bold; margin: 2pt 0 0; }
+        .system { font-size: 6.5pt; color: #58676d; margin-top: 1pt; }
+        .title { font-size: 10.5pt; font-weight: bold; letter-spacing: 0.8pt; text-transform: uppercase; margin-top: 3pt; }
+        .regno { position: absolute; right: 0; top: 4pt; text-align: right; font-size: 6.5pt; color: #3d4b45; }
+        .regno strong { font-size: 7.5pt; color: #17252d; }
+        .band { background: #235842; color: #fff; font-weight: bold; font-size: 7pt; letter-spacing: 0.6pt; text-transform: uppercase; text-align: center; padding: 2.5pt 0; margin-top: 4pt; }
+        .info { width: 100%; border-collapse: collapse; table-layout: fixed; border: 0.75pt solid #aebdb3; border-top: 0; }
+        .info td { vertical-align: top; padding: 3pt 5pt; }
+        .info table { width: 100%; border-collapse: collapse; }
+        .info .k { width: 32%; text-align: right; color: #52615a; padding: 1pt 4pt 1pt 0; white-space: nowrap; }
+        .info .v { font-weight: bold; padding: 1pt 0; }
+        .section { font-weight: bold; font-size: 7pt; text-transform: uppercase; letter-spacing: 0.5pt; border-bottom: 0.75pt solid #235842; padding: 5pt 0 1.5pt; margin: 0 0 2pt; color: #235842; }
+        .grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .grid th { background: #edf3ef; font-size: 6.3pt; text-transform: uppercase; text-align: left; padding: 2.5pt 3pt; border: 0.5pt solid #aebdb3; }
+        .grid td { padding: 2pt 3pt; border: 0.5pt solid #cfd9d2; vertical-align: top; overflow-wrap: break-word; }
+        .grid .num { text-align: right; white-space: nowrap; }
+        .grid .total td { font-weight: bold; background: #f6f8f7; }
+        .grid .sign { height: 13pt; }
         thead { display: table-header-group; }
         tr { page-break-inside: avoid; }
-        .muted { color: #64716b; font-size: 7.5pt; }
-        .note { font-size: 8pt; color: #52615a; margin: 8pt 0 12pt; }
-        .summary { border: 1pt solid #d6ded9; padding: 10pt; margin-top: 14pt; page-break-inside: avoid; }
-        .summary strong { font-size: 11pt; }
-        .endnote { margin-top: 18pt; padding-top: 8pt; border-top: 1pt solid #aebdb3; font-size: 7.5pt; color: #52615a; page-break-inside: avoid; }
-        .footer { position: fixed; bottom: -31pt; left: 0; right: 0; border-top: 0.5pt solid #cad4cd; padding-top: 5pt; font-size: 7pt; color: #64716b; }
+        .cols { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 2pt; }
+        .cols > tbody > tr > td { vertical-align: top; padding: 0; }
+        .gap { width: 12pt; }
+        .muted { color: #64716b; }
+        .note { color: #52615a; font-size: 6.3pt; margin: 2pt 0 0; }
+        .box { border: 0.75pt solid #aebdb3; padding: 5pt 6pt; margin-top: 6pt; }
+        .box h3 { font-size: 7pt; text-transform: uppercase; letter-spacing: 0.5pt; margin: 0 0 3pt; }
+        .signature { margin-top: 18pt; border-top: 0.75pt solid #17252d; width: 70%; text-align: center; padding-top: 2pt; font-size: 6.5pt; }
+        .standing { font-size: 8pt; font-weight: bold; }
+        .footer { position: fixed; bottom: -20pt; left: 0; right: 110pt; font-size: 6pt; color: #64716b; }
     </style>
 </head>
 <body>
@@ -39,74 +48,102 @@
         ? \Carbon\Carbon::parse($value)->format('d M Y')
         : \Carbon\Carbon::parse($value)->timezone(config('institution.timezone'))->format('d M Y'));
     $number = fn ($value) => $value === null ? '-' : number_format((float) $value, 2);
+    $range = fn (?array $period) => $period === null || ! $period['startsOn'] ? '-' : $date($period['startsOn']).' – '.$date($period['endsOn']);
 @endphp
-<div class="footer">{{ $title }} | Candidate {{ $candidate['candidateNumber'] }} | Confidential student record</div>
-<div class="masthead">
-    @if($logo)<img class="logo" src="{{ $logo }}" alt="Organization logo">@endif
-    <p class="organization">{{ $organization }}</p>
-    <div class="system">{{ $systemName }}</div>
-    <h1>{{ $title }}</h1>
-</div>
-<table class="meta"><tr><td>Reference: {{ $reference }}</td><td class="right">Generated: {{ $generatedAt }}</td></tr></table>
+<div class="footer">{{ $title }} · Candidate {{ $candidate['candidateNumber'] }} · System-generated from {{ $systemName }} on {{ $generatedAt }} · Confidential student record</div>
 
-<h2>Student General Information</h2>
-<table class="information">
-    <tr><td><div class="label">Candidate Number / ID</div><div class="value">{{ $candidate['candidateNumber'] }}</div></td><td><div class="label">Candidate Status</div><div class="value">{{ $candidate['status']['label'] }}</div></td></tr>
-    <tr><td colspan="2" style="width:100%"><div class="label">Full Name</div><div class="value">{{ $candidate['name'] }}</div></td></tr>
-    <tr><td><div class="label">Class / Batch</div><div class="value">{{ $candidate['classBatch']['name'] ?? 'Not assigned' }}</div></td><td><div class="label">Academic Period</div><div class="value">{{ $candidate['classBatch']['period'] ?? 'Not assigned' }}</div></td></tr>
-    <tr><td><div class="label">Training Group / Section / Platoon</div><div class="value">{{ $candidate['trainingGroup'] ?? 'Not assigned' }}</div></td><td><div class="label">Record Last Updated</div><div class="value">{{ $date($candidate['updatedAt']) }}</div></td></tr>
-</table>
+@php
+    // One page per semester for the academic record; the registration form is one page.
+    $pages = $type === 'registration' ? [['period' => $period, 'isCurrent' => true]] : $periods;
+    if ($pages === []) {
+        $pages = [['period' => null, 'isCurrent' => false, 'assessments' => [], 'examinations' => [], 'twoColumns' => true]];
+    }
+@endphp
+
+@foreach($pages as $index => $page)
+<div class="{{ $index > 0 ? 'page-break' : '' }}">
+    <div class="masthead">
+        @if($logo)<img class="logo" src="{{ $logo }}" alt="Organization logo">@endif
+        <div class="regno">{{ $type === 'registration' ? 'Registration No.' : 'Record No.' }}<br><strong>{{ $reference }}</strong></div>
+        <p class="organization">{{ $organization }}</p>
+        <div class="system">{{ $systemName }}</div>
+        <div class="title">{{ $title }}</div>
+    </div>
+
+    <div class="band">Student General Information</div>
+    <table class="info">
+        <tr>
+            <td><table>
+                <tr><td class="k">Candidate No.:</td><td class="v">{{ $candidate['candidateNumber'] }}</td></tr>
+                <tr><td class="k">Name:</td><td class="v">{{ $candidate['name'] }}</td></tr>
+                <tr><td class="k">Status:</td><td class="v">{{ $candidate['status']['label'] }}</td></tr>
+            </table></td>
+            <td><table>
+                <tr><td class="k">Class / Section:</td><td class="v">{{ $candidate['classBatch']['name'] ?? 'Not assigned' }}</td></tr>
+                <tr><td class="k">Training Group:</td><td class="v">{{ $candidate['trainingGroup'] ?? 'Not assigned' }}</td></tr>
+                <tr><td class="k">Record Updated:</td><td class="v">{{ $date($candidate['updatedAt']) }}</td></tr>
+            </table></td>
+            <td><table>
+                <tr><td class="k">Academic Period:</td><td class="v">{{ $page['period']['name'] ?? 'Not assigned' }}@if($type === 'academic' && ! $page['isCurrent'] && $page['period'] !== null) <span class="muted">(previous)</span>@endif</td></tr>
+                <tr><td class="k">Period Dates:</td><td class="v">{{ $range($page['period']) }}</td></tr>
+                <tr><td class="k">Generated:</td><td class="v">{{ $generatedAt }}</td></tr>
+            </table></td>
+        </tr>
+    </table>
 
 @if($type === 'registration')
-    <h2>Enrolled Subjects</h2>
-    <table class="records">
-        <thead><tr><th style="width:19%">Code</th><th style="width:43%">Subject Title</th><th style="width:38%">Assigned Instructor(s)</th></tr></thead>
+    <div class="section">Enrolled Subjects</div>
+    <table class="grid">
+        <thead><tr><th style="width:4%">No.</th><th style="width:12%">Code</th><th style="width:30%">Subject Title</th><th style="width:15%">Class / Section</th><th style="width:21%">Instructor(s)</th><th style="width:18%">Instructor's Signature</th></tr></thead>
         <tbody>
-        @forelse($subjects as $subject)
-            <tr><td>{{ $subject['code'] }}</td><td>{{ $subject['name'] }}</td><td>{{ implode(', ', $subject['instructors']) ?: 'Not assigned' }}</td></tr>
+        @forelse($subjects as $i => $subject)
+            <tr><td class="num">{{ $i + 1 }}</td><td>{{ $subject['code'] }}</td><td>{{ $subject['name'] }}</td><td>{{ $candidate['classBatch']['name'] ?? '-' }}</td><td>{{ implode(', ', $subject['instructors']) ?: 'Not assigned' }}</td><td class="sign"></td></tr>
         @empty
-            <tr><td colspan="3">No subjects are assigned to the current class.</td></tr>
+            <tr><td colspan="6">No subjects are assigned to the current class.</td></tr>
         @endforelse
+        <tr class="total"><td colspan="2">Total</td><td colspan="4">{{ count($subjects) }} {{ count($subjects) === 1 ? 'subject' : 'subjects' }}</td></tr>
         </tbody>
     </table>
-    <div class="summary">Total assigned subjects: <strong>{{ count($subjects) }}</strong></div>
-    <p class="note">Subjects and instructors follow the candidate's current class assignment. This registration record does not represent payment, fee clearance or completion of training.</p>
+    <p class="note">Subjects and instructors follow the candidate's current class assignment for the academic period shown. This record does not represent payment, fee clearance, or completion of training.</p>
+
+    <table class="cols"><tr>
+        <td style="width:50%">
+            <div class="box">
+                <h3>Registration Summary</h3>
+                <table class="grid">
+                    <tr><td style="width:45%">Academic period</td><td>{{ $period['name'] ?? 'Not assigned' }}</td></tr>
+                    <tr><td>Class / section</td><td>{{ $candidate['classBatch']['name'] ?? 'Not assigned' }}</td></tr>
+                    <tr><td>Enrolled subjects</td><td>{{ count($subjects) }}</td></tr>
+                    <tr><td>Candidate status</td><td>{{ $candidate['status']['label'] }}</td></tr>
+                </table>
+            </div>
+        </td>
+        <td class="gap"></td>
+        <td style="width:50%">
+            <div class="box">
+                <h3>Candidate's Acknowledgement</h3>
+                <p class="note">I acknowledge the subjects and class assignment listed above for the academic period shown, and I agree to abide by the rules and regulations of {{ $organization }}.</p>
+                <table style="width:100%"><tr>
+                    <td style="width:50%"><div class="signature">Candidate's Signature</div></td>
+                    <td style="width:50%"><div class="signature">Approved by: Academic Office</div></td>
+                </tr></table>
+            </div>
+        </td>
+    </tr></table>
 @else
-    <div class="summary"><div class="label">Current Overall Academic Standing</div><strong>{{ $academics['overall']['standing']['label'] ?? 'Not available' }}</strong>
-        @if($academics['overall']['isProvisional'])<div class="muted">Provisional: some subject grades are still in progress.</div>@endif
-    </div>
-    <h2>Current Subjects and Grades</h2>
-    <p class="note">Grades use finalized assessments and the configured grading rules. Current grades may change as more assessments are finalized.</p>
-    <table class="records"><thead><tr><th style="width:47%">Subject / Instructor(s)</th><th style="width:17%" class="numeric">Grade</th><th style="width:36%">Standing / Grade Status</th></tr></thead><tbody>
-        @forelse($academics['subjects'] as $subject)
-            <tr><td><strong>{{ $subject['code'] }} - {{ $subject['name'] }}</strong><div class="muted">{{ implode(', ', $subject['instructors']) ?: 'No instructor assigned' }}</div></td><td class="numeric">{{ $number($subject['result']['grade']) }}</td><td>{{ $subject['result']['standing']['label'] ?? 'Not available' }}<div class="muted">{{ $subject['result']['status']['label'] }}@if($subject['result']['isProvisional']) - Provisional @endif</div></td></tr>
-        @empty
-            <tr><td colspan="3">No subjects assigned.</td></tr>
-        @endforelse
-    </tbody></table>
-
-    <h2>Quiz and Examination Results</h2>
-    <p class="note">Only released, fully graded results show a score. All attempts are listed separately; exam scores affect subject grades only when posted to the gradebook.</p>
-    <table class="records"><thead><tr><th style="width:41%">Assessment</th><th style="width:17%">Submitted</th><th style="width:19%" class="numeric">Score</th><th style="width:23%">Result</th></tr></thead><tbody>
-        @forelse($examinations as $exam)
-            <tr><td><strong>{{ $exam['title'] }}</strong><div class="muted">{{ $exam['subject'] }} / {{ $exam['className'] }}</div><div class="muted">{{ $exam['kind'] }} - Attempt {{ $exam['attemptNumber'] }} - {{ $exam['status'] }}</div></td><td>{{ $date($exam['submittedAt']) }}</td><td class="numeric">@if($exam['score'] !== null){{ $number($exam['score']) }} / {{ $number($exam['maxScore']) }}<div class="muted">{{ $number($exam['percentage']) }}%</div>@else - @endif</td><td>{{ $exam['passed'] === null ? $exam['resultLabel'] : ($exam['passed'] ? 'Passed' : 'Failed') }}</td></tr>
-        @empty
-            <tr><td colspan="4">No examination attempts recorded.</td></tr>
-        @endforelse
-    </tbody></table>
-
-    <h2>Assessment History</h2>
-    <p class="note">Finalized assessments in the current class and recorded results from previous classes. Missing scores remain blank and are not treated as zero.</p>
-    <table class="records"><thead><tr><th style="width:43%">Assessment / Subject</th><th style="width:18%">Date</th><th style="width:23%" class="numeric">Score</th><th style="width:16%" class="numeric">Percent</th></tr></thead><tbody>
-        @forelse($assessments as $assessment)
-            <tr><td><strong>{{ $assessment['title'] }}</strong><div class="muted">{{ $assessment['subject'] }} / {{ $assessment['category'] }}</div><div class="muted">{{ $assessment['className'] }}</div></td><td>{{ $date($assessment['date']) }}</td><td class="numeric">@if($assessment['score'] !== null){{ $number($assessment['score']) }} / {{ $number($assessment['maxScore']) }}@else Missing @endif</td><td class="numeric">{{ $assessment['percentage'] === null ? '-' : $number($assessment['percentage']).'%' }}</td></tr>
-        @empty
-            <tr><td colspan="4">No finalized assessment records.</td></tr>
-        @endforelse
-    </tbody></table>
+    @if($page['twoColumns'])
+        <table class="cols"><tr>
+            <td style="width:52%">@include('pdf.partials.record-subjects')@include('pdf.partials.record-examinations')</td>
+            <td class="gap"></td>
+            <td style="width:48%">@include('pdf.partials.record-assessments')</td>
+        </tr></table>
+    @else
+        @include('pdf.partials.record-subjects')
+        @include('pdf.partials.record-examinations')
+        @include('pdf.partials.record-assessments')
+    @endif
 @endif
-
-<div class="endnote"><strong>System-generated record.</strong> This document reflects stored information at the time shown above. It is not a signed certification or a final transcript. For corrections or verification, contact the academic office.</div>
+</div>
+@endforeach
 </body>
 </html>
-

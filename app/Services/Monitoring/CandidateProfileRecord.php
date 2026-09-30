@@ -4,6 +4,7 @@ namespace App\Services\Monitoring;
 
 use App\Models\Assessment;
 use App\Models\Candidate;
+use App\Models\ClassBatch;
 use App\Models\ClassSubject;
 use App\Models\ExaminationAttempt;
 use App\Services\Grading\GradeCalculationService;
@@ -44,7 +45,8 @@ final class CandidateProfileRecord
                 }
             })
             ->with([
-                'classSubject.subject:id,code,name', 'classSubject.classBatch:id,name', 'category:id,name',
+                'classSubject.subject:id,code,name', 'classSubject.classBatch:id,name,academic_period_id',
+                'classSubject.classBatch.academicPeriod:id,name,starts_on,ends_on', 'category:id,name',
                 'scores' => fn ($query) => $query->where('candidate_id', $candidate->id)->select(['id', 'assessment_id', 'score']),
             ])
             ->orderByDesc('finalized_at')->orderByDesc('id')
@@ -57,6 +59,8 @@ final class CandidateProfileRecord
                     'title' => $assessment->title,
                     'subject' => $assessment->classSubject->subject->name,
                     'className' => $assessment->classSubject->classBatch->name,
+                    'period' => self::period($assessment->classSubject->classBatch),
+                    'subjectCode' => $assessment->classSubject->subject->code,
                     'category' => $assessment->category->name,
                     'date' => $assessment->assessed_on?->toDateString()
                         ?? $assessment->finalized_at?->copy()->setTimezone(config('institution.timezone'))->toDateString(),
@@ -73,7 +77,7 @@ final class CandidateProfileRecord
         return ExaminationAttempt::query()->where('candidate_id', $candidate->id)
             ->when($offeringIds !== null, fn (Builder $query) => $query->whereHas('examination', fn (Builder $exams) => $exams->whereIn('class_subject_id', $offeringIds)))
             ->select(['id', 'examination_id', 'attempt_number', 'status', 'result_status', 'started_at', 'submitted_at', 'earned_points', 'total_points', 'percentage', 'passed'])
-            ->with(['examination:id,class_subject_id,title,kind,release_results', 'examination.classSubject.subject:id,name', 'examination.classSubject.classBatch:id,name'])
+            ->with(['examination:id,class_subject_id,title,kind,release_results', 'examination.classSubject.subject:id,code,name', 'examination.classSubject.classBatch:id,name,academic_period_id', 'examination.classSubject.classBatch.academicPeriod:id,name,starts_on,ends_on'])
             ->orderByDesc('id')->paginate($perPage, ['*'], 'exams_page', $page)->withQueryString()
             ->through(function (ExaminationAttempt $attempt) use ($portal): array {
                 $released = ! $portal || $attempt->examination->release_results;
@@ -85,6 +89,8 @@ final class CandidateProfileRecord
                     'kind' => $attempt->examination->kind->label(),
                     'subject' => $attempt->examination->classSubject->subject->name,
                     'className' => $attempt->examination->classSubject->classBatch->name,
+                    'period' => self::period($attempt->examination->classSubject->classBatch),
+                    'subjectCode' => $attempt->examination->classSubject->subject->code,
                     'attemptNumber' => $attempt->attempt_number,
                     'status' => str_replace('_', ' ', ucfirst($attempt->status)),
                     'submittedAt' => $attempt->submitted_at?->toIso8601String(),
@@ -99,5 +105,17 @@ final class CandidateProfileRecord
                     'passed' => $graded ? $attempt->passed : null,
                 ];
             });
+    }
+
+    /**
+     * The academic period (semester) a record belongs to, through its class.
+     *
+     * @return array{id: int, name: string, startsOn: ?string, endsOn: ?string}
+     */
+    private static function period(ClassBatch $class): array
+    {
+        $period = $class->academicPeriod;
+
+        return ['id' => $period->id, 'name' => $period->name, 'startsOn' => $period->starts_on?->toDateString(), 'endsOn' => $period->ends_on?->toDateString()];
     }
 }

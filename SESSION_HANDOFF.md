@@ -2,6 +2,14 @@
 
 Updated 2026-09-30 by Codex. Read this file together with `AGENTS.md`, `UI_UX_DESIGN.md`, and `MILESTONES.md`; inspect Git and the actual code before editing.
 
+## Owner request — landscape, one-page-per-semester PDFs (2026-10-01, Claude Code)
+
+- Both candidate PDFs now follow the owner's reference Certificate of Registration layout, in **letter landscape**, compact (7 pt): masthead with logo, organization, system, title, and Registration/Record No. at the right; "Student General Information" band with three label/value columns; green section rules; compact bordered tables.
+- **Certificate of Registration** (formerly "Registration Record"): one page for the current academic period; numbered subjects with code, title, class/section, instructor(s), and a blank instructor's signature column; total; Registration Summary and Candidate's Acknowledgement with candidate and Academic Office signature lines. No fees or payment (not part of this system).
+- **Academic Record**: one page per academic period (semester), oldest first, each with the header. The current period shows subject grades, standing and overall standing; previous periods note that grades are calculated for the current class only and list the results recorded then. Quiz/examination results and assessment results sit side by side; a semester with more than 26 rows in a column is printed stacked (continues on the next page) so no row is cut.
+- `CandidateProfileRecord` rows gained `period` and `subjectCode` (additive). `CandidatePdfService`: `period`, `periods` grouping, landscape paper, page numbers at the new position. Template split into `resources/views/pdf/partials/record-{subjects,examinations,assessments}.blade.php`.
+- Tests: `tests/Feature/Candidates/CandidatePdfLayoutTest.php` (4: one landscape page registration, two semesters = two pages oldest first, no class, long semester stacked); `ResultReleaseTest` PDF check now ignores the stylesheet. Full suite 1,099 passing. Sample PDFs generated from local data were checked (792 × 612 pt, one page each).
+
 ## Owner request — images and media in questions (2026-10-01, Claude Code)
 
 - Questions can have up to 4 media files, shown below the prompt: images (JPEG/PNG/WebP/GIF, 5 MB), audio (MP3/M4A/OGG/WAV, 15 MB), video (MP4/WebM, 30 MB). Type detected from file contents; SVG rejected (scripts). Each needs a description (image alt text / caption, max 500).
