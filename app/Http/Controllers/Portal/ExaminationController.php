@@ -19,8 +19,9 @@ class ExaminationController extends Controller
     {
         abort_unless($service->eligible($request->user(), $examination), 403);
         $attempts = ExaminationAttempt::where('examination_id', $examination->id)->where('candidate_id', $request->user()->candidate->id)->get();
+        $attempts = $attempts->map(fn (ExaminationAttempt $attempt): ExaminationAttempt => $service->expire($attempt));
 
-        return Inertia::render('portal/examinations/show', ['examination' => ['id' => $examination->id, 'title' => $examination->title, 'description' => $examination->description, 'durationMinutes' => $examination->duration_minutes, 'questionCount' => $examination->examinationQuestions()->count(), 'attemptLimit' => $examination->attempt_limit, 'attemptsUsed' => $attempts->count(), 'requiresCode' => $examination->access_code !== null, 'available' => $examination->isActive(), 'resumeId' => $attempts->firstWhere('status', 'in_progress')?->id, 'allowBackNavigation' => $examination->allow_back_navigation]]);
+        return Inertia::render('portal/examinations/show', ['examination' => ['id' => $examination->id, 'title' => $examination->title, 'description' => $examination->description, 'durationMinutes' => $examination->duration_minutes, 'questionCount' => $examination->examinationQuestions()->count(), 'attemptLimit' => $examination->attempt_limit, 'attemptsUsed' => $attempts->count(), 'requiresCode' => $examination->access_code !== null, 'available' => $examination->isActive(), 'resumeId' => $attempts->firstWhere('status', 'in_progress')?->id, 'allowBackNavigation' => $examination->allow_back_navigation, 'releaseResults' => $examination->release_results, 'attempts' => $attempts->sortByDesc('attempt_number')->values()->map(fn (ExaminationAttempt $item) => ['number' => $item->attempt_number, 'status' => $item->status, 'submittedAt' => $item->submitted_at?->toIso8601String(), 'resultStatus' => $item->result_status, 'percentage' => $examination->release_results ? $item->percentage : null])->all()]]);
     }
 
     public function start(Request $request, Examination $examination, CandidateAttemptService $service): RedirectResponse
@@ -62,6 +63,6 @@ class ExaminationController extends Controller
         $attempt = $service->read($request->user(), $attempt);
         abort_if($attempt->status === 'in_progress', 404);
 
-        return Inertia::render('portal/examinations/success', ['title' => $attempt->examination->title, 'status' => $attempt->status]);
+        return Inertia::render('portal/examinations/success', ['title' => $attempt->examination->title, 'status' => $attempt->status, 'attemptId' => $attempt->id, 'releaseResults' => $attempt->examination->release_results, 'resultStatus' => $attempt->result_status, 'objectivePoints' => $attempt->examination->release_results ? $attempt->objective_points : null, 'objectiveMaxPoints' => $attempt->examination->release_results ? $attempt->objective_max_points : null, 'percentage' => $attempt->examination->release_results ? $attempt->percentage : null, 'passed' => $attempt->examination->release_results ? $attempt->passed : null]);
     }
 }

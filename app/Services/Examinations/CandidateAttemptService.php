@@ -15,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 final class CandidateAttemptService
 {
+    public function __construct(private readonly ExaminationScoringService $scoring) {}
+
     public function eligible(User $user, Examination $exam): bool
     {
         return $user->candidate !== null && $user->candidate->isGradableIn((int) $exam->classSubject->class_batch_id) && $exam->status === ExaminationStatus::Published;
@@ -27,7 +29,7 @@ final class CandidateAttemptService
             Candidate::whereKey($user->candidate->id)->lockForUpdate()->firstOrFail();
             $exam = Examination::whereKey($exam->id)->lockForUpdate()->firstOrFail();
             abort_unless($this->eligible($user, $exam), 403);
-            $existing = ExaminationAttempt::where('candidate_id', $user->candidate->id)->where('examination_id', $exam->id)->where('status', 'in_progress')->first();
+            $existing = ExaminationAttempt::where('candidate_id', $user->candidate->id)->where('examination_id', $exam->id)->where('status', 'in_progress')->lockForUpdate()->first();
             if ($existing) {
                 return $this->expire($existing);
             }
@@ -67,6 +69,8 @@ final class CandidateAttemptService
                 $attempt->expires_at = $exam->closes_at;
             }
             $attempt->delivery = $delivery;
+            $attempt->scoring_key = $this->scoring->snapshot($delivery);
+            $attempt->passing_score = $exam->passing_score;
             $attempt->answers = [];
             $attempt->current_position = 0;
             $attempt->revision = 0;
@@ -78,13 +82,19 @@ final class CandidateAttemptService
 
     public function expire(ExaminationAttempt $attempt): ExaminationAttempt
     {
-        if ($attempt->status === 'in_progress' && $attempt->expires_at?->lte(now())) {
-            $attempt->status = $attempt->examination->auto_submit ? 'submitted' : 'expired';
-            $attempt->submitted_at = $attempt->status === 'submitted' ? $attempt->expires_at : null;
-            $attempt->save();
-        }
+        return DB::transaction(function () use ($attempt) {
+            $attempt = ExaminationAttempt::whereKey($attempt->id)->lockForUpdate()->firstOrFail();
+            if ($attempt->status === 'in_progress' && $attempt->expires_at?->lte(now())) {
+                $attempt->status = $attempt->examination->auto_submit ? 'submitted' : 'expired';
+                $attempt->submitted_at = $attempt->status === 'submitted' ? $attempt->expires_at : null;
+                $attempt->submission_kind = $attempt->status === 'submitted' ? 'automatic' : null;
+                $attempt->revision++;
+                $attempt->save();
+                $this->scoring->score($attempt);
+            }
 
-        return $attempt;
+            return $attempt;
+        });
     }
 
     public function read(User $user, ExaminationAttempt $attempt): ExaminationAttempt
@@ -121,9 +131,12 @@ final class CandidateAttemptService
             if ($attempt->revision !== (int) $data['revision']) {
                 // Retrying the same payload after a lost response is safe and idempotent.
                 if (($attempt->answers[$item['id']] ?? null) === $requested && $attempt->current_position === $next) {
-                    return $attempt;
+                    if (! $submit) {
+                        return $attempt;
+                    }
+                } else {
+                    throw ValidationException::withMessages(['attempt' => 'This attempt changed in another tab. Reload before continuing.']);
                 }
-                throw ValidationException::withMessages(['attempt' => 'This attempt changed in another tab. Reload before continuing.']);
             }
             $answers = $attempt->answers;
             $answers[$item['id']] = $requested;
@@ -136,8 +149,12 @@ final class CandidateAttemptService
             if ($submit) {
                 $attempt->status = 'submitted';
                 $attempt->submitted_at = now();
+                $attempt->submission_kind = 'manual';
             }
             $attempt->save();
+            if ($submit) {
+                $this->scoring->score($attempt);
+            }
 
             return $attempt;
         });

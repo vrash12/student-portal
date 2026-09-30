@@ -90,7 +90,9 @@ A published examination must have a positive duration and questions before a can
 can start. Candidates see only their assigned class's currently available examinations.
 The attempt screen supports MCQ, true/false, essay, persisted question/choice order,
 server deadlines, answer saving, refresh recovery, permitted navigation/review flags,
-and an explicit submission confirmation. Scores are not released by this milestone.
+and an explicit submission confirmation. Submission is transactional and idempotent;
+objective items are scored on the server, while essays remain pending manual review.
+Instructors can choose whether released results are visible to candidates.
 
 The PWA uses `/portal.webmanifest` and `/portal-sw.js`. For installation on real LAN
 tablets, serve the application over trusted HTTPS; localhost development also works.

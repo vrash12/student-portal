@@ -1,7 +1,8 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/page-header';
-interface Exam { id:number; title:string; description:string|null; durationMinutes:number; questionCount:number; attemptLimit:number; attemptsUsed:number; requiresCode:boolean; available:boolean; resumeId:number|null; allowBackNavigation:boolean }
+interface ExamAttempt { number:number; status:string; submittedAt:string|null; resultStatus:string|null; percentage:string|null }
+interface Exam { id:number; title:string; description:string|null; durationMinutes:number; questionCount:number; attemptLimit:number; attemptsUsed:number; requiresCode:boolean; available:boolean; resumeId:number|null; allowBackNavigation:boolean; releaseResults:boolean; attempts:ExamAttempt[] }
 export default function ExamStart({examination:e}:{examination:Exam}) {
  const form=useForm({access_code:''});
  return <><Head title={e.title}/><PageHeader title={e.title} description="Review the instructions before starting."/>
@@ -12,5 +13,6 @@ export default function ExamStart({examination:e}:{examination:Exam}) {
  {e.requiresCode&&!e.resumeId&&<label className="block">Access code<input type="password" autoComplete="off" className="mt-2 block min-h-12 w-full rounded border border-line-strong p-3" value={form.data.access_code} onChange={event=>form.setData('access_code',event.target.value)}/></label>}
  {Object.values(form.errors).map((error,i)=><p key={i} role="alert" className="text-danger-fg">{error}</p>)}
  {e.resumeId?<Button type="button" className="min-h-12" onClick={()=>router.visit(`/portal/attempts/${e.resumeId}`)}>Resume examination</Button>:<Button type="submit" className="min-h-12" loading={form.processing} disabled={!e.available||e.attemptsUsed>=e.attemptLimit}>Start examination</Button>}
- </form></>;
+ </form>
+ <section className="mt-6 max-w-2xl rounded-xl border border-line bg-surface p-6" aria-labelledby="attempt-history"><h2 id="attempt-history" className="text-lg font-semibold">Attempt history</h2><div className="mt-3 space-y-2">{e.attempts.map((attempt)=><div key={attempt.number} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line p-3 text-sm"><span>Attempt {attempt.number}</span><span className="capitalize">{attempt.status.replace('_',' ')}</span><span>{attempt.resultStatus === 'pending_review' ? 'Pending review' : e.releaseResults && attempt.percentage !== null ? `${attempt.percentage}%` : '—'}</span></div>)}</div></section></>;
 }

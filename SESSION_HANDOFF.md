@@ -93,11 +93,11 @@ Always distinguish:
 
 ## Current Milestone
 
-Milestones 7–8 remain partially integrated and require a corrective pass. Milestones 9 and 10 are implemented on `main`. Next planned milestone: 11 (submission and scoring).
+Milestones 7–8 remain partially integrated and require a corrective pass. Milestones 9–11 are implemented on `main`. Next planned milestone: 12 (manual essay grading).
 
 ## Current Status
 
-Foundation, sign-in, roles and permissions, staff accounts, academic structure, candidate records, organization branding, teaching and grading, academic monitoring, candidate examination access (M9), and server-backed connection recovery (M10) are implemented. M7/M8 worktree code is preserved but not yet reconciled into the main implementation.
+Foundation, sign-in, roles and permissions, staff accounts, academic structure, candidate records, organization branding, teaching and grading, academic monitoring, candidate examination access (M9), server-backed connection recovery (M10), and transactional submission/scoring (M11) are implemented. M7/M8 worktree code is preserved but not yet reconciled into the main implementation.
 
 ## Last Updated
 
@@ -199,7 +199,7 @@ Foundation, sign-in, roles and permissions, staff accounts, academic structure, 
 
 # Work In Progress
 
-M9 and M10 are implemented on main as uncommitted changes. M7/M8 require a corrective integration pass:
+M9, M10, and M11 are implemented on main. M7/M8 require a corrective integration pass:
 - main contains 536a0ca, 40e6b04 and cd9197b, but cd9197b did NOT complete M7/M8 despite its title and the prior chat report.
 - `.worktrees/m7` contains substantial uncommitted Question Bank services, requests, policy, forms, pages, seeder and tests.
 - `.worktrees/m8` contains substantial uncommitted builder/lifecycle/settings services, policies, controllers, forms, migrations, seeders and tests.
@@ -209,7 +209,7 @@ M9 and M10 are implemented on main as uncommitted changes. M7/M8 require a corre
 
 # Next Recommended Task
 
-Reconcile the preserved M7/M8 worktrees with main and the M9/M10 attempt contract, then implement Milestone 11 submission and scoring. Preserve the attempt delivery snapshot, revision, deadline, and recovery queue fields. Do not drop development records or overwrite migrations already applied.
+Reconcile the preserved M7/M8 worktrees with main and the M9/M10 attempt contract, then continue with Milestone 12 manual essay grading. Preserve the attempt delivery snapshot, revision, deadline, recovery queue, and scoring fields. Do not drop development records or overwrite migrations already applied.
 
 ---
 # Files Recently Changed
@@ -716,7 +716,7 @@ Validation:
 - Browser: synthetic candidate completed MCQ, true/false and essay; save state confirmed; reload preserved selected answer and deadline; confirmation defaulted to Continue; submit reached receipt. Tablet portrait 768x1024 and landscape 1024x768 inspected; landscape DOM had no horizontal overflow. Actual OS installation was not tested.
 - Synthetic local smoke exam `M9 Tablet Smoke Test` archived after verification; candidate `m9-smoke-001` and its synthetic instructor deactivated. Records and submitted answers retained as test evidence. Temporary helper is ignored under storage/app/m9-smoke.php.
 
-Git: M9/M10 changes remain uncommitted on main; no push and no worktree cleanup. Prior statements claiming M7/M8 completion are superseded by this corrective handoff.
+Git: M9/M10/M11 changes are committed on main; no push and no worktree cleanup. Prior statements claiming M7/M8 completion are superseded by this corrective handoff.
 
 ## Milestone 10 implementation — 2026-09-30
 
@@ -725,3 +725,11 @@ Implemented IndexedDB recovery in `resources/js/lib/exam-recovery.ts`. Each atte
 The backend remains authoritative. Each retry carries the server revision; identical retries after a lost response are idempotent, while conflicting stale-tab writes remain rejected. Local storage is temporary and scoped to the attempt. Authenticated HTML, question payloads, and answers are never cached by the service worker. Full offline application startup is intentionally not claimed: the app requires the institutional server to open an attempt, then protects short interruptions and refreshes through IndexedDB until connectivity returns.
 
 Validation focused on implementation flow rather than broad regression work: TypeScript compilation passes, Pint passes, migrations 000300/000400 are applied, and the browser flow has been exercised through MCQ, true/false, essay, refresh recovery, timer continuation, explicit submission confirmation, and portrait/landscape tablet layouts. A focused test command was started after the M10 changes but did not complete in the local environment; broad test execution is intentionally left to the owner.
+
+## Milestone 11 implementation — 2026-09-30
+
+Implemented transactional examination submission and scoring. `ExaminationScoringService` creates a private scoring key from the locked question bank at attempt start, scores multiple-choice and true/false answers from server-side correct choices, and records per-item scores without exposing the key. Essay items produce a `pending_review` result until Milestone 12 grading; objective-only attempts become `graded` immediately. Automatic expiry submission and manual submission both use the same locked, idempotent path, record submission kind/timestamp, and make the attempt immutable to candidates after terminal state.
+
+Added examination-level `release_results` configuration. Candidate result pages and attempt history expose scores only when enabled; pending essay attempts show the objective subtotal and review state. Added persisted objective/total/earned points, percentage, passing threshold and pass flag, score status, and item-score snapshots to `examination_attempts`. Migration `000500_add_examination_scoring` is applied locally.
+
+Validation: TypeScript check, production Vite build, PHP syntax checks, Pint, and `git diff --check` pass. The focused PHPUnit command was attempted but hangs in the local environment; broad test execution remains intentionally with the owner. Next work is M12 manual essay grading, followed by reconciling the preserved M7/M8 worktrees before later milestones.
