@@ -93,11 +93,11 @@ Always distinguish:
 
 ## Current Milestone
 
-Milestones 7–8 remain partially integrated and require a corrective pass. Milestones 9–11 are implemented on `main`. Next planned milestone: 12 (manual essay grading).
+Milestones 7–8 remain partially integrated and require a corrective pass. Milestones 9–12 are implemented on `main`. Next planned milestone: 13 (examination monitoring).
 
 ## Current Status
 
-Foundation, sign-in, roles and permissions, staff accounts, academic structure, candidate records, organization branding, teaching and grading, academic monitoring, candidate examination access (M9), server-backed connection recovery (M10), and transactional submission/scoring (M11) are implemented. M7/M8 worktree code is preserved but not yet reconciled into the main implementation.
+Foundation, sign-in, roles and permissions, staff accounts, academic structure, candidate records, organization branding, teaching and grading, academic monitoring, candidate examination access (M9), server-backed connection recovery (M10), transactional submission/scoring (M11), and manual essay grading with append-only history (M12) are implemented. M7/M8 worktree code is preserved but not yet reconciled into the main implementation.
 
 ## Last Updated
 
@@ -716,7 +716,7 @@ Validation:
 - Browser: synthetic candidate completed MCQ, true/false and essay; save state confirmed; reload preserved selected answer and deadline; confirmation defaulted to Continue; submit reached receipt. Tablet portrait 768x1024 and landscape 1024x768 inspected; landscape DOM had no horizontal overflow. Actual OS installation was not tested.
 - Synthetic local smoke exam `M9 Tablet Smoke Test` archived after verification; candidate `m9-smoke-001` and its synthetic instructor deactivated. Records and submitted answers retained as test evidence. Temporary helper is ignored under storage/app/m9-smoke.php.
 
-Git: M9/M10/M11 changes are committed on main; no push and no worktree cleanup. Prior statements claiming M7/M8 completion are superseded by this corrective handoff.
+Git: M9/M10/M11/M12 changes are committed on main; no push and no worktree cleanup. Prior statements claiming M7/M8 completion are superseded by this corrective handoff.
 
 ## Milestone 10 implementation — 2026-09-30
 
@@ -732,4 +732,12 @@ Implemented transactional examination submission and scoring. `ExaminationScorin
 
 Added examination-level `release_results` configuration. Candidate result pages and attempt history expose scores only when enabled; pending essay attempts show the objective subtotal and review state. Added persisted objective/total/earned points, percentage, passing threshold and pass flag, score status, and item-score snapshots to `examination_attempts`. Migration `000500_add_examination_scoring` is applied locally.
 
-Validation: TypeScript check, production Vite build, PHP syntax checks, Pint, and `git diff --check` pass. The focused PHPUnit command was attempted but hangs in the local environment; broad test execution remains intentionally with the owner. Next work is M12 manual essay grading, followed by reconciling the preserved M7/M8 worktrees before later milestones.
+Validation: TypeScript check, production Vite build, PHP syntax checks, Pint, and `git diff --check` pass. The focused PHPUnit command was attempted but hangs in the local environment; broad test execution remains intentionally with the owner. M12 manual essay grading is recorded below; the next milestone is M13 examination monitoring, followed by reconciling the preserved M7/M8 worktrees before later milestones.
+
+## Milestone 12 implementation — 2026-09-30
+
+Implemented an instructor-only essay grading queue and response review page. Authorized instructors can filter submitted attempts by pending or completed status, inspect the candidate's essay answer, record a score bounded by the snapshotted maximum, add feedback, and move to the next pending attempt. The backend uses `RecordGrades`, assigned class/subject authorization, row locking, and optimistic version checks so concurrent graders cannot silently overwrite one another.
+
+Essay scores are persisted in `examination_essay_grades`; every first score and correction is append-only in `examination_essay_revisions` with actor, before/after score/comment, reason, and timestamp. The result calculation is recalculated centrally after every grading change. Candidate results move from `pending_review` to `graded` only after all essays are scored, and existing release-results settings still control candidate visibility. General audit entries record the grade item and score metadata without storing essay text or detailed comments.
+
+Validation: migrations 000600/000700 applied locally, PHP syntax checks, Pint, TypeScript compilation, route registration, and `git diff --check` pass. Broad PHPUnit execution remains intentionally with the owner. Next work is Milestone 13 examination monitoring, after the preserved M7/M8 corrective integration is accounted for.

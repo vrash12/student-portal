@@ -30,4 +30,7 @@ export const examinationRoutes = {
     publish: (examinationId: number) => `/examinations/${examinationId}/publish`,
     unpublish: (examinationId: number) => `/examinations/${examinationId}/unpublish`,
     archive: (examinationId: number) => `/examinations/${examinationId}/archive`,
+    grading: (examinationId: number) => `/examinations/${examinationId}/grading`,
+    gradeAttempt: (attemptId: number) => `/examination-attempts/${attemptId}/grading`,
+    saveEssay: (attemptId: number) => `/examination-attempts/${attemptId}/essay-grade`,
 };

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[UsePolicy(ExaminationAttemptPolicy::class)]
 #[Hidden(['scoring_key', 'delivery', 'answers', 'item_scores'])]
@@ -25,5 +26,10 @@ class ExaminationAttempt extends Model
     public function candidate(): BelongsTo
     {
         return $this->belongsTo(Candidate::class);
+    }
+
+    public function essayGrades(): HasMany
+    {
+        return $this->hasMany(ExaminationEssayGrade::class);
     }
 }

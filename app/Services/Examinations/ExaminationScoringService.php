@@ -5,12 +5,13 @@ namespace App\Services\Examinations;
 use App\Enums\QuestionType;
 use App\Models\ExaminationAttempt;
 use App\Models\Question;
+use App\Support\DecimalValue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 final class ExaminationScoringService
 {
-    /** Build a confidential key using the same question IDs and points as delivery. */
+    /** The key is confidential and never belongs in candidate delivery or audit data. */
     public function snapshot(array $delivery): array
     {
         $questions = Question::with('choices')->whereIn('id', array_column(array_column($delivery, 'question'), 'id'))->get()->keyBy('id');
@@ -28,57 +29,63 @@ final class ExaminationScoringService
         return $key;
     }
 
-    /** Caller holds the attempt lock; this also supports pre-M11 submitted attempts. */
+    /** Caller holds the attempt lock. Existing scores remain immutable on retries. */
     public function score(ExaminationAttempt $attempt): void
     {
         if ($attempt->status !== 'submitted' || $attempt->scored_at !== null) {
             return;
         }
-        $attempt->passing_score ??= $attempt->examination->passing_score;
-        $attempt->scoring_key ??= $this->snapshot($attempt->delivery ?? []);
-        $objective = 0;
-        $objectiveMax = 0;
-        $total = 0;
-        $pending = false;
-        $scores = [];
-        foreach ($attempt->scoring_key as $id => $key) {
-            // Whole hundredths avoid floating-point drift while summing point values.
-            $points = (int) round((float) $key['points'] * 100);
-            $total += $points;
-            if ($key['type'] === QuestionType::Essay->value) {
-                $pending = true;
-                $earned = null;
-            } else {
-                $objectiveMax += $points;
-                $answer = $attempt->answers[$id]['value'] ?? null;
-                $earned = is_numeric($answer) && (int) $answer === (int) $key['correct_choice_id'] ? $points : 0;
-                $objective += $earned;
-            }
-            $scores[$id] = ['points' => $earned === null ? null : $earned / 100, 'max_points' => $points / 100, 'status' => $earned === null ? 'pending_review' : 'graded'];
+        if ($attempt->scoring_key === null) {
+            $attempt->passing_score = $attempt->examination->passing_score;
+            $attempt->scoring_key = $this->snapshot($attempt->delivery ?? []);
         }
-        $attempt->item_scores = $scores;
-        $attempt->objective_points = $objective / 100;
-        $attempt->objective_max_points = $objectiveMax / 100;
-        $attempt->total_points = $total / 100;
-        $attempt->earned_points = $pending ? null : $objective / 100;
-        $attempt->percentage = $pending || $total === 0 ? null : round($objective * 100 / $total, 2);
-        $attempt->passed = $attempt->percentage !== null && $attempt->passing_score !== null ? (float) $attempt->percentage >= (float) $attempt->passing_score : null;
-        $attempt->result_status = $pending ? 'pending_review' : 'graded';
-        $attempt->scored_at = now();
-        $attempt->save();
+        $this->recalculate($attempt);
     }
 
-    /** Safe retry for historical submissions; never recalculates an existing score. */
     public function reconcile(ExaminationAttempt $attempt): ExaminationAttempt
     {
         return DB::transaction(function () use ($attempt) {
             $locked = ExaminationAttempt::whereKey($attempt->id)->lockForUpdate()->firstOrFail();
-            if ($locked->scoring_key === null) {
-                $locked->passing_score = $locked->examination->passing_score;
-            }
             $this->score($locked);
 
             return $locked;
         });
+    }
+
+    /** Single authoritative calculation for submission and authorized essay grading. */
+    public function recalculate(ExaminationAttempt $attempt): void
+    {
+        abort_unless($attempt->status === 'submitted' && ! empty($attempt->scoring_key), 422, 'A submitted question snapshot is required.');
+        $grades = $attempt->essayGrades()->get()->keyBy('examination_question_id');
+        $objective = $objectiveMaximum = $total = $earnedTotal = 0;
+        $pending = false;
+        $scores = [];
+        foreach ($attempt->scoring_key as $itemId => $key) {
+            // Sum integer hundredths, rounding only when deriving the percentage.
+            $points = DecimalValue::toHundredths($key['points']);
+            $total += $points;
+            if ($key['type'] === QuestionType::Essay->value) {
+                $grade = $grades->get($itemId);
+                $earned = $grade === null ? null : DecimalValue::toHundredths($grade->score);
+                $pending = $pending || $grade === null;
+            } else {
+                $answer = $attempt->answers[$itemId]['value'] ?? null;
+                $earned = is_int($answer) && $answer === (int) $key['correct_choice_id'] ? $points : 0;
+                $objectiveMaximum += $points;
+                $objective += $earned;
+            }
+            $earnedTotal += $earned ?? 0;
+            $scores[$itemId] = ['points' => $earned === null ? null : $earned / 100, 'max_points' => $points / 100, 'status' => $earned === null ? 'pending_review' : 'graded'];
+        }
+        $attempt->objective_points = $objective / 100;
+        $attempt->objective_max_points = $objectiveMaximum / 100;
+        $attempt->total_points = $total / 100;
+        $attempt->item_scores = $scores;
+        $attempt->earned_points = $pending ? null : $earnedTotal / 100;
+        $attempt->percentage = $pending || $total === 0 ? null : round($earnedTotal * 100 / $total, 2);
+        $attempt->passed = $attempt->percentage !== null && $attempt->passing_score !== null ? (float) $attempt->percentage >= (float) $attempt->passing_score : null;
+        $attempt->result_status = $pending ? 'pending_review' : 'graded';
+        $attempt->scored_at = now();
+        $attempt->save();
     }
 }

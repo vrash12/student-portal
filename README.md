@@ -94,6 +94,10 @@ and an explicit submission confirmation. Submission is transactional and idempot
 objective items are scored on the server, while essays remain pending manual review.
 Instructors can choose whether released results are visible to candidates.
 
+The staff examination area includes an essay-grading queue. Authorized instructors
+can review submitted responses, record bounded scores and comments, and inspect
+append-only grading history. Final results remain pending until every essay is graded.
+
 The PWA uses `/portal.webmanifest` and `/portal-sw.js`. For installation on real LAN
 tablets, serve the application over trusted HTTPS; localhost development also works.
 Assets are served locally. The worker caches public build assets and an offline fallback,
