@@ -22,9 +22,11 @@ final class ReportController
         $report = $reports->generate($request->user(), $filters);
         $print = $request->boolean('print');
         $perPage = $print ? 5000 : 25;
-        $page = $print ? 1 : (int) $request->input('page', 1);
         $rows = $report['rows'];
-        $report['rows'] = new LengthAwarePaginator(array_slice($rows, ($page - 1) * $perPage, $perPage), count($rows), $perPage, $page, ['path' => $request->url(), 'query' => $request->query()]);
+        $page = $print ? 1 : (int) $request->input('page', 1);
+        // Pages past the end are empty; the offset is never computed for them, so a huge page number cannot overflow it.
+        $offset = $page > (int) ceil(count($rows) / $perPage) ? count($rows) : ($page - 1) * $perPage;
+        $report['rows'] = new LengthAwarePaginator(array_slice($rows, $offset, $perPage), count($rows), $perPage, $page, ['path' => $request->url(), 'query' => $request->query()]);
 
         return Inertia::render('staff/reports/index', $report + ['printMode' => $print, 'types' => ReportingService::TYPES])
             ->toResponse($request)->header('Cache-Control', 'no-store, private');

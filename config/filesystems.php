@@ -33,7 +33,9 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Private files (question media, candidate photos) are served only
+            // by authorized controllers, never by Laravel's storage/{path} route.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

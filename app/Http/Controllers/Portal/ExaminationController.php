@@ -68,11 +68,12 @@ class ExaminationController extends Controller
      * A question's image, audio, or video during the candidate's own attempt:
      * only while it is in progress and only media of its delivered questions.
      */
-    public function media(Request $request, ExaminationAttempt $attempt, QuestionMedia $medium, QuestionMediaService $media): BinaryFileResponse
+    public function media(Request $request, ExaminationAttempt $attempt, QuestionMedia $medium, QuestionMediaService $media, CandidateAttemptService $attempts): BinaryFileResponse
     {
         // No row lock: video seeking sends many range requests, which must not contend with answer saves.
         Gate::authorize('view', $attempt);
         abort_unless($attempt->status === 'in_progress' && $attempt->expires_at?->isFuture(), 404);
+        abort_unless($attempts->eligible($request->user(), $attempt->examination), 403);
         $delivered = collect($attempt->delivery)->flatMap(fn (array $item): array => [
             ...array_column($item['question']['media'] ?? [], 'id'),
             ...array_column(array_filter(array_column($item['question']['choices'] ?? [], 'image')), 'id'),

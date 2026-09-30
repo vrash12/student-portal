@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests\Users;
 
+use App\Http\Requests\Concerns\NormalizesTextInput;
 use App\Models\User;
 use App\Rules\GrantableStaffRole;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
@@ -14,6 +14,8 @@ use Illuminate\Validation\Rules\Password;
  */
 abstract class UserAccountRequest extends FormRequest
 {
+    use NormalizesTextInput;
+
     /**
      * The account being edited, or null when creating.
      */
@@ -23,12 +25,10 @@ abstract class UserAccountRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $email = trim((string) $this->input('email'));
-
         $this->merge([
-            'name' => trim((string) $this->input('name')),
-            'username' => Str::lower(trim((string) $this->input('username'))),
-            'email' => $email === '' ? null : Str::lower($email),
+            'name' => $this->trimmedInput('name'),
+            'username' => $this->lowercaseInput('username'),
+            'email' => $this->optionalInput('email', lowercase: true),
         ]);
     }
 

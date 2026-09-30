@@ -10,6 +10,8 @@ type Answer = RecoveryAnswer;
 type FocusReason = 'hidden' | 'blur';
 interface FocusReport { event: 'left' | 'returned'; reason: FocusReason; at: number }
 interface Item { id: number; points: string; question: { prompt: string; type: { value: string }; choices: { id: number; text: string; image?: QuestionMediaView | null }[]; media?: QuestionMediaView[] } }
+/** The server refused a save (not a connection failure). */
+class SaveRejected extends Error { constructor(message: string, readonly status: number) { super(message); } }
 interface Attempt { id: number; title: string; expiresAt: string; serverNow: string; allowBackNavigation: boolean; oneQuestionAtATime: boolean; position: number; revision: number; answers: Record<number, Answer> }
 
 export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; questions: Item[] }) {
@@ -204,7 +206,7 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
         const token = document.cookie.split('; ').find((cookie) => cookie.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=');
         const response = await fetch('/portal/attempts/' + attempt.id + '/answers', { method: 'PUT', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-XSRF-TOKEN': decodeURIComponent(token ?? '') }, body: JSON.stringify(payload) });
         const result = await response.json().catch(() => null) as { revision?: number; status?: string; errors?: Record<string, string[]> } | null;
-        if (!response.ok) throw new Error(result?.errors ? Object.values(result.errors).flat().join(' ') : 'Unable to sync this answer. Reload before continuing.');
+        if (!response.ok) throw new SaveRejected(result?.errors ? Object.values(result.errors).flat().join(' ') : 'Unable to sync this answer. Reload before continuing.', response.status);
         return { revision: result?.revision ?? payload.revision, status: result?.status ?? 'in_progress' };
     }
 
@@ -232,6 +234,16 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
             setConnection(navigator.onLine ? 'online' : 'offline');
             setState(pendingRef.current.length > 0 ? 'Offline — saved on this device' : dirty.current ? 'Recovered answer awaiting save' : 'Saved');
         } catch (error) {
+            if (error instanceof SaveRejected && error.status === 422) {
+                // The server refused a queued answer (the attempt changed on another
+                // tab or device). Retrying cannot succeed, so the queue is dropped
+                // and the answers saved on the server are loaded again.
+                pendingRef.current = [];
+                await clearRecovery(attempt.id);
+                setState(`${error.message} The answers saved on the server are being reloaded.`);
+                window.setTimeout(() => window.location.reload(), 2500);
+                return;
+            }
             setState(error instanceof Error ? error.message : 'Unable to sync. Retry when connected.');
         } finally {
             flushing.current = false;

@@ -29,6 +29,8 @@ final class ExaminationFocusService
     /** How old a reported event may be (a queued event from a longer outage is placed no earlier than this). */
     public const MAX_DELAY_MS = 600_000;
 
+    public function __construct(private readonly CandidateAttemptService $attempts) {}
+
     /**
      * @param  'left'|'returned'  $event
      * @param  'hidden'|'blur'  $reason
@@ -38,9 +40,10 @@ final class ExaminationFocusService
     {
         Gate::forUser($user)->authorize('view', $attempt);
 
-        return DB::transaction(function () use ($attempt, $event, $reason, $delayMs): array {
-            $attempt = ExaminationAttempt::query()->whereKey($attempt->id)->lockForUpdate()->firstOrFail();
-            if ($attempt->status !== 'in_progress') {
+        return DB::transaction(function () use ($user, $attempt, $event, $reason, $delayMs): array {
+            // Overdue attempts are closed first; nothing is recorded after the deadline.
+            $attempt = $this->attempts->expire(ExaminationAttempt::query()->whereKey($attempt->id)->lockForUpdate()->firstOrFail());
+            if ($attempt->status !== 'in_progress' || ! $this->attempts->eligible($user, $attempt->examination)) {
                 return ['recorded' => false, 'status' => $attempt->status];
             }
 

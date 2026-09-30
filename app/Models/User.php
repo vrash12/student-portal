@@ -36,6 +36,7 @@ class User extends Authenticatable
      */
     protected $attributes = [
         'is_active' => true,
+        'password_change_required' => false,
         'remember_token' => null,
     ];
 
@@ -47,6 +48,7 @@ class User extends Authenticatable
         return [
             'role_id' => 'integer',
             'is_active' => 'boolean',
+            'password_change_required' => 'boolean',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
         ];

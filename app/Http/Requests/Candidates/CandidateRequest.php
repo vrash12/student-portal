@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Candidates;
 
+use App\Http\Requests\Concerns\NormalizesTextInput;
 use App\Models\Candidate;
 use App\Models\User;
 use App\Services\CandidateService;
@@ -16,6 +17,8 @@ use Illuminate\Validation\Validator;
  */
 abstract class CandidateRequest extends FormRequest
 {
+    use NormalizesTextInput;
+
     /**
      * The candidate being edited, or null when creating.
      */
@@ -26,9 +29,9 @@ abstract class CandidateRequest extends FormRequest
         $classBatchId = $this->input('class_batch_id');
 
         $this->merge([
-            'candidate_number' => trim((string) $this->input('candidate_number')),
-            'first_name' => trim((string) $this->input('first_name')),
-            'last_name' => trim((string) $this->input('last_name')),
+            'candidate_number' => $this->trimmedInput('candidate_number'),
+            'first_name' => $this->trimmedInput('first_name'),
+            'last_name' => $this->trimmedInput('last_name'),
             'class_batch_id' => $classBatchId === '' ? null : $classBatchId,
         ]);
     }
@@ -113,7 +116,7 @@ abstract class CandidateRequest extends FormRequest
         $data = [];
         foreach (['middle_name', 'suffix', 'training_group'] as $field) {
             if ($this->exists($field)) {
-                $data[$field] = trim((string) $this->input($field)) ?: null;
+                $data[$field] = $this->optionalInput($field);
             }
         }
 

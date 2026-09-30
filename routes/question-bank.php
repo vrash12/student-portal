@@ -43,7 +43,7 @@ Route::middleware('can:'.Permission::ManageQuestionBank->value)
     ->controller(QuestionImportController::class)
     ->group(function (): void {
         Route::get('/', 'create')->name('create')->can('create', Question::class);
-        Route::post('/', 'store')->name('store')->can('create', Question::class);
+        Route::post('/', 'store')->name('store')->can('create', Question::class)->middleware('throttle:staff-uploads');
         Route::get('template', 'template')->name('template')->can('create', Question::class);
     });
 
@@ -55,7 +55,7 @@ Route::middleware('can:'.Permission::ManageQuestionBank->value)
     ->whereNumber(['question', 'medium'])
     ->scopeBindings()
     ->group(function (): void {
-        Route::post('/', 'store')->name('store')->can('update', 'question');
+        Route::post('/', 'store')->name('store')->can('update', 'question')->middleware('throttle:staff-uploads');
         Route::put('{medium}', 'update')->name('update')->can('update', 'question');
         Route::delete('{medium}', 'destroy')->name('destroy')->can('update', 'question');
     });

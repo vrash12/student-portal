@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use App\Enums\AuditAction;
+use App\Http\Requests\Concerns\NormalizesTextInput;
 use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Auth\Events\Lockout;
@@ -14,9 +15,18 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
+    use NormalizesTextInput;
+
     private const MAX_ATTEMPTS = 5;
 
     private const DECAY_SECONDS = 60;
+
+    /**
+     * Failed sign-ins from one network address, across all usernames, so
+     * one device cannot try passwords against many accounts at once. High
+     * enough for a room of tablets behind one address mistyping at once.
+     */
+    private const MAX_ATTEMPTS_PER_ADDRESS = 60;
 
     public function authorize(): bool
     {
@@ -26,7 +36,7 @@ class LoginRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'username' => Str::lower(trim((string) $this->input('username'))),
+            'username' => $this->lowercaseInput('username'),
         ]);
     }
 
@@ -78,11 +88,15 @@ class LoginRequest extends FormRequest
 
         if (! $authenticated) {
             RateLimiter::hit($this->throttleKey(), self::DECAY_SECONDS);
+            RateLimiter::hit($this->addressThrottleKey(), self::DECAY_SECONDS);
 
+            // The typed username is recorded only when it is an account's:
+            // anything else may be a password typed into the wrong field.
+            $account = User::query()->where('username', $username)->first();
             $audit->record(
                 AuditAction::LoginFailed,
-                User::query()->where('username', $username)->first(),
-                newValues: ['username' => $username],
+                $account,
+                newValues: $account === null ? ['username' => null, 'known_account' => false] : ['username' => $username],
             );
 
             throw ValidationException::withMessages([
@@ -105,17 +119,27 @@ class LoginRequest extends FormRequest
      */
     private function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), self::MAX_ATTEMPTS)) {
+        $key = match (true) {
+            RateLimiter::tooManyAttempts($this->throttleKey(), self::MAX_ATTEMPTS) => $this->throttleKey(),
+            RateLimiter::tooManyAttempts($this->addressThrottleKey(), self::MAX_ATTEMPTS_PER_ADDRESS) => $this->addressThrottleKey(),
+            default => null,
+        };
+        if ($key === null) {
             return;
         }
 
         event(new Lockout($this));
 
-        $seconds = RateLimiter::availableIn($this->throttleKey());
+        $seconds = RateLimiter::availableIn($key);
 
         throw ValidationException::withMessages([
             'username' => "Too many sign-in attempts. Try again in {$seconds} seconds.",
         ]);
+    }
+
+    private function addressThrottleKey(): string
+    {
+        return 'login-address|'.$this->ip();
     }
 
     private function throttleKey(): string

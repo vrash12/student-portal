@@ -17,10 +17,13 @@ use App\Models\Question;
 use App\Models\Role;
 use App\Models\Subject;
 use App\Models\User;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -42,8 +45,34 @@ class AppServiceProvider extends ServiceProvider
         $this->configureModels();
         $this->configureAuthorization();
         $this->configurePasswords();
+        $this->configureRateLimiting();
 
         DB::prohibitDestructiveCommands($this->app->isProduction());
+    }
+
+    /**
+     * Named limiters, each with its own counter. (Plain throttle:N,M
+     * middleware keys only on the user, so every such route would share one
+     * counter.) Limits are far above normal use on a tablet.
+     */
+    private function configureRateLimiting(): void
+    {
+        $perUser = fn (string $name, int $perMinute) => RateLimiter::for($name, fn (Request $request): Limit => Limit::perMinute($perMinute)->by($name.'|'.($request->user()?->getAuthIdentifier() ?? $request->ip())));
+
+        // Autosave (debounced), heartbeat every 45 seconds, and submission.
+        $perUser('exam-writes', 240);
+        // Leaving and returning to the examination screen.
+        $perUser('exam-focus', 120);
+        // Candidate and staff record PDFs.
+        $perUser('record-downloads', 10);
+        // Question media uploads and question imports.
+        $perUser('staff-uploads', 30);
+        // Changing one's own password (the current password is checked).
+        $perUser('password-change', 6);
+
+        // Starting an examination, per candidate and examination, so access
+        // codes cannot be guessed by trying many.
+        RateLimiter::for('exam-start', fn (Request $request): Limit => Limit::perMinute(10)->by('exam-start|'.($request->user()?->getAuthIdentifier() ?? $request->ip()).'|'.($request->route('examination') instanceof Model ? $request->route('examination')->getKey() : (string) $request->route('examination'))));
     }
 
     private function configureModels(): void

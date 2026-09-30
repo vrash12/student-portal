@@ -32,6 +32,9 @@ final class QuestionImportService
 {
     public const MAX_ROWS = 500;
 
+    /** Set when reading stopped at the row limit. */
+    private bool $truncated = false;
+
     public const MAX_FILE_KILOBYTES = 1024;
 
     /** Problems listed at most; a file with more gets a note to fix these first. */
@@ -166,7 +169,7 @@ final class QuestionImportService
         }
 
         if (count($dataRows) > self::MAX_ROWS) {
-            throw ValidationException::withMessages(['file' => 'The file has '.number_format(count($dataRows)).' questions. Import at most '.self::MAX_ROWS.' at a time: split them into smaller files.']);
+            throw ValidationException::withMessages(['file' => 'The file has '.($this->truncated ? 'more than '.number_format(self::MAX_ROWS) : number_format(count($dataRows))).' questions. Import at most '.self::MAX_ROWS.' at a time: split them into smaller files.']);
         }
 
         // The question form's own rules and messages. The subject is checked once for the whole file.
@@ -235,10 +238,22 @@ final class QuestionImportService
         fwrite($stream, str_replace(["\r\n", "\r"], "\n", $contents));
         rewind($stream);
 
+        // Blank records are not kept, and reading stops one row past the
+        // limit, so a file of blank lines or a huge file cannot exhaust memory.
+        $this->truncated = false;
         $records = [];
         $rowNumber = 0;
+        $dataRows = 0;
         while (($fields = fgetcsv($stream, null, ',', '"', '')) !== false) {
-            $records[++$rowNumber] = array_map(fn (?string $field): string => QuestionContent::normalizeText((string) $field), $fields);
+            $values = array_map(fn (?string $field): string => QuestionContent::normalizeText((string) $field), $fields);
+            if (++$rowNumber > 1 && implode('', $values) === '') {
+                continue;
+            }
+            $records[$rowNumber] = $values;
+            if ($rowNumber > 1 && ++$dataRows > self::MAX_ROWS + 1) {
+                $this->truncated = true;
+                break;
+            }
         }
         fclose($stream);
 
@@ -287,6 +302,9 @@ final class QuestionImportService
 
         $problems = [];
 
+        if (count($unknown) > 10) {
+            $unknown = [...array_slice($unknown, 0, 10), 'and '.number_format(count($unknown) - 10).' more'];
+        }
         if ($unknown !== []) {
             $problems[] = (count($unknown) === 1 ? 'Remove the column '.$unknown[0] : 'Remove the columns '.implode(', ', $unknown))
                 .'. The allowed columns are type, question, choice_a to choice_f, correct, points, topic, and explanation.';

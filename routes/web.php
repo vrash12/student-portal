@@ -43,7 +43,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::get('/', HomeController::class)->name('home');
 
     // Staff area: administrators and instructors.
-    Route::middleware('can:'.Permission::AccessStaffArea->value)->group(function (): void {
+    Route::middleware(['can:'.Permission::AccessStaffArea->value, 'password.current'])->group(function (): void {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
         Route::get('reports', ReportController::class)->name('reports.index')->can(Permission::ViewReports->value);
         Route::get('audit-history', AuditHistoryController::class)->name('audit-history.index')->can(Permission::ViewAuditHistory->value);
@@ -62,7 +62,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('roles', [RoleController::class, 'index'])->name('roles.index')->can(Permission::ViewRoles->value);
 
         Route::get('account/password', [AccountPasswordController::class, 'edit'])->name('account.password.edit');
-        Route::put('account/password', [AccountPasswordController::class, 'update'])->name('account.password.update');
+        Route::put('account/password', [AccountPasswordController::class, 'update'])->name('account.password.update')->middleware('throttle:password-change');
 
         // Academic structure.
         Route::middleware('can:'.Permission::ManageAcademicPeriods->value)->group(function (): void {
@@ -166,7 +166,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('candidates/{candidate}/photo', [CandidatePhotoController::class, 'show'])->name('candidates.photo')->can('view', 'candidate');
         Route::get('candidates/{candidate}/documents/{type}', [CandidatePdfController::class, 'show'])
             ->whereIn('type', ['registration', 'academic'])->name('candidates.documents')
-            ->can('downloadRecord', 'candidate')->middleware('throttle:10,1');
+            ->can('downloadRecord', 'candidate')->middleware('throttle:record-downloads');
         Route::put('candidates/{candidate}', [CandidateController::class, 'update'])->name('candidates.update')->can('update', 'candidate');
     });
 
@@ -179,16 +179,16 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::get('profile', CandidateProfileController::class)->name('profile');
             Route::get('profile/photo', [CandidatePhotoController::class, 'own'])->name('profile.photo');
             Route::get('profile/documents/{type}', [CandidatePdfController::class, 'own'])
-                ->whereIn('type', ['registration', 'academic'])->name('profile.documents')->middleware('throttle:10,1');
+                ->whereIn('type', ['registration', 'academic'])->name('profile.documents')->middleware('throttle:record-downloads');
             Route::get('examinations/{examination}', [PortalExaminationController::class, 'show'])->name('examinations.show');
-            Route::post('examinations/{examination}/start', [PortalExaminationController::class, 'start'])->name('examinations.start');
-            Route::get('attempts/{attempt}', [PortalExaminationController::class, 'attempt'])->name('attempts.show');
-            Route::get('attempts/{attempt}/media/{medium}', [PortalExaminationController::class, 'media'])->name('attempts.media')->whereNumber('medium');
-            Route::put('attempts/{attempt}/answers', [PortalExaminationController::class, 'save'])->name('attempts.answers');
-            Route::post('attempts/{attempt}/activity', [PortalExaminationController::class, 'activity'])->name('attempts.activity');
-            Route::post('attempts/{attempt}/focus', [PortalExaminationController::class, 'focus'])->name('attempts.focus')->middleware('throttle:120,1');
-            Route::post('attempts/{attempt}/submit', [PortalExaminationController::class, 'submit'])->name('attempts.submit');
-            Route::get('attempts/{attempt}/success', [PortalExaminationController::class, 'success'])->name('attempts.success');
+            Route::post('examinations/{examination}/start', [PortalExaminationController::class, 'start'])->name('examinations.start')->middleware('throttle:exam-start');
+            Route::get('attempts/{attempt}', [PortalExaminationController::class, 'attempt'])->name('attempts.show')->can('view', 'attempt');
+            Route::get('attempts/{attempt}/media/{medium}', [PortalExaminationController::class, 'media'])->name('attempts.media')->can('view', 'attempt')->whereNumber('medium');
+            Route::put('attempts/{attempt}/answers', [PortalExaminationController::class, 'save'])->name('attempts.answers')->can('view', 'attempt')->middleware('throttle:exam-writes');
+            Route::post('attempts/{attempt}/activity', [PortalExaminationController::class, 'activity'])->name('attempts.activity')->can('view', 'attempt')->middleware('throttle:exam-writes');
+            Route::post('attempts/{attempt}/focus', [PortalExaminationController::class, 'focus'])->name('attempts.focus')->can('view', 'attempt')->middleware('throttle:exam-focus');
+            Route::post('attempts/{attempt}/submit', [PortalExaminationController::class, 'submit'])->name('attempts.submit')->can('view', 'attempt')->middleware('throttle:exam-writes');
+            Route::get('attempts/{attempt}/success', [PortalExaminationController::class, 'success'])->name('attempts.success')->can('view', 'attempt');
         });
 });
 

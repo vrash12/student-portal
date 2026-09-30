@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Academic;
 
+use App\Http\Requests\Concerns\NormalizesTextInput;
 use App\Models\Subject;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -12,6 +13,8 @@ use Illuminate\Validation\Rule;
  */
 class SubjectRequest extends FormRequest
 {
+    use NormalizesTextInput;
+
     public function authorize(): bool
     {
         return true;
@@ -19,12 +22,10 @@ class SubjectRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $description = trim((string) $this->input('description'));
-
         $this->merge([
-            'code' => trim((string) $this->input('code')),
-            'name' => trim((string) $this->input('name')),
-            'description' => $description === '' ? null : $description,
+            'code' => $this->trimmedInput('code'),
+            'name' => $this->trimmedInput('name'),
+            'description' => $this->optionalInput('description'),
         ]);
     }
 

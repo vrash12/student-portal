@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\Permission;
+use App\Models\Examination;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Carbon;
 
@@ -10,7 +11,12 @@ final class ExaminationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->hasPermission(Permission::ManageExaminations);
+        $examination = $this->route('examination');
+
+        // Ownership is checked before validation, so another instructor's
+        // examination is refused outright (ExaminationService checks again).
+        return $this->user()->hasPermission(Permission::ManageExaminations)
+            && (! $examination instanceof Examination || $this->user()->teachesOffering($examination->class_subject_id));
     }
 
     public function rules(): array
@@ -21,7 +27,7 @@ final class ExaminationRequest extends FormRequest
             'description' => 'nullable|string|max:10000', 'duration_minutes' => 'nullable|integer|min:1|max:1440',
             'attempt_limit' => 'required|integer|min:1|max:100', 'passing_score' => 'nullable|numeric|decimal:0,2|min:0|max:100',
             'opens_at' => 'nullable|date', 'closes_at' => 'nullable|date|after:opens_at',
-            'access_code' => 'nullable|string|max:100', 'release_results' => 'required|boolean',
+            'access_code' => 'nullable|string|min:4|max:100', 'release_results' => 'required|boolean',
             'randomize_questions' => 'required|boolean', 'randomize_choices' => 'required|boolean',
             'question_draw_count' => 'nullable|integer|min:1|max:500',
             'one_question_at_a_time' => 'required|boolean', 'allow_back_navigation' => 'required|boolean', 'auto_submit' => 'required|boolean',

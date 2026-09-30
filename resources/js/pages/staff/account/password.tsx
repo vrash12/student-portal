@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { routes } from '@/lib/routes';
 
-export default function AccountPassword() {
+export default function AccountPassword({ changeRequired = false }: { changeRequired?: boolean }) {
     const form = useForm({
         current_password: '',
         password: '',
@@ -31,6 +31,12 @@ export default function AccountPassword() {
                     title="Change Password"
                     description="Your other signed-in sessions are signed out after the password changes."
                 />
+
+                {changeRequired && (
+                    <p role="status" className="mb-4 rounded-lg border border-warning-border bg-warning-bg p-4 text-sm text-warning-fg">
+                        <strong className="font-semibold">New password required.</strong> Your password was set by an administrator. Choose your own password to continue using the system. Enter the password you were given as the current password.
+                    </p>
+                )}
 
                 <Panel>
                     <form onSubmit={submit} noValidate className="flex flex-col gap-5">

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Academic;
 
+use App\Http\Requests\Concerns\NormalizesTextInput;
 use App\Models\ClassBatch;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -13,6 +14,8 @@ use Illuminate\Validation\Rule;
  */
 class ClassBatchRequest extends FormRequest
 {
+    use NormalizesTextInput;
+
     public function authorize(): bool
     {
         return true;
@@ -20,7 +23,7 @@ class ClassBatchRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge(['name' => trim((string) $this->input('name'))]);
+        $this->merge(['name' => $this->trimmedInput('name')]);
     }
 
     /**

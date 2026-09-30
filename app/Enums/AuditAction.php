@@ -55,6 +55,8 @@ enum AuditAction: string
     case ExaminationEssayGraded = 'examination.essay_graded';
     case ExaminationPosted = 'examination.posted_to_gradebook';
 
+    case ExaminationAccessCodeRejected = 'examination.access_code_rejected';
+
     public function label(): string
     {
         return match ($this) {
@@ -105,6 +107,7 @@ enum AuditAction: string
             self::ExaminationDeleted => 'Deleted draft examination',
             self::ExaminationEssayGraded => 'Graded examination essay',
             self::ExaminationPosted => 'Posted examination to gradebook',
+            self::ExaminationAccessCodeRejected => 'Entered an incorrect examination access code',
         };
     }
 }

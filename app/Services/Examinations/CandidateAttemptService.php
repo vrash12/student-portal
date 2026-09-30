@@ -2,12 +2,14 @@
 
 namespace App\Services\Examinations;
 
+use App\Enums\AuditAction;
 use App\Enums\ExaminationStatus;
 use App\Enums\QuestionType;
 use App\Models\Candidate;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
 use App\Models\User;
+use App\Services\AuditLogger;
 use App\Services\QuestionBank\QuestionPresenter;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -15,7 +17,7 @@ use Illuminate\Validation\ValidationException;
 
 final class CandidateAttemptService
 {
-    public function __construct(private readonly ExaminationScoringService $scoring) {}
+    public function __construct(private readonly ExaminationScoringService $scoring, private readonly AuditLogger $audit) {}
 
     public function eligible(User $user, Examination $exam): bool
     {
@@ -23,6 +25,20 @@ final class CandidateAttemptService
     }
 
     public function start(User $user, Examination $exam, ?string $code): ExaminationAttempt
+    {
+        try {
+            return $this->startAttempt($user, $exam, $code);
+        } catch (ValidationException $exception) {
+            // Recorded after the transaction rolled back. Never the entered code.
+            if ($exception->validator->errors()->has('access_code')) {
+                $this->audit->record(AuditAction::ExaminationAccessCodeRejected, $exam, newValues: ['code_entered' => ($code ?? '') !== ''], actor: $user);
+            }
+
+            throw $exception;
+        }
+    }
+
+    private function startAttempt(User $user, Examination $exam, ?string $code): ExaminationAttempt
     {
         return DB::transaction(function () use ($user, $exam, $code) {
             abort_unless($user->candidate, 403);
@@ -36,12 +52,14 @@ final class CandidateAttemptService
             if (! $exam->isActive() || ! $exam->duration_minutes) {
                 throw ValidationException::withMessages(['examination' => 'This examination is not available to start.']);
             }
-            if ($exam->access_code !== null && ! hash_equals($exam->access_code, $code ?? '')) {
-                throw ValidationException::withMessages(['access_code' => 'The access code is incorrect.']);
-            }
+            // The attempt limit is checked first, so a candidate without attempts
+            // left learns nothing about the access code.
             $number = ExaminationAttempt::where('candidate_id', $user->candidate->id)->where('examination_id', $exam->id)->count() + 1;
             if ($number > $exam->attempt_limit) {
                 throw ValidationException::withMessages(['examination' => 'You have used all permitted attempts.']);
+            }
+            if ($exam->access_code !== null && ! hash_equals($exam->access_code, $code ?? '')) {
+                throw ValidationException::withMessages(['access_code' => 'The access code is incorrect.']);
             }
             $items = $exam->examinationQuestions()->with('question.choices')->get();
             if ($items->isEmpty()) {
@@ -154,7 +172,7 @@ final class CandidateAttemptService
             abort_unless($this->eligible($user, $attempt->examination), 403);
             $position = (int) $data['position'];
             $items = $attempt->delivery;
-            if (! isset($items[$position]) || (! $attempt->examination->allow_back_navigation && $position !== $attempt->current_position)) {
+            if (! isset($items[$position])) {
                 throw ValidationException::withMessages(['position' => 'You cannot return to this question.']);
             }
             $item = $items[$position];
@@ -165,14 +183,22 @@ final class CandidateAttemptService
             }
             $next = (int) ($data['next_position'] ?? $position);
             $requested = ['value' => $answer, 'flagged' => $attempt->examination->allow_back_navigation && ($data['flagged'] ?? false)];
+            // A resend of a save that was applied but whose response was lost
+            // (older revision, same answer, already at its destination). It is
+            // recognised before the navigation rule: without back navigation
+            // the candidate has already moved past the resent question.
+            $isRetry = $attempt->revision !== (int) $data['revision']
+                && ($attempt->answers[$item['id']] ?? null) === $requested
+                && $attempt->current_position === $next;
+            if (! $isRetry && ! $attempt->examination->allow_back_navigation && $position !== $attempt->current_position) {
+                throw ValidationException::withMessages(['position' => 'You cannot return to this question.']);
+            }
             if ($attempt->revision !== (int) $data['revision']) {
-                // Retrying the same payload after a lost response is safe and idempotent.
-                if (($attempt->answers[$item['id']] ?? null) === $requested && $attempt->current_position === $next) {
-                    if (! $submit) {
-                        return $attempt;
-                    }
-                } else {
+                if (! $isRetry) {
                     throw ValidationException::withMessages(['attempt' => 'This attempt changed in another tab. Reload before continuing.']);
+                }
+                if (! $submit) {
+                    return $attempt;
                 }
             }
             $answers = $attempt->answers;

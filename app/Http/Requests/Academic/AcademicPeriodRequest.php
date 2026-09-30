@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Academic;
 
+use App\Http\Requests\Concerns\NormalizesTextInput;
 use App\Models\AcademicPeriod;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -12,6 +13,8 @@ use Illuminate\Validation\Rule;
  */
 class AcademicPeriodRequest extends FormRequest
 {
+    use NormalizesTextInput;
+
     public function authorize(): bool
     {
         return true;
@@ -19,7 +22,7 @@ class AcademicPeriodRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge(['name' => trim((string) $this->input('name'))]);
+        $this->merge(['name' => $this->trimmedInput('name')]);
     }
 
     /**

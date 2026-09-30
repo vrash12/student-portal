@@ -96,6 +96,8 @@ The test suite refuses to run against any database whose name does not end in `_
 - Use a dedicated database account limited to this application's database. Never use `root` in production.
 - Serve the application over HTTPS on the internal network. Secure cookies (`SESSION_SECURE_COOKIE=true`), browser-history encryption (`INERTIA_ENCRYPT_HISTORY=true`), and the tablet PWA all require a secure context.
 - Prefer an internal hostname (for example `academic-system.local`) over a raw IP address.
+- The application sends a Content-Security-Policy and, on HTTPS requests, `Strict-Transport-Security`. Do not add a second, conflicting policy in the web server.
+- Staff accounts created or reset by an administrator must choose their own password at the next sign-in.
 - Never commit `.env` or credentials. Keep `.env.example` current.
 - Back up the database together with `storage/app/private` (question images/audio/video and candidate photos). See `docs/examination-operations.md`.
 

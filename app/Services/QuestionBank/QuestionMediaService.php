@@ -32,6 +32,11 @@ final class QuestionMediaService
 
     public const DISK = 'local';
 
+    /** Largest image side and area, in pixels. */
+    public const MAX_IMAGE_SIDE = 8000;
+
+    public const MAX_IMAGE_PIXELS = 40_000_000;
+
     public const LOCKED_MESSAGE = 'This question is part of a published examination, so its images and media can no longer change. Duplicate the question to make a changed version.';
 
     /**
@@ -80,6 +85,10 @@ final class QuestionMediaService
         $dimensions = $type['kind'] === QuestionMedia::KIND_IMAGE ? @getimagesize($file->getRealPath()) : null;
         if ($type['kind'] === QuestionMedia::KIND_IMAGE && $dimensions === false) {
             throw ValidationException::withMessages(['file' => 'The image could not be read. Upload a valid image file.']);
+        }
+        // A small file can still decode to a huge picture that freezes the tablets.
+        if (is_array($dimensions) && ($dimensions[0] > self::MAX_IMAGE_SIDE || $dimensions[1] > self::MAX_IMAGE_SIDE || $dimensions[0] * $dimensions[1] > self::MAX_IMAGE_PIXELS)) {
+            throw ValidationException::withMessages(['file' => sprintf('This image is %d × %d pixels. Images can be at most %d pixels wide or tall (%d megapixels); resize it and upload again.', $dimensions[0], $dimensions[1], self::MAX_IMAGE_SIDE, intdiv(self::MAX_IMAGE_PIXELS, 1_000_000))]);
         }
 
         $path = 'question-media/'.$question->id.'/'.Str::uuid().'.'.$type['extension'];

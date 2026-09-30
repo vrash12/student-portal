@@ -31,6 +31,8 @@ final class UserAccountService
             ]);
             $user->role()->associate(Role::query()->findOrFail($data['role_id']));
             $user->is_active = $data['is_active'];
+            // The administrator chose this password: the owner replaces it at sign-in.
+            $user->password_change_required = true;
             $user->save();
 
             $this->audit->record(AuditAction::UserCreated, $user, newValues: [
@@ -71,6 +73,7 @@ final class UserAccountService
             $passwordReset = $data['password'] !== null && $data['password'] !== '';
             if ($passwordReset) {
                 $user->password = $data['password'];
+                $user->password_change_required = true;
             }
 
             $user->save();
@@ -112,6 +115,7 @@ final class UserAccountService
     {
         DB::transaction(function () use ($user, $password, $currentSessionId): void {
             $user->password = $password;
+            $user->password_change_required = false;
             $user->save();
 
             $this->endSessions($user, exceptSessionId: $currentSessionId);

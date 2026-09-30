@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
 import { buttonClasses } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/toaster';
+import { pruneRecovery, setRecoveryOwner } from '@/lib/exam-recovery';
 import { routes } from '@/lib/routes';
 
 /**
@@ -13,6 +14,13 @@ import { routes } from '@/lib/routes';
 export default function CandidateLayout({ children }: { children: ReactNode }) {
     const { app, auth } = usePage().props;
     const { component } = usePage();
+    const userId = auth.user?.id ?? null;
+    // Set during render: child pages (the attempt screen) read recovery data
+    // in their own effects, which run before this layout's effects.
+    setRecoveryOwner(userId);
+    useEffect(() => {
+        void pruneRecovery();
+    }, [userId]);
     useEffect(() => {
         if ('serviceWorker' in navigator && window.isSecureContext) {
             void navigator.serviceWorker.register('/portal-sw.js', { scope: '/portal' }).catch(() => undefined);
@@ -43,6 +51,7 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
                             href={routes.logout()}
                             method="post"
                             as="button"
+                            onBefore={() => { void pruneRecovery(); }}
                             className={buttonClasses('ghost', 'md', 'text-primary-100 hover:bg-white/10 hover:text-white')}
                         >
                             <LogOut className="size-4" aria-hidden="true" />
