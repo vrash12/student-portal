@@ -242,7 +242,7 @@ class AttemptLifecycleTest extends TestCase
         $this->assertCount(3, $props['questions']);
         foreach ($props['questions'] as $question) {
             $this->assertSame(['id', 'points', 'question'], array_keys($question));
-            $this->assertSame(['id', 'type', 'prompt', 'choices'], array_keys($question['question']));
+            $this->assertSame(['id', 'type', 'prompt', 'choices', 'media'], array_keys($question['question']));
             foreach ($question['question']['choices'] as $choice) {
                 $this->assertSame(['id', 'text'], array_keys($choice));
             }

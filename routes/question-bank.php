@@ -13,6 +13,7 @@
 
 use App\Enums\Permission;
 use App\Http\Controllers\Staff\QuestionBankController;
+use App\Http\Controllers\Staff\QuestionMediaController;
 use App\Models\Question;
 use Illuminate\Support\Facades\Route;
 
@@ -32,3 +33,19 @@ Route::middleware('can:'.Permission::ManageQuestionBank->value)
         Route::post('{question}/deactivate', 'deactivate')->name('deactivate')->whereNumber('question')->can('deactivate', 'question');
         Route::post('{question}/duplicate', 'duplicate')->name('duplicate')->whereNumber('question')->can('duplicate', 'question');
     });
+
+// Images, audio, and video of a question (changes follow question edits).
+Route::middleware('can:'.Permission::ManageQuestionBank->value)
+    ->prefix('question-bank/{question}/media')
+    ->name('question-bank.media.')
+    ->controller(QuestionMediaController::class)
+    ->whereNumber(['question', 'medium'])
+    ->scopeBindings()
+    ->group(function (): void {
+        Route::post('/', 'store')->name('store')->can('update', 'question');
+        Route::put('{medium}', 'update')->name('update')->can('update', 'question');
+        Route::delete('{medium}', 'destroy')->name('destroy')->can('update', 'question');
+    });
+
+// Viewing media: staff who teach the question's subject (checked in the controller).
+Route::get('question-media/{medium}', [QuestionMediaController::class, 'show'])->name('question-media.show')->whereNumber('medium');

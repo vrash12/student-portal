@@ -52,7 +52,7 @@ final class ExaminationGradingController extends Controller
             $grade = $grades->get($item['id']);
 
             return [
-                'id' => $item['id'], 'prompt' => $item['question']['prompt'],
+                'id' => $item['id'], 'prompt' => $item['question']['prompt'], 'media' => $item['question']['media'] ?? [],
                 'answer' => $attempt->answers[$item['id']]['value'] ?? '', 'maxPoints' => $item['points'],
                 'grade' => $grade?->score, 'comment' => $grade?->comment, 'version' => $grade?->version ?? 0,
                 'grader' => $grade?->grader->name, 'gradedAt' => $grade?->graded_at?->toIso8601String(),

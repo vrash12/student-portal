@@ -1,4 +1,5 @@
 import { CircleCheck } from 'lucide-react';
+import { QuestionMediaList } from '@/components/question-bank/question-media';
 import { cn } from '@/lib/cn';
 import type { StaffQuestion } from '@/types/question-bank';
 
@@ -28,6 +29,8 @@ export function QuestionPreview({ question, showAnswer = true, points }: Questio
             </p>
 
             <p className="whitespace-pre-wrap break-words text-base text-ink">{question.prompt}</p>
+
+            <QuestionMediaList media={question.media} urlFor={(media) => media.url} />
 
             {question.choices.length > 0 ? (
                 <ol className="space-y-2" aria-label="Answer choices">

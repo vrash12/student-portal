@@ -44,6 +44,15 @@ class QuestionPolicy
         return $this->managesSubjectOf($actor, $question);
     }
 
+    /**
+     * See a question's images and media: any active teaching staff of the
+     * subject (question bank, examination review, and essay grading pages).
+     */
+    public function viewMedia(User $actor, Question $question): bool
+    {
+        return $actor->teachesSubject($question->subject_id);
+    }
+
     public function update(User $actor, Question $question): bool
     {
         return $this->managesSubjectOf($actor, $question);

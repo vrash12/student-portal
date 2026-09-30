@@ -66,7 +66,7 @@ final class QuestionBankService
 
     public const POINTS_MESSAGE = 'Enter the points as a number from '.self::POINTS_MIN.' to '.self::POINTS_MAX.'.';
 
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly QuestionMediaService $media) {}
 
     /**
      * @throws ValidationException
@@ -204,6 +204,7 @@ final class QuestionBankService
             $copy->save();
 
             $this->insertChoices($copy, $content->choices);
+            $this->media->copyAll($source, $copy, $actor);
 
             $this->audit->record(AuditAction::QuestionCreated, $copy, newValues: [
                 ...$this->creationValues($copy, $content),

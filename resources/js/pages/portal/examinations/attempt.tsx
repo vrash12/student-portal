@@ -1,13 +1,15 @@
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
+import { QuestionMediaList } from '@/components/question-bank/question-media';
 import { Button } from '@/components/ui/button';
+import type { QuestionMediaView } from '@/types/question-bank';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { clearRecovery, enqueueRecovery, loadRecovery, removePending, saveSnapshot, type RecoveryAnswer, type RecoveryPayload } from '@/lib/exam-recovery';
 
 type Answer = RecoveryAnswer;
 type FocusReason = 'hidden' | 'blur';
 interface FocusReport { event: 'left' | 'returned'; reason: FocusReason; at: number }
-interface Item { id: number; points: string; question: { prompt: string; type: { value: string }; choices: { id: number; text: string }[] } }
+interface Item { id: number; points: string; question: { prompt: string; type: { value: string }; choices: { id: number; text: string }[]; media?: QuestionMediaView[] } }
 interface Attempt { id: number; title: string; expiresAt: string; serverNow: string; allowBackNavigation: boolean; oneQuestionAtATime: boolean; position: number; revision: number; answers: Record<number, Answer> }
 
 export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; questions: Item[] }) {
@@ -307,7 +309,7 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
         {connection === 'offline' && <div role="alert" className="rounded-lg border border-warning-border bg-warning-bg p-3 text-sm text-warning-fg">Connection interrupted. Check the save status below. Keep this page open; saved recovery answers will sync when the institutional network returns.</div>}
         {!storageAvailable && <p role="alert" className="rounded-lg border border-warning-border bg-warning-bg p-3 text-warning-fg">Local recovery is unavailable. Server saving still works when connected. Keep this page open until the answers are saved to the server.</p>}
         {!attempt.oneQuestionAtATime && attempt.allowBackNavigation && <nav aria-label="Question navigator" className="flex flex-wrap gap-2">{questions.map((q, index) => <button key={q.id} disabled={!recoveryReady || busy} className="min-h-12 min-w-12 rounded border border-line bg-surface p-2" aria-current={index === position ? 'step' : undefined} onClick={() => void save(index)}>{index + 1}{answers[q.id]?.flagged ? ' ⚑' : answers[q.id]?.value != null ? ' ✓' : ''}</button>)}</nav>}
-        <fieldset disabled={!recoveryReady || busy || remaining === 0} className="rounded-xl border border-line bg-surface p-5 sm:p-8"><legend className="sr-only">Question {position + 1}</legend><p className="whitespace-pre-wrap text-xl font-semibold leading-relaxed">{item.question.prompt}</p>
+        <fieldset disabled={!recoveryReady || busy || remaining === 0} className="rounded-xl border border-line bg-surface p-5 sm:p-8"><legend className="sr-only">Question {position + 1}</legend><p className="whitespace-pre-wrap text-xl font-semibold leading-relaxed">{item.question.prompt}</p><QuestionMediaList className="mt-5 space-y-4" media={item.question.media ?? []} urlFor={(media) => `/portal/attempts/${attempt.id}/media/${media.id}`} />
             {item.question.type.value === 'essay' ? <label className="mt-6 block">Your answer<textarea className="mt-2 min-h-56 w-full rounded border border-line-strong p-4 text-base" maxLength={20000} value={typeof answer.value === 'string' ? answer.value : ''} onChange={(event) => edit({ ...answer, value: event.target.value })} /></label> : <div className="mt-6 grid gap-3">{item.question.choices.map((choice) => <label key={choice.id} className={'flex min-h-14 cursor-pointer items-center gap-3 rounded-lg border p-4 ' + (answer.value === choice.id ? 'border-primary-600 bg-primary-50' : 'border-line-strong')}><input type="radio" className="size-5" name={'question-' + item.id} checked={answer.value === choice.id} onChange={() => edit({ ...answer, value: choice.id })} /><span>{choice.text}</span></label>)}</div>}
             {attempt.allowBackNavigation && <label className="mt-6 flex min-h-12 items-center gap-3"><input type="checkbox" className="size-5" checked={answer.flagged} onChange={(event) => edit({ ...answer, flagged: event.target.checked })} />Flag for review</label>}
         </fieldset>

@@ -79,11 +79,12 @@ class QuestionConfidentialityTest extends TestCase
                 ['id' => $choiceIds[0], 'text' => self::WRONG_CHOICE],
                 ['id' => $choiceIds[1], 'text' => self::RIGHT_CHOICE],
             ],
+            'media' => [],
         ], $presenter->forCandidate($this->question->fresh()));
 
         $trueFalse = $this->createQuestion($this->subject2, QuestionContent::trueFalse('The sample statement is false.', false), author: $this->bravo);
         $view = $presenter->forCandidate($trueFalse->fresh());
-        $this->assertSame(['id', 'type', 'prompt', 'choices'], array_keys($view));
+        $this->assertSame(['id', 'type', 'prompt', 'choices', 'media'], array_keys($view));
         $this->assertSame([['id', 'text'], ['id', 'text']], array_map('array_keys', $view['choices']));
         $this->assertSame(['True', 'False'], array_column($view['choices'], 'text'));
 

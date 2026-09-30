@@ -23,6 +23,23 @@ export interface StaffQuestionChoice {
     isCorrect: boolean;
 }
 
+/** An image, audio clip, or video shown with a question. */
+export interface QuestionMediaView {
+    id: number;
+    kind: 'image' | 'audio' | 'video';
+    /** Alternative text (images) or caption (audio, video). */
+    description: string;
+    mimeType: string;
+    width: number | null;
+    height: number | null;
+}
+
+/** Staff view of a media file, with its authorized URL. */
+export interface StaffQuestionMedia extends QuestionMediaView {
+    url: string;
+    originalName: string;
+}
+
 /** A question as authorized staff see it (QuestionPresenter::staff). Includes the correct answer. */
 export interface StaffQuestion {
     id: number;
@@ -38,6 +55,8 @@ export interface StaffQuestion {
     isLocked: boolean;
     /** In display order. Empty for essays. */
     choices: StaffQuestionChoice[];
+    /** Shown below the prompt, in display order. */
+    media: StaffQuestionMedia[];
 }
 
 /** A question as candidates see it (QuestionPresenter::forCandidate). Never contains answers. */
@@ -46,6 +65,8 @@ export interface CandidateQuestion {
     type: QuestionTypeOption;
     prompt: string;
     choices: { id: number; text: string }[];
+    /** URLs are built per attempt: /portal/attempts/{attempt}/media/{id}. */
+    media: QuestionMediaView[];
 }
 
 /** A question in a staff list (QuestionPresenter::summary). Never contains choices, answers, or the explanation. */

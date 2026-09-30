@@ -60,7 +60,7 @@ question_choices  id, question_id FK cascade, position 1..6, text (1000), is_cor
 - `QuestionChoice` hides `is_correct` and `correct_marker`; `Question` hides `explanation`. Never serialize these models into a page; use `QuestionPresenter`:
   - `staff(Question)`: shape `StaffQuestion` (TypeScript), includes `isCorrect` and `explanation`. Eager load `QuestionPresenter::STAFF_RELATIONS` for lists.
   - `summary(Question)` (added in Milestone 7): shape `QuestionSummary`, a staff list row: `id`, `subject`, `topic`, `type`, `excerpt` (the prompt on one line, about 200 characters), `points`, `isActive`, `isLocked`. Never choices, correct answers, or the explanation. Eager load `QuestionPresenter::SUMMARY_RELATIONS`.
-  - `forCandidate(Question)`: shape `CandidateQuestion`: `id`, `type`, `prompt`, `choices[{id, text}]` only.
+  - `forCandidate(Question)`: shape `CandidateQuestion`: `id`, `type`, `prompt`, `choices[{id, text}]`, `media[{id, kind, description, mimeType, width, height}]` only (no storage path, file name, or URL).
 - Question text, choice text, correct answers, and explanations never go into audit logs, application logs, URLs, notifications, or dashboards. Audit entries record which fields changed and non-sensitive values (type, points, topic, status).
 
 ---
@@ -79,6 +79,7 @@ question_choices  id, question_id FK cascade, position 1..6, text (1000), is_cor
 
 ## 4. Candidate-facing rules (Milestone 9 and later)
 
+- **Media** (`question_media`, added 2026-10-01): up to 4 images (JPEG/PNG/WebP/GIF, 5 MB), audio (MP3/M4A/OGG/WAV, 15 MB) or video (MP4/WebM, 30 MB) per question, each with a required description (image alt text / caption), on the private local disk. Media is question content: locked questions cannot gain, change, or lose media; duplicating copies the files. Staff who teach the subject load it from `/question-media/{id}`; candidates only through `/portal/attempts/{attempt}/media/{id}`, while that attempt is in progress and only for media in its delivered questions. The type is detected from the file contents; SVG is not allowed.
 - Build question payloads with `QuestionPresenter::forCandidate()` (plus examination-specific values such as points and order). Never include `is_correct`, `explanation`, `correct_marker`, `locked_at`, or topic/bank metadata.
 - "Randomize choices" applies to multiple-choice questions only; True / False keeps True first.
 - Answers to objective questions reference `question_choices.id` of a locked question, so they stay valid.

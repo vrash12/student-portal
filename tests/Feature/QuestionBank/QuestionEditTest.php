@@ -71,6 +71,7 @@ class QuestionEditTest extends TestCase
                         'text' => $choice->text,
                         'isCorrect' => $choice->position === 2,
                     ])->all(),
+                    'media' => [],
                 ])
                 ->where('topics', ['Another Topic', 'Topic 1'])
                 ->where('types', QuestionType::options())

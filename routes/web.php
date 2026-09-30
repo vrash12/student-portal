@@ -183,6 +183,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::get('examinations/{examination}', [PortalExaminationController::class, 'show'])->name('examinations.show');
             Route::post('examinations/{examination}/start', [PortalExaminationController::class, 'start'])->name('examinations.start');
             Route::get('attempts/{attempt}', [PortalExaminationController::class, 'attempt'])->name('attempts.show');
+            Route::get('attempts/{attempt}/media/{medium}', [PortalExaminationController::class, 'media'])->name('attempts.media')->whereNumber('medium');
             Route::put('attempts/{attempt}/answers', [PortalExaminationController::class, 'save'])->name('attempts.answers');
             Route::post('attempts/{attempt}/activity', [PortalExaminationController::class, 'activity'])->name('attempts.activity');
             Route::post('attempts/{attempt}/focus', [PortalExaminationController::class, 'focus'])->name('attempts.focus')->middleware('throttle:120,1');

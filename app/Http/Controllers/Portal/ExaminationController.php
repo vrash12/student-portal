@@ -3,16 +3,21 @@
 namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Staff\QuestionMediaController;
 use App\Http\Requests\Portal\SaveAttemptRequest;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
+use App\Models\QuestionMedia;
 use App\Services\Examinations\CandidateAttemptService;
 use App\Services\Examinations\ExaminationFocusService;
+use App\Services\QuestionBank\QuestionMediaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ExaminationController extends Controller
 {
@@ -57,6 +62,21 @@ class ExaminationController extends Controller
         $attempt = $service->heartbeat($request->user(), $attempt);
 
         return response()->json(['status' => $attempt->status, 'serverNow' => now()->toIso8601String(), 'expiresAt' => $attempt->expires_at?->toIso8601String()]);
+    }
+
+    /**
+     * A question's image, audio, or video during the candidate's own attempt:
+     * only while it is in progress and only media of its delivered questions.
+     */
+    public function media(Request $request, ExaminationAttempt $attempt, QuestionMedia $medium, QuestionMediaService $media): BinaryFileResponse
+    {
+        // No row lock: video seeking sends many range requests, which must not contend with answer saves.
+        Gate::authorize('view', $attempt);
+        abort_unless($attempt->status === 'in_progress' && $attempt->expires_at?->isFuture(), 404);
+        $delivered = collect($attempt->delivery)->flatMap(fn (array $item): array => array_column($item['question']['media'] ?? [], 'id'));
+        abort_unless($delivered->contains($medium->id), 404);
+
+        return QuestionMediaController::file($media, $medium);
     }
 
     /**

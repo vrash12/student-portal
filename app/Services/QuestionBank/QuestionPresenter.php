@@ -4,6 +4,7 @@ namespace App\Services\QuestionBank;
 
 use App\Models\Question;
 use App\Models\QuestionChoice;
+use App\Models\QuestionMedia;
 use App\Support\DecimalValue;
 use Illuminate\Support\Str;
 
@@ -25,7 +26,7 @@ final class QuestionPresenter
     /**
      * Relations staff() reads. Eager load them for lists: ->with(QuestionPresenter::STAFF_RELATIONS).
      */
-    public const STAFF_RELATIONS = ['subject:id,code,name', 'topic:id,name', 'choices'];
+    public const STAFF_RELATIONS = ['subject:id,code,name', 'topic:id,name', 'choices', 'media'];
 
     /**
      * Relations summary() reads. Eager load them for lists: ->with(QuestionPresenter::SUMMARY_RELATIONS).
@@ -77,6 +78,11 @@ final class QuestionPresenter
                     'text' => $choice->text,
                     'isCorrect' => $choice->is_correct,
                 ])
+                ->values()
+                ->all(),
+            // Served only to staff who teach the subject (/question-media/{id}).
+            'media' => $question->media
+                ->map(fn (QuestionMedia $media): array => [...$this->mediaView($media), 'url' => route('question-media.show', $media, false), 'originalName' => $media->original_name])
                 ->values()
                 ->all(),
         ];
@@ -153,7 +159,7 @@ final class QuestionPresenter
      */
     public function forCandidate(Question $question): array
     {
-        $question->loadMissing('choices');
+        $question->loadMissing(['choices', 'media']);
 
         return [
             'id' => $question->id,
@@ -163,6 +169,24 @@ final class QuestionPresenter
                 ->map(fn (QuestionChoice $choice): array => ['id' => $choice->id, 'text' => $choice->text])
                 ->values()
                 ->all(),
+            // No URL or file name: the candidate page builds the attempt-scoped URL
+            // (/portal/attempts/{attempt}/media/{id}), which checks the attempt.
+            'media' => $question->media->map(fn (QuestionMedia $media): array => $this->mediaView($media))->values()->all(),
+        ];
+    }
+
+    /**
+     * @return array{id: int, kind: string, description: string, mimeType: string, width: int|null, height: int|null}
+     */
+    private function mediaView(QuestionMedia $media): array
+    {
+        return [
+            'id' => $media->id,
+            'kind' => $media->kind,
+            'description' => $media->description,
+            'mimeType' => $media->mime_type,
+            'width' => $media->width,
+            'height' => $media->height,
         ];
     }
 }

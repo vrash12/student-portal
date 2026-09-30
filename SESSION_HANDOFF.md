@@ -2,6 +2,17 @@
 
 Updated 2026-09-30 by Codex. Read this file together with `AGENTS.md`, `UI_UX_DESIGN.md`, and `MILESTONES.md`; inspect Git and the actual code before editing.
 
+## Owner request — images and media in questions (2026-10-01, Claude Code)
+
+- Questions can have up to 4 media files, shown below the prompt: images (JPEG/PNG/WebP/GIF, 5 MB), audio (MP3/M4A/OGG/WAV, 15 MB), video (MP4/WebM, 30 MB). Type detected from file contents; SVG rejected (scripts). Each needs a description (image alt text / caption, max 500).
+- Table `question_media` (migration `2026_10_01_000200`, applied locally); model `QuestionMedia` (path hidden); `QuestionMediaService` (add, describe, remove with contiguous positions, `copyAll` on duplicate). Every change locks the question row; locked questions (published) cannot gain/change/lose media. Files on the private local disk `storage/app/private/question-media/{question}/{uuid}.ext`; **include this folder in backups**. Audit records kind/size/count and `changed: [media]`, never file names or descriptions.
+- Managed on **Question Bank → Edit → Images and Media** (upload one file at a time with progress, edit description, remove with confirmation). Create page notes media is added after saving.
+- Serving: staff `GET /question-media/{id}` (`QuestionPolicy::viewMedia` = teaches the subject, so graders and exam reviewers too); candidates `GET /portal/attempts/{attempt}/media/{id}` only for their own in-progress, unexpired attempt and only media of delivered questions (no row lock, so video range requests do not contend with saves). Responses: inline, `no-store`, `nosniff`, sandboxed CSP; BinaryFileResponse supports range requests.
+- `QuestionPresenter::staff()` adds `media` with URL and file name; `forCandidate()` adds `media` without path, name, or URL (the attempt snapshot carries it). Rendered by `QuestionMediaList` on the candidate attempt, staff preview, exam review, question picker (count), and essay grading pages. Contract doc updated.
+- Demo: `DemoExaminationSeeder` now also publishes "Demo Image Quiz — Subject 1" (generated shapes image on each question); run locally.
+- Tests: `tests/Feature/QuestionBank/QuestionMediaTest.php` (12), `tests/Feature/Examinations/Delivery/QuestionMediaDeliveryTest.php` (7); three shape-pinning tests updated. Full suite 1,095 passing. Browser-verified: candidate image via attempt URL with alt text, exam review images, locked read-only panel, duplicate copies the file, real upload on the local server. A test copy (question 33) was deactivated.
+- Not included: images inside answer choices (only question-level media), image editing/cropping, captions files for video.
+
 ## Owner request — detect leaving the examination screen (2026-10-01, Claude Code)
 
 - While an attempt is in progress, the candidate page reports leaving the screen: page hidden (tab/app switch, minimized browser) at once, or window focus lost for over 1 second (Alt+Tab to another window; brief pop-ups ignored). Reports queue while offline and are sent in order (`keepalive` fetch). The candidate sees a notice on the start page and in the exam header, and a calm alert after returning.

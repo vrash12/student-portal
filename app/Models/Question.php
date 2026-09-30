@@ -89,6 +89,16 @@ class Question extends Model
     }
 
     /**
+     * Images, audio, and video shown with the prompt, in display order.
+     *
+     * @return HasMany<QuestionMedia, $this>
+     */
+    public function media(): HasMany
+    {
+        return $this->hasMany(QuestionMedia::class)->orderBy('position');
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function creator(): BelongsTo

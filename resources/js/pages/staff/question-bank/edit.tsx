@@ -2,6 +2,7 @@ import { Head, useForm } from '@inertiajs/react';
 import { Copy } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { PostActionButton } from '@/components/question-bank/post-action-button';
+import { QuestionMediaManager } from '@/components/question-bank/question-media-manager';
 import { focusFirstInvalidField, QuestionForm } from '@/components/question-bank/question-form';
 import { questionFormDataFrom, questionPayload, type QuestionFormData } from '@/components/question-bank/question-form-data';
 import { useUnsavedChangesWarning } from '@/components/question-bank/use-unsaved-changes-warning';
@@ -70,6 +71,8 @@ export default function EditQuestion({ question, topics, types, limits }: EditQu
                     cancelHref={routes.questionBank.show(question.id)}
                     onSubmit={submit}
                 />
+
+                <QuestionMediaManager question={question} />
             </div>
         </>
     );
