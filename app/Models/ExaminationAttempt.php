@@ -28,6 +28,11 @@ class ExaminationAttempt extends Model
         return $this->belongsTo(Candidate::class);
     }
 
+    public function focusEvents(): HasMany
+    {
+        return $this->hasMany(ExaminationFocusEvent::class);
+    }
+
     public function essayGrades(): HasMany
     {
         return $this->hasMany(ExaminationEssayGrade::class);

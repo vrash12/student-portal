@@ -8,6 +8,7 @@ use App\Http\Requests\Examinations\GradeEssayRequest;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
 use App\Models\ExaminationEssayRevision;
+use App\Services\Examinations\ExaminationFocusService;
 use App\Services\Examinations\ExaminationScoringService;
 use App\Services\Examinations\ManualEssayGradingService;
 use Illuminate\Http\RedirectResponse;
@@ -69,6 +70,7 @@ final class ExaminationGradingController extends Controller
             'examination' => ['id' => $attempt->examination_id, 'title' => $attempt->examination->title],
             'attempt' => ['id' => $attempt->id, 'number' => $attempt->attempt_number, 'candidate' => $attempt->candidate->full_name, 'candidateNumber' => $attempt->candidate->candidate_number, 'status' => $attempt->result_status, 'percentage' => $attempt->percentage],
             'questions' => $questions, 'history' => $history, 'nextAttemptId' => $this->nextId($attempt),
+            'focusEvents' => app(ExaminationFocusService::class)->events($attempt),
         ]);
     }
 

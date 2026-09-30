@@ -5,6 +5,8 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { clearRecovery, enqueueRecovery, loadRecovery, removePending, saveSnapshot, type RecoveryAnswer, type RecoveryPayload } from '@/lib/exam-recovery';
 
 type Answer = RecoveryAnswer;
+type FocusReason = 'hidden' | 'blur';
+interface FocusReport { event: 'left' | 'returned'; reason: FocusReason; at: number }
 interface Item { id: number; points: string; question: { prompt: string; type: { value: string }; choices: { id: number; text: string }[] } }
 interface Attempt { id: number; title: string; expiresAt: string; serverNow: string; allowBackNavigation: boolean; oneQuestionAtATime: boolean; position: number; revision: number; answers: Record<number, Answer> }
 
@@ -26,6 +28,10 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
     const flushing = useRef(false);
     const dirty = useRef(false);
     const clock = useRef({ at: performance.now(), remaining: Math.max(0, Date.parse(attempt.expiresAt) - Date.parse(attempt.serverNow)) });
+    const [awayNotice, setAwayNotice] = useState<number | null>(null);
+    const away = useRef<{ since: number; reason: FocusReason } | null>(null);
+    const focusQueue = useRef<FocusReport[]>([]);
+    const focusSending = useRef(false);
     const item = getQuestion(questions, position);
     const answer = answers[item.id] ?? { value: null, flagged: false };
 
@@ -45,6 +51,83 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
             }).catch(() => { /* Answer saving reports connection failures independently. */ });
         }, 45000);
         return () => { window.clearInterval(timer); controller.abort(); };
+    }, [attempt.id]);
+
+    // Leaving the examination screen (tab/app switch, minimized browser, another
+    // window focused) is reported to the server, which records it with its own
+    // clock for the instructor. It never changes answers or scores.
+    useEffect(() => {
+        let blurTimer: number | undefined;
+
+        async function sendReports(): Promise<void> {
+            if (focusSending.current) return;
+            focusSending.current = true;
+            try {
+                while (focusQueue.current.length > 0 && navigator.onLine) {
+                    const report = focusQueue.current[0];
+                    if (!report) break;
+                    const token = document.cookie.split('; ').find((part) => part.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=');
+                    // keepalive lets the report leave even while the page is being hidden.
+                    const response = await fetch(`/portal/attempts/${attempt.id}/focus`, { method: 'POST', keepalive: true, credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-XSRF-TOKEN': decodeURIComponent(token ?? '') }, body: JSON.stringify({ event: report.event, reason: report.reason, delay_ms: Math.max(0, Math.round(performance.now() - report.at)) }) });
+                    if (response.status >= 500 || response.status === 429) break;
+                    focusQueue.current.shift();
+                }
+            } catch {
+                // Offline: the reports stay queued and are sent when the connection returns.
+            } finally {
+                focusSending.current = false;
+            }
+        }
+
+        function report(event: FocusReport['event'], reason: FocusReason, at = performance.now()): void {
+            focusQueue.current.push({ event, reason, at });
+            void sendReports();
+        }
+
+        function leave(reason: FocusReason, at = performance.now()): void {
+            if (away.current !== null) return;
+            away.current = { since: at, reason };
+            report('left', reason, at);
+        }
+
+        function back(): void {
+            window.clearTimeout(blurTimer);
+            const departure = away.current;
+            if (departure === null) return;
+            away.current = null;
+            report('returned', departure.reason);
+            setAwayNotice(Math.max(1, Math.round((performance.now() - departure.since) / 1000)));
+        }
+
+        function onVisibility(): void {
+            if (document.hidden) leave('hidden');
+            else if (document.hasFocus()) back();
+        }
+
+        function onBlur(): void {
+            const at = performance.now();
+            // Brief focus changes (system pop-ups) are ignored; a hidden page is recorded at once by onVisibility.
+            blurTimer = window.setTimeout(() => { if (!document.hasFocus()) leave(document.hidden ? 'hidden' : 'blur', at); }, 1000);
+        }
+
+        function onFocus(): void {
+            if (!document.hidden) back();
+        }
+
+        const onOnline = () => void sendReports();
+        document.addEventListener('visibilitychange', onVisibility);
+        window.addEventListener('blur', onBlur);
+        window.addEventListener('focus', onFocus);
+        window.addEventListener('online', onOnline);
+        if (document.hidden) leave('hidden');
+
+        return () => {
+            window.clearTimeout(blurTimer);
+            document.removeEventListener('visibilitychange', onVisibility);
+            window.removeEventListener('blur', onBlur);
+            window.removeEventListener('focus', onFocus);
+            window.removeEventListener('online', onOnline);
+        };
     }, [attempt.id]);
 
     useEffect(() => {
@@ -219,7 +302,8 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
     const connectionLabel = state;
 
     return <><Head title={attempt.title} /><div className="mx-auto max-w-4xl space-y-6 [&_button]:min-h-12">
-        <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4"><div><h1 className="font-semibold">{attempt.title}</h1><p>Question {position + 1} of {questions.length} · {completed} answered</p></div><p className="text-xl font-semibold tabular-nums" role="timer" aria-label="Time remaining">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</p></header>
+        <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4"><div><h1 className="font-semibold">{attempt.title}</h1><p>Question {position + 1} of {questions.length} · {completed} answered</p></div><p className="w-full text-sm text-ink-muted sm:order-last">Stay on this screen until you submit. Switching to another tab, app, or window is recorded and visible to your instructor.</p><p className="text-xl font-semibold tabular-nums" role="timer" aria-label="Time remaining">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</p></header>
+        {awayNotice !== null && <div role="alert" className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-warning-border bg-warning-bg p-3 text-sm text-warning-fg"><p>You left the examination screen for about {awayNotice} {awayNotice === 1 ? 'second' : 'seconds'}. This has been recorded for your instructor. Your answers were not changed.</p><Button variant="secondary" size="sm" onClick={() => setAwayNotice(null)}>Dismiss</Button></div>}
         {connection === 'offline' && <div role="alert" className="rounded-lg border border-warning-border bg-warning-bg p-3 text-sm text-warning-fg">Connection interrupted. Check the save status below. Keep this page open; saved recovery answers will sync when the institutional network returns.</div>}
         {!storageAvailable && <p role="alert" className="rounded-lg border border-warning-border bg-warning-bg p-3 text-warning-fg">Local recovery is unavailable. Server saving still works when connected. Keep this page open until the answers are saved to the server.</p>}
         {!attempt.oneQuestionAtATime && attempt.allowBackNavigation && <nav aria-label="Question navigator" className="flex flex-wrap gap-2">{questions.map((q, index) => <button key={q.id} disabled={!recoveryReady || busy} className="min-h-12 min-w-12 rounded border border-line bg-surface p-2" aria-current={index === position ? 'step' : undefined} onClick={() => void save(index)}>{index + 1}{answers[q.id]?.flagged ? ' ⚑' : answers[q.id]?.value != null ? ' ✓' : ''}</button>)}</nav>}

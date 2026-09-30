@@ -2,6 +2,16 @@
 
 Updated 2026-09-30 by Codex. Read this file together with `AGENTS.md`, `UI_UX_DESIGN.md`, and `MILESTONES.md`; inspect Git and the actual code before editing.
 
+## Owner request — detect leaving the examination screen (2026-10-01, Claude Code)
+
+- While an attempt is in progress, the candidate page reports leaving the screen: page hidden (tab/app switch, minimized browser) at once, or window focus lost for over 1 second (Alt+Tab to another window; brief pop-ups ignored). Reports queue while offline and are sent in order (`keepalive` fetch). The candidate sees a notice on the start page and in the exam header, and a calm alert after returning.
+- `POST /portal/attempts/{attempt}/focus` (`event` left|returned, `reason` hidden|blur, `delay_ms`), owner-only (`ExaminationAttemptPolicy::view`), throttled 120/min, ignored once the attempt is not in progress. `ExaminationFocusService` stores server times (client only reports the delay, bounded to 10 minutes and never before the attempt start or previous event), one open departure at a time, max 500 per attempt. Never affects answers, revision or scores.
+- Table `examination_focus_events` (migration `2026_10_01_000100`, applied locally): attempt FK cascade, reason CHECK, `left_at` (explicit default — without it MariaDB makes the first TIMESTAMP column `ON UPDATE CURRENT_TIMESTAMP` and overwrote it when the return was saved), `returned_at` CHECK >= left_at.
+- Staff: live monitoring has a **Left screen** total and per-candidate "Left N times · duration" with "Away now"; the essay grading page lists every departure. Wording states it is an indicator, not proof. Browsers cannot see other apps or tell why focus was lost.
+- Demo: `DemoExaminationSeeder` (not in `DatabaseSeeder`; run explicitly, idempotent) publishes "Demo Quiz — Subject 1" for Sample Batch A. It was run on the local database.
+- Also fixed: the administrator dashboard crashed (blank page) formatting finalized timestamps as calendar dates (`9f37685`).
+- Tests: `tests/Feature/Examinations/Delivery/FocusEventsTest.php` (13); full suite 1,076 passing. Browser-verified: start-page notice, tab-switch and Alt+Tab departures recorded, 300 ms blip ignored, candidate alert, instructor monitoring counts.
+
 ## Component test pass (2026-10-01, Claude Code)
 
 Owner request: test each component after M1–16 and the added features. **Full suite: 1,062 tests, all passing** (`php artisan test`), plus `npm run check` (strict TypeScript + production build) and Pint.

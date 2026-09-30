@@ -7,6 +7,7 @@ use App\Http\Requests\Portal\SaveAttemptRequest;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
 use App\Services\Examinations\CandidateAttemptService;
+use App\Services\Examinations\ExaminationFocusService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -56,6 +57,21 @@ class ExaminationController extends Controller
         $attempt = $service->heartbeat($request->user(), $attempt);
 
         return response()->json(['status' => $attempt->status, 'serverNow' => now()->toIso8601String(), 'expiresAt' => $attempt->expires_at?->toIso8601String()]);
+    }
+
+    /**
+     * The candidate left or returned to the examination screen. Recorded for
+     * instructors as an indicator only; it never changes answers or scores.
+     */
+    public function focus(Request $request, ExaminationAttempt $attempt, ExaminationFocusService $service): JsonResponse
+    {
+        $data = $request->validate([
+            'event' => ['required', 'string', 'in:left,returned'],
+            'reason' => ['required', 'string', 'in:hidden,blur'],
+            'delay_ms' => ['sometimes', 'integer', 'min:0', 'max:86400000'],
+        ]);
+
+        return response()->json($service->record($request->user(), $attempt, $data['event'], $data['reason'], (int) ($data['delay_ms'] ?? 0)));
     }
 
     public function submit(SaveAttemptRequest $request, ExaminationAttempt $attempt, CandidateAttemptService $service): RedirectResponse

@@ -63,6 +63,14 @@ The demo seeders create clearly fictional data: staff accounts, one active acade
 | `instructor.alpha`, `instructor.bravo` | Instructor |
 | `2026-0001` … `2026-0010` | Candidate (candidates sign in with their candidate number) |
 
+## Trying an online quiz (local development only)
+
+```bash
+php artisan db:seed --class=DemoExaminationSeeder
+```
+
+This publishes **Demo Quiz — Subject 1** for Sample Batch A (open for 7 days, 20 minutes, 3 attempts, results released). Sign in as `2026-0001` to `2026-0005`, open it from **My Home**, and start it. Sign in as `instructor.alpha` and open **Examinations → Demo Quiz** to watch live participation, including how often each candidate left the examination screen, and **Essay grading** to grade the essay. To build your own, sign in as `instructor.alpha`: **Question Bank → Add Question**, then **Examinations → Create**, select questions, set the time limit and availability, review, and publish.
+
 ## Common commands
 
 | Command | Purpose |

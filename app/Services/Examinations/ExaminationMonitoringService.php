@@ -22,10 +22,11 @@ final class ExaminationMonitoringService
         $classBatchId = (int) $examination->classSubject->class_batch_id;
         $candidates = Candidate::query()->gradableIn($classBatchId)->with('classBatch')->orderBy('candidate_number')->get();
         $latest = ExaminationAttempt::selectRaw('MAX(id)')->where('examination_id', $examination->id)->groupBy('candidate_id');
-        $attempts = ExaminationAttempt::query()->select(['id', 'candidate_id', 'status', 'attempt_number', 'answers', 'last_activity_at'])->selectRaw('JSON_LENGTH(delivery) as delivery_count')->whereIn('id', $latest)->get()->keyBy('candidate_id');
+        $attempts = ExaminationAttempt::query()->select(['id', 'candidate_id', 'status', 'attempt_number', 'answers', 'last_activity_at', 'started_at', 'submitted_at', 'expires_at'])->selectRaw('JSON_LENGTH(delivery) as delivery_count')->whereIn('id', $latest)->get()->keyBy('candidate_id');
         $questionCount = $examination->examinationQuestions()->count();
+        $focus = app(ExaminationFocusService::class)->summaries($attempts->values());
         $inactiveBefore = now()->subMinutes(self::INACTIVE_AFTER_MINUTES);
-        $rows = $candidates->map(function (Candidate $candidate) use ($attempts, $questionCount, $inactiveBefore): array {
+        $rows = $candidates->map(function (Candidate $candidate) use ($attempts, $questionCount, $inactiveBefore, $focus): array {
             $attempt = $attempts->get($candidate->id);
             $status = match (true) {
                 $attempt === null => 'not_started',
@@ -44,13 +45,15 @@ final class ExaminationMonitoringService
                 'answered' => $attempt === null ? 0 : $answered,
                 'questionCount' => $attempt === null ? $questionCount : (int) $attempt->delivery_count,
                 'lastActivityAt' => $attempt?->last_activity_at?->toIso8601String(),
+                // Times the candidate left the examination screen (indicator only).
+                'focus' => $attempt === null ? null : ($focus[$attempt->id] ?? ['count' => 0, 'awaySeconds' => 0, 'awaySince' => null]),
             ];
         })->values();
         $counts = $rows->countBy('status');
 
         return [
             'refreshedAt' => now()->toIso8601String(),
-            'totals' => ['candidates' => $rows->count(), 'active' => $counts->get('active', 0), 'inactive' => $counts->get('inactive', 0), 'submitted' => $counts->get('submitted', 0), 'expired' => $counts->get('expired', 0), 'notStarted' => $counts->get('not_started', 0)],
+            'totals' => ['candidates' => $rows->count(), 'active' => $counts->get('active', 0), 'inactive' => $counts->get('inactive', 0), 'submitted' => $counts->get('submitted', 0), 'expired' => $counts->get('expired', 0), 'notStarted' => $counts->get('not_started', 0), 'leftScreen' => $rows->filter(fn (array $row): bool => ($row['focus']['count'] ?? 0) > 0)->count()],
             'candidates' => $rows->all(),
         ];
     }

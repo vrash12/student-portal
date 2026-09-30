@@ -76,7 +76,7 @@ class LiveMonitoringTest extends TestCase
         $this->saveEssay($this->candidateInA, $retake, 'SENTINEL-ANSWER-ACTIVE');
 
         $monitoring = $this->monitoring();
-        $this->assertSame(['candidates' => 5, 'active' => 1, 'inactive' => 1, 'submitted' => 1, 'expired' => 1, 'notStarted' => 1], $monitoring['totals']);
+        $this->assertSame(['candidates' => 5, 'active' => 1, 'inactive' => 1, 'submitted' => 1, 'expired' => 1, 'notStarted' => 1, 'leftScreen' => 0], $monitoring['totals']);
         $rows = collect($monitoring['candidates'])->keyBy('candidate.id');
         $this->assertSame(
             collect([$this->candidateInA, $this->secondInA, $inactive, $submitted, $expired])->pluck('id')->sort()->values()->all(),
@@ -102,7 +102,10 @@ class LiveMonitoringTest extends TestCase
         $this->saveEssay($this->candidateInA, $attempt, 'SENTINEL-ANSWER-TEXT');
         $monitoring = $this->monitoring();
         foreach ($monitoring['candidates'] as $row) {
-            $this->assertSame(['candidate', 'status', 'attemptNumber', 'answered', 'questionCount', 'lastActivityAt'], array_keys($row));
+            $this->assertSame(['candidate', 'status', 'attemptNumber', 'answered', 'questionCount', 'lastActivityAt', 'focus'], array_keys($row));
+            if ($row['focus'] !== null) {
+                $this->assertSame(['count', 'awaySeconds', 'awaySince'], array_keys($row['focus']));
+            }
             $this->assertSame(['id', 'number', 'name'], array_keys($row['candidate']));
         }
         $encoded = json_encode($monitoring);
