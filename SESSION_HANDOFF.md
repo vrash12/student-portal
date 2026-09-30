@@ -4,6 +4,8 @@ Updated 2026-09-30 by Codex. Read this file together with `AGENTS.md`, `UI_UX_DE
 
 ## Additional owner request — login photograph (2026-09-30)
 
+- Latest photo replacement: owner's `821523531_1440394027981701_8622232413143856063_n.jpg` replaces the original ceremony image, now served as `public/branding/login-training.jpg`. Config/default/example use the new filename to avoid stale browser caching. Updated alt text and portrait framing (3:4 on narrow screens, full-height left panel on desktop). Original file remains recoverable in Git history.
+- Replacement verified in the browser; strict TypeScript/production build and PHP syntax check passed. Current replacement preview: `storage/app/login-replacement-preview.png` (ignored).
 - Latest owner revision: removed the green login-page background and promotional text. Desktop now has a full-height photograph on the left and the logo/organization/system title above the sign-in form on the right, on white surfaces. Narrow screens keep branding/form first and the photograph below. Missing images fall back to a centered form. This supersedes the original photo-panel layout below.
 - Revised layout verification: TypeScript and production build passed; visually checked at 1366px and 390px with no narrow-screen overflow. Current preview: `storage/app/login-layout-preview.png` (ignored).
 - Added the owner's supplied `OIP.jpg` as the local asset `public/branding/login-ceremony.jpg`; original image preserved without editing or inventing imagery.

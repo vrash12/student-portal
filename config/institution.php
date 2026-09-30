@@ -23,7 +23,7 @@ return [
     'logo_url' => env('ORGANIZATION_LOGO_URL'),
 
     // Owner-provided login photograph, served locally for intranet use.
-    'login_image_url' => env('LOGIN_IMAGE_URL', '/branding/login-ceremony.jpg'),
+    'login_image_url' => env('LOGIN_IMAGE_URL', '/branding/login-training.jpg'),
 
     // Public URL of the browser-tab icon. Defaults to the neutral placeholder.
     'favicon_url' => env('ORGANIZATION_FAVICON_URL') ?: '/favicon.svg',

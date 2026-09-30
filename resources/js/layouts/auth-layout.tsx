@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="flex min-h-dvh flex-col items-center justify-center bg-white px-4 py-8 sm:px-6 sm:py-12">
             <div className={`flex w-full flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-xl ${showImage ? 'max-w-6xl lg:grid lg:grid-cols-[1.15fr_1fr]' : 'max-w-lg'}`}>
                 {showImage && <figure className="relative order-2 bg-surface-muted lg:order-1">
-                    <img src={app.loginImageUrl!} alt="Uniformed candidates standing together with raised right hands during a ceremony" width={474} height={316} className="aspect-[3/2] w-full object-cover object-center lg:absolute lg:inset-0 lg:h-full lg:aspect-auto" onError={() => setImageFailed(true)} />
+                    <img src={app.loginImageUrl!} alt="Uniformed personnel gathered in a hall with Valor, Integrity and Duty displayed on the wall" width={1536} height={2048} className="aspect-[3/4] w-full object-cover object-[center_65%] lg:absolute lg:inset-0 lg:h-full lg:aspect-auto" onError={() => setImageFailed(true)} />
                 </figure>}
 
                 <main className="order-1 flex flex-col justify-center p-6 sm:p-10 lg:order-2 lg:py-12">
