@@ -5,13 +5,16 @@ namespace App\Services\QuestionBank;
 use App\Models\Question;
 use App\Models\QuestionChoice;
 use App\Support\DecimalValue;
+use Illuminate\Support\Str;
 
 /**
- * The two shapes a question is sent to the browser in
+ * The shapes a question is sent to the browser in
  * (docs/question-bank-examination-contract.md):
  *
  * - staff(): for authorized staff pages (question bank, examination builder
  *   review). Includes correct answers and the explanation.
+ * - summary(): list rows for authorized staff. A prompt excerpt and bank
+ *   metadata; never choices, correct answers, or the explanation.
  * - forCandidate(): for candidate-facing pages. A whitelist that never
  *   includes correct answers, the explanation, or bank metadata.
  *
@@ -23,6 +26,16 @@ final class QuestionPresenter
      * Relations staff() reads. Eager load them for lists: ->with(QuestionPresenter::STAFF_RELATIONS).
      */
     public const STAFF_RELATIONS = ['subject:id,code,name', 'topic:id,name', 'choices'];
+
+    /**
+     * Relations summary() reads. Eager load them for lists: ->with(QuestionPresenter::SUMMARY_RELATIONS).
+     */
+    public const SUMMARY_RELATIONS = ['subject:id,code,name', 'topic:id,name'];
+
+    /**
+     * Approximate length of the prompt excerpt in summary().
+     */
+    public const EXCERPT_LENGTH = 200;
 
     /**
      * @return array{
@@ -67,6 +80,64 @@ final class QuestionPresenter
                 ->values()
                 ->all(),
         ];
+    }
+
+    /**
+     * List row for staff lists (the question bank): enough to recognize a
+     * question, without its choices, correct answer, or explanation.
+     *
+     * @return array{
+     *     id: int,
+     *     subject: array{id: int, code: string, name: string},
+     *     topic: array{id: int, name: string}|null,
+     *     type: array{value: string, label: string},
+     *     excerpt: string,
+     *     points: string,
+     *     isActive: bool,
+     *     isLocked: bool
+     * }
+     */
+    public function summary(Question $question): array
+    {
+        $question->loadMissing(self::SUMMARY_RELATIONS);
+
+        return [
+            'id' => $question->id,
+            'subject' => [
+                'id' => $question->subject->id,
+                'code' => $question->subject->code,
+                'name' => $question->subject->name,
+            ],
+            'topic' => $question->topic === null ? null : ['id' => $question->topic->id, 'name' => $question->topic->name],
+            'type' => $question->type->toArray(),
+            'excerpt' => self::excerpt($question->prompt),
+            'points' => DecimalValue::display($question->points),
+            'isActive' => $question->is_active,
+            'isLocked' => $question->isLocked(),
+        ];
+    }
+
+    /**
+     * The beginning of a prompt on one line: line breaks and repeated
+     * whitespace collapsed, cut at about EXCERPT_LENGTH characters (at a word
+     * boundary when one is close). The text is kept as written; it is
+     * escaped when rendered.
+     */
+    public static function excerpt(string $prompt): string
+    {
+        $oneLine = trim((string) preg_replace('/\s+/u', ' ', $prompt));
+
+        if (mb_strlen($oneLine) <= self::EXCERPT_LENGTH) {
+            return $oneLine;
+        }
+
+        $cut = mb_substr($oneLine, 0, self::EXCERPT_LENGTH);
+        $lastSpace = mb_strrpos($cut, ' ');
+        if ($lastSpace !== false && $lastSpace >= self::EXCERPT_LENGTH - 30) {
+            $cut = mb_substr($cut, 0, $lastSpace);
+        }
+
+        return Str::of($cut)->rtrim(' ,.;:')->append('…')->toString();
     }
 
     /**

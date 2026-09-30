@@ -17,6 +17,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[UsePolicy(ClassSubjectPolicy::class)]
 class ClassSubject extends Model
 {
+    public function examinations(): HasMany
+    {
+        return $this->hasMany(Examination::class);
+    }
+
     /**
      * @return BelongsTo<ClassBatch, $this>
      */

@@ -47,3 +47,38 @@ export interface CandidateQuestion {
     prompt: string;
     choices: { id: number; text: string }[];
 }
+
+/** A question in a staff list (QuestionPresenter::summary). Never contains choices, answers, or the explanation. */
+export interface QuestionSummary {
+    id: number;
+    subject: { id: number; code: string; name: string };
+    topic: { id: number; name: string } | null;
+    type: QuestionTypeOption;
+    /** About 200 characters of the prompt on one line. */
+    excerpt: string;
+    /** Compact decimal string from the server, e.g. "1" or "2.5". */
+    points: string;
+    isActive: boolean;
+    /** Part of a published examination. */
+    isLocked: boolean;
+}
+
+/** A subject the user teaches, as offered in question bank selects. */
+export interface QuestionBankSubject {
+    id: number;
+    code: string;
+    name: string;
+}
+
+/**
+ * Input limits of the question form, sent by the server (App\Enums\QuestionType,
+ * App\Services\QuestionBank\QuestionBankService). Lengths are in characters.
+ */
+export interface QuestionLimits {
+    minChoices: number;
+    maxChoices: number;
+    promptLength: number;
+    choiceLength: number;
+    topicLength: number;
+    explanationLength: number;
+}

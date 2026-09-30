@@ -15,7 +15,7 @@ class AddSecurityHeaders
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
-        if ($request->is('portal', 'portal/*', 'examinations/*/grading', 'examination-attempts/*')) {
+        if ($request->is('portal', 'portal/*', 'examinations', 'examinations/*', 'examination-attempts/*', 'question-bank', 'question-bank/*', 'reports', 'audit-history', 'dashboard')) {
             $response->headers->set('Cache-Control', 'no-store, private');
         }
 

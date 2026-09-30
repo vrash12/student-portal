@@ -14,6 +14,8 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
     const [state, setState] = useState('Saved');
     const [connection, setConnection] = useState(navigator.onLine ? 'online' : 'offline');
     const [busy, setBusy] = useState(false);
+    const [recoveryReady, setRecoveryReady] = useState(false);
+    const [storageAvailable, setStorageAvailable] = useState(true);
     const [confirm, setConfirm] = useState(false);
     const [remaining, setRemaining] = useState(Math.max(0, Date.parse(attempt.expiresAt) - Date.parse(attempt.serverNow)));
     const revision = useRef(attempt.revision);
@@ -31,38 +33,59 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
     useEffect(() => { positionRef.current = position; }, [position]);
 
     useEffect(() => {
+        const controller = new AbortController();
+        const timer = window.setInterval(() => {
+            if (!navigator.onLine) return;
+            const token = document.cookie.split('; ').find((part) => part.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=');
+            void fetch(`/portal/attempts/${attempt.id}/activity`, { method: 'POST', credentials: 'same-origin', signal: controller.signal, headers: { Accept: 'application/json', 'X-XSRF-TOKEN': decodeURIComponent(token ?? '') } }).then(async (response) => {
+                if (!response.ok || controller.signal.aborted) return;
+                const activity = await response.json() as { status: string; serverNow: string; expiresAt: string };
+                if (activity.status !== 'in_progress') { router.visit(`/portal/attempts/${attempt.id}/success`); return; }
+                clock.current = { at: performance.now(), remaining: Math.max(0, Date.parse(activity.expiresAt) - Date.parse(activity.serverNow)) };
+            }).catch(() => { /* Answer saving reports connection failures independently. */ });
+        }, 45000);
+        return () => { window.clearInterval(timer); controller.abort(); };
+    }, [attempt.id]);
+
+    useEffect(() => {
         let mounted = true;
-        void loadRecovery(attempt.id).then(({ snapshot, pending }) => {
+        void loadRecovery(attempt.id).then(({ snapshot, pending, available }) => {
             if (!mounted) return;
+            setStorageAvailable(available);
             pendingRef.current = pending;
-            if (snapshot) {
+            if (snapshot && (pending.length > 0 || (snapshot.dirty && snapshot.revision === attempt.revision))) {
                 const merged = { ...answersRef.current, ...snapshot.answers };
                 answersRef.current = merged;
                 setAnswers(merged);
-                if (pending.length > 0) {
-                    setPosition(snapshot.position);
-                    positionRef.current = snapshot.position;
-                    setState('Offline — saved on this device');
-                    if (navigator.onLine) void flushPending();
-                }
+                setPosition(snapshot.position);
+                positionRef.current = snapshot.position;
+                dirty.current = snapshot.dirty ?? false;
+                setState('Recovered on this device — awaiting server save');
             }
+            setRecoveryReady(true);
+            if (pending.length > 0 && navigator.onLine) void flushPending();
         });
         return () => { mounted = false; };
     }, [attempt.id]);
 
     useEffect(() => {
-        const onOffline = () => { setConnection('offline'); setState('Offline — saved on this device'); };
-        const onOnline = () => { setConnection('online'); void flushPending(); };
+        const onOffline = () => { setConnection('offline'); setState('Connection interrupted — checking local recovery'); };
+        const onOnline = () => { setConnection('online'); if (pendingRef.current.length > 0) void flushPending(); };
         window.addEventListener('offline', onOffline);
         window.addEventListener('online', onOnline);
         return () => { window.removeEventListener('offline', onOffline); window.removeEventListener('online', onOnline); };
     }, []);
 
     useEffect(() => {
-        if (!dirty.current) return;
+        if (!recoveryReady || !dirty.current) return;
         const timer = window.setTimeout(() => { if (!saving.current) void save(); }, 900);
         return () => window.clearTimeout(timer);
-    }, [answers]);
+    }, [answers, recoveryReady]);
+
+    useEffect(() => {
+        const timer = window.setInterval(() => { if (recoveryReady && navigator.onLine && !saving.current && !flushing.current) { if (pendingRef.current.length > 0) void flushPending(); else if (dirty.current) void save(); } }, 10000);
+        return () => window.clearInterval(timer);
+    }, [recoveryReady]);
 
     useEffect(() => {
         const timer = window.setInterval(() => setRemaining(Math.max(0, clock.current.remaining - (performance.now() - clock.current.at))), 1000);
@@ -80,7 +103,7 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
     }, []);
 
     function persistLocal(nextAnswers: Record<number, Answer>, nextPosition: number): void {
-        void saveSnapshot({ attemptId: attempt.id, answers: nextAnswers, position: nextPosition, revision: revision.current, updatedAt: Date.now() });
+        void saveSnapshot({ attemptId: attempt.id, answers: nextAnswers, position: nextPosition, revision: revision.current, updatedAt: Date.now(), dirty: dirty.current }).then((saved) => setStorageAvailable(saved));
     }
 
     function edit(value: Answer): void {
@@ -89,7 +112,7 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
         dirty.current = true;
         setAnswers(nextAnswers);
         persistLocal(nextAnswers, positionRef.current);
-        setState(connection === 'offline' ? 'Offline — saved on this device' : 'Not saved yet');
+        setState('Not saved yet');
     }
 
     async function requestSave(payload: RecoveryPayload): Promise<{ revision: number; status: string }> {
@@ -109,11 +132,11 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
             while (pendingRef.current.length > 0 && navigator.onLine) {
                 const queued = pendingRef.current[0];
                 if (!queued) break;
-                const payload: RecoveryPayload = { ...queued, revision: revision.current };
-                const result = await requestSave(payload);
+                // Preserve the original revision so stale recovery cannot overwrite another tab.
+                const result = await requestSave(queued);
                 revision.current = result.revision;
+                if (!await removePending(attempt.id)) throw new Error('Saved to server, but local recovery could not be updated. Keep this page open and retry.');
                 pendingRef.current.shift();
-                await removePending(attempt.id);
                 if (result.status !== 'in_progress') {
                     await clearRecovery(attempt.id);
                     router.visit('/portal/attempts/' + attempt.id + '/success');
@@ -121,7 +144,8 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
                 }
             }
             persistLocal(answersRef.current, positionRef.current);
-            setState('Saved');
+            setConnection(navigator.onLine ? 'online' : 'offline');
+            setState(pendingRef.current.length > 0 ? 'Offline — saved on this device' : dirty.current ? 'Recovered answer awaiting save' : 'Saved');
         } catch (error) {
             setState(error instanceof Error ? error.message : 'Unable to sync. Retry when connected.');
         } finally {
@@ -131,10 +155,15 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
     }
 
     async function save(next = positionRef.current): Promise<boolean> {
-        if (saving.current) return false;
+        if (!recoveryReady || saving.current || flushing.current) return false;
+        if (pendingRef.current.length > 0 && navigator.onLine) {
+            await flushPending();
+            if (pendingRef.current.length > 0) return false;
+        }
         const currentItem = getQuestion(questions, positionRef.current);
         const currentAnswer = answersRef.current[currentItem.id] ?? { value: null, flagged: false };
-        const payload: RecoveryPayload = { position: positionRef.current, next_position: next, revision: revision.current, answer: currentAnswer.value, flagged: currentAnswer.flagged };
+        const tail = pendingRef.current.at(-1);
+        const payload: RecoveryPayload = { position: positionRef.current, next_position: next, revision: tail ? tail.revision + 1 : revision.current, answer: currentAnswer.value, flagged: currentAnswer.flagged };
         saving.current = true;
         setBusy(true);
         setState('Saving…');
@@ -148,12 +177,17 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
             positionRef.current = next;
             persistLocal(answersRef.current, next);
             setState('Saved');
-            if (pendingRef.current.length > 0) void flushPending();
+            if (result.status !== 'in_progress') router.visit(`/portal/attempts/${attempt.id}/success`);
             return result.status === 'in_progress';
         } catch (error) {
             if (error instanceof TypeError || !navigator.onLine) {
+                if (!await enqueueRecovery(attempt.id, payload)) {
+                    setStorageAvailable(false);
+                    setConnection('offline');
+                    setState('Not saved — local recovery is unavailable. Keep this page open and reconnect.');
+                    return false;
+                }
                 pendingRef.current = [...pendingRef.current, payload];
-                await enqueueRecovery(attempt.id, payload);
                 dirty.current = false;
                 setConnection('offline');
                 setPosition(next);
@@ -182,20 +216,22 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
 
     const seconds = Math.ceil(remaining / 1000);
     const completed = Object.values(answers).filter((value) => value.value !== null && value.value !== '').length;
-    const connectionLabel = connection === 'offline' ? 'Offline — saved on this device' : state;
+    const connectionLabel = state;
 
     return <><Head title={attempt.title} /><div className="mx-auto max-w-4xl space-y-6 [&_button]:min-h-12">
         <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4"><div><h1 className="font-semibold">{attempt.title}</h1><p>Question {position + 1} of {questions.length} · {completed} answered</p></div><p className="text-xl font-semibold tabular-nums" role="timer" aria-label="Time remaining">{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</p></header>
-        {connection === 'offline' && <div role="alert" className="rounded-lg border border-warning-border bg-warning-bg p-3 text-sm text-warning-fg">Connection interrupted. Answers are stored on this device and will sync automatically when the institutional network returns.</div>}
-        {!attempt.oneQuestionAtATime && attempt.allowBackNavigation && <nav aria-label="Question navigator" className="flex flex-wrap gap-2">{questions.map((q, index) => <button key={q.id} disabled={busy} className="min-h-12 min-w-12 rounded border border-line bg-surface p-2" aria-current={index === position ? 'step' : undefined} onClick={() => void save(index)}>{index + 1}{answers[q.id]?.flagged ? ' ⚑' : answers[q.id]?.value != null ? ' ✓' : ''}</button>)}</nav>}
-        <fieldset disabled={busy || remaining === 0} className="rounded-xl border border-line bg-surface p-5 sm:p-8"><legend className="sr-only">Question {position + 1}</legend><p className="whitespace-pre-wrap text-xl font-semibold leading-relaxed">{item.question.prompt}</p>
+        {connection === 'offline' && <div role="alert" className="rounded-lg border border-warning-border bg-warning-bg p-3 text-sm text-warning-fg">Connection interrupted. Check the save status below. Keep this page open; saved recovery answers will sync when the institutional network returns.</div>}
+        {!storageAvailable && <p role="alert" className="rounded-lg border border-warning-border bg-warning-bg p-3 text-warning-fg">Local recovery is unavailable. Server saving still works when connected. Keep this page open until the answers are saved to the server.</p>}
+        {!attempt.oneQuestionAtATime && attempt.allowBackNavigation && <nav aria-label="Question navigator" className="flex flex-wrap gap-2">{questions.map((q, index) => <button key={q.id} disabled={!recoveryReady || busy} className="min-h-12 min-w-12 rounded border border-line bg-surface p-2" aria-current={index === position ? 'step' : undefined} onClick={() => void save(index)}>{index + 1}{answers[q.id]?.flagged ? ' ⚑' : answers[q.id]?.value != null ? ' ✓' : ''}</button>)}</nav>}
+        <fieldset disabled={!recoveryReady || busy || remaining === 0} className="rounded-xl border border-line bg-surface p-5 sm:p-8"><legend className="sr-only">Question {position + 1}</legend><p className="whitespace-pre-wrap text-xl font-semibold leading-relaxed">{item.question.prompt}</p>
             {item.question.type.value === 'essay' ? <label className="mt-6 block">Your answer<textarea className="mt-2 min-h-56 w-full rounded border border-line-strong p-4 text-base" maxLength={20000} value={typeof answer.value === 'string' ? answer.value : ''} onChange={(event) => edit({ ...answer, value: event.target.value })} /></label> : <div className="mt-6 grid gap-3">{item.question.choices.map((choice) => <label key={choice.id} className={'flex min-h-14 cursor-pointer items-center gap-3 rounded-lg border p-4 ' + (answer.value === choice.id ? 'border-primary-600 bg-primary-50' : 'border-line-strong')}><input type="radio" className="size-5" name={'question-' + item.id} checked={answer.value === choice.id} onChange={() => edit({ ...answer, value: choice.id })} /><span>{choice.text}</span></label>)}</div>}
             {attempt.allowBackNavigation && <label className="mt-6 flex min-h-12 items-center gap-3"><input type="checkbox" className="size-5" checked={answer.flagged} onChange={(event) => edit({ ...answer, flagged: event.target.checked })} />Flag for review</label>}
         </fieldset>
-        <div className="flex flex-wrap items-center justify-between gap-3"><p role="status" className="max-w-xl text-sm">{connectionLabel}</p><Button variant="secondary" disabled={busy || remaining === 0} onClick={() => void save()}>Save answer</Button></div>
-        <div className="flex flex-wrap justify-between gap-3"><Button variant="secondary" disabled={busy || position === 0 || !attempt.allowBackNavigation} onClick={() => void save(position - 1)}>Previous</Button>{position < questions.length - 1 ? <Button disabled={busy || remaining === 0} onClick={() => void save(position + 1)}>Save and next</Button> : <Button disabled={busy || remaining === 0} onClick={() => setConfirm(true)}>Review submission</Button>}</div>
+        <div className="flex flex-wrap items-center justify-between gap-3"><p role="status" className="max-w-xl text-sm">{connectionLabel}</p><Button variant="secondary" disabled={!recoveryReady || busy || remaining === 0} onClick={() => void save()}>Save answer</Button></div>
+        <div className="flex flex-wrap justify-between gap-3"><Button variant="secondary" disabled={!recoveryReady || busy || position === 0 || !attempt.allowBackNavigation} onClick={() => void save(position - 1)}>Previous</Button>{position < questions.length - 1 ? <Button disabled={!recoveryReady || busy || remaining === 0} onClick={() => void save(position + 1)}>Save and next</Button> : <Button disabled={!recoveryReady || busy || remaining === 0} onClick={() => setConfirm(true)}>Review submission</Button>}</div>
         <ConfirmDialog open={confirm} title="Submit examination?" description={<p>{questions.length - completed} questions are unanswered. Your current answer will be saved. You cannot change answers after submitting.</p>} confirmLabel="Confirm submission" cancelLabel="Continue examination" tone="primary" processing={busy} onConfirm={() => void submit()} onCancel={() => setConfirm(false)} />
     </div></>;
 }
 
 function getQuestion(questions: Item[], position: number): Item { const item = questions[position]; if (!item) throw new Error('The examination question is unavailable.'); return item; }
+

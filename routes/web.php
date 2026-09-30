@@ -169,6 +169,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::post('examinations/{examination}/start', [PortalExaminationController::class, 'start'])->name('examinations.start');
             Route::get('attempts/{attempt}', [PortalExaminationController::class, 'attempt'])->name('attempts.show');
             Route::put('attempts/{attempt}/answers', [PortalExaminationController::class, 'save'])->name('attempts.answers');
+            Route::post('attempts/{attempt}/activity', [PortalExaminationController::class, 'activity'])->name('attempts.activity');
             Route::post('attempts/{attempt}/submit', [PortalExaminationController::class, 'submit'])->name('attempts.submit');
             Route::get('attempts/{attempt}/success', [PortalExaminationController::class, 'success'])->name('attempts.success');
         });

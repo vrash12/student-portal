@@ -25,6 +25,8 @@ export const Permission = {
     ViewAcademicMonitoring: 'academic_monitoring.view',
     ManageQuestionBank: 'question_bank.manage',
     ManageExaminations: 'examinations.manage',
+    ViewReports: 'reports.view',
+    ViewAuditHistory: 'audit_history.view',
 } as const;
 
 export type PermissionCode = (typeof Permission)[keyof typeof Permission];

@@ -105,6 +105,38 @@ final class CandidateAttemptService
         return DB::transaction(fn () => $this->expire(ExaminationAttempt::whereKey($attempt->id)->lockForUpdate()->firstOrFail()));
     }
 
+    public function heartbeat(User $user, ExaminationAttempt $attempt): ExaminationAttempt
+    {
+        Gate::forUser($user)->authorize('view', $attempt);
+
+        return DB::transaction(function () use ($user, $attempt) {
+            $attempt = $this->expire($attempt);
+            if ($attempt->status === 'in_progress') {
+                abort_unless($this->eligible($user, $attempt->examination), 403);
+                $attempt->last_activity_at = now();
+                $attempt->save();
+            }
+
+            return $attempt;
+        });
+    }
+
+    /** Reconcile deadlines even when the candidate's tablet is disconnected. */
+    public function expireDue(?int $examinationId = null): int
+    {
+        $count = 0;
+        ExaminationAttempt::where('status', 'in_progress')->where('expires_at', '<=', now())
+            ->when($examinationId !== null, fn ($query) => $query->where('examination_id', $examinationId))
+            ->chunkById(100, function ($attempts) use (&$count) {
+                foreach ($attempts as $attempt) {
+                    $this->expire($attempt);
+                    $count++;
+                }
+            });
+
+        return $count;
+    }
+
     /** Atomic saves prevent stale tabs from silently overwriting answers. */
     public function save(User $user, ExaminationAttempt $attempt, array $data, bool $submit = false): ExaminationAttempt
     {

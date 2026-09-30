@@ -5,7 +5,6 @@ namespace App\Services\Examinations;
 use App\Models\Candidate;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
-use Illuminate\Support\Collection;
 
 final class ExaminationMonitoringService
 {
@@ -19,11 +18,14 @@ final class ExaminationMonitoringService
      */
     public function snapshot(Examination $examination): array
     {
+        app(CandidateAttemptService::class)->expireDue($examination->id);
         $classBatchId = (int) $examination->classSubject->class_batch_id;
         $candidates = Candidate::query()->gradableIn($classBatchId)->with('classBatch')->orderBy('candidate_number')->get();
-        $attempts = ExaminationAttempt::query()->where('examination_id', $examination->id)->with('candidate')->orderBy('attempt_number')->get()->groupBy('candidate_id')->map(fn (Collection $items): ExaminationAttempt => $items->last());
+        $latest = ExaminationAttempt::selectRaw('MAX(id)')->where('examination_id', $examination->id)->groupBy('candidate_id');
+        $attempts = ExaminationAttempt::query()->select(['id', 'candidate_id', 'status', 'attempt_number', 'answers', 'last_activity_at'])->selectRaw('JSON_LENGTH(delivery) as delivery_count')->whereIn('id', $latest)->get()->keyBy('candidate_id');
+        $questionCount = $examination->examinationQuestions()->count();
         $inactiveBefore = now()->subMinutes(self::INACTIVE_AFTER_MINUTES);
-        $rows = $candidates->map(function (Candidate $candidate) use ($attempts, $examination, $inactiveBefore): array {
+        $rows = $candidates->map(function (Candidate $candidate) use ($attempts, $questionCount, $inactiveBefore): array {
             $attempt = $attempts->get($candidate->id);
             $status = match (true) {
                 $attempt === null => 'not_started',
@@ -40,7 +42,7 @@ final class ExaminationMonitoringService
                 'status' => $status,
                 'attemptNumber' => $attempt?->attempt_number,
                 'answered' => $attempt === null ? 0 : $answered,
-                'questionCount' => $attempt === null ? $examination->examinationQuestions()->count() : count($attempt->delivery ?? []),
+                'questionCount' => $attempt === null ? $questionCount : (int) $attempt->delivery_count,
                 'lastActivityAt' => $attempt?->last_activity_at?->toIso8601String(),
             ];
         })->values();

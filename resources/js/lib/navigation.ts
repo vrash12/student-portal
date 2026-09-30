@@ -46,6 +46,8 @@ export const staffNavigation: NavigationSection[] = [
     {
         label: 'Teaching',
         items: [
+            { label: 'Question Bank', href: routes.questionBank.index(), icon: BookOpen, permission: Permission.ManageQuestionBank },
+            { label: 'Examinations', href: '/examinations', icon: BookOpen, permission: Permission.ManageExaminations, activeFor: ['/examination-attempts'] },
             {
                 label: `My ${terms.classBatch.plural}`,
                 href: routes.teaching.classes.index(),

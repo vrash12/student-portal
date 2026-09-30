@@ -2,19 +2,40 @@
 
 namespace App\Models;
 
+use App\Enums\ExaminationKind;
 use App\Enums\ExaminationStatus;
+use App\Policies\ExaminationPolicy;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['title', 'description', 'opens_at', 'closes_at', 'duration_minutes', 'attempt_limit', 'passing_score', 'release_results', 'randomize_questions', 'randomize_choices', 'one_question_at_a_time', 'allow_back_navigation', 'auto_submit', 'access_code'])]
+#[Fillable(['kind', 'title', 'description', 'opens_at', 'closes_at', 'duration_minutes', 'attempt_limit', 'passing_score', 'release_results', 'randomize_questions', 'randomize_choices', 'one_question_at_a_time', 'allow_back_navigation', 'auto_submit', 'access_code'])]
+#[Hidden(['access_code'])]
+#[UsePolicy(ExaminationPolicy::class)]
 class Examination extends Model
 {
+    public function lifecycle(): array
+    {
+        if ($this->status !== ExaminationStatus::Published) {
+            return $this->status->toArray();
+        }
+        if ($this->closes_at && $this->closes_at->lte(now())) {
+            return ['value' => 'ended', 'label' => 'Ended', 'tone' => 'neutral'];
+        }
+        if ($this->isActive()) {
+            return ['value' => 'active', 'label' => 'Active', 'tone' => 'success'];
+        }
+
+        return $this->status->toArray();
+    }
+
     protected function casts(): array
     {
-        return ['status' => ExaminationStatus::class, 'opens_at' => 'datetime', 'closes_at' => 'datetime', 'duration_minutes' => 'integer', 'attempt_limit' => 'integer', 'passing_score' => 'decimal:2', 'release_results' => 'boolean', 'randomize_questions' => 'boolean', 'randomize_choices' => 'boolean', 'one_question_at_a_time' => 'boolean', 'allow_back_navigation' => 'boolean', 'auto_submit' => 'boolean'];
+        return ['kind' => ExaminationKind::class, 'status' => ExaminationStatus::class, 'opens_at' => 'datetime', 'closes_at' => 'datetime', 'duration_minutes' => 'integer', 'attempt_limit' => 'integer', 'passing_score' => 'decimal:2', 'release_results' => 'boolean', 'randomize_questions' => 'boolean', 'randomize_choices' => 'boolean', 'one_question_at_a_time' => 'boolean', 'allow_back_navigation' => 'boolean', 'auto_submit' => 'boolean'];
     }
 
     public function classSubject(): BelongsTo

@@ -47,6 +47,7 @@ question_choices  id, question_id FK cascade, position 1..6, text (1000), is_cor
 - **Lifecycle: active / inactive. Questions are never deleted.** Inactive questions stay visible in the bank and in every examination that already contains them, but cannot be added to examinations.
 - **Locking:** `locked_at` is set when the question is first included in a published examination (`QuestionLocking::lock()`). Locks are permanent. A locked question's **type, prompt, and choices (texts, order, correct answer)** cannot change; its **topic, points, explanation, and active flag** can. To change locked content, duplicate the question and edit the copy.
 - Edits and deactivation lock the question row (`SELECT ... FOR UPDATE`) before checking `locked_at`, so they are serialized with publication.
+- Questions are created and changed only through `App\Services\QuestionBank\QuestionBankService` (Milestone 7). `updated_by` and `updated_at` record content edits (topic, type, prompt, points, explanation, choices); activation, deactivation, and locking do not change them (they are audited or timestamped separately). Kept choice positions keep their `question_choices.id` when an unlocked question is edited.
 
 ### Authorization
 
@@ -58,6 +59,7 @@ question_choices  id, question_id FK cascade, position 1..6, text (1000), is_cor
 - Correct answers (`question_choices.is_correct`) and explanations are **staff-only**: sent only to users authorized for the subject.
 - `QuestionChoice` hides `is_correct` and `correct_marker`; `Question` hides `explanation`. Never serialize these models into a page; use `QuestionPresenter`:
   - `staff(Question)`: shape `StaffQuestion` (TypeScript), includes `isCorrect` and `explanation`. Eager load `QuestionPresenter::STAFF_RELATIONS` for lists.
+  - `summary(Question)` (added in Milestone 7): shape `QuestionSummary`, a staff list row: `id`, `subject`, `topic`, `type`, `excerpt` (the prompt on one line, about 200 characters), `points`, `isActive`, `isLocked`. Never choices, correct answers, or the explanation. Eager load `QuestionPresenter::SUMMARY_RELATIONS`.
   - `forCandidate(Question)`: shape `CandidateQuestion`: `id`, `type`, `prompt`, `choices[{id, text}]` only.
 - Question text, choice text, correct answers, and explanations never go into audit logs, application logs, URLs, notifications, or dashboards. Audit entries record which fields changed and non-sensitive values (type, points, topic, status).
 

@@ -51,6 +51,13 @@ class ExaminationController extends Controller
         return response()->json(['revision' => $attempt->revision, 'status' => $attempt->status]);
     }
 
+    public function activity(Request $request, ExaminationAttempt $attempt, CandidateAttemptService $service): JsonResponse
+    {
+        $attempt = $service->heartbeat($request->user(), $attempt);
+
+        return response()->json(['status' => $attempt->status, 'serverNow' => now()->toIso8601String(), 'expiresAt' => $attempt->expires_at?->toIso8601String()]);
+    }
+
     public function submit(SaveAttemptRequest $request, ExaminationAttempt $attempt, CandidateAttemptService $service): RedirectResponse
     {
         $attempt = $service->save($request->user(), $attempt, $request->validated(), true);

@@ -8,6 +8,9 @@ Route::middleware('can:examinations.manage')->group(function () {
     Route::get('examinations', [ExaminationController::class, 'index'])->name('examinations.index');
     Route::get('examinations/create', [ExaminationController::class, 'create'])->name('examinations.create');
     Route::post('examinations', [ExaminationController::class, 'store'])->name('examinations.store');
+    Route::get('examinations/{examination}/edit', [ExaminationController::class, 'edit'])->name('examinations.edit');
+    Route::put('examinations/{examination}', [ExaminationController::class, 'update'])->name('examinations.update');
+    Route::put('examinations/{examination}/results', [ExaminationController::class, 'releaseResults'])->name('examinations.results');
     Route::get('examinations/{examination}', [ExaminationController::class, 'show'])->name('examinations.show');
     Route::get('examinations/{examination}/questions', [ExaminationController::class, 'questions'])->name('examinations.questions');
     Route::put('examinations/{examination}/questions', [ExaminationController::class, 'syncQuestions'])->name('examinations.questions.update');

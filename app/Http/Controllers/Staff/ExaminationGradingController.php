@@ -78,7 +78,9 @@ final class ExaminationGradingController extends Controller
         $attempt = $service->grade($request->user(), $attempt, (int) $data['item_id'], (string) $data['score'], $data['comment'] ?? null, (int) $data['version'], $data['reason'] ?? null);
         $nextId = $request->boolean('next') && $attempt->result_status === 'graded' ? $this->nextId($attempt) : null;
 
-        return redirect()->route('examination-attempts.grading', $nextId ?? $attempt->id)->with('success', 'Essay score saved.');
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Essay score saved.']);
+
+        return redirect()->route('examination-attempts.grading', $nextId ?? $attempt->id);
     }
 
     private function nextId(ExaminationAttempt $attempt): ?int

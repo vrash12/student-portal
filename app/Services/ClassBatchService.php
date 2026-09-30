@@ -83,6 +83,10 @@ final class ClassBatchService
                 ]);
             }
 
+            if ($locked->examinations()->exists()) {
+                throw ValidationException::withMessages(['offering' => 'This subject has quizzes or examinations. Keep the class assignment to preserve its examination history.']);
+            }
+
             $this->audit->record(AuditAction::ClassSubjectRemoved, $locked, oldValues: [
                 'class' => $locked->classBatch->name,
                 'subject' => $locked->subject->name,

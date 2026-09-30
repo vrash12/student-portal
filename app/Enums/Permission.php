@@ -32,6 +32,8 @@ enum Permission: string
     case ViewAcademicMonitoring = 'academic_monitoring.view';
     case ManageQuestionBank = 'question_bank.manage';
     case ManageExaminations = 'examinations.manage';
+    case ViewReports = 'reports.view';
+    case ViewAuditHistory = 'audit_history.view';
 
     public function label(): string
     {
@@ -53,6 +55,8 @@ enum Permission: string
             self::ViewAcademicMonitoring => 'View academic monitoring',
             self::ManageQuestionBank => 'Manage the question bank',
             self::ManageExaminations => 'Manage quizzes and examinations',
+            self::ViewReports => 'View academic and examination reports',
+            self::ViewAuditHistory => 'View audit history',
         };
     }
 
@@ -76,6 +80,8 @@ enum Permission: string
             self::ViewAcademicMonitoring => 'See academic standings and the candidates who need attention: every candidate for users who can view all candidates, otherwise only the classes and subjects the user teaches. Candidate profiles follow their own permissions.',
             self::ManageQuestionBank => 'Create, edit, preview, activate, and deactivate questions, including their correct answers, for the subjects they are assigned to teach.',
             self::ManageExaminations => 'Create quizzes and examinations for the class subjects they are assigned to teach, choose their questions from the question bank, configure them, and publish them.',
+            self::ViewReports => 'View and print reports for all candidates when permitted, otherwise only assigned classes and subjects.',
+            self::ViewAuditHistory => 'Read institutional audit records and academic change metadata. Does not allow modifying history.',
         };
     }
 
@@ -90,6 +96,8 @@ enum Permission: string
             self::TeachClasses => 'Teaching',
             self::ConfigureGrading, self::RecordGrades => 'Grading',
             self::ViewAcademicMonitoring => 'Monitoring',
+            self::ViewReports => 'Monitoring',
+            self::ViewAuditHistory => 'Administration',
             self::ManageQuestionBank, self::ManageExaminations => 'Assessments',
         };
     }
