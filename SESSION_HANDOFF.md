@@ -2,6 +2,13 @@
 
 Updated 2026-09-30 by Codex. Read this file together with `AGENTS.md`, `UI_UX_DESIGN.md`, and `MILESTONES.md`; inspect Git and the actual code before editing.
 
+## Additional owner request — login photograph (2026-09-30)
+
+- Added the owner's supplied `OIP.jpg` as the local asset `public/branding/login-ceremony.jpg`; original image preserved without editing or inventing imagery.
+- Login layout now pairs a branded photo panel with the white sign-in form on desktop. On narrower screens, branding precedes the form and the photo follows it so sign-in controls stay easy to reach. Green/yellow theme and existing authentication behavior retained; image failure hides the photo without blocking sign-in.
+- Configurable through `LOGIN_IMAGE_URL` / `institution.login_image_url`, with the approved local asset as default and `.env.example` documented. No external image service or new dependency.
+- Verification: strict TypeScript/production build, Pint and diff checks passed. Browser-confirmed the local photograph loads at 474 × 316, reviewed desktop (1366px) and narrow (390px) layouts with no horizontal overflow. Ignored preview saved at `storage/app/login-photo-preview.png`. No credentials were changed or login submitted during visual review.
+
 ## Additional owner request — green and yellow UI refresh (2026-09-30)
 
 The owner requested a less minimalist interface based on the existing logo's green/yellow colors. Updated the authoritative design direction in `UI_UX_DESIGN.md` accordingly.

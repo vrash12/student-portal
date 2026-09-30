@@ -23,6 +23,7 @@ export interface AppBranding {
     shortName: string;
     organizationName: string;
     logoUrl: string | null;
+    loginImageUrl: string | null;
     timezone: string;
 }
 
