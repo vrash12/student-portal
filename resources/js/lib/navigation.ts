@@ -81,6 +81,7 @@ export const staffNavigation: NavigationSection[] = [
     {
         label: 'Administration',
         items: [
+            { label: 'Audit History', href: '/audit-history', icon: ShieldCheck, permission: Permission.ViewAuditHistory },
             {
                 label: 'Instructors',
                 href: routes.instructors.index(),

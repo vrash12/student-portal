@@ -28,6 +28,9 @@ final class AuditLogger
         'token',
         'secret',
         'access_code',
+        'prompt', 'question_text', 'answer', 'answers', 'correct_answer', 'is_correct',
+        'choices', 'explanation', 'scoring_key', 'delivery', 'comment', 'old_comment', 'new_comment',
+        'correct_choice_id', 'correct_position', 'previous_comment', 'feedback',
     ];
 
     public function __construct(private readonly Request $request) {}
@@ -101,9 +104,14 @@ final class AuditLogger
      * @param  array<string, mixed>  $values
      * @return array<string, mixed>|null
      */
-    private function sanitize(array $values): ?array
+    public function sanitize(array $values): ?array
     {
-        $clean = array_diff_key($values, array_flip(self::REDACTED_KEYS));
+        $clean = array_filter($values, fn ($key) => ! in_array(Str::snake((string) $key), self::REDACTED_KEYS, true), ARRAY_FILTER_USE_KEY);
+        foreach ($clean as $key => $value) {
+            if (is_array($value)) {
+                $clean[$key] = $this->sanitize($value);
+            }
+        }
 
         return $clean === [] ? null : $clean;
     }

@@ -10,6 +10,7 @@ use App\Http\Controllers\Staff\AcademicPeriodController;
 use App\Http\Controllers\Staff\AccountPasswordController;
 use App\Http\Controllers\Staff\AssessmentController;
 use App\Http\Controllers\Staff\AssessmentScoreController;
+use App\Http\Controllers\Staff\AuditHistoryController;
 use App\Http\Controllers\Staff\CandidateController;
 use App\Http\Controllers\Staff\ClassBatchController;
 use App\Http\Controllers\Staff\ClassSubjectController;
@@ -42,6 +43,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::middleware('can:'.Permission::AccessStaffArea->value)->group(function (): void {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
         Route::get('reports', ReportController::class)->name('reports.index')->can(Permission::ViewReports->value);
+        Route::get('audit-history', AuditHistoryController::class)->name('audit-history.index')->can(Permission::ViewAuditHistory->value);
 
         // Academic monitoring, scoped by MonitoringScope (all candidates, or the subjects taught).
         Route::get('monitoring', AcademicMonitoringController::class)
