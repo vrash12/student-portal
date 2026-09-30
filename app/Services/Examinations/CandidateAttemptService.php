@@ -64,6 +64,7 @@ final class CandidateAttemptService
             $attempt->attempt_number = $number;
             $attempt->status = 'in_progress';
             $attempt->started_at = now();
+            $attempt->last_activity_at = now();
             $attempt->expires_at = now()->addMinutes($exam->duration_minutes);
             if ($exam->closes_at && $exam->closes_at->lt($attempt->expires_at)) {
                 $attempt->expires_at = $exam->closes_at;
@@ -145,6 +146,7 @@ final class CandidateAttemptService
             }
             $attempt->answers = $answers;
             $attempt->current_position = $next;
+            $attempt->last_activity_at = now();
             $attempt->revision++;
             if ($submit) {
                 $attempt->status = 'submitted';
