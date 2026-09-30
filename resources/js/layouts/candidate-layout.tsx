@@ -12,6 +12,7 @@ import { routes } from '@/lib/routes';
  */
 export default function CandidateLayout({ children }: { children: ReactNode }) {
     const { app, auth } = usePage().props;
+    const { component } = usePage();
     useEffect(() => {
         if ('serviceWorker' in navigator && window.isSecureContext) {
             void navigator.serviceWorker.register('/portal-sw.js', { scope: '/portal' }).catch(() => undefined);
@@ -48,6 +49,10 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
                         </Link>
                     </div>
                 </div>
+                {component !== 'portal/examinations/attempt' && <nav aria-label="Candidate portal" className="mx-auto flex max-w-5xl gap-2 px-4 pb-2 sm:px-6">
+                    {[{ href: '/portal', label: 'Examinations', active: component !== 'portal/profile' }, { href: '/portal/profile', label: 'My Information', active: component === 'portal/profile' }].map((item) =>
+                        <Link key={item.href} href={item.href} aria-current={item.active ? 'page' : undefined} className={`inline-flex min-h-12 items-center rounded-lg px-4 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600 ${item.active ? 'bg-primary-50 text-primary-700' : 'text-ink-muted hover:bg-canvas'}`}>{item.label}</Link>)}
+                </nav>}
             </header>
 
             <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">

@@ -9,14 +9,14 @@ use App\Models\Candidate;
 use App\Models\ClassBatch;
 use App\Models\Role;
 use App\Models\User;
+use Closure;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
-/**
- * Candidate records and their sign-in accounts. The account username is the
- * candidate number in lowercase, and the account name mirrors the candidate's
- * name; both are kept in sync here.
- */
+/** Candidate identity and account changes are kept together and audited. */
 final class CandidateService
 {
     public function __construct(
@@ -29,82 +29,119 @@ final class CandidateService
         return Str::lower($candidateNumber);
     }
 
-    /**
-     * @param  array{candidate_number: string, first_name: string, last_name: string, class_batch_id: ?int, password: string}  $data
-     */
+    /** @param array<string, mixed> $data */
     public function create(array $data): Candidate
     {
-        return DB::transaction(function () use ($data): Candidate {
-            $account = new User([
-                'name' => $this->accountName($data['first_name'], $data['last_name']),
-                'username' => self::usernameFor($data['candidate_number']),
-                'email' => null,
-                'password' => $data['password'],
-            ]);
-            $account->role()->associate(Role::query()->where('code', SystemRole::Candidate->value)->firstOrFail());
-            $account->is_active = true;
-            $account->save();
+        return $this->withPhoto($data, function (?string $photoPath) use ($data): Candidate {
+            return DB::transaction(function () use ($data, $photoPath): Candidate {
+                $candidate = new Candidate($this->identity($data));
+                $account = new User([
+                    'name' => $this->accountName($candidate),
+                    'username' => self::usernameFor($data['candidate_number']),
+                    'email' => null,
+                    'password' => $data['password'],
+                ]);
+                $account->role()->associate(Role::query()->where('code', SystemRole::Candidate->value)->firstOrFail());
+                $account->is_active = true;
+                $account->save();
 
-            $candidate = new Candidate([
-                'candidate_number' => $data['candidate_number'],
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-            ]);
-            $candidate->user()->associate($account);
-            $candidate->classBatch()->associate($this->classBatch($data['class_batch_id']));
-            $candidate->status = CandidateStatus::Enrolled;
-            $candidate->save();
+                $candidate->user()->associate($account);
+                $candidate->classBatch()->associate($this->classBatch($data['class_batch_id']));
+                $candidate->status = CandidateStatus::Enrolled;
+                $candidate->profile_photo_path = $photoPath;
+                $candidate->save();
+                $this->audit->record(AuditAction::CandidateCreated, $candidate, newValues: $this->snapshot($candidate));
 
-            $this->audit->record(AuditAction::CandidateCreated, $candidate, newValues: $this->snapshot($candidate));
-
-            return $candidate;
+                return $candidate;
+            });
         });
     }
 
-    /**
-     * @param  array{candidate_number: string, first_name: string, last_name: string, class_batch_id: ?int, status: CandidateStatus, account_active: bool, password: ?string}  $data
-     */
+    /** @param array<string, mixed> $data */
     public function update(Candidate $candidate, array $data): Candidate
     {
-        return DB::transaction(function () use ($candidate, $data): Candidate {
-            $candidate->loadMissing(['user', 'classBatch']);
-            $before = $this->snapshot($candidate);
+        return $this->withPhoto($data, function (?string $photoPath) use ($candidate, $data): Candidate {
+            return DB::transaction(function () use ($candidate, $data, $photoPath): Candidate {
+                $candidate = Candidate::query()->lockForUpdate()->findOrFail($candidate->id);
+                $candidate->load(['user', 'classBatch']);
+                $before = $this->snapshot($candidate);
+                $oldPhoto = $candidate->profile_photo_path;
 
-            $candidate->fill([
-                'candidate_number' => $data['candidate_number'],
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-            ]);
-            $candidate->classBatch()->associate($this->classBatch($data['class_batch_id']));
-            $candidate->status = $data['status'];
-            $candidate->save();
+                $candidate->fill($this->identity($data));
+                $candidate->classBatch()->associate($this->classBatch($data['class_batch_id']));
+                $candidate->status = $data['status'];
+                if ($photoPath !== null || ($data['remove_photo'] ?? false)) {
+                    $candidate->profile_photo_path = $photoPath;
+                }
+                $candidate->save();
 
-            $account = $candidate->user;
-            $account->fill([
-                'name' => $this->accountName($data['first_name'], $data['last_name']),
-                'username' => self::usernameFor($data['candidate_number']),
-            ]);
-            $account->is_active = $data['account_active'];
+                $account = $candidate->user;
+                $account->fill([
+                    'name' => $this->accountName($candidate),
+                    'username' => self::usernameFor($data['candidate_number']),
+                ]);
+                $account->is_active = $data['account_active'];
+                $passwordReset = ($data['password'] ?? '') !== '' && $data['password'] !== null;
+                if ($passwordReset) {
+                    $account->password = $data['password'];
+                }
+                $account->save();
 
-            $passwordReset = $data['password'] !== null && $data['password'] !== '';
-            if ($passwordReset) {
-                $account->password = $data['password'];
-            }
-            $account->save();
+                $after = $this->snapshot($candidate);
+                if ($oldPhoto !== $candidate->profile_photo_path) {
+                    // Audit the change, never the file or storage path.
+                    $before['profile_photo_changed'] = false;
+                    $after['profile_photo_changed'] = true;
+                    if ($oldPhoto !== null) {
+                        DB::afterCommit(fn () => Storage::disk('local')->delete($oldPhoto));
+                    }
+                }
+                $this->audit->recordChanges(AuditAction::CandidateUpdated, $candidate, $before, $after);
+                if ($passwordReset) {
+                    $this->audit->record(AuditAction::CandidatePasswordReset, $candidate);
+                }
+                if ($passwordReset || ! $account->is_active || $account->wasChanged('username')) {
+                    $this->accounts->endSessions($account);
+                }
 
-            $this->audit->recordChanges(AuditAction::CandidateUpdated, $candidate, $before, $this->snapshot($candidate));
-
-            if ($passwordReset) {
-                $this->audit->record(AuditAction::CandidatePasswordReset, $candidate);
-            }
-
-            // Sign the candidate out everywhere when their access changes.
-            if ($passwordReset || ! $account->is_active || $account->wasChanged('username')) {
-                $this->accounts->endSessions($account);
-            }
-
-            return $candidate;
+                return $candidate;
+            });
         });
+    }
+
+    /** @param array<string, mixed> $data */
+    private function withPhoto(array $data, Closure $save): Candidate
+    {
+        $path = null;
+        if (isset($data['profile_photo'])) {
+            $path = $data['profile_photo']->store('candidate-photos', 'local');
+            if ($path === false) {
+                throw ValidationException::withMessages(['profile_photo' => 'The photo could not be saved. Please try again.']);
+            }
+        }
+        try {
+            return $save($path);
+        } catch (Throwable $exception) {
+            if ($path !== null) {
+                Storage::disk('local')->delete($path);
+            }
+            throw $exception;
+        }
+    }
+
+    /** @param array<string, mixed> $data @return array<string, mixed> */
+    private function identity(array $data): array
+    {
+        return array_intersect_key($data, array_flip(['candidate_number', 'first_name', 'middle_name', 'last_name', 'suffix', 'training_group']));
+    }
+
+    private function accountName(Candidate $candidate): string
+    {
+        if (mb_strlen($candidate->full_name) > 255) {
+            throw ValidationException::withMessages(['last_name' => 'The combined name must be 255 characters or fewer.']);
+        }
+
+        return $candidate->full_name;
     }
 
     private function classBatch(?int $classBatchId): ?ClassBatch
@@ -112,14 +149,7 @@ final class CandidateService
         return $classBatchId === null ? null : ClassBatch::query()->findOrFail($classBatchId);
     }
 
-    private function accountName(string $firstName, string $lastName): string
-    {
-        return trim("{$firstName} {$lastName}");
-    }
-
-    /**
-     * @return array{candidate_number: string, first_name: string, last_name: string, class: ?string, status: string, account_active: bool}
-     */
+    /** @return array<string, mixed> */
     private function snapshot(Candidate $candidate): array
     {
         $candidate->loadMissing(['user', 'classBatch']);
@@ -127,7 +157,11 @@ final class CandidateService
         return [
             'candidate_number' => $candidate->candidate_number,
             'first_name' => $candidate->first_name,
+            'middle_name' => $candidate->middle_name,
             'last_name' => $candidate->last_name,
+            'suffix' => $candidate->suffix,
+            'training_group' => $candidate->training_group,
+            'has_profile_photo' => $candidate->profile_photo_path !== null,
             'class' => $candidate->classBatch?->name,
             'status' => $candidate->status->value,
             'account_active' => $candidate->user->is_active,

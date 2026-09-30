@@ -16,6 +16,10 @@ interface EditCandidateProps {
         candidateNumber: string;
         firstName: string;
         lastName: string;
+        middleName: string | null;
+        suffix: string | null;
+        trainingGroup: string | null;
+        photoUrl: string | null;
         name: string;
         status: { value: string };
         classBatch: { id: number } | null;
@@ -33,6 +37,11 @@ export default function EditCandidate({ candidate, classOptions, statusOptions }
         candidate_number: candidate.candidateNumber,
         first_name: candidate.firstName,
         last_name: candidate.lastName,
+        middle_name: candidate.middleName ?? '',
+        suffix: candidate.suffix ?? '',
+        training_group: candidate.trainingGroup ?? '',
+        profile_photo: null,
+        remove_photo: false,
         class_batch_id: candidate.classBatch ? String(candidate.classBatch.id) : '',
         status: candidate.status.value,
         account_active: candidate.accountActive,
@@ -41,7 +50,8 @@ export default function EditCandidate({ candidate, classOptions, statusOptions }
     });
 
     const save = () => {
-        form.put(routes.candidates.update(candidate.id), {
+        form.transform((data) => ({ ...data, _method: 'put' }));
+        form.post(routes.candidates.update(candidate.id), {
             preserveScroll: true,
             onError: () => form.reset('password', 'password_confirmation'),
             onFinish: () => setConfirmingDeactivation(false),
@@ -80,6 +90,7 @@ export default function EditCandidate({ candidate, classOptions, statusOptions }
                     classOptions={classOptions}
                     statusOptions={statusOptions}
                     currentUsername={candidate.username}
+                    currentPhotoUrl={candidate.photoUrl}
                     submitLabel="Save Changes"
                     cancelHref={routes.candidates.show(candidate.id)}
                     onSubmit={submit}

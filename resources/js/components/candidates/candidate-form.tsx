@@ -20,6 +20,11 @@ export interface CandidateFormData {
     candidate_number: string;
     first_name: string;
     last_name: string;
+    middle_name: string;
+    suffix: string;
+    training_group: string;
+    profile_photo: File | null;
+    remove_photo: boolean;
     class_batch_id: string;
     status: string;
     account_active: boolean;
@@ -34,6 +39,7 @@ interface CandidateFormProps {
     statusOptions?: StatusOption[];
     /** Current sign-in username, when editing. */
     currentUsername?: string;
+    currentPhotoUrl?: string | null;
     submitLabel: string;
     cancelHref: string;
     onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -45,6 +51,7 @@ export function CandidateForm({
     classOptions,
     statusOptions = [],
     currentUsername,
+    currentPhotoUrl,
     submitLabel,
     cancelHref,
     onSubmit,
@@ -84,6 +91,9 @@ export function CandidateForm({
                             autoComplete="off"
                         />
                     </FormField>
+                    <FormField label="Middle Name" error={form.errors.middle_name} hint="Optional">
+                        <TextInput name="middle_name" value={form.data.middle_name} onChange={(event) => form.setData('middle_name', event.target.value)} maxLength={100} autoComplete="off" />
+                    </FormField>
                     <FormField label="Last Name" required error={form.errors.last_name}>
                         <TextInput
                             name="last_name"
@@ -93,10 +103,23 @@ export function CandidateForm({
                             autoComplete="off"
                         />
                     </FormField>
+                    <FormField label="Suffix" error={form.errors.suffix} hint="Optional, e.g. Jr. or III">
+                        <TextInput name="suffix" value={form.data.suffix} onChange={(event) => form.setData('suffix', event.target.value)} maxLength={20} autoComplete="off" />
+                    </FormField>
                 </div>
+                <FormField label="Profile Photo" error={form.errors.profile_photo} hint="Optional. JPEG, PNG or WebP, up to 2 MB and 4096 × 4096 pixels.">
+                    <TextInput key={form.data.remove_photo ? 'removed' : 'photo'} type="file" name="profile_photo" accept="image/jpeg,image/png,image/webp" disabled={form.data.remove_photo} onChange={(event) => form.setData('profile_photo', event.target.files?.[0] ?? null)} />
+                </FormField>
+                {currentPhotoUrl && (
+                    <div className="flex items-center gap-4">
+                        <img src={currentPhotoUrl} alt="Current candidate profile" className="size-20 rounded-lg border border-line object-cover" />
+                        <CheckboxField label="Remove current photo" checked={form.data.remove_photo} onChange={(event) => { form.setData('remove_photo', event.target.checked); if (event.target.checked) form.setData('profile_photo', null); }} error={form.errors.remove_photo} />
+                    </div>
+                )}
+                {form.progress && <p role="status" className="text-sm text-ink-muted">Uploading: {form.progress.percentage}%</p>}
             </FormSection>
 
-            <FormSection title="Academic Assignment">
+            <FormSection title="Academic Assignment" description="Enrolled subjects and assigned instructors follow the selected class. Grades and standing come from its finalized assessments.">
                 <div className="grid gap-5 sm:grid-cols-2">
                     <FormField label={classTerm} error={form.errors.class_batch_id}>
                         <SelectInput
@@ -129,6 +152,9 @@ export function CandidateForm({
                         </FormField>
                     )}
                 </div>
+                <FormField label="Training Group / Section / Platoon" error={form.errors.training_group} hint="Optional. Leave blank if your training program does not use this grouping.">
+                    <TextInput name="training_group" value={form.data.training_group} onChange={(event) => form.setData('training_group', event.target.value)} maxLength={100} />
+                </FormField>
             </FormSection>
 
             <FormSection

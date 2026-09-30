@@ -21,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * the candidate number as username. Create and update through
  * CandidateService so the account stays in sync.
  */
-#[Fillable(['candidate_number', 'first_name', 'last_name'])]
+#[Fillable(['candidate_number', 'first_name', 'middle_name', 'last_name', 'suffix', 'training_group'])]
 #[UsePolicy(CandidatePolicy::class)]
 class Candidate extends Model
 {
@@ -96,7 +96,10 @@ class Candidate extends Model
      */
     protected function fullName(): Attribute
     {
-        return Attribute::get(fn (): string => trim("{$this->first_name} {$this->last_name}"));
+        return Attribute::get(fn (): string => implode(' ', array_filter(
+            [$this->first_name, $this->middle_name, $this->last_name, $this->suffix],
+            fn (?string $part): bool => $part !== null && $part !== '',
+        )));
     }
 
     /**
@@ -114,6 +117,8 @@ class Candidate extends Model
             ->where('candidate_number', 'like', $pattern)
             ->orWhere('first_name', 'like', $pattern)
             ->orWhere('last_name', 'like', $pattern)
+            ->orWhere('middle_name', 'like', $pattern)
+            ->orWhereRaw("concat_ws(' ', `first_name`, `middle_name`, `last_name`, `suffix`) like ?", [$pattern])
             ->orWhereRaw("concat(`first_name`, ' ', `last_name`) like ?", [$pattern]));
     }
 }

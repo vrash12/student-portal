@@ -9,6 +9,7 @@ use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Validator;
 
 /**
  * Shared normalization and rules for creating and updating candidates.
@@ -47,6 +48,11 @@ abstract class CandidateRequest extends FormRequest
             ],
             'first_name' => ['required', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
+            'middle_name' => ['nullable', 'string', 'max:100'],
+            'suffix' => ['nullable', 'string', 'max:20'],
+            'training_group' => ['nullable', 'string', 'max:100'],
+            'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=4096,max_height=4096', 'prohibited_if:remove_photo,1,true'],
+            'remove_photo' => ['sometimes', 'boolean'],
             'class_batch_id' => ['nullable', 'integer', Rule::exists('class_batches', 'id')],
             'password' => [
                 $candidate === null ? 'required' : 'nullable',
@@ -98,5 +104,32 @@ abstract class CandidateRequest extends FormRequest
         $value = $this->input('class_batch_id');
 
         return $value === null ? null : (int) $value;
+    }
+
+    /** @return array<string, mixed> */
+    protected function profileData(): array
+    {
+        // Preserve optional fields when older clients omit them.
+        $data = [];
+        foreach (['middle_name', 'suffix', 'training_group'] as $field) {
+            if ($this->exists($field)) {
+                $data[$field] = trim((string) $this->input($field)) ?: null;
+            }
+        }
+
+        return [...$data, 'profile_photo' => $this->file('profile_photo'), 'remove_photo' => $this->boolean('remove_photo')];
+    }
+
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+            $parts = array_map(fn (string $field): string => $this->string($field)->trim()->value(), ['first_name', 'middle_name', 'last_name', 'suffix']);
+            if (mb_strlen(implode(' ', array_filter($parts))) > 255) {
+                $validator->errors()->add('last_name', 'The combined name must be 255 characters or fewer.');
+            }
+        }];
     }
 }

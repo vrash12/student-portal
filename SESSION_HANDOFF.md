@@ -8,6 +8,22 @@ Implementation has reached **Milestone 16 — Audit Logs and Academic History**.
 
 **Next planned milestone: M17 — Security Hardening**, followed by M18 UI/UX QA, M19 testing/stability, M20 demo preparation. Do not add deferred imports, AI, native apps, or unrelated infrastructure.
 
+## Additional owner request — candidate information (2026-09-30)
+
+Implemented after M16 at the owner's explicit request. Administrators manage candidate details; candidates have a read-only **My Information** page at `/portal/profile`. This request explicitly authorizes showing candidates their own subjects, assigned instructor names, current grades, academic standing, assessment history and released examination results. It does not authorize other candidates' records or confidential question/answer content.
+
+- Existing administrator Candidates create/edit/show pages now include optional middle name, suffix, training group/section/platoon and profile photo, alongside candidate number, first/last name, class, status and account access. Full account names stay synchronized. Empty optional values can be cleared. Existing deactivation/reactivation and enrollment statuses preserve academic history; no destructive candidate-delete route was added.
+- Candidate details show username, account status, last sign-in, created/updated dates. Administrators and authorized instructors also see paginated quiz/examination attempts on the candidate profile; instructor rows remain limited to subjects they teach. Account details stay restricted to candidate managers and the account owner.
+- Subjects and instructors derive from class-subject relationships. Grades and standing use `GradeCalculationService`; no editable copies of calculated grades or instructor assignments were added to candidate records.
+- Portal assessment history is paginated, includes finalized current-class assessments plus the candidate's own recorded historical results, and excludes staff comments/audit reasons. Exam history is separately paginated and respects `release_results`; no answer, delivery or scoring-key payload is selected or serialized.
+- Portal profile and photo endpoints resolve the candidate from the authenticated account; they accept no candidate route ID. Staff photo access uses the existing candidate policy. Candidate navigation is hidden on the active examination screen.
+- Photos use private local storage (`storage/app/private/candidate-photos`) and authenticated, no-store responses; JPEG/PNG/WebP only, maximum 2 MB and 4096 × 4096. Replacements/removal clean the former file after transaction commit. Include private photos in future backups. No public storage link or external image service is required.
+- Applied additive migration `2026_09_30_001200_add_candidate_profile_fields` locally. No reset or seeder run; existing records keep null optional values until administrators fill them.
+- Strict TypeScript/production build and an isolated rollback smoke workflow passed. The workflow checked administrator create/update, optional-field clearing, private photo access/removal, own-profile isolation, candidate write denial, released/unreleased scores, and authenticated page responses. Synthetic records/photos were removed. Focused regression tests were added in `tests/Feature/Candidates/CandidateProfileTest.php` for the owner's test pass; the broad PHPUnit/tablet acceptance suite was not run.
+- Reusable ignored smoke script: `storage/app/candidate-profile-smoke.php`. It uses an outer rollback transaction and does not refresh the working database. The temporary testing environment binding only applies inside that script process to exercise HTTP requests without CSRF tokens.
+
+M17 remains the next planned milestone. This addition does not claim that security hardening or deployment acceptance is complete.
+
 ## Git and preserved work
 
 - Current checkout: `main`. Previous head: `7a3ce80` (candidate activity), following M9/M10, M11, M12 and M13 commits.

@@ -13,7 +13,9 @@ use App\Services\CandidateService;
 use App\Services\Grading\GradeCalculationService;
 use App\Services\Grading\GradingThresholds;
 use App\Services\Monitoring\CandidateAcademicRecord;
+use App\Services\Monitoring\CandidateProfileRecord;
 use App\Support\AcademicOptions;
+use App\Support\CandidatePresenter;
 use App\Support\QueryFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -81,7 +83,7 @@ class CandidateController extends Controller
         return redirect()->route('candidates.show', $candidate);
     }
 
-    public function show(Request $request, Candidate $candidate, GradeCalculationService $grades, CandidateAcademicRecord $record): Response
+    public function show(Request $request, Candidate $candidate, GradeCalculationService $grades, CandidateAcademicRecord $record, CandidateProfileRecord $profile): Response
     {
         $candidate->load(['user', 'classBatch.academicPeriod']);
         $viewer = $request->user();
@@ -163,6 +165,7 @@ class CandidateController extends Controller
             // The same definition of a concern as academic monitoring.
             'warnings' => $monitored ? $record->warnings($subjectResults) : [],
             'assessmentResults' => $record->assessmentResults($candidate, $offerings, $monitored),
+            'examinationResults' => $profile->examinationResults($candidate, false, $seesAllSubjects ? null : $offerings->modelKeys()),
             'recentActivity' => $record->recentActivity($candidate, $offerings->modelKeys(), $monitored),
             'canEdit' => $canManage,
             // Instructors return to the class they teach, not the full candidate list.
@@ -195,24 +198,11 @@ class CandidateController extends Controller
     }
 
     /**
-     * @return array{id: int, candidateNumber: string, firstName: string, lastName: string, name: string, status: array{value: string, label: string, tone: string}, classBatch: array{id: int, name: string, period: string, periodId: int}|null}
+     * @return array<string, mixed>
      */
     private function details(Candidate $candidate): array
     {
-        return [
-            'id' => $candidate->id,
-            'candidateNumber' => $candidate->candidate_number,
-            'firstName' => $candidate->first_name,
-            'lastName' => $candidate->last_name,
-            'name' => $candidate->full_name,
-            'status' => $this->status($candidate->status),
-            'classBatch' => $candidate->classBatch === null ? null : [
-                'id' => $candidate->classBatch->id,
-                'name' => $candidate->classBatch->name,
-                'period' => $candidate->classBatch->academicPeriod->name,
-                'periodId' => $candidate->classBatch->academic_period_id,
-            ],
-        ];
+        return CandidatePresenter::details($candidate);
     }
 
     /**

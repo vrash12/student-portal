@@ -1,6 +1,9 @@
 import { Head } from '@inertiajs/react';
 import { ChartColumn, Pencil } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { CandidateInformationPanels } from '@/components/candidates/candidate-information';
+import { CandidateExaminationResults } from '@/components/candidates/examination-results';
+import type { CandidateInformation, CandidateExaminationResult } from '@/types/candidates';
+import type { Paginated } from '@/types';
 import { GradeStatusBadge, StandingCell, ThresholdSummary } from '@/components/grading/standing';
 import {
     AcademicSummary,
@@ -13,9 +16,9 @@ import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader, type BreadcrumbItem } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
-import { StatusBadge, type StatusTone } from '@/components/ui/status-badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
-import { formatGrade, useDateFormatter } from '@/lib/format';
+import { formatGrade } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import type { GradingThresholds, OverallStanding, SubjectGrade } from '@/types/grading';
@@ -32,17 +35,8 @@ interface SubjectPerformance {
 }
 
 interface CandidateShowProps {
-    candidate: {
-        id: number;
-        candidateNumber: string;
-        name: string;
-        status: { label: string; tone: StatusTone };
-        classBatch: { id: number; name: string; period: string; periodId: number } | null;
-        /** Only provided to users who manage candidate records. */
-        account: { username: string; isActive: boolean; lastLoginAt: string | null } | null;
-        createdAt: string | null;
-        updatedAt: string | null;
-    };
+    candidate: CandidateInformation;
+    examinationResults: Paginated<CandidateExaminationResult>;
     subjects: Array<{ code: string; name: string; instructors: string[] }>;
     performance: SubjectPerformance[];
     standing: {
@@ -74,11 +68,12 @@ export default function CandidateShow({
     standing,
     warnings,
     assessmentResults,
+    examinationResults,
     recentActivity,
     canEdit,
     canBrowseCandidates,
 }: CandidateShowProps) {
-    const formatDate = useDateFormatter();
+
     const classTerm = terms.classBatch.singular;
     const overallLabel = standing.scope === 'all' ? 'Overall Standing' : 'Standing in Your Subjects';
     const showsStanding = standing.monitored && standing.thresholds !== null;
@@ -138,6 +133,8 @@ export default function CandidateShow({
                     warnings={warnings}
                     hasClass={candidate.classBatch !== null}
                 />
+
+                <CandidateInformationPanels candidate={candidate} />
 
                 <Panel
                     title="Academic Performance"
@@ -214,52 +211,9 @@ export default function CandidateShow({
 
                 {assessmentResults.length > 0 && <AssessmentResults subjects={assessmentResults} />}
 
-                <div className="grid gap-6 lg:grid-cols-2">
-                    {candidate.classBatch !== null && <RecentActivity entries={recentActivity} />}
-
-                    <div className="flex flex-col gap-6">
-                        <Panel title="Candidate Information">
-                            <dl className="grid gap-4 sm:grid-cols-2">
-                                <Detail label="Candidate Number">{candidate.candidateNumber}</Detail>
-                                <Detail label="Status">
-                                    <StatusBadge tone={candidate.status.tone}>{candidate.status.label}</StatusBadge>
-                                </Detail>
-                                <Detail label={classTerm}>{candidate.classBatch?.name ?? 'Not assigned'}</Detail>
-                                <Detail label="Academic Period">{candidate.classBatch?.period ?? '—'}</Detail>
-                                <Detail label="Record Created">{formatDate.date(candidate.createdAt)}</Detail>
-                                <Detail label="Last Updated">{formatDate.dateTime(candidate.updatedAt)}</Detail>
-                            </dl>
-                        </Panel>
-
-                        {candidate.account !== null && (
-                            <Panel title="Sign-In Account">
-                                <dl className="grid gap-4 sm:grid-cols-2">
-                                    <Detail label="Username">{candidate.account.username}</Detail>
-                                    <Detail label="Account Status">
-                                        {candidate.account.isActive ? (
-                                            <StatusBadge tone="success">Active</StatusBadge>
-                                        ) : (
-                                            <StatusBadge tone="neutral">Deactivated</StatusBadge>
-                                        )}
-                                    </Detail>
-                                    <Detail label="Last Sign-In">
-                                        {candidate.account.lastLoginAt ? formatDate.dateTime(candidate.account.lastLoginAt) : 'Never'}
-                                    </Detail>
-                                </dl>
-                            </Panel>
-                        )}
-                    </div>
-                </div>
+                <CandidateExaminationResults results={examinationResults} />
+                {candidate.classBatch !== null && <RecentActivity entries={recentActivity} />}
             </div>
         </>
-    );
-}
-
-function Detail({ label, children }: { label: string; children: ReactNode }) {
-    return (
-        <div>
-            <dt className="text-sm text-ink-muted">{label}</dt>
-            <dd className="mt-0.5 font-medium text-ink">{children}</dd>
-        </div>
     );
 }

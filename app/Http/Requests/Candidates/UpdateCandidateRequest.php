@@ -42,7 +42,7 @@ class UpdateCandidateRequest extends CandidateRequest
     }
 
     /**
-     * @return array{candidate_number: string, first_name: string, last_name: string, class_batch_id: ?int, status: CandidateStatus, account_active: bool, password: ?string}
+     * @return array<string, mixed>
      */
     public function candidateData(): array
     {
@@ -50,6 +50,7 @@ class UpdateCandidateRequest extends CandidateRequest
 
         return [
             'candidate_number' => $this->string('candidate_number')->value(),
+            ...$this->profileData(),
             'first_name' => $this->string('first_name')->value(),
             'last_name' => $this->string('last_name')->value(),
             'class_batch_id' => $this->classBatchId(),

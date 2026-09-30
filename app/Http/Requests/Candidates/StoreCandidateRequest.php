@@ -17,11 +17,12 @@ class StoreCandidateRequest extends CandidateRequest
     }
 
     /**
-     * @return array{candidate_number: string, first_name: string, last_name: string, class_batch_id: ?int, password: string}
+     * @return array<string, mixed>
      */
     public function candidateData(): array
     {
         return [
+            ...$this->profileData(),
             'candidate_number' => $this->string('candidate_number')->value(),
             'first_name' => $this->string('first_name')->value(),
             'last_name' => $this->string('last_name')->value(),
