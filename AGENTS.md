@@ -1898,7 +1898,7 @@ Do **not** implement the following unless explicitly requested later:
 - AI features
 - facial recognition
 - biometric authentication
-- proctoring / webcam monitoring
+- proctoring / webcam monitoring (exception approved by the owner on 2026-10-01: the examination page records when a candidate leaves the exam screen — tab/app switch or another window focused — as an indicator for instructors; no camera, microphone, screen capture, or automatic penalties)
 - multi-tenant SaaS architecture
 - payment functionality
 - public registration

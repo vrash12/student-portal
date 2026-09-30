@@ -1,6 +1,17 @@
 # SESSION_HANDOFF.md
 
-Updated 2026-09-30 by Codex. Read this file together with `AGENTS.md`, `UI_UX_DESIGN.md`, and `MILESTONES.md`; inspect Git and the actual code before editing.
+Updated 2026-10-01 by Claude Code (earlier sections by Codex, 2026-09-30). Read this file together with `AGENTS.md`, `UI_UX_DESIGN.md`, `MILESTONES.md`, and `docs/question-bank-examination-contract.md`; inspect Git and the actual code before editing. Newest entries are first.
+
+## Start here (state on 2026-10-01)
+
+- **Branch `main`, clean working tree, latest commit `102b8b5`** (plus the documentation commit that added this section). Nothing is pushed; `main` is many commits ahead of `origin/main`. Push only when the owner asks. The owner prefers one commit per milestone or owner request.
+- **Implemented:** Milestones 0–16, plus owner additions: candidate information and photos, exam-to-gradebook posting, student home, registration/academic PDFs (now landscape, one page per semester), green/yellow UI refresh, login photo, leave-screen detection during exams, and question images/audio/video.
+- **Verify before changing anything:** `php artisan test` (expect **1,099 passing**, about 5–6 minutes; XAMPP MariaDB on port 3306 must be running), `npm run check` (strict TypeScript + build), `vendor/bin/pint --test`, `php artisan migrate:status` (no pending).
+- **Local use:** `php artisan serve`, then http://localhost:8000. Demo accounts are in `README.md` (`admin`, `academic.admin`, `instructor.alpha`, `instructor.bravo`, `2026-0001` to `2026-0010`, password `password`). `php artisan db:seed --class=DemoExaminationSeeder` publishes two ready demo quizzes (already run on the local database). Run `php artisan schedule:work` for unattended exam expiry.
+- **Next planned work: Milestone 17 — Security Hardening** (then M18 UI/UX QA, M19 testing/stability, M20 demo preparation). Do not start other features unless the owner asks.
+- **Open owner decisions** are listed under "Requirements still needing confirmation" at the end of this file. The newest: which examination transitions to keep (the contract lists Return to Draft, Delete Draft and archive-only-after-the-end, none implemented; archive currently only needs no in-progress attempts), examination list filters (none yet), images inside answer choices (not implemented), and fees/units/schedule columns on the registration PDF (not stored by the system).
+- **The local database contains test leftovers** from earlier smoke runs (the "M9 Tablet Smoke Test" exam, "Sample question 12345."-style questions, candidate `m9-smoke-001`, a deactivated duplicated question 33). Clean up before a demo; never run `migrate:fresh` on the working database.
+- Extra test databases `academic_system_{r1,r2,r3,w1,w2,w3,v1…v12}_testing` exist from parallel test runs and can be dropped.
 
 ## Owner request — landscape, one-page-per-semester PDFs (2026-10-01, Claude Code)
 
@@ -9,6 +20,8 @@ Updated 2026-09-30 by Codex. Read this file together with `AGENTS.md`, `UI_UX_DE
 - **Academic Record**: one page per academic period (semester), oldest first, each with the header. The current period shows subject grades, standing and overall standing; previous periods note that grades are calculated for the current class only and list the results recorded then. Quiz/examination results and assessment results sit side by side; a semester with more than 26 rows in a column is printed stacked (continues on the next page) so no row is cut.
 - `CandidateProfileRecord` rows gained `period` and `subjectCode` (additive). `CandidatePdfService`: `period`, `periods` grouping, landscape paper, page numbers at the new position. Template split into `resources/views/pdf/partials/record-{subjects,examinations,assessments}.blade.php`.
 - Tests: `tests/Feature/Candidates/CandidatePdfLayoutTest.php` (4: one landscape page registration, two semesters = two pages oldest first, no class, long semester stacked); `ResultReleaseTest` PDF check now ignores the stylesheet. Full suite 1,099 passing. Sample PDFs generated from local data were checked (792 × 612 pt, one page each).
+- Follow-up fix `102b8b5`: the masthead no longer has a fixed height, and the green information band keeps about 11 pt of space below the title (the owner reported they touched).
+- No PDF renderer (poppler) is installed on the development machine; the layout was checked from generated page sizes and text positions, and visually by the owner.
 
 ## Owner request — images and media in questions (2026-10-01, Claude Code)
 
@@ -47,7 +60,7 @@ Owner request: test each component after M1–16 and the added features. **Full 
   - Dashboard "Candidates in active period" counts classes without subjects, while standing counts don't, so totals can differ.
   - The report period filter returns 403 for out-of-scope or unknown periods instead of ignoring them.
   - Concurrency (row locks) cannot be exercised in single-process PHPUnit; it is covered by stale-version checks only.
-- Stale worktrees `.worktrees/m7` and `.worktrees/m8` (branches `m7-question-bank`, `m8-examination-builder`) are superseded by `main`; kept untouched per the earlier note. The test databases `academic_system_{m7,m8,r1,r2,r3,w1}_testing` can be dropped.
+- The old worktrees `.worktrees/m7` / `.worktrees/m8`, their branches, and the `academic_system_m7*` / `academic_system_m8*` databases were removed later the same day at the owner's request. The other extra test databases (`r1`, `r2`, `r3`, `w1`… `_testing`) can be dropped.
 
 ## Additional owner request — login photograph (2026-09-30)
 
@@ -87,7 +100,7 @@ The owner supplied a Certificate of Registration as a visual reference and expli
 
 Implementation has reached **Milestone 16 — Audit Logs and Academic History**. Milestones 0–6 were already complete; M7/M8 have now been reconciled into the main application's existing schema, and M9–16 are implemented. The owner explicitly requested implementation through M16 and will handle the broad test/acceptance pass. This is an implementation status, not a claim that deployment, full regression testing, or tablet QA is complete.
 
-**Next planned milestone: M17 — Security Hardening**, followed by M18 UI/UX QA, M19 testing/stability, M20 demo preparation. Do not add deferred imports, AI, native apps, or unrelated infrastructure.
+**Next planned milestone: M17 — Security Hardening**, followed by M18 UI/UX QA, M19 testing/stability, M20 demo preparation. Do not add deferred imports, AI, native apps, or unrelated infrastructure. (Since this was written, the full suite was run and extended and further owner additions were made; see "Start here".)
 
 ## Additional owner request — exam posting and student home (2026-09-30)
 
@@ -124,11 +137,11 @@ M17 remains the next planned milestone. This addition does not claim that securi
 
 - Current checkout: `main`. Previous head: `7a3ce80` (candidate activity), following M9/M10, M11, M12 and M13 commits.
 - This session's integration, M14 dashboard, M15 reports and M16 audit/history work is saved in local commits on `main`. Inspect `git status` and `git log` for the latest hashes.
-- `.worktrees/m7` and `.worktrees/m8` remain untouched, with their prior uncommitted work preserved. Do not delete, overwrite, or recreate them.
+- `.worktrees/m7`, `.worktrees/m8` and branches `m7-question-bank` / `m8-examination-builder` were **removed on 2026-10-01 at the owner's request** (their work was already integrated into `main`). Only `main` exists.
 - M7's preserved full controller, request, policy, service/data classes, question form components, pages, presenter additions, types and route file were integrated. Its tests and optional synthetic seeder were also copied, without running the broad suite.
 - M8's preserved design was inspected. Its `ExaminationKind` enum was reused. Its complete schema/services cannot be copied wholesale: they use different field names from the schema already consumed by M9–13. Main retains `description`, `attempt_limit`, `passing_score`, `randomize_questions`, `randomize_choices`, `allow_back_navigation` and the existing examination/attempt tables. The builder was completed against that contract. No duplicate question models or tables were introduced.
 - Prior history/handoff statements claiming M7/M8 were already finished were inaccurate; this session resolves the identified skeletal pages and broken writes.
-- Owner's earlier preference: milestone-sized commits, no push unless asked. No remote push or worktree cleanup in this session.
+- Owner's preference: milestone-sized commits, no push unless asked.
 
 ## Runtime
 
@@ -201,6 +214,11 @@ Applied to local MariaDB:
 - `2026_09_30_001000_add_reporting_permissions`: reports.view and audit_history.view, additive grants.
 - `2026_09_30_001100_add_assessment_permissions`: repairs missing question_bank.manage/examinations.manage grants for default instructor role.
 
+Added 2026-10-01 (applied locally):
+
+- `2026_10_01_000100_create_examination_focus_events_table`: departures from the exam screen (see "detect leaving the examination screen").
+- `2026_10_01_000200_create_question_media_table`: question images/audio/video (see "images and media in questions").
+
 Earlier applied attempt migrations 000300–000800 remain the authoritative M9–13 schema (delivery/recovery, scoring, essay grades/revisions, last activity). No destructive database reset occurred.
 
 ## Verification and limits
@@ -211,7 +229,7 @@ Earlier applied attempt migrations 000300–000800 remain the authoritative M9�
 - All eight reports and administrator dashboard generated data. Authenticated HTTP/Inertia responses returned 200 for dashboard, reports/print, audit history, question list/create/preview/edit, examination list/create/settings/question selection/review, grading queue and essay review. Candidate access to all staff modules and instructor access to administrative audit history were denied as expected; deadline reconciliation also passed.
 - The reusable local scratch smoke script is ignored at `storage/app/m14-16-smoke.php`; it is not a substitute for the owner's regression suite. Earlier broad suite results predate these changes and must not be presented as current.
 - Restored M7 tests are under `tests/Feature/QuestionBank`; they were not broadly run this session. Optional `DemoQuestionBankSeeder` was integrated but is not automatically executed against existing data.
-- Full PHPUnit, final browser visual QA, actual tablet PWA installation and physical connection-interruption checks remain with the owner, as requested. Earlier sessions exercised a synthetic tablet flow, but that is not verification of all later changes.
+- Superseded on 2026-10-01: the full PHPUnit suite now passes (1,099 tests) and each account type was checked in the browser (see "Component test pass"). Actual tablet PWA installation and physical connection-interruption checks still remain with the owner.
 
 ## Follow-up considerations
 
@@ -231,4 +249,39 @@ Earlier applied attempt migrations 000300–000800 remain the authoritative M9�
 - Review access-code storage, production sessions/rate limits and sensitive browser history in the planned M17 security pass. Do not claim production readiness from implementation completion.
 - `php artisan serve` is a development server; hundreds of tablets require an appropriate PHP web server.
 - Class/subject removal is restricted when academic/exam history depends on it. Existing inactive accounts and historical assignments are intentionally retained.
-- Both preserved worktrees remain available for comparison; do not treat their alternative M8 schema as a migration to run.
+- The Hostinger trial deployment predates the 2026-10-01 changes (component tests, dashboard fix, leave-screen detection, question media, landscape PDFs). Deploying them needs `composer install --no-dev`, `php artisan migrate` (two new migrations), `npm run build`, and backups that include `storage/app/private/question-media` and `storage/app/private/candidate-photos`.
+
+## Milestone 6 review findings deferred by the owner (2026-09-30)
+
+Confirmed by the Milestone 6 review but not fixed (the owner asked to move on). Not re-checked after the M7–M16 changes; verify before fixing. All low except the first (medium).
+
+1. `CandidateAcademicRecord::recentActivity()`: "Result finalized" entries show the current (corrected) score instead of the score at finalization.
+2. Comment-only corrections of finalized scores appear as score corrections ("6.00 → 6.00").
+3. Dashboard Academic Alerts links open /monitoring in the all-candidates scope for custom roles holding `candidates.view_all` + `classes.teach`.
+4. /monitoring echoes `standing` as active when the period has no thresholds.
+5. /monitoring says "No standings yet for the 0 monitored candidates" when nobody is monitored.
+6. Standing count links: small tap targets, no visible link affordance on touch, current card marked by border colour only.
+7. Class and Lowest Grade columns hidden below 1280px although the list may be sorted by lowest grade.
+8. "View candidates" links under Subjects Requiring Attention keep the current search.
+9. Withdrawn candidates: the Recent Academic Activity limit is applied before filtering, so it can say "No academic activity yet".
+10. Some Milestone 6 copy hardcodes "class" instead of `terms.classBatch`.
+11. The empty monitoring scope shows the administrator empty-state text.
+12. Academic Alerts renders "0 failing, 0 at risk" as links to empty lists.
+
+Small UI notes from the 2026-10-01 browser check: an archived exam's page still says "Review delivery settings and questions before publishing"; exam dates show as `30/09/2026, 06:57:15` while the rest of the app uses `Sep 29, 2026`.
+
+## Requirements still needing confirmation
+
+Do not hardcode these until the owner confirms:
+
+- production database server (MySQL or MariaDB) and version; internal deployment hostname and HTTPS certificate;
+- actual subject names, Class / Batch terminology, candidate identifier format, enrollment statuses, number of academic periods;
+- official grading formula, passing and warning grades (demo 75 / 80), missing-score policy (never zero), whether corrections need administrator approval, whether grading locks when a period ends;
+- overall standing rule (implemented: most serious subject standing), Incomplete vs At Risk/Failing precedence, standing for provisional grades and withdrawn candidates, whether thresholds may be cleared;
+- administrator access to the question bank and examinations (none by default); whether former instructors of a subject keep question bank access (currently yes, any-period assignment);
+- whether Academic Administrators may create Academic Administrator accounts or teach;
+- candidate password rules on shared tablets; session timeout during examinations; exam navigation restrictions and when candidates see scores;
+- examination lifecycle transitions (see "Start here"), examination list filters, images in answer choices;
+- leave-screen detection policy: it is an indicator only (browsers cannot see other apps); stronger prevention needs tablet kiosk mode (device management), not the web app;
+- registration PDF fields the system does not store (units, section codes, schedule/room, fees);
+- brand colours.

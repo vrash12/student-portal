@@ -2028,6 +2028,27 @@ This should not modify scoring.
 
 ---
 
+# 90a. Question Images and Media
+
+Questions may show up to four images, audio clips, or videos below the prompt.
+
+- Images fit the screen width and keep their proportions; never crop them.
+- Audio and video use the browser's own accessible controls; never autoplay.
+- Every file has a description: the alternative text of an image, or the caption of audio and video.
+- The description must not give away the answer.
+
+---
+
+# 90b. Leaving the Examination Screen
+
+Candidates are told before starting, and in the examination header, that switching to another tab, app, or window is recorded and visible to their instructor.
+
+After they return, show one calm, dismissible notice stating how long they were away and that their answers were not changed. Do not block the examination or use alarming language.
+
+Instructors see the count and total time away in live monitoring and on the grading page, worded as something to follow up on, not as proof of misconduct.
+
+---
+
 # 91. Essay Questions
 
 Essay inputs should:

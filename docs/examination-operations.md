@@ -20,4 +20,10 @@ The instructor monitor also reconciles overdue attempts. Inactivity means no rec
 
 Use trusted HTTPS on actual LAN tablets for service workers, installation and secure sessions. Core assets are bundled locally. Public internet access is not required. IndexedDB protects short interruptions after opening an attempt; it does not provide full offline application startup.
 
+Leaving the examination screen (switching tabs or apps, or another window taking focus for more than a second) is recorded with server times. Instructors see it in live monitoring (Left screen, Away now) and on the essay grading page. It is an indicator only: browsers cannot see other apps or tell why focus was lost, and it never changes answers or scores. For hard prevention, lock the tablets into the browser with the device's kiosk or managed mode.
+
+Question images, audio, and video are stored privately in `storage/app/private/question-media` (candidate photos in `storage/app/private/candidate-photos`). Include both folders in backups together with the database; restoring the database without them leaves questions without their media.
+
+For a demonstration, `php artisan db:seed --class=DemoExaminationSeeder` publishes two quizzes for Sample Batch A (one with an image in every question). It refuses to run in production.
+
 Reports are under Reports in the staff navigation. Choose Printable report, then Print / save PDF. Academic summaries are current snapshots, not historical reconstructions. Exam and quiz report dates use the institutional timezone and report every attempt separately. Audit History is visible only to users with its administrative permission.

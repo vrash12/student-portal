@@ -927,6 +927,23 @@ The MVP can be considered ready for presentation when all of the following are f
 
 ---
 
+# Owner-Requested Additions After Milestone 16
+
+Implemented at the owner's request (details and decisions in `SESSION_HANDOFF.md`):
+
+- Candidate information and profile photos; candidate My Information page
+- Examination results posted to the gradebook by the instructor (reviewed, confirmed snapshot)
+- Candidate My Home page
+- Registration and academic record PDFs: landscape Certificate of Registration (one page) and Academic Record (one page per academic period)
+- Green and yellow institutional UI refresh; login photograph
+- Leave-screen detection during examinations (indicator for instructors only)
+- Images, audio, and video attached to questions
+- Component test pass: every module has automated tests (1,099 passing on 2026-10-01)
+
+The next planned milestone remains **Milestone 17 — Security Hardening**.
+
+---
+
 # Explicitly Deferred Features
 
 The following are intentionally deferred until requirements are confirmed:
