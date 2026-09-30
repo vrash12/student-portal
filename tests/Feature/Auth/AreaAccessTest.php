@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Enums\SystemRole;
+use App\Models\Candidate;
 use App\Models\Role;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -110,7 +111,9 @@ class AreaAccessTest extends TestCase
 
     public function test_candidates_can_open_the_examination_portal(): void
     {
-        $this->actingAs($this->userWithRole(SystemRole::Candidate))
+        $candidate = Candidate::factory()->create();
+
+        $this->actingAs($candidate->user)
             ->get('/portal')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page->component('portal/home'));
@@ -172,7 +175,7 @@ class AreaAccessTest extends TestCase
         $this->actingAs($this->userWithRole(SystemRole::Instructor))
             ->get('/dashboard')
             ->assertInertia(fn (Assert $page) => $page
-                ->where('auth.permissions', fn ($permissions) => collect($permissions)->sort()->values()->all() === ['academic_monitoring.view', 'classes.teach', 'examinations.manage', 'grades.record', 'question_bank.manage', 'staff_area.access'])
+                ->where('auth.permissions', fn ($permissions) => collect($permissions)->sort()->values()->all() === ['academic_monitoring.view', 'classes.teach', 'examinations.manage', 'grades.record', 'question_bank.manage', 'reports.view', 'staff_area.access'])
                 ->missing('auth.user.password')
                 ->missing('auth.user.remember_token')
                 ->missing('auth.user.email'));

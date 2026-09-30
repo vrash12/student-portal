@@ -387,7 +387,8 @@ class ScoreRecordingTest extends TestCase
         $this->assertSame($this->alpha->id, (int) $audit->actor_id);
         $this->assertSame('Item 3 was marked against the wrong key.', $audit->reason);
         $this->assertEquals(44.0, (float) $audit->new_values['score']);
-        $this->assertSame('Re-marked', $audit->new_values['comment']);
+        // Staff comments stay in the restricted score history, not the general audit log.
+        $this->assertArrayNotHasKey('comment', $audit->new_values);
         $this->assertSame($this->candidateInA->candidate_number, $audit->new_values['candidate']);
         $this->assertSame('Quiz 1', $audit->new_values['assessment']);
 
@@ -395,7 +396,7 @@ class ScoreRecordingTest extends TestCase
         $this->assertTrue($this->quiz->fresh()->isFinalized());
     }
 
-    public function test_the_correction_audit_entry_keeps_the_previous_score_and_comment(): void
+    public function test_the_correction_audit_entry_keeps_the_previous_score_and_leaves_comments_to_the_score_history(): void
     {
         $this->putScores($this->quiz, [$this->candidateInA->id => $this->entry('40', 'Late')])->assertSessionHasNoErrors();
         $this->finalize($this->quiz);
@@ -413,10 +414,15 @@ class ScoreRecordingTest extends TestCase
 
         // Old values must be the values before the correction, new values the corrected ones.
         $this->assertEquals(40.0, (float) $audit->old_values['score'], 'Audit old_values.score must be the score before the correction.');
-        $this->assertSame('Late', $audit->old_values['comment'], 'Audit old_values.comment must be the comment before the correction.');
         $this->assertEquals(44.0, (float) $audit->new_values['score']);
-        $this->assertSame('Re-marked', $audit->new_values['comment']);
         $this->assertSame('Item 3 was marked against the wrong key.', $audit->reason);
+        $this->assertArrayNotHasKey('comment', $audit->old_values);
+        $this->assertArrayNotHasKey('comment', $audit->new_values);
+
+        // The comments before and after the correction are traceable in the score history.
+        $revision = $this->scoreRow($this->quiz, $this->candidateInA)->revisions()->latest('id')->firstOrFail();
+        $this->assertSame('Re-marked', $revision->comment);
+        $this->assertEquals(40.0, (float) $revision->previous_score);
     }
 
     public function test_a_correction_requires_a_reason_of_5_to_500_characters(): void

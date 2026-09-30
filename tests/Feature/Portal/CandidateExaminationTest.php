@@ -152,7 +152,9 @@ class CandidateExaminationTest extends TestCase
     {
         $this->candidateInA->status = CandidateStatus::Withdrawn;
         $this->candidateInA->save();
-        $this->actingAs($this->candidateInA->user)->get('/portal')->assertInertia(fn (Assert $page) => $page->has('examinations', 0));
+        $this->actingAs($this->candidateInA->user)->get('/portal')->assertInertia(fn (Assert $page) => $page
+            ->has('available.data', 0)
+            ->has('upcoming.data', 0));
         $this->post('/portal/examinations/'.$this->exam->id.'/start')->assertForbidden();
     }
 }

@@ -35,7 +35,7 @@ final class ReportingService
             ? $this->examinations($offerings->modelKeys(), $type, $filters)
             : $this->academic($this->monitoring->evaluate($offerings), $type);
         // Search narrows authorized output, including aggregated report rows.
-        if (! empty($filters['search'])) {
+        if (($filters['search'] ?? '') !== '') {
             $term = mb_strtolower($filters['search']);
             $result['rows'] = array_values(array_filter($result['rows'], fn ($row) => str_contains(mb_strtolower(implode(' ', $row)), $term)));
         }

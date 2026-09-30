@@ -498,8 +498,9 @@ class AssessmentLifecycleTest extends TestCase
         $this->assertSame(1, AssessmentScoreRevision::query()->whereIn('assessment_score_id', $other->scores()->select('id'))->count());
 
         $expectedScores = [
-            ['candidate' => $this->candidateInA->candidate_number, 'score' => '47.50', 'comment' => null],
-            ['candidate' => $this->secondInA->candidate_number, 'score' => null, 'comment' => 'Absent'],
+            // Staff comments are not copied into the general audit log.
+            ['candidate' => $this->candidateInA->candidate_number, 'score' => '47.50'],
+            ['candidate' => $this->secondInA->candidate_number, 'score' => null],
         ];
         usort($expectedScores, fn (array $first, array $second): int => strcmp($first['candidate'], $second['candidate']));
 

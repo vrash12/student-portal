@@ -2,6 +2,24 @@
 
 Updated 2026-09-30 by Codex. Read this file together with `AGENTS.md`, `UI_UX_DESIGN.md`, and `MILESTONES.md`; inspect Git and the actual code before editing.
 
+## Component test pass (2026-10-01, Claude Code)
+
+Owner request: test each component after M1–16 and the added features. **Full suite: 1,062 tests, all passing** (`php artisan test`), plus `npm run check` (strict TypeScript + production build) and Pint.
+
+- Existing suite before this pass: 773 tests, 7 failures + 10 errors. The errors were a temporary MariaDB outage (reran green). Failures fixed:
+  - Bug: `AuditLogger::sanitize()` turned nested empty arrays into `null` (e.g. previous grading `categories: []`). Now only the top level collapses to null.
+  - Stale tests updated to current intended behaviour: staff score comments are no longer copied to the general audit log (they remain in `assessment_score_revisions`); instructor default permissions now include `question_bank.manage`, `examinations.manage`, `reports.view`; portal home props are `summary/available/upcoming/outstanding/recentResults`; `/portal` needs a real candidate record.
+- Bug: report search for `"0"` was ignored (`empty()` in `ReportingService`); now compares with `''`.
+- New tests (289, none found further bugs): `tests/Feature/Examinations/Builder/` (builder access, drafts, question sync, publication/locking, lifecycle, archive, result release), `Examinations/Delivery/` (eligibility, attempts, autosave/revisions, navigation, deadlines, submission idempotency, objective scoring, `examinations:expire`, live monitoring), `Examinations/Grading/` (essay queue, grading, corrections/history, final results, result release and candidate visibility), `tests/Feature/Reporting/` (administrator dashboard, all 8 reports and print mode, audit history, portal home/profile/photo/PDF edge cases).
+- Pint reformatted `app/Models/ExaminationQuestion.php` and migration `2026_09_30_000200_create_examination_tables.php` (formatting only).
+- Open questions found while testing (not changed):
+  - `docs/question-bank-examination-contract.md` §3 lists Return to Draft, Delete draft and "Archive only after it ends"; the implementation has none of these, and archive is allowed for drafts/open exams without in-progress attempts. Decide which is correct.
+  - The examination list has no filters.
+  - Dashboard "Candidates in active period" counts classes without subjects, while standing counts don't, so totals can differ.
+  - The report period filter returns 403 for out-of-scope or unknown periods instead of ignoring them.
+  - Concurrency (row locks) cannot be exercised in single-process PHPUnit; it is covered by stale-version checks only.
+- Stale worktrees `.worktrees/m7` and `.worktrees/m8` (branches `m7-question-bank`, `m8-examination-builder`) are superseded by `main`; kept untouched per the earlier note. The test databases `academic_system_{m7,m8,r1,r2,r3,w1}_testing` can be dropped.
+
 ## Additional owner request — login photograph (2026-09-30)
 
 - Latest photo replacement: owner's `821523531_1440394027981701_8622232413143856063_n.jpg` replaces the original ceremony image, now served as `public/branding/login-training.jpg`. Config/default/example use the new filename to avoid stale browser caching. Updated alt text and portrait framing (3:4 on narrow screens, full-height left panel on desktop). Original file remains recoverable in Git history.
@@ -167,6 +185,16 @@ Earlier applied attempt migrations 000300–000800 remain the authoritative M9�
 - Full PHPUnit, final browser visual QA, actual tablet PWA installation and physical connection-interruption checks remain with the owner, as requested. Earlier sessions exercised a synthetic tablet flow, but that is not verification of all later changes.
 
 ## Follow-up considerations
+
+### Hostinger trial deployment (2026-09-30, live)
+
+- Target: `testwebsitetrial.site`, SSH account `u330835917` on port `65002`. Do not record SSH or database passwords in this file or Git.
+- The previous Node.js site is backed up at `/home/u330835917/backups/testwebsitetrial.site/before-academic-20260930-084502.tar.gz` (verified with `gzip -t`). Its old `public_html` and `hbuilds` were removed after successful cutover. Unrelated account databases were preserved.
+- Current code and built Vite assets are at `/home/u330835917/domains/testwebsitetrial.site/academic-app`. `composer install --no-dev` succeeded with CLI PHP 8.4.19 at `/opt/alt/php84/usr/bin/php`. The lockfile requires PHP 8.4 even though default CLI/web PHP is 8.3.
+- Production `.env` is remote only, mode 600, with a new key, debug off, HTTPS cookies, Inertia history encryption, and dedicated DB `u330835917_academic`. Never copy the local `.env` to the server or log secrets. The full schema migrated and `AccessControlSeeder` ran; no demo accounts were seeded. Laravel config and routes are cached.
+- Document root `/home/u330835917/domains/testwebsitetrial.site/public_html` contains only public assets and a front controller pointing to sibling `academic-app`. Its `.htaccess` selects Hostinger's `application/x-lsphp84` handler. Public storage links to `academic-app/storage/app/public`. HTTPS redirects correctly, `/login` and `/up` return 200, `/.env` returns 403, and an authenticated superadmin dashboard rendered in the browser. Browser login has the initial `admin` account and a unique generated password disclosed only to the owner; rotate it after sign-in. The old ServLife site briefly persisted in Hostinger CDN cache; development mode was enabled and cache flush requested. Confirm CDN remains bypassed or fully purged after development mode expires.
+- **Operational follow-up:** Hostinger still labels this site a Node.js web app connected to the old ServLife GitHub repository with auto-deployment on. Avoid Redeploy or pushing that repository; it may recreate/overwrite files. Convert the site's hPanel platform to Custom PHP/HTML (with a fresh backup and domain/database checks) or disable/disconnect the old auto-deployment when the control becomes available. Hostinger's SSH account aliases `crontab` to read-only output and the Node-site sidebar exposes no Cron Jobs item, so the every-minute Laravel `schedule:run` job was **not installed**. Candidate/staff requests reconcile expired attempts, but unattended timely expiry needs the cron job. Use PHP 8.4 binary `/opt/alt/php84/usr/bin/php` and app path above when setting it up. This is a trial deployment, not approval for real sensitive records.
+- At the owner's request, the live database also has synthetic active `instructor` and `student` accounts with their requested shared demonstration password (not recorded here). `instructor` has the instructor role but no teaching assignment. `student` has a linked candidate record (`candidate_number=student`) but no class/batch; therefore no exams or grades appear until assignments are configured. These were created through the application services, preserving audit entries. Replace the weak shared password before using the site with real records.
 
 - Finish the owner's acceptance pass, especially multi-tab/offline queue conflicts, expiry while disconnected, tablet storage failure, print layout and concurrent grading.
 - Ensure the deployment scheduler actually runs; registering a scheduled command alone does not run it.

@@ -106,14 +106,29 @@ final class AuditLogger
      */
     public function sanitize(array $values): ?array
     {
+        $clean = $this->redact($values);
+
+        return $clean === [] ? null : $clean;
+    }
+
+    /**
+     * Removes redacted keys at every depth. Nested arrays keep their shape:
+     * an empty list stays [] (for example "no grading categories before"),
+     * so only the top level collapses to null.
+     *
+     * @param  array<array-key, mixed>  $values
+     * @return array<array-key, mixed>
+     */
+    private function redact(array $values): array
+    {
         $clean = array_filter($values, fn ($key) => ! in_array(Str::snake((string) $key), self::REDACTED_KEYS, true), ARRAY_FILTER_USE_KEY);
         foreach ($clean as $key => $value) {
             if (is_array($value)) {
-                $clean[$key] = $this->sanitize($value);
+                $clean[$key] = $this->redact($value);
             }
         }
 
-        return $clean === [] ? null : $clean;
+        return $clean;
     }
 
     private function userAgent(): ?string

@@ -143,7 +143,11 @@ class QuestionConfidentialityTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page->component('portal/home'));
 
         $this->assertDoesNotReveal($response->getContent(), [self::PROMPT, self::RIGHT_CHOICE, self::WRONG_CHOICE, self::EXPLANATION, 'isCorrect', 'is_correct']);
-        $this->assertSame([], array_diff(array_keys($this->propsOf($response)), ['app', 'auth', 'errors', 'flash']));
+        // The home page lists examinations and results, never question content.
+        $this->assertSame([], array_diff(
+            array_keys($this->propsOf($response)),
+            ['app', 'auth', 'errors', 'flash', 'summary', 'available', 'upcoming', 'outstanding', 'recentResults'],
+        ));
     }
 
     public function test_audit_entries_never_contain_question_text_answers_or_explanations(): void
