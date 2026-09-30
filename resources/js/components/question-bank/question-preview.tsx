@@ -51,6 +51,7 @@ export function QuestionPreview({ question, showAnswer = true, points }: Questio
                                 <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-ink">
                                     <span className="sr-only">Choice {choice.label}: </span>
                                     {choice.text}
+                                    {choice.image !== null && <ChoiceImage src={choice.image.url} media={choice.image} />}
                                 </span>
                                 {isShownCorrect && (
                                     <span className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-success-fg">
@@ -66,6 +67,19 @@ export function QuestionPreview({ question, showAnswer = true, points }: Questio
                 <p className="text-sm text-ink-muted">Essay question: candidates write their answer, and an instructor grades it.</p>
             )}
         </div>
+    );
+}
+
+function ChoiceImage({ src, media }: { src: string; media: { description: string; width: number | null; height: number | null } }) {
+    return (
+        <img
+            src={src}
+            alt={media.description}
+            width={media.width ?? undefined}
+            height={media.height ?? undefined}
+            loading="lazy"
+            className="mt-2 block h-auto max-h-48 w-auto max-w-full rounded-md border border-line object-contain"
+        />
     );
 }
 

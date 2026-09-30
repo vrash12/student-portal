@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { BookOpenCheck, ClipboardList, Plus, SearchX } from 'lucide-react';
+import { BookOpenCheck, ClipboardList, FileUp, Plus, SearchX } from 'lucide-react';
 import { pointsLabel } from '@/components/question-bank/question-form-data';
 import { LockedIndicator, QuestionStatusBadge } from '@/components/question-bank/question-status';
 import { Button, ButtonLink } from '@/components/ui/button';
@@ -54,7 +54,19 @@ export default function QuestionBankIndex({ questions, filters, subjects, topics
             <PageHeader
                 title="Question Bank"
                 description="Reusable questions for the subjects you teach. Correct answers and explanations are visible to staff only."
-                actions={subjects.length > 0 ? addQuestion : undefined}
+                actions={
+                    subjects.length > 0 ? (
+                        <>
+                            <ButtonLink
+                                href={routes.questionBank.import.create(values.subject === '' ? {} : { subject: values.subject })}
+                                icon={<FileUp className="size-4" aria-hidden="true" />}
+                            >
+                                Import Questions
+                            </ButtonLink>
+                            {addQuestion}
+                        </>
+                    ) : undefined
+                }
             />
 
             {subjects.length === 0 ? (

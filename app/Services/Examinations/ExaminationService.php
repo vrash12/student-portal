@@ -122,10 +122,11 @@ final class ExaminationService
             if ($questions->count() !== count($ids)) {
                 throw ValidationException::withMessages(['questions' => 'One or more selected questions are unavailable.']);
             }
+            $this->checkSubset($exam);
             $this->locking->lock($ids);
             $exam->status = ExaminationStatus::Published;
             $exam->save();
-            $this->audit->record(AuditAction::ExaminationPublished, $exam, ['status' => 'draft'], ['status' => 'published', 'question_count' => count($ids), 'duration_minutes' => $exam->duration_minutes], actor: $user);
+            $this->audit->record(AuditAction::ExaminationPublished, $exam, ['status' => 'draft'], ['status' => 'published', 'question_count' => count($ids), 'questions_per_attempt' => $exam->questionsPerAttempt(count($ids)), 'duration_minutes' => $exam->duration_minutes], actor: $user);
         });
     }
 
@@ -147,6 +148,28 @@ final class ExaminationService
         });
     }
 
+    /**
+     * A random subset must be smaller than the question list, and every
+     * question must carry the same points so all candidates have the same
+     * maximum score whichever questions they draw.
+     *
+     * @throws ValidationException
+     */
+    private function checkSubset(Examination $exam): void
+    {
+        if ($exam->question_draw_count === null) {
+            return;
+        }
+
+        $count = $exam->examinationQuestions->count();
+        if ($exam->question_draw_count > $count) {
+            throw ValidationException::withMessages(['question_draw_count' => sprintf('Questions per attempt (%d) is more than the %d selected questions. Add questions or lower the number.', $exam->question_draw_count, $count)]);
+        }
+        if ($exam->drawsSubset($count) && $exam->examinationQuestions->map(fn (ExaminationQuestion $item): string => (string) $item->points)->unique()->count() > 1) {
+            throw ValidationException::withMessages(['question_draw_count' => 'When each attempt draws only some of the questions, every question must be worth the same points, so all candidates have the same maximum score. Set equal points or deliver all questions.']);
+        }
+    }
+
     private function authorize(User $user, int $offeringId): void
     {
         abort_unless($user->hasPermission(Permission::ManageExaminations) && $user->teachesOffering($offeringId), 403);
@@ -161,6 +184,6 @@ final class ExaminationService
 
     private function snapshot(Examination $exam): array
     {
-        return $exam->only(['class_subject_id', 'kind', 'title', 'status', 'duration_minutes', 'attempt_limit', 'passing_score', 'opens_at', 'closes_at', 'randomize_questions', 'randomize_choices', 'one_question_at_a_time', 'allow_back_navigation', 'auto_submit', 'release_results']) + ['has_access_code' => $exam->access_code !== null];
+        return $exam->only(['class_subject_id', 'kind', 'title', 'status', 'duration_minutes', 'attempt_limit', 'passing_score', 'opens_at', 'closes_at', 'randomize_questions', 'randomize_choices', 'question_draw_count', 'one_question_at_a_time', 'allow_back_navigation', 'auto_submit', 'release_results']) + ['has_access_code' => $exam->access_code !== null];
     }
 }

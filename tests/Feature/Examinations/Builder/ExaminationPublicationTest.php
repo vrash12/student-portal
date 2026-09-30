@@ -261,7 +261,7 @@ class ExaminationPublicationTest extends TestCase
         $this->post("/examinations/{$exam->id}/archive", ['reason' => 'Archive'])->assertSessionHasNoErrors();
 
         $entry = AuditLog::where('action', 'examination.published')->where('auditable_id', $exam->id)->sole();
-        $this->assertSame(['status' => 'published', 'question_count' => 1, 'duration_minutes' => 30], $entry->new_values);
+        $this->assertSame(['status' => 'published', 'question_count' => 1, 'questions_per_attempt' => 1, 'duration_minutes' => 30], $entry->new_values);
         $this->assertDoesNotReveal($this->auditTextFor($exam), [
             'SECRET-PUBLISH-CODE', 'SECRET-PUBLISH-INSTRUCTIONS', 'SECRET-PUBLISH-PROMPT', 'Option A', 'Option B', 'is_correct',
         ]);

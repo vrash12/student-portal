@@ -89,13 +89,37 @@ class Question extends Model
     }
 
     /**
-     * Images, audio, and video shown with the prompt, in display order.
+     * Images, audio, and video shown with the prompt, in display order
+     * (choice images are on QuestionChoice::image()).
      *
      * @return HasMany<QuestionMedia, $this>
      */
     public function media(): HasMany
     {
-        return $this->hasMany(QuestionMedia::class)->orderBy('position');
+        return $this->hasMany(QuestionMedia::class)->whereNull('question_choice_id')->orderBy('position');
+    }
+
+    /**
+     * Every media row of the question, question-level and choice images.
+     *
+     * @return HasMany<QuestionMedia, $this>
+     */
+    public function allMedia(): HasMany
+    {
+        return $this->hasMany(QuestionMedia::class);
+    }
+
+    /**
+     * Scoped route bindings of {medium} (question-bank/{question}/media/{medium})
+     * cover choice images too, not only the media() relation.
+     */
+    public function resolveChildRouteBinding($childType, $value, $field)
+    {
+        if ($childType === 'medium') {
+            return $this->allMedia()->where($field ?? 'id', $value)->first();
+        }
+
+        return parent::resolveChildRouteBinding($childType, $value, $field);
     }
 
     /**

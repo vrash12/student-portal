@@ -27,7 +27,7 @@ class ExaminationController extends Controller
         $attempts = ExaminationAttempt::where('examination_id', $examination->id)->where('candidate_id', $request->user()->candidate->id)->get();
         $attempts = $attempts->map(fn (ExaminationAttempt $attempt): ExaminationAttempt => $service->expire($attempt));
 
-        return Inertia::render('portal/examinations/show', ['examination' => ['id' => $examination->id, 'title' => $examination->title, 'description' => $examination->description, 'durationMinutes' => $examination->duration_minutes, 'questionCount' => $examination->examinationQuestions()->count(), 'attemptLimit' => $examination->attempt_limit, 'attemptsUsed' => $attempts->count(), 'requiresCode' => $examination->access_code !== null, 'available' => $examination->isActive(), 'resumeId' => $attempts->firstWhere('status', 'in_progress')?->id, 'allowBackNavigation' => $examination->allow_back_navigation, 'releaseResults' => $examination->release_results, 'attempts' => $attempts->sortByDesc('attempt_number')->values()->map(fn (ExaminationAttempt $item) => ['number' => $item->attempt_number, 'status' => $item->status, 'submittedAt' => $item->submitted_at?->toIso8601String(), 'resultStatus' => $item->result_status, 'percentage' => $examination->release_results ? $item->percentage : null])->all()]]);
+        return Inertia::render('portal/examinations/show', ['examination' => ['id' => $examination->id, 'title' => $examination->title, 'description' => $examination->description, 'durationMinutes' => $examination->duration_minutes, 'questionCount' => $examination->questionsPerAttempt(), 'attemptLimit' => $examination->attempt_limit, 'attemptsUsed' => $attempts->count(), 'requiresCode' => $examination->access_code !== null, 'available' => $examination->isActive(), 'resumeId' => $attempts->firstWhere('status', 'in_progress')?->id, 'allowBackNavigation' => $examination->allow_back_navigation, 'releaseResults' => $examination->release_results, 'attempts' => $attempts->sortByDesc('attempt_number')->values()->map(fn (ExaminationAttempt $item) => ['number' => $item->attempt_number, 'status' => $item->status, 'submittedAt' => $item->submitted_at?->toIso8601String(), 'resultStatus' => $item->result_status, 'percentage' => $examination->release_results ? $item->percentage : null])->all()]]);
     }
 
     public function start(Request $request, Examination $examination, CandidateAttemptService $service): RedirectResponse
@@ -73,7 +73,10 @@ class ExaminationController extends Controller
         // No row lock: video seeking sends many range requests, which must not contend with answer saves.
         Gate::authorize('view', $attempt);
         abort_unless($attempt->status === 'in_progress' && $attempt->expires_at?->isFuture(), 404);
-        $delivered = collect($attempt->delivery)->flatMap(fn (array $item): array => array_column($item['question']['media'] ?? [], 'id'));
+        $delivered = collect($attempt->delivery)->flatMap(fn (array $item): array => [
+            ...array_column($item['question']['media'] ?? [], 'id'),
+            ...array_column(array_filter(array_column($item['question']['choices'] ?? [], 'image')), 'id'),
+        ]);
         abort_unless($delivered->contains($medium->id), 404);
 
         return QuestionMediaController::file($media, $medium);

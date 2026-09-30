@@ -70,6 +70,7 @@ class QuestionEditTest extends TestCase
                         'label' => $choice->letter(),
                         'text' => $choice->text,
                         'isCorrect' => $choice->position === 2,
+                        'image' => null,
                     ])->all(),
                     'media' => [],
                 ])

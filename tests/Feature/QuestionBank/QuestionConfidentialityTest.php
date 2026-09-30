@@ -76,8 +76,8 @@ class QuestionConfidentialityTest extends TestCase
             'type' => ['value' => 'multiple_choice', 'label' => 'Multiple Choice'],
             'prompt' => self::PROMPT,
             'choices' => [
-                ['id' => $choiceIds[0], 'text' => self::WRONG_CHOICE],
-                ['id' => $choiceIds[1], 'text' => self::RIGHT_CHOICE],
+                ['id' => $choiceIds[0], 'text' => self::WRONG_CHOICE, 'image' => null],
+                ['id' => $choiceIds[1], 'text' => self::RIGHT_CHOICE, 'image' => null],
             ],
             'media' => [],
         ], $presenter->forCandidate($this->question->fresh()));
@@ -85,7 +85,7 @@ class QuestionConfidentialityTest extends TestCase
         $trueFalse = $this->createQuestion($this->subject2, QuestionContent::trueFalse('The sample statement is false.', false), author: $this->bravo);
         $view = $presenter->forCandidate($trueFalse->fresh());
         $this->assertSame(['id', 'type', 'prompt', 'choices', 'media'], array_keys($view));
-        $this->assertSame([['id', 'text'], ['id', 'text']], array_map('array_keys', $view['choices']));
+        $this->assertSame([['id', 'text', 'image'], ['id', 'text', 'image']], array_map('array_keys', $view['choices']));
         $this->assertSame(['True', 'False'], array_column($view['choices'], 'text'));
 
         $essay = $this->createQuestion($this->subject2, QuestionContent::essay('Explain the sample.'), explanation: 'Essay grading notes', author: $this->bravo);

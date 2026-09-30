@@ -23,7 +23,7 @@ final class ExaminationMonitoringService
         $candidates = Candidate::query()->gradableIn($classBatchId)->with('classBatch')->orderBy('candidate_number')->get();
         $latest = ExaminationAttempt::selectRaw('MAX(id)')->where('examination_id', $examination->id)->groupBy('candidate_id');
         $attempts = ExaminationAttempt::query()->select(['id', 'candidate_id', 'status', 'attempt_number', 'answers', 'last_activity_at', 'started_at', 'submitted_at', 'expires_at'])->selectRaw('JSON_LENGTH(delivery) as delivery_count')->whereIn('id', $latest)->get()->keyBy('candidate_id');
-        $questionCount = $examination->examinationQuestions()->count();
+        $questionCount = $examination->questionsPerAttempt();
         $focus = app(ExaminationFocusService::class)->summaries($attempts->values());
         $inactiveBefore = now()->subMinutes(self::INACTIVE_AFTER_MINUTES);
         $rows = $candidates->map(function (Candidate $candidate) use ($attempts, $questionCount, $inactiveBefore, $focus): array {

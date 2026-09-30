@@ -75,6 +75,28 @@ class QuestionMediaDeliveryTest extends TestCase
         $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
     }
 
+    public function test_choice_images_follow_their_choice_when_choices_are_shuffled(): void
+    {
+        $question = $this->mcq(2);
+        $choice = $question->choices()->where('position', 3)->sole();
+        $image = app(QuestionMediaService::class)->add($question, UploadedFile::fake()->image('choice-c.png', 120, 90), 'Picture of the sample part.', $this->alpha, 3);
+
+        $exam = $this->makeExamination(['randomize_choices' => true]);
+        $this->addItem($exam, $question);
+        $attempt = $this->startFor($this->candidateInA, $exam);
+
+        $props = $this->inertiaProps($this->actingAs($this->candidateInA->user)->get('/portal/attempts/'.$attempt->id)->assertOk());
+        $choices = collect($props['questions'][0]['question']['choices'])->keyBy('id');
+        $this->assertSame($image->id, $choices[$choice->id]['image']['id']);
+        $this->assertSame('Picture of the sample part.', $choices[$choice->id]['image']['description']);
+        $this->assertSame(3, $choices->whereNull('image')->count());
+        $this->assertStringNotContainsString('choice-c.png', json_encode($props['questions']));
+
+        $this->actingAs($this->candidateInA->user)->get($this->mediaUrl($attempt, $image))->assertOk();
+        // Not part of the other attempt's delivered questions.
+        $this->actingAs($this->candidateInA->user)->get($this->mediaUrl(media: $image))->assertNotFound();
+    }
+
     public function test_media_outside_the_attempt_is_not_served(): void
     {
         $other = $this->essay();

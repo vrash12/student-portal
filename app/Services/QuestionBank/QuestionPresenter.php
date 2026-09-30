@@ -26,7 +26,7 @@ final class QuestionPresenter
     /**
      * Relations staff() reads. Eager load them for lists: ->with(QuestionPresenter::STAFF_RELATIONS).
      */
-    public const STAFF_RELATIONS = ['subject:id,code,name', 'topic:id,name', 'choices', 'media'];
+    public const STAFF_RELATIONS = ['subject:id,code,name', 'topic:id,name', 'choices.image', 'media'];
 
     /**
      * Relations summary() reads. Eager load them for lists: ->with(QuestionPresenter::SUMMARY_RELATIONS).
@@ -77,12 +77,13 @@ final class QuestionPresenter
                     'label' => $choice->letter(),
                     'text' => $choice->text,
                     'isCorrect' => $choice->is_correct,
+                    'image' => $choice->image === null ? null : $this->staffMedia($choice->image),
                 ])
                 ->values()
                 ->all(),
             // Served only to staff who teach the subject (/question-media/{id}).
             'media' => $question->media
-                ->map(fn (QuestionMedia $media): array => [...$this->mediaView($media), 'url' => route('question-media.show', $media, false), 'originalName' => $media->original_name])
+                ->map(fn (QuestionMedia $media): array => $this->staffMedia($media))
                 ->values()
                 ->all(),
         ];
@@ -159,20 +160,28 @@ final class QuestionPresenter
      */
     public function forCandidate(Question $question): array
     {
-        $question->loadMissing(['choices', 'media']);
+        $question->loadMissing(['choices.image', 'media']);
 
         return [
             'id' => $question->id,
             'type' => $question->type->toArray(),
             'prompt' => $question->prompt,
             'choices' => $question->choices
-                ->map(fn (QuestionChoice $choice): array => ['id' => $choice->id, 'text' => $choice->text])
+                ->map(fn (QuestionChoice $choice): array => ['id' => $choice->id, 'text' => $choice->text, 'image' => $choice->image === null ? null : $this->mediaView($choice->image)])
                 ->values()
                 ->all(),
             // No URL or file name: the candidate page builds the attempt-scoped URL
             // (/portal/attempts/{attempt}/media/{id}), which checks the attempt.
             'media' => $question->media->map(fn (QuestionMedia $media): array => $this->mediaView($media))->values()->all(),
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function staffMedia(QuestionMedia $media): array
+    {
+        return [...$this->mediaView($media), 'url' => route('question-media.show', $media, false), 'originalName' => $media->original_name];
     }
 
     /**

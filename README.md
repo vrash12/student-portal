@@ -71,6 +71,13 @@ php artisan db:seed --class=DemoExaminationSeeder
 
 This publishes **Demo Quiz — Subject 1** and **Demo Image Quiz — Subject 1** (every question shows an image) for Sample Batch A (open for 7 days, 20 minutes, 3 attempts, results released). Sign in as `2026-0001` to `2026-0005`, open it from **My Home**, and start it. Sign in as `instructor.alpha` and open **Examinations → Demo Quiz** to watch live participation, including how often each candidate left the examination screen, and **Essay grading** to grade the essay. To build your own, sign in as `instructor.alpha`: **Question Bank → Add Question**, then add images, audio, or video under **Edit → Images and Media**, then **Examinations → Create**, select questions, set the time limit and availability, review, and publish.
 
+Other question and examination tools (instructors):
+
+- **Question Bank → Import Questions**: add many questions to one subject from a UTF-8 CSV file (download the template on that page). If any row has a problem, nothing is imported and the problems are listed by row.
+- **Images in answer choices**: on a multiple-choice question's **Edit → Images and Media**, choose a choice under **Show with**.
+- **Questions per attempt** (examination settings): give each attempt a random selection, for example 20 of 50 questions. All questions must then have equal points.
+- **Item analysis** (on a published examination): which questions most candidates missed, how often each choice was chosen, and discrimination (from 10 scored attempts).
+
 ## Common commands
 
 | Command | Purpose |

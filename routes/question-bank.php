@@ -13,6 +13,7 @@
 
 use App\Enums\Permission;
 use App\Http\Controllers\Staff\QuestionBankController;
+use App\Http\Controllers\Staff\QuestionImportController;
 use App\Http\Controllers\Staff\QuestionMediaController;
 use App\Models\Question;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +33,18 @@ Route::middleware('can:'.Permission::ManageQuestionBank->value)
         Route::post('{question}/activate', 'activate')->name('activate')->whereNumber('question')->can('activate', 'question');
         Route::post('{question}/deactivate', 'deactivate')->name('deactivate')->whereNumber('question')->can('deactivate', 'question');
         Route::post('{question}/duplicate', 'duplicate')->name('duplicate')->whereNumber('question')->can('duplicate', 'question');
+    });
+
+// Importing questions from a CSV file into a subject the user teaches
+// (checked by QuestionImportRequest).
+Route::middleware('can:'.Permission::ManageQuestionBank->value)
+    ->prefix('question-bank/import')
+    ->name('question-bank.import.')
+    ->controller(QuestionImportController::class)
+    ->group(function (): void {
+        Route::get('/', 'create')->name('create')->can('create', Question::class);
+        Route::post('/', 'store')->name('store')->can('create', Question::class);
+        Route::get('template', 'template')->name('template')->can('create', Question::class);
     });
 
 // Images, audio, and video of a question (changes follow question edits).

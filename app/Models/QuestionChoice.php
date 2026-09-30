@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * One answer option of an objective question. Position 1 is shown as "A".
@@ -44,6 +45,16 @@ class QuestionChoice extends Model
     public function question(): BelongsTo
     {
         return $this->belongsTo(Question::class);
+    }
+
+    /**
+     * The choice's optional image (multiple-choice questions only).
+     *
+     * @return HasOne<QuestionMedia, $this>
+     */
+    public function image(): HasOne
+    {
+        return $this->hasOne(QuestionMedia::class);
     }
 
     /**

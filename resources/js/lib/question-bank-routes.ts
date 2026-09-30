@@ -14,6 +14,11 @@ export const questionBankRoutes = {
     activate: (questionId: number) => `/question-bank/${questionId}/activate`,
     deactivate: (questionId: number) => `/question-bank/${questionId}/deactivate`,
     duplicate: (questionId: number) => `/question-bank/${questionId}/duplicate`,
+    import: {
+        create: (query?: Record<string, string>) => withQuery('/question-bank/import', query),
+        store: () => '/question-bank/import',
+        template: () => '/question-bank/import/template',
+    },
     media: {
         store: (questionId: number) => `/question-bank/${questionId}/media`,
         update: (questionId: number, mediaId: number) => `/question-bank/${questionId}/media/${mediaId}`,

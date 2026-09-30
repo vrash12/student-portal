@@ -1891,7 +1891,7 @@ Do **not** implement the following unless explicitly requested later:
 
 - spreadsheet grade imports
 - Excel uploading
-- CSV grade imports
+- CSV grade imports (question import is different: CSV import of questions into the question bank was approved by the owner on 2026-10-01; grades are still entered directly)
 - native Android application
 - public student portal
 - full offline-first architecture

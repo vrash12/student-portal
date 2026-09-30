@@ -27,6 +27,7 @@ class QuestionMedia extends Model
     {
         return [
             'question_id' => 'integer',
+            'question_choice_id' => 'integer',
             'position' => 'integer',
             'size_bytes' => 'integer',
             'width' => 'integer',
@@ -40,5 +41,15 @@ class QuestionMedia extends Model
     public function question(): BelongsTo
     {
         return $this->belongsTo(Question::class);
+    }
+
+    /**
+     * Set when this is the image of an answer choice.
+     *
+     * @return BelongsTo<QuestionChoice, $this>
+     */
+    public function choice(): BelongsTo
+    {
+        return $this->belongsTo(QuestionChoice::class, 'question_choice_id');
     }
 }

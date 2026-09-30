@@ -16,6 +16,7 @@ export const examinationRoutes = {
     results: (id: number) => `/examinations/${id}/results`,
     grading: (id: number) => `/examinations/${id}/grading`,
     gradebook: (id: number) => `/examinations/${id}/gradebook`,
+    analysis: (id: number, query?: Record<string, string>) => withQuery(`/examinations/${id}/analysis`, query),
     gradeAttempt: (id: number) => `/examination-attempts/${id}/grading`,
     saveEssay: (id: number) => `/examination-attempts/${id}/essay-grade`,
 };

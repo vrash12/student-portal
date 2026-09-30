@@ -144,6 +144,8 @@ final class QuestionBankService
 
             if ($content->choices !== $current->choices) {
                 $this->syncChoices($locked, $content->choices);
+            } elseif ($content->type !== QuestionType::MultipleChoice) {
+                $this->media->removeChoiceImages($locked, 0);
             }
 
             $after = $this->auditValues($locked);
@@ -323,6 +325,8 @@ final class QuestionBankService
         $existing = $question->choices->keyBy('position');
         $count = count($choices);
 
+        // Choice images exist only on multiple-choice questions, for kept choices.
+        $this->media->removeChoiceImages($question, $question->type === QuestionType::MultipleChoice ? $count : 0);
         $question->choices()->where('position', '>', $count)->delete();
 
         foreach ($existing as $position => $choice) {

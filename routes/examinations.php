@@ -3,6 +3,7 @@
 use App\Http\Controllers\Staff\ExaminationController;
 use App\Http\Controllers\Staff\ExaminationGradebookController;
 use App\Http\Controllers\Staff\ExaminationGradingController;
+use App\Http\Controllers\Staff\ExaminationItemAnalysisController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('can:examinations.manage')->group(function () {
@@ -20,6 +21,7 @@ Route::middleware('can:examinations.manage')->group(function () {
     Route::post('examinations/{examination}/publish', [ExaminationController::class, 'publish'])->name('examinations.publish');
     Route::post('examinations/{examination}/archive', [ExaminationController::class, 'archive'])->name('examinations.archive');
     Route::get('examinations/{examination}/grading', [ExaminationGradingController::class, 'index'])->name('examinations.grading');
+    Route::get('examinations/{examination}/analysis', [ExaminationItemAnalysisController::class, 'show'])->name('examinations.analysis');
     Route::get('examination-attempts/{attempt}/grading', [ExaminationGradingController::class, 'show'])->name('examination-attempts.grading');
     Route::put('examination-attempts/{attempt}/essay-grade', [ExaminationGradingController::class, 'update'])->name('examination-attempts.essay-grade');
 });

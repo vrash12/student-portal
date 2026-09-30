@@ -39,7 +39,7 @@ final class ExaminationGradebookService
             ->get(['id', 'candidate_id', 'attempt_number', 'status', 'result_status', 'earned_points', 'total_points', 'percentage', 'updated_at']);
         $categories = $exam->classSubject->assessmentCategories()->orderBy('position')->get(['id', 'name', 'weight']);
         $posted = Assessment::where('source_examination_id', $exam->id)->first(['id', 'title']);
-        $maximum = DecimalValue::normalize($exam->examinationQuestions()->sum('points'));
+        $maximum = DecimalValue::normalize($exam->attemptMaximumPoints());
         $byCandidate = $attempts->groupBy('candidate_id');
         $rows = $candidates->map(function (Candidate $candidate) use ($byCandidate, $rule): array {
             $submitted = ($byCandidate->get($candidate->id) ?? collect())->where('status', 'submitted');

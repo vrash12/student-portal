@@ -21,6 +21,8 @@ export interface StaffQuestionChoice {
     label: string;
     text: string;
     isCorrect: boolean;
+    /** Optional image of the choice (multiple choice only). */
+    image: StaffQuestionMedia | null;
 }
 
 /** An image, audio clip, or video shown with a question. */
@@ -64,7 +66,7 @@ export interface CandidateQuestion {
     id: number;
     type: QuestionTypeOption;
     prompt: string;
-    choices: { id: number; text: string }[];
+    choices: { id: number; text: string; image: QuestionMediaView | null }[];
     /** URLs are built per attempt: /portal/attempts/{attempt}/media/{id}. */
     media: QuestionMediaView[];
 }

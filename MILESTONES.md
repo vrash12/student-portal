@@ -209,7 +209,7 @@ For the current MVP:
 - No CSV import
 - No spreadsheet import
 
-Grades are entered directly in the system.
+Grades are entered directly in the system. (These rules are about grades. CSV import of questions into the question bank was approved by the owner on 2026-10-01.)
 
 ## Acceptance Criteria
 

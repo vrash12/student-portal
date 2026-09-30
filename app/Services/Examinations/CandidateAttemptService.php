@@ -47,6 +47,10 @@ final class CandidateAttemptService
             if ($items->isEmpty()) {
                 throw ValidationException::withMessages(['examination' => 'This examination has no questions.']);
             }
+            if ($exam->drawsSubset($items->count())) {
+                // A fresh random subset per attempt, kept in examination order unless shuffled below.
+                $items = $items->shuffle()->take($exam->question_draw_count)->sortBy('position')->values();
+            }
             if ($exam->randomize_questions) {
                 $items = $items->shuffle();
             }

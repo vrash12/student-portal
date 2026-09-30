@@ -26,12 +26,14 @@ class QuestionMediaController extends Controller
             // Detailed type and size limits are checked by QuestionMediaService from the file's contents.
             'file' => ['required', 'file', 'max:30720'],
             'description' => ['required', 'string', 'max:500'],
+            // Empty: the question itself; 1–6: answer choice A–F (images only).
+            'choice' => ['nullable', 'integer', 'between:1,6'],
         ], [
             'file.max' => 'Files can be at most 30 MB (images 5 MB, audio 15 MB).',
             'description.required' => 'Describe the file for candidates who cannot see or hear it.',
         ]);
 
-        $this->media->add($question, $request->file('file'), trim($data['description']), $request->user());
+        $this->media->add($question, $request->file('file'), trim($data['description']), $request->user(), isset($data['choice']) ? (int) $data['choice'] : null);
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Media added.']);
 
         return back();

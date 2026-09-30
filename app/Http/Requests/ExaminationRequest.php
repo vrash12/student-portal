@@ -23,6 +23,7 @@ final class ExaminationRequest extends FormRequest
             'opens_at' => 'nullable|date', 'closes_at' => 'nullable|date|after:opens_at',
             'access_code' => 'nullable|string|max:100', 'release_results' => 'required|boolean',
             'randomize_questions' => 'required|boolean', 'randomize_choices' => 'required|boolean',
+            'question_draw_count' => 'nullable|integer|min:1|max:500',
             'one_question_at_a_time' => 'required|boolean', 'allow_back_navigation' => 'required|boolean', 'auto_submit' => 'required|boolean',
         ];
     }

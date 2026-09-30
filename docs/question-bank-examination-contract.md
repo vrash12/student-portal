@@ -49,6 +49,11 @@ question_choices  id, question_id FK cascade, position 1..6, text (1000), is_cor
 - Edits and deactivation lock the question row (`SELECT ... FOR UPDATE`) before checking `locked_at`, so they are serialized with publication.
 - Questions are created and changed only through `App\Services\QuestionBank\QuestionBankService` (Milestone 7). `updated_by` and `updated_at` record content edits (topic, type, prompt, points, explanation, choices); activation, deactivation, and locking do not change them (they are audited or timestamped separately). Kept choice positions keep their `question_choices.id` when an unlocked question is edited.
 
+### CSV import (added 2026-10-01, owner request)
+
+- `/question-bank/import`: instructors import up to 500 questions (1 MB UTF-8 CSV) into **one subject they teach** (checked server-side). Columns: `type`, `question`, `choice_a`…`choice_f`, `correct`, `points`, `topic`, `explanation`; template at `/question-bank/import/template`.
+- Every row is validated with the question form's rules; **all or nothing**: any invalid row imports nothing and lists problems by row and column. Valid files create every question in one transaction through `QuestionBankService::create` (audited per question). Media cannot be imported.
+
 ### Authorization
 
 - Permission `question_bank.manage` (Instructor by default), **and** the user teaches the subject: `User::teachesSubject($subjectId)` = active account with `classes.teach` and an instructor assignment to a class subject of that subject, in any academic period. `User::taughtSubjectIds()` lists them.
@@ -60,7 +65,7 @@ question_choices  id, question_id FK cascade, position 1..6, text (1000), is_cor
 - `QuestionChoice` hides `is_correct` and `correct_marker`; `Question` hides `explanation`. Never serialize these models into a page; use `QuestionPresenter`:
   - `staff(Question)`: shape `StaffQuestion` (TypeScript), includes `isCorrect` and `explanation`. Eager load `QuestionPresenter::STAFF_RELATIONS` for lists.
   - `summary(Question)` (added in Milestone 7): shape `QuestionSummary`, a staff list row: `id`, `subject`, `topic`, `type`, `excerpt` (the prompt on one line, about 200 characters), `points`, `isActive`, `isLocked`. Never choices, correct answers, or the explanation. Eager load `QuestionPresenter::SUMMARY_RELATIONS`.
-  - `forCandidate(Question)`: shape `CandidateQuestion`: `id`, `type`, `prompt`, `choices[{id, text}]`, `media[{id, kind, description, mimeType, width, height}]` only (no storage path, file name, or URL).
+  - `forCandidate(Question)`: shape `CandidateQuestion`: `id`, `type`, `prompt`, `choices[{id, text, image}]` (`image` is null or a media view), `media[{id, kind, description, mimeType, width, height}]` only (no storage path, file name, or URL).
 - Question text, choice text, correct answers, and explanations never go into audit logs, application logs, URLs, notifications, or dashboards. Audit entries record which fields changed and non-sensitive values (type, points, topic, status).
 
 ---
@@ -75,12 +80,13 @@ question_choices  id, question_id FK cascade, position 1..6, text (1000), is_cor
   - **As implemented (checked 2026-10-01):** Publish and Archive exist; Archive requires a reason and no in-progress attempts, but also accepts drafts and open examinations. Return to Draft and Delete Draft are not implemented. Which rule is correct is an open owner decision (see `SESSION_HANDOFF.md`).
 - Published examinations are visible only to **eligible candidates**: candidates of the examination's class who are not withdrawn, with an active account. The builder provides this rule (query scope/service) for the candidate portal (Milestone 9).
 - Settings are enforced server-side; the browser only displays them.
-
+- **Random subsets** (`examinations.question_draw_count`, added 2026-10-01): null delivers every question; a number N gives each attempt N questions drawn at random (a fresh draw per attempt, kept in examination order unless "Randomize question order" is on). The attempt's `delivery` and `scoring_key` contain only the drawn questions, so scoring, monitoring, grading and item analysis read each attempt's own questions. Publication rejects N greater than the number of questions, and, when N is smaller, questions with different points (every candidate must have the same maximum). `Examination::questionsPerAttempt()` and `attemptMaximumPoints()` give the per-attempt count and maximum (gradebook posting uses the maximum).
+- **Item analysis** (`/examinations/{id}/analysis`, `ItemAnalysisService`, added 2026-10-01): aggregate statistics from submitted attempts only, using each attempt's snapshot: difficulty (percent correct, counted per delivery), choice distribution, essay averages, discrimination (upper/lower 27 %, only from 10 attempts with a final score), plain-language flags. Same authorization as essay grading. Never shows which candidate chose what.
 ---
 
 ## 4. Candidate-facing rules (Milestone 9 and later)
 
-- **Media** (`question_media`, added 2026-10-01): up to 4 images (JPEG/PNG/WebP/GIF, 5 MB), audio (MP3/M4A/OGG/WAV, 15 MB) or video (MP4/WebM, 30 MB) per question, each with a required description (image alt text / caption), on the private local disk. Media is question content: locked questions cannot gain, change, or lose media; duplicating copies the files. Staff who teach the subject load it from `/question-media/{id}`; candidates only through `/portal/attempts/{attempt}/media/{id}`, while that attempt is in progress and only for media in its delivered questions. The type is detected from the file contents; SVG is not allowed.
+- **Media** (`question_media`, added 2026-10-01): up to 4 images (JPEG/PNG/WebP/GIF, 5 MB), audio (MP3/M4A/OGG/WAV, 15 MB) or video (MP4/WebM, 30 MB) per question, each with a required description (image alt text / caption), on the private local disk. Media is question content: locked questions cannot gain, change, or lose media; duplicating copies the files. Answer choices of multiple-choice questions can each show one image (`question_media.question_choice_id`, no position, image kinds only, enforced by constraints); choice images do not count toward the 4 files, follow their choice when choices are shuffled, and are removed with their choice or when the question stops being multiple choice. Staff who teach the subject load it from `/question-media/{id}`; candidates only through `/portal/attempts/{attempt}/media/{id}`, while that attempt is in progress and only for media in its delivered questions. The type is detected from the file contents; SVG is not allowed.
 - Build question payloads with `QuestionPresenter::forCandidate()` (plus examination-specific values such as points and order). Never include `is_correct`, `explanation`, `correct_marker`, `locked_at`, or topic/bank metadata.
 - "Randomize choices" applies to multiple-choice questions only; True / False keeps True first.
 - Answers to objective questions reference `question_choices.id` of a locked question, so they stay valid.
