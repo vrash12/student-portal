@@ -4,6 +4,8 @@ Updated 2026-09-30 by Codex. Read this file together with `AGENTS.md`, `UI_UX_DE
 
 ## Additional owner request — login photograph (2026-09-30)
 
+- Latest owner revision: removed the green login-page background and promotional text. Desktop now has a full-height photograph on the left and the logo/organization/system title above the sign-in form on the right, on white surfaces. Narrow screens keep branding/form first and the photograph below. Missing images fall back to a centered form. This supersedes the original photo-panel layout below.
+- Revised layout verification: TypeScript and production build passed; visually checked at 1366px and 390px with no narrow-screen overflow. Current preview: `storage/app/login-layout-preview.png` (ignored).
 - Added the owner's supplied `OIP.jpg` as the local asset `public/branding/login-ceremony.jpg`; original image preserved without editing or inventing imagery.
 - Login layout now pairs a branded photo panel with the white sign-in form on desktop. On narrower screens, branding precedes the form and the photo follows it so sign-in controls stay easy to reach. Green/yellow theme and existing authentication behavior retained; image failure hides the photo without blocking sign-in.
 - Configurable through `LOGIN_IMAGE_URL` / `institution.login_image_url`, with the approved local asset as default and `.env.example` documented. No external image service or new dependency.
