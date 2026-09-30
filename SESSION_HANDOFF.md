@@ -93,11 +93,11 @@ Always distinguish:
 
 ## Current Milestone
 
-Milestones 7–8 remain partially integrated and require a corrective pass. Milestones 9–12 are implemented on `main`. Next planned milestone: 13 (examination monitoring).
+Milestones 7–8 remain partially integrated and require a corrective pass. Milestones 9–13 are implemented on `main`. Next planned milestone: 14 (administrator dashboard).
 
 ## Current Status
 
-Foundation, sign-in, roles and permissions, staff accounts, academic structure, candidate records, organization branding, teaching and grading, academic monitoring, candidate examination access (M9), server-backed connection recovery (M10), transactional submission/scoring (M11), and manual essay grading with append-only history (M12) are implemented. M7/M8 worktree code is preserved but not yet reconciled into the main implementation.
+Foundation, sign-in, roles and permissions, staff accounts, academic structure, candidate records, organization branding, teaching and grading, academic monitoring, candidate examination access (M9), server-backed connection recovery (M10), transactional submission/scoring (M11), manual essay grading with append-only history (M12), and instructor examination monitoring (M13) are implemented. M7/M8 worktree code is preserved but not yet reconciled into the main implementation.
 
 ## Last Updated
 
@@ -716,7 +716,7 @@ Validation:
 - Browser: synthetic candidate completed MCQ, true/false and essay; save state confirmed; reload preserved selected answer and deadline; confirmation defaulted to Continue; submit reached receipt. Tablet portrait 768x1024 and landscape 1024x768 inspected; landscape DOM had no horizontal overflow. Actual OS installation was not tested.
 - Synthetic local smoke exam `M9 Tablet Smoke Test` archived after verification; candidate `m9-smoke-001` and its synthetic instructor deactivated. Records and submitted answers retained as test evidence. Temporary helper is ignored under storage/app/m9-smoke.php.
 
-Git: M9/M10/M11/M12 changes are committed on main; no push and no worktree cleanup. Prior statements claiming M7/M8 completion are superseded by this corrective handoff.
+Git: M9/M10/M11/M12/M13 changes are committed on main; no push and no worktree cleanup. Prior statements claiming M7/M8 completion are superseded by this corrective handoff.
 
 ## Milestone 10 implementation — 2026-09-30
 
@@ -740,4 +740,10 @@ Implemented an instructor-only essay grading queue and response review page. Aut
 
 Essay scores are persisted in `examination_essay_grades`; every first score and correction is append-only in `examination_essay_revisions` with actor, before/after score/comment, reason, and timestamp. The result calculation is recalculated centrally after every grading change. Candidate results move from `pending_review` to `graded` only after all essays are scored, and existing release-results settings still control candidate visibility. General audit entries record the grade item and score metadata without storing essay text or detailed comments.
 
-Validation: migrations 000600/000700 applied locally, PHP syntax checks, Pint, TypeScript compilation, route registration, and `git diff --check` pass. Broad PHPUnit execution remains intentionally with the owner. Next work is Milestone 13 examination monitoring, after the preserved M7/M8 corrective integration is accounted for.
+Validation: migrations 000600/000700 applied locally, PHP syntax checks, Pint, TypeScript compilation, route registration, and `git diff --check` pass. Broad PHPUnit execution remains intentionally with the owner. M13 examination monitoring is recorded below; the next milestone is 14, after the preserved M7/M8 corrective integration is accounted for.
+
+## Milestone 13 implementation — 2026-09-30
+
+Added an instructor-only live examination monitor to the examination review page. It reports total eligible candidates, active, inactive, submitted, expired, and not-started counts; each candidate row includes status, attempt number, answered-question count, question count, and last activity timestamp. Candidate answers and scoring data are never included. Activity is updated by the authoritative answer-save transaction and inactive means no server activity for two minutes. The page polls the server every 15 seconds with an Inertia partial reload, so monitoring does not use sockets or interfere with attempts.
+
+Migration `000800_add_attempt_activity` adds the indexed `last_activity_at` field and is applied locally. Validation: migration, PHP syntax, Pint, TypeScript, route registration, and `git diff --check` pass. Next work is Milestone 14 administrator dashboard, after accounting for the preserved M7/M8 corrective integration.

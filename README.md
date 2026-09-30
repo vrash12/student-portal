@@ -98,6 +98,10 @@ The staff examination area includes an essay-grading queue. Authorized instructo
 can review submitted responses, record bounded scores and comments, and inspect
 append-only grading history. Final results remain pending until every essay is graded.
 
+The examination review page also includes a lightweight live monitor. It polls every
+15 seconds and shows participation and progress counts without exposing candidate
+answers.
+
 The PWA uses `/portal.webmanifest` and `/portal-sw.js`. For installation on real LAN
 tablets, serve the application over trusted HTTPS; localhost development also works.
 Assets are served locally. The worker caches public build assets and an offline fallback,

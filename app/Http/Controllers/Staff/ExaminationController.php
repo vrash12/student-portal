@@ -6,6 +6,7 @@ use App\Enums\ExaminationStatus;
 use App\Models\ClassSubject;
 use App\Models\Examination;
 use App\Models\Question;
+use App\Services\Examinations\ExaminationMonitoringService;
 use App\Services\Examinations\ExaminationService;
 use App\Services\QuestionBank\QuestionPresenter;
 use Illuminate\Http\Request;
@@ -35,12 +36,12 @@ class ExaminationController
         return redirect('/examinations/'.$e->id);
     }
 
-    public function show(Examination $examination, Request $r)
+    public function show(Examination $examination, Request $r, ExaminationMonitoringService $monitoring)
     {
         abort_unless($r->user()->teachesOffering($examination->class_subject_id), 403);
         $examination->load('classSubject.subject', 'classSubject.classBatch', 'examinationQuestions.question.choices');
 
-        return Inertia::render('staff/examinations/show', ['examination' => $examination]);
+        return Inertia::render('staff/examinations/show', ['examination' => $examination, 'monitoring' => $monitoring->snapshot($examination)]);
     }
 
     public function questions(Examination $examination, Request $r, QuestionPresenter $p)
