@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Enums\ExaminationStatus;
 use App\Http\Requests\ExaminationRequest;
+use App\Models\Assessment;
 use App\Models\ClassSubject;
 use App\Models\Examination;
 use App\Models\Question;
@@ -69,6 +70,8 @@ final class ExaminationController
         $payload = $examination->toArray();
         $payload['lifecycle'] = $examination->lifecycle();
         $payload['has_access_code'] = $examination->access_code !== null;
+        $payload['can_post_grades'] = $request->user()->can('recordGrades', $examination->classSubject);
+        $payload['posted_assessment_id'] = Assessment::where('source_examination_id', $examination->id)->value('id');
         $payload['examination_questions'] = $examination->examinationQuestions->map(fn ($item) => ['id' => $item->id, 'points' => $item->points, 'question' => $presenter->staff($item->question)])->all();
 
         return Inertia::render('staff/examinations/show', ['examination' => $payload, 'monitoring' => fn () => $monitoring->snapshot($examination)])->toResponse($request)->header('Cache-Control', 'no-store, private');

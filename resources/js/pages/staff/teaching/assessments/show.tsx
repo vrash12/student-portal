@@ -28,6 +28,8 @@ interface AssessmentShowProps {
         createdBy: string;
         finalizedBy: string | null;
         finalizedAt: string | null;
+        sourceExaminationId: number | null;
+        examAttemptRule: string | null;
     };
     roster: RosterRow[];
     history: { entries: ScoreHistoryEntry[]; total: number };
@@ -145,6 +147,7 @@ export default function AssessmentShow({ offering, assessment, roster, history, 
                     </Alert>
                 )}
 
+                {assessment.sourceExaminationId !== null && <Alert tone="info" title="Posted Examination Results">These scores were posted from examination #{assessment.sourceExaminationId} using the {assessment.examAttemptRule} submitted attempt. Later examination regrading does not change these recorded grades. Use Correct Score with a reason for any adjustment.</Alert>}
                 <Panel title="Details">
                     <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <Detail label="Status">

@@ -52,6 +52,7 @@ enum AuditAction: string
     case ExaminationArchived = 'examination.archived';
     case ExaminationDeleted = 'examination.deleted';
     case ExaminationEssayGraded = 'examination.essay_graded';
+    case ExaminationPosted = 'examination.posted_to_gradebook';
 
     public function label(): string
     {
@@ -101,6 +102,7 @@ enum AuditAction: string
             self::ExaminationArchived => 'Archived examination',
             self::ExaminationDeleted => 'Deleted draft examination',
             self::ExaminationEssayGraded => 'Graded examination essay',
+            self::ExaminationPosted => 'Posted examination to gradebook',
         };
     }
 }

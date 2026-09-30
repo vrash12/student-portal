@@ -57,6 +57,8 @@ class AssessmentController extends Controller
                 'createdBy' => $assessment->creator->name,
                 'finalizedBy' => $assessment->finalizer?->name,
                 'finalizedAt' => $assessment->finalized_at?->toIso8601String(),
+                'sourceExaminationId' => $assessment->source_examination_id,
+                'examAttemptRule' => $assessment->exam_attempt_rule,
             ],
             'roster' => $this->gradebook->scoreSheet($assessment),
             'history' => $this->gradebook->history($assessment, self::HISTORY_LIMIT),

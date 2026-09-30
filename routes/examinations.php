@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\Staff\ExaminationController;
+use App\Http\Controllers\Staff\ExaminationGradebookController;
 use App\Http\Controllers\Staff\ExaminationGradingController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('can:examinations.manage')->group(function () {
+    Route::get('examinations/{examination}/gradebook', [ExaminationGradebookController::class, 'show'])->name('examinations.gradebook');
+    Route::post('examinations/{examination}/gradebook', [ExaminationGradebookController::class, 'store'])->name('examinations.gradebook.post');
     Route::get('examinations', [ExaminationController::class, 'index'])->name('examinations.index');
     Route::get('examinations/create', [ExaminationController::class, 'create'])->name('examinations.create');
     Route::post('examinations', [ExaminationController::class, 'store'])->name('examinations.store');

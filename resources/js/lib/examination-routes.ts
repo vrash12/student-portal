@@ -15,6 +15,7 @@ export const examinationRoutes = {
     archive: (id: number) => `/examinations/${id}/archive`,
     results: (id: number) => `/examinations/${id}/results`,
     grading: (id: number) => `/examinations/${id}/grading`,
+    gradebook: (id: number) => `/examinations/${id}/gradebook`,
     gradeAttempt: (id: number) => `/examination-attempts/${id}/grading`,
     saveEssay: (id: number) => `/examination-attempts/${id}/essay-grade`,
 };
