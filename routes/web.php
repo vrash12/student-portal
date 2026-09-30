@@ -19,6 +19,7 @@ use App\Http\Controllers\Staff\GradingSchemeController;
 use App\Http\Controllers\Staff\GradingThresholdController;
 use App\Http\Controllers\Staff\InstructorAssignmentController;
 use App\Http\Controllers\Staff\InstructorController;
+use App\Http\Controllers\Staff\ReportController;
 use App\Http\Controllers\Staff\RoleController;
 use App\Http\Controllers\Staff\SubjectController;
 use App\Http\Controllers\Staff\TeachingClassController;
@@ -40,6 +41,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     // Staff area: administrators and instructors.
     Route::middleware('can:'.Permission::AccessStaffArea->value)->group(function (): void {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
+        Route::get('reports', ReportController::class)->name('reports.index')->can(Permission::ViewReports->value);
 
         // Academic monitoring, scoped by MonitoringScope (all candidates, or the subjects taught).
         Route::get('monitoring', AcademicMonitoringController::class)

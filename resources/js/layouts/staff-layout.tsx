@@ -31,14 +31,14 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
                 Skip to main content
             </a>
 
-            <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-line bg-surface lg:block">
+            <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-line bg-surface lg:block print:hidden">
                 <SidebarContent />
             </aside>
 
             <NavigationDrawer open={navigationOpen} onClose={() => setNavigationOpen(false)} />
 
-            <div className="lg:pl-64">
-                <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-surface px-4 sm:px-6 lg:px-8">
+            <div className="lg:pl-64 print:pl-0">
+                <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-surface px-4 sm:px-6 lg:px-8 print:hidden">
                     <button
                         type="button"
                         onClick={() => setNavigationOpen(true)}

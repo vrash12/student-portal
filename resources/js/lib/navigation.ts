@@ -60,6 +60,7 @@ export const staffNavigation: NavigationSection[] = [
     {
         label: 'Academics',
         items: [
+            { label: 'Reports', href: '/reports', icon: Activity, permission: Permission.ViewReports },
             {
                 label: 'Academic Monitoring',
                 href: routes.monitoring.index(),
