@@ -71,14 +71,4 @@ class Subject extends Model
     {
         $query->where('is_active', true);
     }
-
-    public function questions(): HasMany
-    {
-        return $this->hasMany(Question::class);
-    }
-
-    public function questionTopics(): HasMany
-    {
-        return $this->hasMany(QuestionTopic::class);
-    }
 }

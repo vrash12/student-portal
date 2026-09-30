@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { LogOut } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
 import { buttonClasses } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/toaster';
@@ -12,6 +12,11 @@ import { routes } from '@/lib/routes';
  */
 export default function CandidateLayout({ children }: { children: ReactNode }) {
     const { app, auth } = usePage().props;
+    useEffect(() => {
+        if ('serviceWorker' in navigator && window.isSecureContext) {
+            void navigator.serviceWorker.register('/portal-sw.js', { scope: '/portal' }).catch(() => undefined);
+        }
+    }, []);
 
     return (
         <div className="flex min-h-dvh flex-col">

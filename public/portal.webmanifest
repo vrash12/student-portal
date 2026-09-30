@@ -1,0 +1,6 @@
+{
+ "id":"/portal", "name":"Candidate Examination Portal", "short_name":"Examinations",
+ "start_url":"/portal", "scope":"/portal", "display":"standalone",
+ "background_color":"#f4f6f5", "theme_color":"#1f6b4a",
+ "icons":[{"src":"/branding/logo-512.png","sizes":"512x512","type":"image/png","purpose":"any"}]
+}

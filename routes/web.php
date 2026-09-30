@@ -3,6 +3,7 @@
 use App\Enums\Permission;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Portal\ExaminationController as PortalExaminationController;
 use App\Http\Controllers\Portal\PortalHomeController;
 use App\Http\Controllers\Staff\AcademicMonitoringController;
 use App\Http\Controllers\Staff\AcademicPeriodController;
@@ -164,6 +165,12 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         ->name('portal.')
         ->group(function (): void {
             Route::get('/', PortalHomeController::class)->name('home');
+            Route::get('examinations/{examination}', [PortalExaminationController::class, 'show'])->name('examinations.show');
+            Route::post('examinations/{examination}/start', [PortalExaminationController::class, 'start'])->name('examinations.start');
+            Route::get('attempts/{attempt}', [PortalExaminationController::class, 'attempt'])->name('attempts.show');
+            Route::put('attempts/{attempt}/answers', [PortalExaminationController::class, 'save'])->name('attempts.answers');
+            Route::post('attempts/{attempt}/submit', [PortalExaminationController::class, 'submit'])->name('attempts.submit');
+            Route::get('attempts/{attempt}/success', [PortalExaminationController::class, 'success'])->name('attempts.success');
         });
 });
 

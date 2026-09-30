@@ -93,5 +93,11 @@ export const routes = {
     },
     portal: {
         home: () => '/portal',
+        examination: (id: number) => `/portal/examinations/${id}`,
+        start: (id: number) => `/portal/examinations/${id}/start`,
+        attempt: (id: number) => `/portal/attempts/${id}`,
+        answers: (id: number) => `/portal/attempts/${id}/answers`,
+        submit: (id: number) => `/portal/attempts/${id}/submit`,
+        success: (id: number) => `/portal/attempts/${id}/success`,
     },
 } as const;

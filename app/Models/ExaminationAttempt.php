@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Models;
+
+use App\Policies\ExaminationAttemptPolicy;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+#[UsePolicy(ExaminationAttemptPolicy::class)]
+class ExaminationAttempt extends Model
+{
+    protected function casts(): array
+    {
+        return ['candidate_id' => 'integer', 'examination_id' => 'integer', 'started_at' => 'datetime', 'expires_at' => 'datetime', 'submitted_at' => 'datetime', 'delivery' => 'array', 'answers' => 'array', 'current_position' => 'integer', 'revision' => 'integer'];
+    }
+
+    public function examination(): BelongsTo
+    {
+        return $this->belongsTo(Examination::class);
+    }
+
+    public function candidate(): BelongsTo
+    {
+        return $this->belongsTo(Candidate::class);
+    }
+}

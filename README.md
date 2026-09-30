@@ -82,3 +82,26 @@ The test suite refuses to run against any database whose name does not end in `_
 - Serve the application over HTTPS on the internal network. Secure cookies (`SESSION_SECURE_COOKIE=true`), browser-history encryption (`INERTIA_ENCRYPT_HISTORY=true`), and the tablet PWA all require a secure context.
 - Prefer an internal hostname (for example `academic-system.local`) over a raw IP address.
 - Never commit `.env` or credentials. Keep `.env.example` current.
+
+## Candidate examination PWA (Milestone 9)
+
+Candidate routes live under `/portal` and require the candidate portal permission.
+A published examination must have a positive duration and questions before a candidate
+can start. Candidates see only their assigned class's currently available examinations.
+The attempt screen supports MCQ, true/false, essay, persisted question/choice order,
+server deadlines, answer saving, refresh recovery, permitted navigation/review flags,
+and an explicit submission confirmation. Scores are not released by this milestone.
+
+The PWA uses `/portal.webmanifest` and `/portal-sw.js`. For installation on real LAN
+tablets, serve the application over trusted HTTPS; localhost development also works.
+Assets are served locally. The worker caches public build assets and an offline fallback,
+never authenticated pages, examination content, or answers. Full offline answer recovery
+and IndexedDB synchronization are Milestone 10 work. Keep a disconnected attempt open
+until the connection returns; unsaved answers in memory are not reported as server-saved.
+
+Validation: `php artisan test --filter=CandidateExaminationTest`, `npm run types`,
+`npm run build`, and `php vendor/bin/pint --dirty`.
+
+## Autosave and connection recovery (Milestone 10)
+
+Candidate answers are saved automatically to the server. During a short network interruption, the active attempt stores a temporary snapshot and ordered pending writes in IndexedDB on the tablet. The screen distinguishes server-saved answers from device-only recovery, resumes the queue on reconnection, and removes temporary recovery data after submission. Authenticated exam pages and answers are never cached by the service worker.
