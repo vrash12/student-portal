@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicPeriod;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\AdministratorDashboardService;
 use App\Services\Grading\GradingThresholds;
 use App\Services\Monitoring\AcademicMonitoring;
 use App\Services\Monitoring\MonitoredCandidate;
@@ -33,7 +34,7 @@ class DashboardController extends Controller
         private readonly MonitoringPresenter $presenter,
     ) {}
 
-    public function __invoke(Request $request, TeachingOverview $teaching): Response
+    public function __invoke(Request $request, TeachingOverview $teaching, AdministratorDashboardService $administratorDashboard): Response
     {
         $user = $request->user();
         $canMonitor = $user->hasPermission(Permission::ViewAcademicMonitoring);
@@ -50,6 +51,7 @@ class DashboardController extends Controller
             'academicAlerts' => $showAcademicAlerts ? $this->monitoringSummary(MonitoringScope::teaching($user), $user) : null,
             'thresholdSetup' => $user->hasPermission(Permission::ConfigureGrading) ? $this->missingThresholds() : null,
             'accountSummary' => $user->can('viewAny', User::class) ? $this->accountSummary() : null,
+            'administratorOverview' => $showAcademicOverview ? $administratorDashboard->overview() : null,
         ]);
     }
 
