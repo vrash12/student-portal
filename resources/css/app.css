@@ -14,9 +14,9 @@
     --color-black: #000000;
 
     /* Surfaces */
-    --color-canvas: #f4f6f5; /* page background */
+    --color-canvas: #edf3ed; /* soft green page background */
     --color-surface: #ffffff; /* cards, tables, forms */
-    --color-surface-muted: #f8f9f9; /* table headers, subtle panels */
+    --color-surface-muted: #f2f6ef; /* table headers, subtle panels */
     --color-overlay: rgb(15 23 20 / 0.45); /* dialog/drawer backdrop */
 
     /* Lines */
@@ -36,6 +36,13 @@
     --color-primary-700: #185a3d;
     --color-primary-800: #134a32;
     --color-primary-900: #0f3a28;
+
+    /* Logo-inspired yellow: dark green text on yellow, never white. */
+    --color-accent-50: #fffbea;
+    --color-accent-100: #fff2b3;
+    --color-accent-300: #f2d44b;
+    --color-accent-400: #e8c32e;
+    --color-accent-800: #66520a;
 
     /* Status (always paired with a text label or icon) */
     --color-success-bg: #e9f5ee;
@@ -62,6 +69,16 @@
 
     /* Typography: Inter is bundled locally (no font CDN). */
     --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+@layer components {
+    .brand-dark :focus-visible {
+        outline-color: var(--color-accent-300);
+    }
+
+    .institution-panel {
+        box-shadow: 0 2px 6px rgb(15 58 40 / 0.04), 0 8px 24px rgb(15 58 40 / 0.025);
+    }
 }
 
 @layer base {

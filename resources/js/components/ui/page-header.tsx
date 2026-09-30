@@ -17,10 +17,10 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, actions, breadcrumbs }: PageHeaderProps) {
     return (
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-6 flex flex-col gap-4 rounded-xl border border-line border-l-4 border-l-primary-600 bg-surface p-5 shadow-sm xl:flex-row xl:items-end xl:justify-between print:border-0 print:p-0 print:shadow-none">
             <div className="min-w-0">
                 {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
-                <h1 className="text-2xl font-semibold tracking-tight text-ink">{title}</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-primary-900">{title}</h1>
                 {description && <p className="mt-1 text-sm text-ink-muted">{description}</p>}
             </div>
             {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}

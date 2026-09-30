@@ -2,6 +2,16 @@
 
 Updated 2026-09-30 by Codex. Read this file together with `AGENTS.md`, `UI_UX_DESIGN.md`, and `MILESTONES.md`; inspect Git and the actual code before editing.
 
+## Additional owner request — green and yellow UI refresh (2026-09-30)
+
+The owner requested a less minimalist interface based on the existing logo's green/yellow colors. Updated the authoritative design direction in `UI_UX_DESIGN.md` accordingly.
+
+- Shared theme: pale green canvas, tinted green panel/table headers, stronger page headers, subtle panel elevation, rounded buttons and a yellow accent-button variant with dark green text. Semantic standing/error colors remain distinct and labelled.
+- Staff: deep-green desktop sidebar and tablet drawer, yellow active-item border/icon, green-tinted navigation text and yellow header rule. Existing permission filtering, drawer focus handling and account controls remain intact.
+- Candidate: green branded header, larger configured logo, yellow active navigation and welcome panel with candidate/class/period details. Counts and jump links lead to available examinations, upcoming examinations and recent released results. Academic summary cards have clearer hierarchy. The portal uses more available desktop width while retaining the narrower active-examination layout; no home navigation or footer appears during an attempt.
+- Sign-in uses the same green backdrop and yellow accent. No external assets, new dependencies, backend/schema edits, new metrics or examination-flow changes. Added candidate skip link and contextual keyboard focus colors.
+- Verification: strict TypeScript and production build passed. Browser-reviewed candidate home at desktop and narrow widths, and profile at tablet width; home had no horizontal overflow at 390px or 1366px. Profile navigation and both PDF actions remain present. Saved an ignored visual preview at `storage/app/portal-theme-preview.png`. Staff and sign-in changes were build-checked; their complete role/device acceptance pass and broad regression remain with the owner. M17 Security remains the next planned milestone.
+
 ## Additional owner request — student PDF downloads (2026-09-30)
 
 The owner supplied a Certificate of Registration as a visual reference and explicitly chose **both registration and academic records as separate downloads**. Implemented on the administrator candidate profile and the candidate's own My Information page.

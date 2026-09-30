@@ -31,14 +31,14 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
                 Skip to main content
             </a>
 
-            <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-line bg-surface lg:block print:hidden">
+            <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-primary-800 bg-primary-900 lg:block print:hidden">
                 <SidebarContent />
             </aside>
 
             <NavigationDrawer open={navigationOpen} onClose={() => setNavigationOpen(false)} />
 
             <div className="lg:pl-64 print:pl-0">
-                <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-surface px-4 sm:px-6 lg:px-8 print:hidden">
+                <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b-2 border-accent-300 bg-surface px-4 sm:px-6 lg:px-8 print:hidden">
                     <button
                         type="button"
                         onClick={() => setNavigationOpen(true)}
@@ -78,13 +78,13 @@ function SidebarContent({ inDrawer = false }: { inDrawer?: boolean }) {
     const activeHref = activeItemHref(url, visibleItems);
 
     return (
-        <div className="flex h-full flex-col">
+        <div className="brand-dark flex h-full flex-col bg-primary-900 text-white">
             {/* In the drawer, space is reserved for the close button. */}
-            <div className={cn('flex h-16 shrink-0 items-center gap-3 border-b border-line pl-5', inDrawer ? 'pr-14' : 'pr-5')}>
+            <div className={cn('flex h-16 shrink-0 items-center gap-3 border-b border-white/15 pl-5', inDrawer ? 'pr-14' : 'pr-5')}>
                 <BrandMark />
                 <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-ink">{props.app.shortName}</p>
-                    <p className="truncate text-xs text-ink-muted">{props.app.name}</p>
+                    <p className="truncate text-sm font-semibold text-white">{props.app.shortName}</p>
+                    <p className="truncate text-xs text-primary-200">{props.app.name}</p>
                 </div>
             </div>
 
@@ -98,7 +98,7 @@ function SidebarContent({ inDrawer = false }: { inDrawer?: boolean }) {
                     return (
                         <div key={section.label ?? `section-${sectionIndex}`} className="mb-6 last:mb-0">
                             {section.label && (
-                                <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-ink-subtle">
+                                <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-primary-200">
                                     {section.label}
                                 </p>
                             )}
@@ -112,14 +112,14 @@ function SidebarContent({ inDrawer = false }: { inDrawer?: boolean }) {
                                                 href={item.href}
                                                 aria-current={active ? 'page' : undefined}
                                                 className={cn(
-                                                    'flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors pointer-coarse:h-11',
+                                                    'flex min-h-11 items-center gap-3 rounded-lg border-l-4 px-3 text-sm font-medium transition-colors pointer-coarse:h-11',
                                                     active
-                                                        ? 'bg-primary-50 text-primary-800'
-                                                        : 'text-ink-muted hover:bg-surface-muted hover:text-ink',
+                                                        ? 'border-accent-300 bg-white/10 text-accent-100'
+                                                        : 'border-transparent text-primary-100 hover:bg-white/10 hover:text-white',
                                                 )}
                                             >
                                                 <item.icon
-                                                    className={cn('size-4.5 shrink-0', active ? 'text-primary-600' : 'text-ink-subtle')}
+                                                    className={cn('size-4.5 shrink-0', active ? 'text-accent-300' : 'text-primary-200')}
                                                     aria-hidden="true"
                                                 />
                                                 {item.label}
@@ -176,13 +176,13 @@ function NavigationDrawer({ open, onClose }: { open: boolean; onClose: () => voi
                     onClose();
                 }
             }}
-            className="m-0 h-dvh max-h-dvh w-72 max-w-[85vw] border-r border-line bg-surface p-0 lg:hidden"
+            className="m-0 h-dvh max-h-dvh w-72 max-w-[85vw] brand-dark border-r border-primary-800 bg-primary-900 p-0 lg:hidden"
         >
             <div className="relative h-full">
                 <button
                     type="button"
                     onClick={onClose}
-                    className="absolute right-2 top-2.5 z-10 flex size-11 items-center justify-center rounded-md text-ink-muted hover:bg-neutral-bg hover:text-ink"
+                    className="absolute right-2 top-2.5 z-10 flex size-11 items-center justify-center rounded-md text-white hover:bg-white/10"
                     aria-label="Close navigation menu"
                 >
                     <X className="size-5" aria-hidden="true" />

@@ -19,7 +19,7 @@ export function Table({ caption, children, className }: { caption: string; child
 
 export function TableHead({ children }: { children: ReactNode }) {
     return (
-        <thead className="bg-surface-muted text-xs font-semibold uppercase tracking-wide text-ink-muted">
+        <thead className="border-b border-primary-200 bg-primary-50 text-xs font-semibold uppercase tracking-wide text-primary-800">
             <tr>{children}</tr>
         </thead>
     );

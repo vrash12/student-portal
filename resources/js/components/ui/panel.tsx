@@ -21,13 +21,13 @@ export function Panel({ title, description, actions, children, className, bodyCl
 
     return (
         <section
-            className={cn('rounded-lg border border-line bg-surface', className)}
+            className={cn('institution-panel min-w-0 rounded-xl border border-line bg-surface', className)}
             aria-labelledby={title ? titleId : undefined}
         >
             {title && (
-                <header className="flex flex-col gap-3 border-b border-line px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+                <header className="flex flex-col gap-3 rounded-t-xl border-b border-line bg-primary-50/70 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                        <Heading id={titleId} className="text-base font-semibold text-ink">
+                        <Heading id={titleId} className="text-base font-bold text-primary-900">
                             {title}
                         </Heading>
                         {description && <p className="mt-0.5 text-sm text-ink-muted">{description}</p>}

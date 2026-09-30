@@ -3,15 +3,16 @@ import { LoaderCircle } from 'lucide-react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'accent';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 const baseClasses =
-    'inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60';
+    'inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-lg font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60';
 
 const variantClasses: Record<ButtonVariant, string> = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800',
-    secondary: 'border border-line-strong bg-surface text-ink hover:bg-surface-muted active:bg-neutral-bg',
+    primary: 'bg-primary-600 text-white shadow-sm hover:bg-primary-700 active:bg-primary-800',
+    secondary: 'border border-line-strong bg-surface text-primary-900 hover:border-primary-600 hover:bg-primary-50 active:bg-primary-100',
+    accent: 'border border-accent-300 bg-accent-300 text-primary-900 shadow-sm hover:bg-accent-400 active:bg-accent-100',
     danger: 'bg-danger-600 text-white hover:bg-danger-700',
     ghost: 'text-ink-muted hover:bg-neutral-bg hover:text-ink',
 };
