@@ -8,14 +8,14 @@
         @page { margin: 22pt 26pt 30pt; }
         body { font-family: "DejaVu Sans", sans-serif; font-size: 7pt; color: #17252d; line-height: 1.25; }
         .page-break { page-break-before: always; }
-        .masthead { position: relative; text-align: center; height: 44pt; }
+        .masthead { position: relative; text-align: center; min-height: 46pt; padding-bottom: 2pt; }
         .logo { position: absolute; left: 0; top: 0; width: 42pt; height: 42pt; }
         .organization { font-size: 11.5pt; font-weight: bold; margin: 2pt 0 0; }
         .system { font-size: 6.5pt; color: #58676d; margin-top: 1pt; }
-        .title { font-size: 10.5pt; font-weight: bold; letter-spacing: 0.8pt; text-transform: uppercase; margin-top: 3pt; }
+        .title { font-size: 10.5pt; font-weight: bold; letter-spacing: 0.8pt; text-transform: uppercase; margin-top: 4pt; line-height: 1.2; }
         .regno { position: absolute; right: 0; top: 4pt; text-align: right; font-size: 6.5pt; color: #3d4b45; }
         .regno strong { font-size: 7.5pt; color: #17252d; }
-        .band { background: #235842; color: #fff; font-weight: bold; font-size: 7pt; letter-spacing: 0.6pt; text-transform: uppercase; text-align: center; padding: 2.5pt 0; margin-top: 4pt; }
+        .band { background: #235842; color: #fff; font-weight: bold; font-size: 7pt; letter-spacing: 0.6pt; text-transform: uppercase; text-align: center; padding: 2.5pt 0; margin-top: 9pt; }
         .info { width: 100%; border-collapse: collapse; table-layout: fixed; border: 0.75pt solid #aebdb3; border-top: 0; }
         .info td { vertical-align: top; padding: 3pt 5pt; }
         .info table { width: 100%; border-collapse: collapse; }
