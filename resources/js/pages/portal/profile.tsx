@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { CandidateInformationPanels } from '@/components/candidates/candidate-information';
+import { RecordDownloads } from '@/components/candidates/record-downloads';
 import { CandidateExaminationResults } from '@/components/candidates/examination-results';
 import { OverallStandingValue, StandingCell } from '@/components/grading/standing';
 import { PageHeader } from '@/components/ui/page-header';
@@ -25,7 +26,7 @@ interface ProfileProps {
 export default function CandidateProfile({ candidate, academics, assessmentHistory, examinationResults }: ProfileProps) {
     return <>
         <Head title="My Information" />
-        <PageHeader title="My Information" description="Your training and academic record. Contact the academic office to correct your personal details." />
+        <PageHeader title="My Information" description="Your training and academic record. Contact the academic office to correct your personal details." actions={<RecordDownloads baseUrl="/portal/profile/documents" />} />
         <div className="flex flex-col gap-6">
             <Panel title="Academic Standing" description="Current standing in your assigned class, calculated from finalized assessments.">
                 <OverallStandingValue overall={academics.overall} />

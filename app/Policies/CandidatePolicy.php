@@ -36,6 +36,13 @@ class CandidatePolicy
         return $actor->hasPermission(Permission::ManageCandidates);
     }
 
+    /** Full-record exports are available to administrators and the record owner. */
+    public function downloadRecord(User $actor, Candidate $candidate): bool
+    {
+        return ($actor->hasPermission(Permission::AccessStaffArea) && $actor->hasPermission(Permission::ViewAllCandidates))
+            || ($actor->hasPermission(Permission::AccessExamPortal) && (int) $candidate->user_id === (int) $actor->id);
+    }
+
     public function update(User $actor, Candidate $candidate): bool
     {
         return $actor->hasPermission(Permission::ManageCandidates);

@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { ChartColumn, Pencil } from 'lucide-react';
 import { CandidateInformationPanels } from '@/components/candidates/candidate-information';
+import { RecordDownloads } from '@/components/candidates/record-downloads';
 import { CandidateExaminationResults } from '@/components/candidates/examination-results';
 import type { CandidateInformation, CandidateExaminationResult } from '@/types/candidates';
 import type { Paginated } from '@/types';
@@ -115,11 +116,11 @@ export default function CandidateShow({
                 }
                 breadcrumbs={breadcrumbs}
                 actions={
-                    canEdit && (
+                    <>{canBrowseCandidates && <RecordDownloads baseUrl={`/candidates/${candidate.id}/documents`} />}{canEdit && (
                         <ButtonLink href={routes.candidates.edit(candidate.id)} icon={<Pencil className="size-4" aria-hidden="true" />}>
                             Edit Candidate
                         </ButtonLink>
-                    )
+                    )}</>
                 }
             />
 

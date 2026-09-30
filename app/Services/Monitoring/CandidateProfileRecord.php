@@ -34,7 +34,7 @@ final class CandidateProfileRecord
     }
 
     /** Finalized current assessments and the candidate's recorded historical results. */
-    public function assessmentHistory(Candidate $candidate): LengthAwarePaginator
+    public function assessmentHistory(Candidate $candidate, int $perPage = 15, ?int $page = null): LengthAwarePaginator
     {
         return Assessment::query()->finalized()
             ->where(function (Builder $query) use ($candidate): void {
@@ -48,7 +48,7 @@ final class CandidateProfileRecord
                 'scores' => fn ($query) => $query->where('candidate_id', $candidate->id)->select(['id', 'assessment_id', 'score']),
             ])
             ->orderByDesc('finalized_at')->orderByDesc('id')
-            ->paginate(15, ['*'], 'assessments_page')->withQueryString()
+            ->paginate($perPage, ['*'], 'assessments_page', $page)->withQueryString()
             ->through(function (Assessment $assessment): array {
                 $score = $assessment->scores->first()?->score;
 
@@ -68,13 +68,13 @@ final class CandidateProfileRecord
     }
 
     /** @param list<int>|null $offeringIds Null for the owner or an administrator; restricted IDs for instructors. */
-    public function examinationResults(Candidate $candidate, bool $portal, ?array $offeringIds = null): LengthAwarePaginator
+    public function examinationResults(Candidate $candidate, bool $portal, ?array $offeringIds = null, int $perPage = 15, ?int $page = null): LengthAwarePaginator
     {
         return ExaminationAttempt::query()->where('candidate_id', $candidate->id)
             ->when($offeringIds !== null, fn (Builder $query) => $query->whereHas('examination', fn (Builder $exams) => $exams->whereIn('class_subject_id', $offeringIds)))
             ->select(['id', 'examination_id', 'attempt_number', 'status', 'result_status', 'started_at', 'submitted_at', 'earned_points', 'total_points', 'percentage', 'passed'])
             ->with(['examination:id,class_subject_id,title,kind,release_results', 'examination.classSubject.subject:id,name', 'examination.classSubject.classBatch:id,name'])
-            ->orderByDesc('id')->paginate(15, ['*'], 'exams_page')->withQueryString()
+            ->orderByDesc('id')->paginate($perPage, ['*'], 'exams_page', $page)->withQueryString()
             ->through(function (ExaminationAttempt $attempt) use ($portal): array {
                 $released = ! $portal || $attempt->examination->release_results;
                 $graded = $released && $attempt->result_status === 'graded' && $attempt->status === 'submitted';

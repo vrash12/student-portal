@@ -31,6 +31,7 @@ enum AuditAction: string
     case CandidateCreated = 'candidate.created';
     case CandidateUpdated = 'candidate.updated';
     case CandidatePasswordReset = 'candidate.password_reset';
+    case CandidateRecordDownloaded = 'candidate.record_downloaded';
     case GradingSchemeUpdated = 'grading_scheme.updated';
     case AssessmentCreated = 'assessment.created';
     case AssessmentUpdated = 'assessment.updated';
@@ -81,6 +82,7 @@ enum AuditAction: string
             self::CandidateCreated => 'Created candidate',
             self::CandidateUpdated => 'Updated candidate',
             self::CandidatePasswordReset => 'Reset candidate password',
+            self::CandidateRecordDownloaded => 'Downloaded candidate PDF record',
             self::GradingSchemeUpdated => 'Updated grading setup',
             self::AssessmentCreated => 'Created assessment',
             self::AssessmentUpdated => 'Updated assessment',

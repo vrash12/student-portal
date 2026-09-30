@@ -2,6 +2,7 @@
 
 use App\Enums\Permission;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\CandidatePdfController;
 use App\Http\Controllers\CandidatePhotoController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Portal\CandidateProfileController;
@@ -163,6 +164,9 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('candidates/{candidate}', [CandidateController::class, 'show'])->name('candidates.show')->can('view', 'candidate');
         Route::get('candidates/{candidate}/edit', [CandidateController::class, 'edit'])->name('candidates.edit')->can('update', 'candidate');
         Route::get('candidates/{candidate}/photo', [CandidatePhotoController::class, 'show'])->name('candidates.photo')->can('view', 'candidate');
+        Route::get('candidates/{candidate}/documents/{type}', [CandidatePdfController::class, 'show'])
+            ->whereIn('type', ['registration', 'academic'])->name('candidates.documents')
+            ->can('downloadRecord', 'candidate')->middleware('throttle:10,1');
         Route::put('candidates/{candidate}', [CandidateController::class, 'update'])->name('candidates.update')->can('update', 'candidate');
     });
 
@@ -174,6 +178,8 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::get('/', PortalHomeController::class)->name('home');
             Route::get('profile', CandidateProfileController::class)->name('profile');
             Route::get('profile/photo', [CandidatePhotoController::class, 'own'])->name('profile.photo');
+            Route::get('profile/documents/{type}', [CandidatePdfController::class, 'own'])
+                ->whereIn('type', ['registration', 'academic'])->name('profile.documents')->middleware('throttle:10,1');
             Route::get('examinations/{examination}', [PortalExaminationController::class, 'show'])->name('examinations.show');
             Route::post('examinations/{examination}/start', [PortalExaminationController::class, 'start'])->name('examinations.start');
             Route::get('attempts/{attempt}', [PortalExaminationController::class, 'attempt'])->name('attempts.show');
