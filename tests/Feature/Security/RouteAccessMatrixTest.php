@@ -43,6 +43,13 @@ class RouteAccessMatrixTest extends TestCase
     /** Public or guest-only routes. */
     private const UNPROTECTED = ['login', 'up', '{fallbackPlaceholder}'];
 
+    /**
+     * Records with an id that are not owned by a class: fitness events apply
+     * to every class, and instructors set them (owner request 2026-10-02).
+     * Fitness tests of another class are still refused.
+     */
+    private const INSTITUTION_WIDE_FOR_INSTRUCTORS = ['fitness/standards/{fitnessEvent}/edit', 'fitness/standards/{fitnessEvent}'];
+
     /** @var array<string, string> route parameter => value */
     private array $parameters = [];
 
@@ -94,7 +101,7 @@ class RouteAccessMatrixTest extends TestCase
         $media->created_by = $this->bravo->id;
         $media->save();
 
-        // A fitness event and a test of Batch B (managed only by administrators).
+        // A fitness event (institution-wide) and a fitness test of Batch B (Bravo's class).
         $fitnessEvent = app(FitnessStandardService::class)->create([
             'name' => 'Push-ups', 'description' => null, 'unit' => 'repetitions', 'higher_is_better' => true,
             'passing_value' => 40.0, 'maximum_value' => 60.0, 'sort_order' => 1,
@@ -254,7 +261,7 @@ class RouteAccessMatrixTest extends TestCase
     public function test_an_instructor_cannot_use_another_instructors_classes_subjects_or_examinations(): void
     {
         foreach ($this->protectedRoutes() as $route) {
-            if (! str_contains($route->uri(), '{')) {
+            if (! str_contains($route->uri(), '{') || in_array($route->uri(), self::INSTITUTION_WIDE_FOR_INSTRUCTORS, true)) {
                 continue;
             }
             $this->actingAs($this->alpha);
@@ -278,6 +285,7 @@ class RouteAccessMatrixTest extends TestCase
             '/question-bank/'.$this->parameters['question'],
             '/conduct/candidates/'.$this->parameters['candidate'],
             '/attendance/sessions/'.$this->parameters['attendanceSession'],
+            '/fitness/tests/'.$this->parameters['fitnessTest'],
         ] as $url) {
             $this->get($url)->assertOk();
         }

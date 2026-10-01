@@ -175,7 +175,7 @@ class AreaAccessTest extends TestCase
         $this->actingAs($this->userWithRole(SystemRole::Instructor))
             ->get('/dashboard')
             ->assertInertia(fn (Assert $page) => $page
-                ->where('auth.permissions', fn ($permissions) => collect($permissions)->sort()->values()->all() === ['academic_monitoring.view', 'attendance.manage', 'classes.teach', 'conduct.manage', 'examinations.manage', 'grades.record', 'question_bank.manage', 'reports.view', 'staff_area.access'])
+                ->where('auth.permissions', fn ($permissions) => collect($permissions)->sort()->values()->all() === ['academic_monitoring.view', 'attendance.manage', 'classes.teach', 'conduct.manage', 'examinations.manage', 'fitness.configure', 'fitness.manage', 'fitness.view', 'grades.record', 'question_bank.manage', 'reports.view', 'staff_area.access'])
                 ->missing('auth.user.password')
                 ->missing('auth.user.remember_token')
                 ->missing('auth.user.email'));
