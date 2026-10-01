@@ -4,7 +4,7 @@ import { useRef, type FormEvent } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink, buttonClasses } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { FormField, SelectInput } from '@/components/ui/form-field';
+import { FileInput, FormField, SelectInput } from '@/components/ui/form-field';
 import { FormActions, FormSection } from '@/components/ui/form-section';
 import { PageHeader } from '@/components/ui/page-header';
 import { Table, TableBody, TableHead, Td, Th } from '@/components/ui/table';
@@ -156,13 +156,11 @@ export default function ImportQuestions({ subjects, selectedSubjectId, limits }:
                                     error={errors.file}
                                     hint={`A UTF-8 CSV file with a header row, up to ${maxFileSize} and ${limits.maxRows.toLocaleString()} questions. In a spreadsheet, use Save As and choose "CSV UTF-8 (Comma delimited)".`}
                                 >
-                                    <input
+                                    <FileInput
                                         ref={fileInput}
-                                        type="file"
                                         name="file"
                                         accept=".csv,text/csv"
                                         disabled={form.processing}
-                                        className="block w-full text-sm text-ink file:mr-3 file:min-h-10 file:rounded-md file:border file:border-line-strong file:bg-surface file:px-3 file:text-sm file:font-medium pointer-coarse:file:min-h-11"
                                         onChange={(event) => form.setData('file', event.target.files?.[0] ?? null)}
                                     />
                                 </FormField>

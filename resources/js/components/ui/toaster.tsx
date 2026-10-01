@@ -63,14 +63,26 @@ export function Toaster({ position = 'bottom' }: ToasterProps) {
 function ToastItem({ toast, onDismiss }: { toast: ToastEntry; onDismiss: (id: number) => void }) {
     const { icon: Icon, classes } = toneStyles[toast.type];
 
+    const [paused, setPaused] = useState(false);
+
+    // Errors stay until dismissed; other notices close after 5 seconds unless
+    // the pointer or keyboard focus is on them.
     useEffect(() => {
-        const timer = window.setTimeout(() => onDismiss(toast.id), toast.type === 'error' ? 8000 : 5000);
+        if (toast.type === 'error' || paused) {
+            return;
+        }
+        const timer = window.setTimeout(() => onDismiss(toast.id), 5000);
 
         return () => window.clearTimeout(timer);
-    }, [toast.id, toast.type, onDismiss]);
+    }, [toast.id, toast.type, paused, onDismiss]);
 
     return (
         <div
+            role={toast.type === 'error' ? 'alert' : undefined}
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            onFocus={() => setPaused(true)}
+            onBlur={() => setPaused(false)}
             className={cn(
                 'pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border bg-surface p-4 shadow-md',
                 classes,
@@ -81,7 +93,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastEntry; onDismiss: (id: nu
             <button
                 type="button"
                 onClick={() => onDismiss(toast.id)}
-                className="-m-1 flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-neutral-bg hover:text-ink"
+                className="-m-1 flex size-8 shrink-0 items-center justify-center rounded-md text-ink-muted hover:bg-neutral-bg hover:text-ink pointer-coarse:size-11"
                 aria-label="Dismiss notification"
             >
                 <X className="size-4" aria-hidden="true" />

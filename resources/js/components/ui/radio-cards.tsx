@@ -1,4 +1,4 @@
-import { CircleAlert } from 'lucide-react';
+import { CircleAlert, type LucideIcon } from 'lucide-react';
 import { useId } from 'react';
 import { cn } from '@/lib/cn';
 
@@ -6,6 +6,7 @@ export interface RadioCardOption {
     value: string;
     label: string;
     description?: string | null;
+    icon?: LucideIcon;
 }
 
 interface RadioCardsProps {
@@ -17,13 +18,15 @@ interface RadioCardsProps {
     error?: string;
     required?: boolean;
     disabled?: boolean;
+    /** Three options side by side from the small breakpoint (default two). */
+    columns?: 2 | 3;
 }
 
 /**
  * Radio group where the whole card is the tap target (UI_UX_DESIGN.md §23).
  * The selected state is shown by the radio mark, border, and background.
  */
-export function RadioCards({ legend, name, options, value, onChange, error, required = false, disabled = false }: RadioCardsProps) {
+export function RadioCards({ legend, name, options, value, onChange, error, required = false, disabled = false, columns = 2 }: RadioCardsProps) {
     const errorId = useId();
 
     return (
@@ -37,7 +40,7 @@ export function RadioCards({ legend, name, options, value, onChange, error, requ
                     </span>
                 )}
             </legend>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className={cn('grid gap-2', columns === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
                 {options.map((option) => {
                     const checked = option.value === value;
 
@@ -59,6 +62,7 @@ export function RadioCards({ legend, name, options, value, onChange, error, requ
                                 className="mt-0.5 size-4 shrink-0 accent-primary-600 focus-visible:outline-none"
                             />
                             <span className="min-w-0">
+                                {option.icon !== undefined && <option.icon className={cn('mb-1.5 size-5', checked ? 'text-primary-700' : 'text-ink-muted')} aria-hidden="true" />}
                                 <span className="block text-sm font-medium text-ink">{option.label}</span>
                                 {option.description && (
                                     <span className="mt-0.5 block text-sm text-ink-muted">{option.description}</span>

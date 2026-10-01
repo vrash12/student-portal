@@ -3,7 +3,7 @@ import { FileAudio, FileVideo, ImagePlus } from 'lucide-react';
 import { useId, useRef, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { ConfirmAction } from '@/components/ui/confirm-action';
-import { FormField, SelectInput, TextArea } from '@/components/ui/form-field';
+import { FileInput, FormField, SelectInput, TextArea } from '@/components/ui/form-field';
 import { Panel } from '@/components/ui/panel';
 import { routes } from '@/lib/routes';
 import type { StaffQuestion, StaffQuestionMedia } from '@/types/question-bank';
@@ -167,12 +167,7 @@ function UploadForm({ question, questionMediaFull }: { question: StaffQuestion; 
                 </FormField>
             )}
             <FormField label={forChoice ? 'Image' : 'File'} error={form.errors.file} required>
-                <input
-                    ref={input}
-                    type="file"
-                    accept={forChoice ? IMAGE_ACCEPT : ACCEPT}
-                    className="block w-full text-sm text-ink file:mr-3 file:min-h-10 file:rounded-md file:border file:border-line-strong file:bg-surface file:px-3 file:text-sm file:font-medium pointer-coarse:file:min-h-11"
-                    onChange={(event) => form.setData('file', event.target.files?.[0] ?? null)}
+                <FileInput ref={input} accept={forChoice ? IMAGE_ACCEPT : ACCEPT} onChange={(event) => form.setData('file', event.target.files?.[0] ?? null)}
                 />
             </FormField>
             <FormField

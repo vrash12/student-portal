@@ -7,6 +7,7 @@ import { cn } from '@/lib/cn';
 import { activeItemHref, staffNavigation } from '@/lib/navigation';
 import { usePermissions } from '@/lib/permissions';
 import { routes } from '@/lib/routes';
+import { useFocusMainOnNavigate } from '@/lib/use-focus-main-on-navigate';
 
 const DESKTOP_QUERY = '(min-width: 1024px)';
 
@@ -16,6 +17,7 @@ const DESKTOP_QUERY = '(min-width: 1024px)';
  */
 export default function StaffLayout({ children }: { children: ReactNode }) {
     const { url } = usePage();
+    useFocusMainOnNavigate();
     const [navigationOpen, setNavigationOpen] = useState(false);
 
     useEffect(() => {

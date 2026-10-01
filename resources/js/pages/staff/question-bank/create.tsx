@@ -1,10 +1,10 @@
 import { Head, useForm } from '@inertiajs/react';
 import { ClipboardList } from 'lucide-react';
-import type { FormEvent } from 'react';
+import { useRef, type FormEvent } from 'react';
 import { focusFirstInvalidField, QuestionForm } from '@/components/question-bank/question-form';
 import { newQuestionFormData, questionPayload, type QuestionFormData } from '@/components/question-bank/question-form-data';
 import { useUnsavedChangesWarning } from '@/components/question-bank/use-unsaved-changes-warning';
-import { ButtonLink } from '@/components/ui/button';
+import { Button, ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { routes } from '@/lib/routes';
@@ -24,6 +24,9 @@ export default function CreateQuestion({ subjects, selectedSubjectId, types, lim
     const selected = subjects.find((subject) => String(subject.id) === form.data.subject_id) ?? null;
     const cancelHref = routes.questionBank.index(selectedSubjectId === null ? {} : { subject: String(selectedSubjectId) });
 
+    // Set by "Save and Add Another": the server then returns to a new, empty form for the same subject.
+    const addAnother = useRef(false);
+
     useUnsavedChangesWarning(form.isDirty && !form.processing, routes.questionBank.store());
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -32,15 +35,17 @@ export default function CreateQuestion({ subjects, selectedSubjectId, types, lim
             return;
         }
 
-        form.transform((data) => questionPayload(data, { includeSubject: true, includeContent: true }));
-        form.post(routes.questionBank.store(), { preserveScroll: true, onError: focusFirstInvalidField });
+        const another = addAnother.current;
+        addAnother.current = false;
+        form.transform((data) => ({ ...questionPayload(data, { includeSubject: true, includeContent: true }), ...(another ? { add_another: true } : {}) }));
+        form.post(routes.questionBank.store(), { preserveScroll: !another, preserveState: another ? 'errors' : undefined, onSuccess: () => { if (another) form.reset(); }, onError: focusFirstInvalidField });
     };
 
     return (
         <>
             <Head title="Add Question" />
 
-            <div className="mx-auto max-w-3xl">
+            <div className="mx-auto max-w-6xl">
                 <PageHeader
                     title="Add Question"
                     description="Questions can be reused in quizzes and examinations of the same subject. After saving, add images, audio, or video from Edit."
@@ -64,6 +69,11 @@ export default function CreateQuestion({ subjects, selectedSubjectId, types, lim
                         types={types}
                         limits={limits}
                         submitLabel="Save Question"
+                        extraActions={
+                            <Button type="submit" variant="secondary" disabled={form.processing} onClick={() => (addAnother.current = true)}>
+                                Save and Add Another
+                            </Button>
+                        }
                         cancelHref={cancelHref}
                         onSubmit={submit}
                     />

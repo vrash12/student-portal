@@ -1,5 +1,6 @@
 import { Head, usePage } from '@inertiajs/react';
 import { Ban, CircleAlert, FileQuestion, Wrench, type LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { ButtonLink } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 import { routes } from '@/lib/routes';
@@ -45,7 +46,8 @@ export default function ErrorPage({ status }: ErrorPageProps) {
         <>
             <Head title={title} />
 
-            <div className={cn('flex flex-col items-center text-center', standalone ? 'min-h-dvh justify-center px-4 py-12' : 'py-10')}>
+            {/* Without a layout (server errors) this page provides its own main landmark. */}
+            <ErrorBody standalone={standalone}>
                 <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-neutral-bg text-ink-muted">
                     <Icon className="size-6" aria-hidden="true" />
                 </div>
@@ -57,7 +59,19 @@ export default function ErrorPage({ status }: ErrorPageProps) {
                         {signedIn || standalone ? 'Go to Home' : 'Go to Sign In'}
                     </ButtonLink>
                 </div>
-            </div>
+            </ErrorBody>
         </>
+    );
+}
+
+function ErrorBody({ standalone, children }: { standalone: boolean; children: ReactNode }) {
+    const classes = cn('flex flex-col items-center text-center', standalone ? 'min-h-dvh justify-center px-4 py-12' : 'py-10');
+
+    return standalone ? (
+        <main id="main-content" className={classes}>
+            {children}
+        </main>
+    ) : (
+        <div className={classes}>{children}</div>
     );
 }

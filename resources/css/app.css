@@ -21,12 +21,12 @@
 
     /* Lines */
     --color-line: #dde2e0; /* dividers and container borders */
-    --color-line-strong: #879390; /* form control borders, 3.2:1 */
+    --color-line-strong: #7a8682; /* form control borders, 3.3:1 or more on every surface */
 
     /* Text */
     --color-ink: #17201c; /* primary text */
     --color-ink-muted: #4f5b56; /* secondary text, 7.1:1 */
-    --color-ink-subtle: #66726d; /* helper text, 5.0:1 */
+    --color-ink-subtle: #5d6964; /* helper text, 5.0:1 or more on tinted surfaces */
 
     /* Primary: restrained institutional green */
     --color-primary-50: #eef6f1;

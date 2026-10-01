@@ -8,7 +8,8 @@ import { cn } from '@/lib/cn';
  */
 export function Table({ caption, children, className }: { caption: string; children: ReactNode; className?: string }) {
     return (
-        <div className="overflow-x-auto">
+        // relative: visually hidden labels (sr-only, absolutely positioned) stay inside the scroll area instead of widening the page.
+        <div className="relative overflow-x-auto">
             <table className={cn('w-full min-w-[40rem] text-left text-sm', className)}>
                 <caption className="sr-only">{caption}</caption>
                 {children}

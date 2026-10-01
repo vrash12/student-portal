@@ -2,9 +2,13 @@ import {
     Activity,
     BookOpen,
     CalendarRange,
+    ClipboardCheck,
     Dumbbell,
+    FileChartColumn,
     GraduationCap,
+    History,
     LayoutDashboard,
+    Library,
     ReceiptText,
     School,
     ShieldCheck,
@@ -48,8 +52,8 @@ export const staffNavigation: NavigationSection[] = [
     {
         label: 'Teaching',
         items: [
-            { label: 'Question Bank', href: routes.questionBank.index(), icon: BookOpen, permission: Permission.ManageQuestionBank },
-            { label: 'Examinations', href: '/examinations', icon: BookOpen, permission: Permission.ManageExaminations, activeFor: ['/examination-attempts'] },
+            { label: 'Question Bank', href: routes.questionBank.index(), icon: Library, permission: Permission.ManageQuestionBank },
+            { label: 'Examinations', href: '/examinations', icon: ClipboardCheck, permission: Permission.ManageExaminations, activeFor: ['/examination-attempts'] },
             {
                 label: `My ${terms.classBatch.plural}`,
                 href: routes.teaching.classes.index(),
@@ -62,7 +66,7 @@ export const staffNavigation: NavigationSection[] = [
     {
         label: 'Academics',
         items: [
-            { label: 'Reports', href: '/reports', icon: Activity, permission: Permission.ViewReports },
+            { label: 'Reports', href: '/reports', icon: FileChartColumn, permission: Permission.ViewReports },
             {
                 label: 'Academic Monitoring',
                 href: routes.monitoring.index(),
@@ -96,7 +100,7 @@ export const staffNavigation: NavigationSection[] = [
     {
         label: 'Administration',
         items: [
-            { label: 'Audit History', href: '/audit-history', icon: ShieldCheck, permission: Permission.ViewAuditHistory },
+            { label: 'Audit History', href: '/audit-history', icon: History, permission: Permission.ViewAuditHistory },
             {
                 label: 'Instructors',
                 href: routes.instructors.index(),

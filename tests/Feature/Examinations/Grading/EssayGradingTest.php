@@ -321,8 +321,14 @@ class EssayGradingTest extends TestCase
         $this->assertSame(3, $grade->version);
         $this->assertSame($this->alpha->id, (int) $grade->graded_by);
 
+        // History names the question by the number the candidate saw, not by its internal id.
+        $questionNumber = collect($attempt->fresh()->delivery)->values()->search(fn (array $item) => (int) $item['id'] === $this->shortEssay->id) + 1;
+        $this->assertSame(2, $questionNumber);
+
         $this->actingAs($this->alpha)->get('/examination-attempts/'.$attempt->id.'/grading')->assertInertia(fn (Assert $page) => $page
             ->has('history.data', 3)
+            ->where('history.data.0.itemId', $this->shortEssay->id)->where('history.data.0.itemNumber', $questionNumber)
+            ->where('questions.0.number', $questionNumber)
             ->where('history.data.0.before', '1.50')->where('history.data.0.reason', 'Clarified feedback')
             ->where('history.data.2.before', null)->where('history.data.2.after', '2.00')
             ->where('questions.0.version', 3));

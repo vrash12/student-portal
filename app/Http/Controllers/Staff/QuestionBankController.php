@@ -96,6 +96,13 @@ class QuestionBankController extends Controller
     {
         $question = $this->questions->create($request->subject(), $request->questionData(), $request->user());
 
+        // "Save and Add Another": a new, empty form for the same subject.
+        if ($request->boolean('add_another')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => 'Question saved. Add the next one.']);
+
+            return redirect()->route('question-bank.create', ['subject' => $question->subject_id]);
+        }
+
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Question saved.']);
 
         return redirect()->route('question-bank.show', $question);

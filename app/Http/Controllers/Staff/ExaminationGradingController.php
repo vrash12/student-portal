@@ -48,23 +48,29 @@ final class ExaminationGradingController extends Controller
         $attempt = $scoring->reconcile($attempt);
         $attempt->load(['candidate', 'examination', 'essayGrades.grader']);
         $grades = $attempt->essayGrades->keyBy('examination_question_id');
-        $questions = collect($attempt->delivery)->filter(fn (array $item) => $item['question']['type']['value'] === 'essay')->map(function (array $item) use ($attempt, $grades) {
+        // Question numbers as the candidate saw them (1-based, in the attempt's delivered order).
+        $positions = collect($attempt->delivery)->values()->mapWithKeys(fn (array $item, int $index) => [$item['id'] => $index + 1]);
+        $questions = collect($attempt->delivery)->filter(fn (array $item) => $item['question']['type']['value'] === 'essay')->map(function (array $item) use ($attempt, $grades, $positions) {
             $grade = $grades->get($item['id']);
 
             return [
-                'id' => $item['id'], 'prompt' => $item['question']['prompt'], 'media' => $item['question']['media'] ?? [],
+                'id' => $item['id'], 'number' => $positions->get($item['id']), 'prompt' => $item['question']['prompt'], 'media' => $item['question']['media'] ?? [],
                 'answer' => $attempt->answers[$item['id']]['value'] ?? '', 'maxPoints' => $item['points'],
                 'grade' => $grade?->score, 'comment' => $grade?->comment, 'version' => $grade?->version ?? 0,
                 'grader' => $grade?->grader->name, 'gradedAt' => $grade?->graded_at?->toIso8601String(),
             ];
         })->values();
         $history = ExaminationEssayRevision::with('actor')->whereIn('examination_essay_grade_id', $grades->pluck('id'))->latest('id')->paginate(20, ['*'], 'history_page');
-        $history->through(fn ($revision) => [
-            'id' => $revision->id, 'itemId' => $grades->firstWhere('id', $revision->examination_essay_grade_id)->examination_question_id,
-            'actor' => $revision->actor->name, 'at' => $revision->created_at->toIso8601String(),
-            'before' => $revision->previous_score, 'after' => $revision->new_score,
-            'commentBefore' => $revision->previous_comment, 'commentAfter' => $revision->new_comment, 'reason' => $revision->reason,
-        ]);
+        $history->through(function ($revision) use ($grades, $positions) {
+            $itemId = $grades->firstWhere('id', $revision->examination_essay_grade_id)->examination_question_id;
+
+            return [
+                'id' => $revision->id, 'itemId' => $itemId, 'itemNumber' => $positions->get($itemId),
+                'actor' => $revision->actor->name, 'at' => $revision->created_at->toIso8601String(),
+                'before' => $revision->previous_score, 'after' => $revision->new_score,
+                'commentBefore' => $revision->previous_comment, 'commentAfter' => $revision->new_comment, 'reason' => $revision->reason,
+            ];
+        });
 
         return Inertia::render('staff/examinations/grade-attempt', [
             'examination' => ['id' => $attempt->examination_id, 'title' => $attempt->examination->title],

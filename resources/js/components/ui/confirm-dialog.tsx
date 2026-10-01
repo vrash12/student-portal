@@ -41,6 +41,8 @@ export function ConfirmDialog({
 
         if (open && !dialog.open) {
             dialog.showModal();
+            // Explicit: React does not write autoFocus to the HTML.
+            dialog.querySelector<HTMLButtonElement>('[data-dialog-cancel]')?.focus();
         } else if (!open && dialog.open) {
             dialog.close();
         }
@@ -69,7 +71,7 @@ export function ConfirmDialog({
             </div>
             <div className="flex flex-col-reverse gap-2 rounded-b-xl border-t border-line bg-surface-muted px-6 py-4 sm:flex-row sm:justify-end">
                 {/* Cancel receives initial focus so Enter never confirms by accident. */}
-                <Button variant="secondary" onClick={onCancel} disabled={processing} autoFocus>
+                <Button variant="secondary" onClick={onCancel} disabled={processing} data-dialog-cancel>
                     {cancelLabel}
                 </Button>
                 <Button variant={tone} onClick={onConfirm} loading={processing}>

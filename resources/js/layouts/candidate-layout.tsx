@@ -6,6 +6,7 @@ import { buttonClasses } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/toaster';
 import { pruneRecovery, setRecoveryOwner } from '@/lib/exam-recovery';
 import { routes } from '@/lib/routes';
+import { useFocusMainOnNavigate } from '@/lib/use-focus-main-on-navigate';
 
 /**
  * Candidate examination portal shell (UI_UX_DESIGN.md Â§20): deliberately
@@ -15,6 +16,7 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
     const { app, auth } = usePage().props;
     const { component } = usePage();
     const userId = auth.user?.id ?? null;
+    useFocusMainOnNavigate();
     // Set during render: child pages (the attempt screen) read recovery data
     // in their own effects, which run before this layout's effects.
     setRecoveryOwner(userId);
@@ -47,7 +49,8 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
                                 <p className="truncate text-xs text-primary-100">{auth.user.username}</p>
                             </div>
                         )}
-                        <Link
+                        {/* Hidden during an attempt: one tap would sign the candidate out mid-examination. */}
+                        {component !== 'portal/examinations/attempt' && <Link
                             href={routes.logout()}
                             method="post"
                             as="button"
@@ -56,7 +59,7 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
                         >
                             <LogOut className="size-4" aria-hidden="true" />
                             Sign Out
-                        </Link>
+                        </Link>}
                     </div>
                 </div>
                 {component !== 'portal/examinations/attempt' && <nav aria-label="Candidate portal" className="mx-auto flex max-w-7xl gap-2 px-4 pb-3 sm:px-6">
@@ -65,7 +68,7 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
                 </nav>}
             </header>
 
-            <main id="main-content" tabIndex={-1} className={`mx-auto w-full ${component === 'portal/examinations/attempt' ? 'max-w-5xl' : 'max-w-7xl'} flex-1 px-4 py-8 sm:px-6`}>
+            <main id="main-content" tabIndex={-1} className={`mx-auto w-full ${component === 'portal/examinations/attempt' ? 'max-w-6xl' : 'max-w-7xl'} flex-1 px-4 py-8 sm:px-6`}>
                 {children}
             </main>
 

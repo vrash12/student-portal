@@ -4,7 +4,7 @@ import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Panel } from '@/components/ui/panel';
 import { Pagination } from '@/components/ui/pagination';
-import { StatusBadge } from '@/components/ui/status-badge';
+import { StatusBadge, type StatusTone } from '@/components/ui/status-badge';
 import { OverallStandingValue } from '@/components/grading/standing';
 import { formatCalendarDate, formatPercent, useDateFormatter } from '@/lib/format';
 import type { Paginated } from '@/types';
@@ -30,9 +30,9 @@ export default function PortalHome({ summary, available, upcoming, outstanding, 
         <section className="brand-dark mb-6 overflow-hidden rounded-2xl border border-primary-800 bg-primary-800 text-white shadow-md" aria-labelledby="welcome-title">
             <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center">
                 <div className="min-w-0">
-                    <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-accent-300">Your academic journey</p>
+                    <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-accent-300">My Home</p>
                     <h1 id="welcome-title" className="text-2xl font-bold tracking-tight sm:text-3xl">Welcome, {summary.name}</h1>
-                    <p className="mt-3 max-w-xl text-sm leading-relaxed text-primary-100">Stay on top of your examinations, review your progress and keep your academic records close at hand.</p>
+                    <p className="mt-3 max-w-xl text-sm leading-relaxed text-primary-100">Your examinations, results and academic standing.</p>
                     <div className="mt-5 flex flex-wrap gap-2 text-xs font-medium">
                         <span className="rounded-md border border-white/20 px-3 py-2">Candidate {summary.number}</span>
                         <span className="rounded-md border border-white/20 px-3 py-2">{summary.className ?? 'Class not assigned'}</span>
@@ -68,7 +68,7 @@ export default function PortalHome({ summary, available, upcoming, outstanding, 
                     <Pagination page={outstanding} noun={{ one: 'assessment', other: 'assessments' }} />
                 </Panel>
                 <div id="recent-results" className="min-w-0 scroll-mt-6"><Panel title="Recent Released Results" description="Your six most recent graded submissions whose results have been released." bodyClassName="p-0">
-                    {recentResults.length === 0 ? <p className="p-5 text-sm text-ink-muted">No released results yet. Results appear after grading and instructor release.</p> : <ul className="divide-y divide-line">{recentResults.map((result) => <li key={result.id} className="p-5"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{result.title}</p><p className="mt-1 text-sm text-ink-muted">{result.subject} · {result.kind}</p></div><span className="font-semibold tabular-nums">{formatPercent(result.percentage)}</span></div><p className="mt-1 text-xs text-ink-muted">Attempt {result.attemptNumber} · Submitted {dates.dateTime(result.submittedAt)}</p>{result.passed !== null && <div className="mt-2"><StatusBadge tone={result.passed ? 'success' : 'danger'}>{result.passed ? 'Passed' : 'Failed'}</StatusBadge></div>}</li>)}</ul>}
+                    {recentResults.length === 0 ? <p className="p-5 text-sm text-ink-muted">No released results yet. Results appear after grading and instructor release.</p> : <ul className="divide-y divide-line">{recentResults.map((result) => <li key={result.id} className="p-5"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{result.title}</p><p className="mt-1 text-sm text-ink-muted">{result.subject} · {result.kind}</p></div><span className="font-semibold tabular-nums">{formatPercent(result.percentage)}</span></div><p className="mt-1 text-xs text-ink-muted">Attempt {result.attemptNumber} · Submitted {dates.dateTime(result.submittedAt)}</p>{result.passed !== null && <div className="mt-2"><StatusBadge tone={result.passed ? 'success' : 'danger'}>{result.passed ? 'Passed' : 'Not passed'}</StatusBadge></div>}</li>)}</ul>}
                     <div className="border-t border-line p-4"><ButtonLink href="/portal/profile" variant="secondary">View Academic Record</ButtonLink></div>
                 </Panel></div>
             </div>
@@ -79,11 +79,27 @@ export default function PortalHome({ summary, available, upcoming, outstanding, 
 function ExamCard({ exam, upcoming = false }: { exam: Exam; upcoming?: boolean }) {
     const dates = useDateFormatter();
     const exhausted = exam.attemptsUsed >= exam.attemptLimit;
-    return <article className="flex flex-col rounded-xl border border-primary-200 border-t-4 border-t-primary-600 bg-surface-muted p-5">
-        <p className="text-xs font-medium text-ink-muted">{exam.kind}</p><h3 className="mt-1 text-lg font-semibold">{exam.title}</h3><p className="text-sm text-ink-muted">{exam.subject}</p>
-        <p className="mt-3 flex items-center gap-2 text-sm"><Clock3 className="size-4" aria-hidden="true" />{exam.durationMinutes} minute limit</p>
-        <p className="mt-1 text-sm text-ink-muted">{upcoming ? `Opens ${dates.dateTime(exam.opensAt)}` : exam.closesAt ? `Closes ${dates.dateTime(exam.closesAt)}` : 'No closing date scheduled'}</p>
-        <p className="mt-1 text-sm text-ink-muted">{exam.attemptsUsed} of {exam.attemptLimit} attempts used</p>
-        <div className="mt-4"><ButtonLink size="lg" variant={upcoming || exhausted ? 'secondary' : 'primary'} href={exam.resumeId && !upcoming ? `/portal/attempts/${exam.resumeId}` : `/portal/examinations/${exam.id}`}>{upcoming ? 'View Details' : exam.resumeId ? 'Continue Examination' : exhausted ? 'View Attempts' : exam.attemptsUsed > 0 ? 'Review / Try Again' : 'View & Start'}</ButtonLink></div>
+    // The state of this examination for the candidate, in words and with an icon (never color alone).
+    const state: { tone: StatusTone; label: string } = upcoming
+        ? { tone: 'neutral', label: 'Scheduled' }
+        : exam.resumeId
+          ? { tone: 'warning', label: 'In progress' }
+          : exhausted
+            ? { tone: 'neutral', label: 'All attempts used' }
+            : { tone: 'success', label: 'Open now' };
+
+    return <article className="flex flex-col rounded-xl border border-line border-t-4 border-t-primary-600 bg-surface p-5 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{exam.kind}</p>
+            <StatusBadge tone={state.tone}>{state.label}</StatusBadge>
+        </div>
+        <h3 className="mt-2 text-lg font-semibold leading-snug">{exam.title}</h3>
+        <p className="text-sm text-ink-muted">{exam.subject}</p>
+        <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-surface-muted p-3 text-sm">
+            <div><dt className="text-xs text-ink-muted">Time limit</dt><dd className="mt-0.5 flex items-center gap-1.5 font-medium"><Clock3 className="size-4" aria-hidden="true" />{exam.durationMinutes} min</dd></div>
+            <div><dt className="text-xs text-ink-muted">Attempts</dt><dd className="mt-0.5 font-medium">{exam.attemptsUsed} of {exam.attemptLimit} used</dd></div>
+            <div className="col-span-2"><dt className="text-xs text-ink-muted">{upcoming ? 'Opens' : 'Closes'}</dt><dd className="mt-0.5 font-medium">{upcoming ? dates.dateTime(exam.opensAt) : exam.closesAt ? dates.dateTime(exam.closesAt) : 'No closing date'}</dd></div>
+        </dl>
+        <div className="mt-auto pt-4"><ButtonLink size="lg" className="w-full" variant={upcoming || exhausted ? 'secondary' : 'primary'} href={exam.resumeId && !upcoming ? `/portal/attempts/${exam.resumeId}` : `/portal/examinations/${exam.id}`}>{upcoming ? 'View Details' : exam.resumeId ? 'Continue Examination' : exhausted ? 'View Attempts' : exam.attemptsUsed > 0 ? 'View and Try Again' : 'View and Start'}</ButtonLink></div>
     </article>;
 }

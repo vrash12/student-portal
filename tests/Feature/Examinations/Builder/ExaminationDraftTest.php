@@ -42,7 +42,8 @@ class ExaminationDraftTest extends TestCase
         ]));
 
         $exam = Examination::sole();
-        $response->assertRedirect('/examinations/'.$exam->id)->assertSessionHasNoErrors();
+        // A new draft continues to step 2: choosing questions.
+        $response->assertRedirect('/examinations/'.$exam->id.'/questions')->assertSessionHasNoErrors();
         $this->assertSame('draft', $exam->status->value);
         $this->assertSame(ExaminationKind::Examination, $exam->kind);
         $this->assertSame($this->alphaOffering->id, $exam->class_subject_id);

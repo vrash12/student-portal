@@ -72,9 +72,10 @@ On 2026-10-01 the local database was reset to a small set for client demonstrati
 | `admin` | Super Administrator |
 | `instructor1` | Instructor, Subject 1 |
 | `instructor2` | Instructor, Subject 2 |
+| `finance1` | Finance Officer (Statements of Account) |
 | `student01` … `student20` | Candidates in Class A |
 
-It includes grading weights, passing/warning grades (75/80), finalized scores (a mix of Passing, At Risk, Failing and Incomplete), five questions per subject and one published online quiz per subject, open for 7 days, plus three sample fitness events (placeholder standards) and a "Diagnostic Fitness Test" with synthetic results for Class A (`DemoFitnessSeeder`, also runnable on its own). To rebuild it on an empty database (this deletes all data):
+It includes grading weights, passing/warning grades (75/80), finalized scores (a mix of Passing, At Risk, Failing and Incomplete), five questions per subject and one published online quiz per subject, open for 7 days, plus three sample fitness events (placeholder standards) and a "Diagnostic Fitness Test" with synthetic results for Class A (`DemoFitnessSeeder`, also runnable on its own), plus sample Statement of Account entries (`DemoAccountStatementsSeeder`). To rebuild it on an empty database (this deletes all data):
 
 ```bash
 php artisan migrate:fresh
@@ -111,6 +112,7 @@ The test suite refuses to run against any database whose name does not end in `_
 
 ## Internal deployment notes
 
+- Sign-in image: place a photo in `public/branding/` (for example `login.jpg`) and set `LOGIN_IMAGE_URL=/branding/login.jpg` in `.env`. It fills the left panel of the sign-in page on wide screens; without it the panel shows the institution's mark and names. Run `php artisan config:clear` if configuration is cached.
 - Set `APP_ENV=production` and `APP_DEBUG=false`. Error pages then never show stack traces.
 - Use a dedicated database account limited to this application's database. Never use `root` in production.
 - Serve the application over HTTPS on the internal network. Secure cookies (`SESSION_SECURE_COOKIE=true`), browser-history encryption (`INERTIA_ENCRYPT_HISTORY=true`), and the tablet PWA all require a secure context.

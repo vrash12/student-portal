@@ -39,9 +39,10 @@ final class ExaminationController
     {
         $exam = $service->create($request->user(), $request->settings());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Draft saved. Add questions and review before publishing.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Draft saved. Next, choose its questions.']);
 
-        return redirect('/examinations/'.$exam->id);
+        // Step 2 of the builder: choosing questions.
+        return redirect('/examinations/'.$exam->id.'/questions');
     }
 
     public function edit(Examination $examination, Request $request)

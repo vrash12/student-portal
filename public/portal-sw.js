@@ -1,7 +1,7 @@
 /* Cache public assets only. Never cache authenticated HTML, questions or answers. */
-const CACHE = 'candidate-assets-v1';
+const CACHE = 'candidate-assets-v2';
 self.addEventListener('install', event => {
- event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(['/portal-offline.html','/branding/logo-512.png'])));
+ event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(['/portal-offline.html','/branding/logo-512.png','/branding/logo-192.png'])));
 });
 self.addEventListener('activate', event => {
  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('candidate-assets-') && key !== CACHE).map(key => caches.delete(key)))));

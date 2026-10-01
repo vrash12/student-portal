@@ -5,6 +5,7 @@ import {
     useId,
     useState,
     type InputHTMLAttributes,
+    type Ref,
     type ReactNode,
     type SelectHTMLAttributes,
     type TextareaHTMLAttributes,
@@ -97,6 +98,26 @@ export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInput
         <input
             {...fieldAttributes(field)}
             className={cn(controlClasses, stateClasses(Boolean(field?.invalid)), className)}
+            {...props}
+        />
+    );
+}
+
+/**
+ * A file picker linked to its FormField label, hint and error like the other
+ * controls. The browser's own button is styled as a touch-sized button.
+ */
+export function FileInput({ className, ...props }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & { ref?: Ref<HTMLInputElement> }) {
+    const field = useFormField();
+
+    return (
+        <input
+            {...fieldAttributes(field)}
+            type="file"
+            className={cn(
+                'block w-full text-sm text-ink file:mr-3 file:min-h-10 file:rounded-md file:border file:border-line-strong file:bg-surface file:px-3 file:text-sm file:font-medium disabled:cursor-not-allowed disabled:text-ink-subtle pointer-coarse:file:min-h-11',
+                className,
+            )}
             {...props}
         />
     );

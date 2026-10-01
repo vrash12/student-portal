@@ -39,7 +39,7 @@ export default function EditQuestion({ question, topics, types, limits }: EditQu
         <>
             <Head title={`Edit Question · ${question.subject.name}`} />
 
-            <div className="mx-auto max-w-3xl">
+            <div className="mx-auto max-w-6xl">
                 <PageHeader
                     title="Edit Question"
                     description={`${question.subject.name} · ${question.type.label}`}
@@ -72,7 +72,10 @@ export default function EditQuestion({ question, topics, types, limits }: EditQu
                     onSubmit={submit}
                 />
 
-                <QuestionMediaManager question={question} />
+                {/* Aligned with the form column, beside the preview on wide screens. */}
+                <div className={question.isLocked ? '' : 'lg:mr-[22.5rem]'}>
+                    <QuestionMediaManager question={question} />
+                </div>
             </div>
         </>
     );
