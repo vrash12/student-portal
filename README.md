@@ -60,7 +60,7 @@ The demo seeders create clearly fictional data: staff accounts, one active acade
 
 | Username | Role |
 | --- | --- |
-| `admin` | Super Administrator |
+| `admin` | Admin |
 | `academic.admin` | Academic Administrator |
 | `instructor.alpha`, `instructor.bravo` | Instructor |
 | `2026-0001` … `2026-0010` | Candidate (candidates sign in with their candidate number) |
@@ -71,7 +71,7 @@ On 2026-10-01 the local database was reset to a small set for client demonstrati
 
 | Username | Role |
 | --- | --- |
-| `admin` | Super Administrator (Teresita P. Vergara) |
+| `admin` | Admin (Teresita P. Vergara) |
 | `instructor1` | Instructor, Subject 1 (Ramon S. Estrada) |
 | `instructor2` | Instructor, Subject 2 (Liza M. Tan) |
 | `student01` … `student20` | Candidates in Class A (fictional Filipino names, e.g. `student01` Mark Anthony Dizon Villanueva) |

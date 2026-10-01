@@ -6,7 +6,7 @@ This repository contains an **internal Academic Monitoring, Assessment, and Exam
 
 The system is designed primarily for:
 
-- Super Administrators
+- Admins
 - Academic Administrators
 - Instructors
 - Candidates / students using organization-issued tablets for examinations and quizzes
@@ -263,7 +263,7 @@ Support authenticated access for different user roles.
 
 Potential roles:
 
-- Super Administrator
+- Admin
 - Academic Administrator
 - Instructor
 - Candidate
@@ -1904,7 +1904,7 @@ Do **not** implement the following unless explicitly requested later:
 - biometric authentication
 - proctoring / webcam monitoring (exception approved by the owner on 2026-10-01: the examination page records when a candidate leaves the exam screen — tab/app switch or another window focused — as an indicator for instructors; no camera, microphone, screen capture, or automatic penalties)
 - multi-tenant SaaS architecture
-- payment functionality (owner decision 2026-10-01: only the Expenses feature remains — the Super Administrator defines expenses and assign them to a class or chosen candidates; the Statement of Account pages, PDF and candidate view, and the Finance Officer role, were removed; candidates are scholars, no payments)
+- payment functionality (owner decision 2026-10-01: only the Expenses feature remains — the Admin defines expenses and assign them to a class or chosen candidates; the Statement of Account pages, PDF and candidate view, and the Finance Officer role, were removed; candidates are scholars, no payments)
 - public registration
 
 Focus only on the requirements currently needed for the prototype and initial system.

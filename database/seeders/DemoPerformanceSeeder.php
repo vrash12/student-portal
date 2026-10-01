@@ -341,7 +341,7 @@ class DemoPerformanceSeeder extends Seeder
         return ($date->greaterThan($today) ? $today : $date)->toDateString();
     }
 
-    /** The administrator who records (`admin` in the demo set, else any Super Administrator). */
+    /** The administrator who records (`admin` in the demo set, else any Admin). */
     private function administrator(): ?User
     {
         return User::query()->where('username', 'admin')->first()

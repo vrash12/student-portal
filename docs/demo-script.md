@@ -8,7 +8,7 @@ Every demo account uses the password `password`.
 
 | Username | Role | Used for |
 | --- | --- | --- |
-| `admin` | Super Administrator | Dashboard, monitoring, candidates, classes, qualification, records, audit history |
+| `admin` | Admin | Dashboard, monitoring, candidates, classes, qualification, records, audit history |
 | `instructor1` | Instructor, Subject 1 | Gradebook, question bank, examination builder, live monitoring, essay grading |
 | `instructor2` | Instructor, Subject 2 | Second instructor (shows that each instructor sees only their own subject) |
 | `student01` … `student20` | Candidates, Class A | Tablet examination, own grades, performance |

@@ -103,7 +103,7 @@ class DemoAccountStatementsSeeder extends Seeder
         }
     }
 
-    /** The administrator who charges candidates (`admin` in the demo set, else any Super Administrator). */
+    /** The administrator who charges candidates (`admin` in the demo set, else any Admin). */
     private function administrator(): ?User
     {
         return User::query()->where('username', 'admin')->first()

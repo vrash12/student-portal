@@ -55,7 +55,7 @@ Create a secure role-based access foundation.
 
 Initial roles:
 
-- Super Administrator
+- Admin
 - Academic Administrator
 - Instructor
 - Candidate
@@ -939,7 +939,7 @@ Implemented at the owner's request (details and decisions in `SESSION_HANDOFF.md
 - Leave-screen detection during examinations (indicator for instructors only)
 - Images, audio, and video attached to questions
 - Component test pass: every module has automated tests (1,099 passing on 2026-10-01)
-- Standard military fitness testing; charts on dashboards and reports; Expenses assigned by the Super Administrator
+- Standard military fitness testing; charts on dashboards and reports; Expenses assigned by the Admin
 - OCS performance: merits and demerits, attendance, company/platoon, performance areas with qualification and class rank (staff only)
 - Candidate portal split into Home, Examinations, My Grades, My Performance, Physical Fitness and My Information pages, with icons and charts (own records only, no rank)
 

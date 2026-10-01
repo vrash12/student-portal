@@ -31,6 +31,10 @@ Updated 2026-10-01 by Claude Code (earlier sections by Codex, 2026-09-30). Read 
 - **Open owner decisions** are under "Requirements still needing confirmation" at the end of this file, plus whether to deactivate the "Pay & Allowances" and "Deductions" account categories.
 - Extra test databases `academic_system_{r1,r2,r3,w1,w2,w3,v1…v12,login}_testing` exist from parallel runs and can be dropped.
 
+## Owner request — "Super Administrator" shown as "Admin" (2026-10-02, Claude Code)
+
+- **Request:** "instead of super admin, just replace it with just 'admin' term". `SystemRole::SuperAdministrator->label()` is now **"Admin"**; `AccessControlSeeder` writes it to `roles.name`, so every page that shows the role (top bar, Users, Roles & Permissions, dashboard Active Accounts) says "Admin". The role code `super_admin`, the enum case and all permissions are unchanged, so no stored record or rule changed. "Academic Administrator" is unchanged. Docs (AGENTS, README, MILESTONES, demo script) updated. Local DB: `AccessControlSeeder` run. Tests: Auth, Security, Reporting and Accounts suites, 201 passing; Pint. Deployed to Hostinger (see the Hostinger section).
+
 ## Owner request — Military Fitness for instructors, staff only, points tables (2026-10-02, Claude Code)
 
 - **Request:** "make the Military Fitness as well to the instructor. just make the military fitness only can be seen by admin, instructor will adjust on it. make as well the push ups, sit ups, runs, and other exercises configurable points reps and points."

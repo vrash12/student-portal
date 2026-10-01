@@ -26,7 +26,7 @@ use RuntimeException;
  * Small, simple data set for client demonstrations (requested by the owner
  * on 2026-10-01), meant for an otherwise empty database:
  *
- *   admin                      Super Administrator
+ *   admin                      Admin
  *   instructor1, instructor2   Instructors (Subject 1 and Subject 2)
  *   student01 … student20      Candidates in Class A
  *

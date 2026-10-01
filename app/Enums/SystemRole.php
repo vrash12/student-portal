@@ -19,7 +19,7 @@ enum SystemRole: string
     public function label(): string
     {
         return match ($this) {
-            self::SuperAdministrator => 'Super Administrator',
+            self::SuperAdministrator => 'Admin',
             self::AcademicAdministrator => 'Academic Administrator',
             self::Instructor => 'Instructor',
             self::Candidate => 'Candidate',
@@ -79,7 +79,7 @@ enum SystemRole: string
         ];
 
         return match ($this) {
-            // Expenses: the Super Administrator charges candidates (there is
+            // Expenses: the Admin charges candidates (there is
             // no finance role; owner decision 2026-10-01).
             self::SuperAdministrator => [...$academicAdministration, Permission::ViewRoles, Permission::ViewAccounts, Permission::ManageAccounts],
             self::AcademicAdministrator => [...$academicAdministration, Permission::ViewAccounts],
