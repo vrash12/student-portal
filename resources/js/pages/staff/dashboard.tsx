@@ -4,6 +4,7 @@ import { BarList } from '@/components/charts/bar-list';
 import { ChartFigure } from '@/components/charts/chart-figure';
 import { ColumnChart } from '@/components/charts/column-chart';
 import { StandingBreakdown, StandingDistribution } from '@/components/charts/standing-breakdown';
+import { StandingBadge } from '@/components/grading/standing';
 import { AttentionList } from '@/components/monitoring/attention-list';
 import { QualificationDistribution } from '@/components/performance/qualification-distribution';
 import { StandingCounts } from '@/components/monitoring/standing-counts';
@@ -15,7 +16,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { RowAction } from '@/components/ui/table';
-import { formatCalendarDate, useDateFormatter } from '@/lib/format';
+import { formatCalendarDate, formatGrade, useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import type { QualificationOverviewData } from '@/types/candidate-performance';
@@ -472,13 +473,6 @@ function AcademicAlerts({ summary, period }: { summary: MonitoringSummary | null
             title="Academic Alerts"
             headingLevel="h3"
             bodyClassName="p-0"
-            actions={
-                ready && (
-                    <RowAction href={routes.monitoring.index()} label="View all in Academic Monitoring">
-                        View all
-                    </RowAction>
-                )
-            }
         >
             {!ready ? (
                 <EmptyState
@@ -494,6 +488,9 @@ function AcademicAlerts({ summary, period }: { summary: MonitoringSummary | null
     );
 }
 
+/** How many candidates the instructor dashboard lists by name; the rest are one click away. */
+const ALERT_PREVIEW = 3;
+
 function AlertsBody({ summary }: { summary: MonitoringSummary }) {
     const { counts } = summary;
 
@@ -507,28 +504,58 @@ function AlertsBody({ summary }: { summary: MonitoringSummary }) {
         );
     }
 
+    const preview = summary.requiringAttention.slice(0, ALERT_PREVIEW);
     const concerned = counts.failing + counts.atRisk;
 
     return (
-        <>
-            <p className="px-5 py-4 text-sm text-ink">
-                <span className="font-semibold tabular-nums">{concerned}</span> of <span className="tabular-nums">{counts.monitored}</span> monitored{' '}
-                {counts.monitored === 1 ? 'candidate is' : 'candidates are'} failing or at risk in your subjects:{' '}
-                <Link href={routes.monitoring.index({ standing: 'failing' })} className="font-medium text-primary-700 underline">
-                    <span className="tabular-nums">{counts.failing}</span> failing
-                </Link>
-                ,{' '}
-                <Link href={routes.monitoring.index({ standing: 'at_risk' })} className="font-medium text-primary-700 underline">
-                    <span className="tabular-nums">{counts.atRisk}</span> at risk
-                </Link>
-                .
+        <div className="space-y-3 p-4">
+            <div className="grid grid-cols-2 gap-2">
+                <AlertCount href={routes.monitoring.index({ standing: 'failing' })} label="Failing" count={counts.failing} tone="danger" />
+                <AlertCount href={routes.monitoring.index({ standing: 'at_risk' })} label="At Risk" count={counts.atRisk} tone="warning" />
+            </div>
+            <p className="text-xs text-ink-muted">
+                <span className="tabular-nums">{concerned}</span> of <span className="tabular-nums">{counts.monitored}</span> monitored candidates in your subjects.
             </p>
-            {summary.requiringAttention.length > 0 && (
-                <div className="border-t border-line">
-                    <AttentionList candidates={summary.requiringAttention} showGradebook />
-                </div>
+
+            {preview.length > 0 && (
+                <ul className="divide-y divide-line rounded-lg border border-line">
+                    {preview.map((entry) => (
+                        <li key={entry.candidate.id}>
+                            <Link
+                                href={routes.candidates.show(entry.candidate.id)}
+                                className="flex min-h-11 items-center gap-2 px-3 py-2 text-sm hover:bg-surface-muted"
+                                aria-label={`${entry.candidate.name}${entry.mostSerious ? `, ${entry.mostSerious.subject}` : ''}`}
+                            >
+                                <span className="min-w-0 flex-1 truncate font-medium text-ink">{entry.candidate.name}</span>
+                                <StandingBadge standing={entry.standing} />
+                                {entry.mostSerious?.grade != null && <span className="w-12 text-right tabular-nums text-ink-muted">{formatGrade(entry.mostSerious.grade)}</span>}
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
             )}
-        </>
+
+            {concerned > preview.length && (
+                <Link href={routes.monitoring.index()} className="inline-flex min-h-11 items-center text-sm font-medium text-primary-700 hover:underline">
+                    View all {concerned} candidates
+                </Link>
+            )}
+        </div>
+    );
+}
+
+function AlertCount({ href, label, count, tone }: { href: string; label: string; count: number; tone: 'danger' | 'warning' }) {
+    return (
+        <Link
+            href={href}
+            className={
+                'flex items-center justify-between rounded-lg border px-3 py-2 hover:shadow-sm ' +
+                (tone === 'danger' ? 'border-danger-border bg-danger-bg text-danger-fg' : 'border-warning-border bg-warning-bg text-warning-fg')
+            }
+        >
+            <span className="text-sm font-medium">{label}</span>
+            <span className="text-xl font-bold tabular-nums">{count}</span>
+        </Link>
     );
 }
 
