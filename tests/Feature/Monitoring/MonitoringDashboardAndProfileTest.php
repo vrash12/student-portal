@@ -443,8 +443,13 @@ class MonitoringDashboardAndProfileTest extends TestCase
         ];
 
         foreach ($summaries as $label => $summary) {
-            $this->assertEqualsCanonicalizing(self::SUMMARY_KEYS, array_keys($summary), $label);
+            // Teaching alerts also break each taught subject down by standing (aggregates only).
+            $expectedKeys = $label === 'overview' ? self::SUMMARY_KEYS : [...self::SUMMARY_KEYS, 'subjects'];
+            $this->assertEqualsCanonicalizing($expectedKeys, array_keys($summary), $label);
             $this->assertNotEmpty($summary['requiringAttention'], $label);
+            foreach ($summary['subjects'] ?? [] as $subject) {
+                $this->assertEqualsCanonicalizing(['classSubjectId', 'classId', 'subject', 'classBatch', 'average', 'counts'], array_keys($subject), $label);
+            }
 
             foreach ($summary['requiringAttention'] as $entry) {
                 $this->assertEqualsCanonicalizing(self::ENTRY_KEYS, array_keys($entry), $label);

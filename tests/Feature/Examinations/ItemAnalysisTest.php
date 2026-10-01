@@ -249,6 +249,9 @@ class ItemAnalysisTest extends TestCase
         $this->assertEquals(60, $summary['passingScore']);
         $this->assertSame(2, $summary['passed']);
         $this->assertEquals(50, $summary['passRate']);
+        // Score ranges, lowest first: 0 and 50 are below 60, both 100s are 90–100.
+        $this->assertSame(['Below 60', '60–69.99', '70–79.99', '80–89.99', '90–100'], array_column($summary['scoreDistribution'], 'label'));
+        $this->assertSame([2, 0, 0, 0, 2], array_column($summary['scoreDistribution'], 'value'));
     }
 
     public function test_analysis_uses_the_attempt_snapshot_not_the_current_question_bank(): void
@@ -314,6 +317,9 @@ class ItemAnalysisTest extends TestCase
         $this->assertEquals(80, $summary['highest']);
         $this->assertEquals(40, $summary['lowest']);
         $this->assertNull($summary['passRate']);
+        // Attempts awaiting essay grading are not in the score distribution.
+        $this->assertSame(2, array_sum(array_column($summary['scoreDistribution'], 'value')));
+        $this->assertSame([1, 0, 0, 1, 0], array_column($summary['scoreDistribution'], 'value'));
     }
 
     // Scope -----------------------------------------------------------------

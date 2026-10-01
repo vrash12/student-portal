@@ -48,7 +48,7 @@ class DashboardController extends Controller
             'academicOverview' => $showAcademicOverview ? $this->monitoringSummary(MonitoringScope::for($user), $user) : null,
             'showAcademicAlerts' => $showAcademicAlerts,
             // Standings over the subjects the user teaches in the active period.
-            'academicAlerts' => $showAcademicAlerts ? $this->monitoringSummary(MonitoringScope::teaching($user), $user) : null,
+            'academicAlerts' => $showAcademicAlerts ? $this->monitoringSummary(MonitoringScope::teaching($user), $user, withSubjects: true) : null,
             'thresholdSetup' => $user->hasPermission(Permission::ConfigureGrading) ? $this->missingThresholds() : null,
             'accountSummary' => $user->can('viewAny', User::class) ? $this->accountSummary() : null,
             'administratorOverview' => $showAcademicOverview ? $administratorDashboard->overview() : null,
@@ -57,15 +57,30 @@ class DashboardController extends Controller
 
     /**
      * Counts and the candidates requiring attention in the active period,
-     * with only the fields a dashboard shows.
+     * with only the fields a dashboard shows; with `$withSubjects`, also the
+     * standing counts and mean grade of each class subject in scope.
      *
      * @return array<string, mixed>|null
      */
-    private function monitoringSummary(MonitoringScope $scope, User $viewer): ?array
+    private function monitoringSummary(MonitoringScope $scope, User $viewer, bool $withSubjects = false): ?array
     {
-        $summary = $this->monitoring->activePeriodSummary($scope, self::ATTENTION_LIMIT);
+        $summary = $this->monitoring->activePeriodSummary($scope, self::ATTENTION_LIMIT, $withSubjects);
         if ($summary === null) {
             return null;
+        }
+
+        if ($withSubjects) {
+            $summary['subjects'] = array_map(fn (array $row): array => [
+                'classSubjectId' => $row['id'],
+                'classId' => $row['classId'],
+                'subject' => $row['subject'],
+                'classBatch' => $row['classBatch'],
+                'average' => $row['average'],
+                'counts' => [
+                    'passing' => $row['passing'], 'atRisk' => $row['at_risk'], 'failing' => $row['failing'],
+                    'incomplete' => $row['incomplete'], 'noStanding' => $row['none'],
+                ],
+            ], $summary['subjects']);
         }
 
         $taught = $viewer->canTeach()

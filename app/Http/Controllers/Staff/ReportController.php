@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Services\ReportCharts;
 use App\Services\ReportingService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -10,7 +11,7 @@ use Inertia\Inertia;
 
 final class ReportController
 {
-    public function __invoke(Request $request, ReportingService $reports)
+    public function __invoke(Request $request, ReportingService $reports, ReportCharts $charts)
     {
         $filters = $request->validate([
             'type' => ['sometimes', Rule::in(array_keys(ReportingService::TYPES))],
@@ -23,6 +24,8 @@ final class ReportController
         $print = $request->boolean('print');
         $perPage = $print ? 5000 : 25;
         $rows = $report['rows'];
+        // Charts summarize every row of the filtered report, not only the visible page.
+        $report['charts'] = $charts->for($report['filters']['type'], $rows, (int) $report['filters']['period'] ?: null);
         $page = $print ? 1 : (int) $request->input('page', 1);
         // Pages past the end are empty; the offset is never computed for them, so a huge page number cannot overflow it.
         $offset = $page > (int) ceil(count($rows) / $perPage) ? count($rows) : ($page - 1) * $perPage;

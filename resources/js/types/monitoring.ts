@@ -1,3 +1,4 @@
+import type { StandingTally } from '@/types/charts';
 import type { OverallStanding, StatusValue, SubjectResult } from '@/types/grading';
 
 /**
@@ -76,4 +77,16 @@ export interface MonitoringSummary {
     hasThresholds: boolean;
     counts: StandingCounts;
     requiringAttention: MonitoredCandidateSummary[];
+    /** Present on the instructor dashboard: each class subject taught, by standing. */
+    subjects?: SubjectStandingSummary[];
+}
+
+/** One class subject's candidates per standing and their mean current grade. */
+export interface SubjectStandingSummary {
+    classSubjectId: number;
+    classId: number;
+    subject: string;
+    classBatch: string;
+    average: number | null;
+    counts: StandingTally;
 }

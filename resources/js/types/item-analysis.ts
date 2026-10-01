@@ -3,6 +3,7 @@
  * only: the payload never contains candidate identity or individual answers.
  * Percentages are calculated by the server; the page only formats them.
  */
+import type { ChartColumn } from '@/types/charts';
 import type { QuestionMediaView, QuestionTypeOption } from '@/types/question-bank';
 
 export type ItemAnalysisScope = 'latest' | 'all';
@@ -79,6 +80,8 @@ export interface ItemAnalysisSummary {
     passingScore: number | null;
     passed: number | null;
     passRate: number | null;
+    /** Final percentages by range, lowest first; empty when no attempt has a final score. */
+    scoreDistribution: ChartColumn[];
 }
 
 export interface ItemAnalysisDiscrimination {

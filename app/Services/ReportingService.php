@@ -8,6 +8,7 @@ use App\Services\Monitoring\AcademicMonitoring;
 use App\Services\Monitoring\MonitoringScope;
 use App\Services\Monitoring\SubjectPerformance;
 use App\Support\InstitutionDate;
+use App\Support\ScoreBands;
 
 final class ReportingService
 {
@@ -48,10 +49,15 @@ final class ReportingService
         ];
     }
 
+    /**
+     * Each report returns its columns, the rows, and `numericColumns`: display
+     * metadata naming the columns the page right-aligns (UI_UX_DESIGN.md §31).
+     */
     private function academic(array $entries, string $type): array
     {
         if ($type === 'subject') {
             return ['columns' => ['classBatch' => 'Class', 'subject' => 'Subject', 'candidateCount' => 'Candidates', 'average' => 'Mean current grade', 'provisionalCount' => 'Provisional', 'passing' => 'Passing', 'at_risk' => 'At risk', 'failing' => 'Failing', 'incomplete' => 'Incomplete', 'none' => 'No standing'],
+                'numericColumns' => ['candidateCount', 'average', 'provisionalCount', 'passing', 'at_risk', 'failing', 'incomplete', 'none'],
                 'rows' => array_map(fn ($row) => array_diff_key($row, array_flip(['id', 'subjectId', 'classId', 'gradedCount'])), $this->performance->summarize($entries))];
         }
         if ($type === 'class') {
@@ -59,21 +65,13 @@ final class ReportingService
                 return ['classBatch' => $group->first()->candidate->classBatch->name] + $this->monitoring->counts($group->all());
             })->values()->all();
 
-            return ['columns' => ['classBatch' => 'Class', 'monitored' => 'Candidates', 'passing' => 'Passing', 'atRisk' => 'At risk', 'failing' => 'Failing', 'incomplete' => 'Incomplete', 'noStanding' => 'No standing'], 'rows' => $rows];
+            return ['columns' => ['classBatch' => 'Class', 'monitored' => 'Candidates', 'passing' => 'Passing', 'atRisk' => 'At risk', 'failing' => 'Failing', 'incomplete' => 'Incomplete', 'noStanding' => 'No standing'],
+                'numericColumns' => ['monitored', 'passing', 'atRisk', 'failing', 'incomplete', 'noStanding'], 'rows' => $rows];
         }
         if ($type === 'distribution') {
-            $bins = ['90–100' => 0, '80–89.99' => 0, '70–79.99' => 0, '60–69.99' => 0, 'Below 60' => 0, 'No grade' => 0];
-            foreach ($entries as $entry) {
-                foreach ($entry->subjects as $subject) {
-                    $grade = $subject['grade']->grade;
-                    $key = match (true) {
-                        $grade === null => 'No grade', $grade >= 90 => '90–100', $grade >= 80 => '80–89.99', $grade >= 70 => '70–79.99', $grade >= 60 => '60–69.99', default => 'Below 60'
-                    };
-                    $bins[$key]++;
-                }
-            }
+            $grades = collect($entries)->flatMap(fn ($entry) => array_map(fn ($subject) => $subject['grade']->grade, $entry->subjects));
 
-            return ['columns' => ['band' => 'Grade range (descriptive only)', 'count' => 'Candidate-subject records'], 'rows' => collect($bins)->map(fn ($count, $band) => ['band' => $band, 'count' => $count])->values()->all()];
+            return ['columns' => ['band' => 'Grade range (descriptive only)', 'count' => 'Candidate-subject records'], 'numericColumns' => ['count'], 'rows' => ScoreBands::count($grades)];
         }
         $rows = [];
         foreach ($entries as $entry) {
@@ -85,7 +83,8 @@ final class ReportingService
                 'provisional' => collect($entry->subjects)->contains(fn ($subject) => $subject['grade']->isProvisional()) ? 'Yes' : 'No'];
         }
 
-        return ['columns' => ['number' => 'Candidate no.', 'candidate' => 'Candidate', 'classBatch' => 'Class', 'standing' => 'Overall standing', 'lowest' => 'Lowest subject grade', 'missing' => 'Missing scores', 'provisional' => 'Provisional grades'], 'rows' => $rows];
+        return ['columns' => ['number' => 'Candidate no.', 'candidate' => 'Candidate', 'classBatch' => 'Class', 'standing' => 'Overall standing', 'lowest' => 'Lowest subject grade', 'missing' => 'Missing scores', 'provisional' => 'Provisional grades'],
+            'numericColumns' => ['lowest', 'missing'], 'rows' => $rows];
     }
 
     private function examinations(array $offeringIds, string $kind, array $filters): array
@@ -99,6 +98,7 @@ final class ReportingService
             ->orderByDesc('submitted_at')->orderByDesc('id')->get();
 
         return ['columns' => ['candidate' => 'Candidate', 'number' => 'Candidate no.', 'classBatch' => 'Class', 'subject' => 'Subject', 'examination' => 'Title', 'attempt' => 'Attempt', 'submitted' => 'Submitted', 'status' => 'Result status', 'score' => 'Score', 'percentage' => 'Percent', 'result' => 'Outcome'],
+            'numericColumns' => ['attempt', 'score', 'percentage'],
             'rows' => $attempts->map(fn ($attempt) => [
                 'candidate' => $attempt->candidate->full_name, 'number' => $attempt->candidate->candidate_number,
                 'classBatch' => $attempt->examination->classSubject->classBatch->name, 'subject' => $attempt->examination->classSubject->subject->name,

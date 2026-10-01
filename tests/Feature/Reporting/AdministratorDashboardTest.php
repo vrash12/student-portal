@@ -195,7 +195,8 @@ class AdministratorDashboardTest extends TestCase
 
         $this->assertSame([
             'period' => null, 'totalCandidates' => 0, 'recentExaminations' => [],
-            'recentActivity' => [], 'subjectPerformance' => [], 'instructors' => [],
+            'recentActivity' => [], 'subjectPerformance' => [], 'gradeDistribution' => [],
+            'thresholds' => null, 'instructors' => [],
         ], $props['administratorOverview']);
         $this->assertNull($props['academicOverview']);
         $this->assertNull($props['thresholdSetup']);

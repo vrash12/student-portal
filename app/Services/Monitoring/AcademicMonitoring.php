@@ -31,7 +31,10 @@ final class AcademicMonitoring
 
     public const STANDING_FILTERS = ['failing', 'at_risk', 'incomplete', 'passing', 'none'];
 
-    public function __construct(private readonly GradeCalculationService $calculator) {}
+    public function __construct(
+        private readonly GradeCalculationService $calculator,
+        private readonly SubjectPerformance $performance = new SubjectPerformance,
+    ) {}
 
     /**
      * @param  Collection<int, ClassSubject>  $offerings  the monitoring scope, already narrowed by filters
@@ -200,11 +203,13 @@ final class AcademicMonitoring
 
     /**
      * Dashboard panel data for the active period within a scope, or null
-     * when there is no active period or nothing is in scope.
+     * when there is no active period or nothing is in scope. With
+     * `$withSubjects`, it also summarizes each class subject (counts per
+     * standing and mean grade) from the same evaluation.
      *
-     * @return array{period: array{id: int, name: string}, scope: string, hasThresholds: bool, counts: array<string, int>, requiringAttention: list<MonitoredCandidate>}|null
+     * @return array{period: array{id: int, name: string}, scope: string, hasThresholds: bool, counts: array<string, int>, requiringAttention: list<MonitoredCandidate>, subjects?: list<array<string, mixed>>}|null
      */
-    public function activePeriodSummary(MonitoringScope $scope, int $limit): ?array
+    public function activePeriodSummary(MonitoringScope $scope, int $limit, bool $withSubjects = false): ?array
     {
         $period = AcademicPeriod::query()->active()->first();
         if ($period === null || $scope->isEmpty()) {
@@ -213,13 +218,15 @@ final class AcademicMonitoring
 
         $monitored = $this->evaluate($scope->offerings($period->id)->get());
 
-        return [
+        $summary = [
             'period' => ['id' => $period->id, 'name' => $period->name],
             'scope' => $scope->kind(),
             'hasThresholds' => GradingThresholds::forPeriod($period) !== null,
             'counts' => $this->counts($monitored),
             'requiringAttention' => $this->requiringAttention($monitored, $limit),
         ];
+
+        return $withSubjects ? $summary + ['subjects' => $this->performance->summarize($monitored)] : $summary;
     }
 
     private static function countKey(?AcademicStanding $standing): string

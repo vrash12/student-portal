@@ -1,6 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { ChartColumn, CircleCheck, Printer } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { ChartFigure } from '@/components/charts/chart-figure';
+import { ColumnChart } from '@/components/charts/column-chart';
 import { QuestionMediaList } from '@/components/question-bank/question-media';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink } from '@/components/ui/button';
@@ -184,6 +186,15 @@ function SummaryPanel({ analysis }: { analysis: ItemAnalysis }) {
                     />
                 )}
             </dl>
+            {summary.scoreDistribution.length > 0 && (
+                <ChartFigure
+                    title="Score Distribution"
+                    description={`Final percentages of the ${summary.scoredAttempts} scored ${summary.scoredAttempts === 1 ? 'attempt' : 'attempts'} by range.`}
+                    className="mt-6 border-t border-line pt-5"
+                >
+                    <ColumnChart columns={summary.scoreDistribution} noun={{ one: 'attempt', other: 'attempts' }} />
+                </ChartFigure>
+            )}
         </Panel>
     );
 }

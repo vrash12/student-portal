@@ -67,6 +67,15 @@
     --color-neutral-border: #d3d9d6;
     --color-neutral-fg: #4f5b56;
 
+    /* Chart fills: 3:1 or more against white, always paired with text labels and values. */
+    --color-chart-passing: #2f7d55;
+    --color-chart-at-risk: #c27803;
+    --color-chart-failing: #b42318;
+    --color-chart-incomplete: #6b7772;
+    --color-chart-none: #c9d1cd; /* no standing or no grade yet */
+    --color-chart-bar: #1f6b4a;
+    --color-chart-track: #e6ebe8;
+
     /* Typography: Inter is bundled locally (no font CDN). */
     --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
