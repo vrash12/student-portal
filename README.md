@@ -63,6 +63,25 @@ The demo seeders create clearly fictional data: staff accounts, one active acade
 | `instructor.alpha`, `instructor.bravo` | Instructor |
 | `2026-0001` … `2026-0010` | Candidate (candidates sign in with their candidate number) |
 
+### Client demo data set (current local database)
+
+On 2026-10-01 the local database was reset to a small set for client demonstrations (`ClientDemoSeeder`). Every account's password is `password`:
+
+| Username | Role |
+| --- | --- |
+| `admin` | Super Administrator |
+| `instructor1` | Instructor, Subject 1 |
+| `instructor2` | Instructor, Subject 2 |
+| `student01` … `student20` | Candidates in Class A |
+
+It includes grading weights, passing/warning grades (75/80), finalized scores (a mix of Passing, At Risk, Failing and Incomplete), five questions per subject and one published online quiz per subject, open for 7 days. To rebuild it on an empty database (this deletes all data):
+
+```bash
+php artisan migrate:fresh
+php artisan db:seed --class=AccessControlSeeder
+php artisan db:seed --class=ClientDemoSeeder
+```
+
 ## Trying an online quiz (local development only)
 
 ```bash
