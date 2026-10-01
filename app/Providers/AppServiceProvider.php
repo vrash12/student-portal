@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Enums\Permission;
 use App\Models\AcademicPeriod;
+use App\Models\AccountCategory;
+use App\Models\AccountEntry;
 use App\Models\Assessment;
 use App\Models\AssessmentCategory;
 use App\Models\AssessmentScore;
@@ -103,6 +105,8 @@ class AppServiceProvider extends ServiceProvider
             'examination_attempt' => ExaminationAttempt::class,
             'fitness_event' => FitnessEvent::class,
             'fitness_test' => FitnessTest::class,
+            'account_entry' => AccountEntry::class,
+            'account_category' => AccountCategory::class,
         ]);
     }
 

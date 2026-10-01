@@ -1901,7 +1901,7 @@ Do **not** implement the following unless explicitly requested later:
 - biometric authentication
 - proctoring / webcam monitoring (exception approved by the owner on 2026-10-01: the examination page records when a candidate leaves the exam screen — tab/app switch or another window focused — as an indicator for instructors; no camera, microphone, screen capture, or automatic penalties)
 - multi-tenant SaaS architecture
-- payment functionality
+- payment functionality (Statement of Account ledger approved by the owner on 2026-10-01; records amounts only, no payments)
 - public registration
 
 Focus only on the requirements currently needed for the prototype and initial system.

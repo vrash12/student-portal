@@ -7,9 +7,7 @@ use App\Models\ClassSubject;
 use App\Models\User;
 use App\Services\Monitoring\CandidateProfileRecord;
 use App\Support\CandidatePresenter;
-use Dompdf\Dompdf;
-use Dompdf\Options;
-use Illuminate\Support\Facades\File;
+use App\Support\PdfDocument;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
@@ -40,7 +38,7 @@ final class CandidatePdfService
             'systemName' => config('institution.system_name'),
             'generatedAt' => $generated->format('d M Y, h:i A T'),
             'reference' => strtoupper($type === 'registration' ? 'REG' : 'ACAD').'-'.$candidate->id.'-'.$generated->format('Ymd-His'),
-            'logo' => $this->logo(),
+            'logo' => PdfDocument::logo(),
             'period' => $this->currentPeriod($candidate),
         ];
 
@@ -69,25 +67,8 @@ final class CandidatePdfService
 
     public function render(array $data): string
     {
-        $cache = storage_path('framework/cache/pdf');
-        File::ensureDirectoryExists($cache);
-        $options = new Options;
-        $options->setIsRemoteEnabled(false);
-        $options->setIsPhpEnabled(false);
-        $options->setIsJavascriptEnabled(false);
-        $options->setIsFontSubsettingEnabled(true);
-        $options->setDefaultFont('DejaVu Sans');
-        $options->setChroot([public_path('branding'), base_path('vendor/dompdf/dompdf/lib/fonts')]);
-        $options->setTempDir($cache);
-        $options->setFontCache($cache);
-        $pdf = new Dompdf($options);
         // Landscape, like the institution's printed registration form.
-        $pdf->setPaper('letter', 'landscape');
-        $pdf->loadHtml(view('pdf.candidate-record', $data)->render(), 'UTF-8');
-        $pdf->render();
-        $pdf->getCanvas()->page_text(700, 590, 'Page {PAGE_NUM} of {PAGE_COUNT}', $pdf->getFontMetrics()->getFont('DejaVu Sans'), 7, [0.35, 0.39, 0.43]);
-
-        return $pdf->output();
+        return PdfDocument::render(view('pdf.candidate-record', $data)->render(), 'landscape');
     }
 
     /**
@@ -147,25 +128,5 @@ final class CandidatePdfService
                     && count($group['examinations']) + ($isCurrent ? self::CURRENT_SUBJECT_ROWS : 0) <= self::COLUMN_ROWS,
             ];
         }, $periods));
-    }
-
-    /** Embed only a configured local raster logo; never request remote resources. */
-    private function logo(): ?string
-    {
-        $url = config('institution.logo_url');
-        if (! is_string($url) || ! str_starts_with($url, '/') || str_starts_with($url, '//')) {
-            return null;
-        }
-        $root = realpath(public_path());
-        $path = realpath(public_path(ltrim($url, '/')));
-        if ($root === false || $path === false || ! str_starts_with($path, $root.DIRECTORY_SEPARATOR) || ! is_file($path) || filesize($path) > 5 * 1024 * 1024) {
-            return null;
-        }
-        $mime = mime_content_type($path);
-        if (! in_array($mime, ['image/png', 'image/jpeg'], true)) {
-            return null;
-        }
-
-        return 'data:'.$mime.';base64,'.base64_encode(file_get_contents($path));
     }
 }

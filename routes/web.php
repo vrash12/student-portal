@@ -10,6 +10,8 @@ use App\Http\Controllers\Portal\ExaminationController as PortalExaminationContro
 use App\Http\Controllers\Portal\PortalHomeController;
 use App\Http\Controllers\Staff\AcademicMonitoringController;
 use App\Http\Controllers\Staff\AcademicPeriodController;
+use App\Http\Controllers\Staff\AccountCategoryController;
+use App\Http\Controllers\Staff\AccountController;
 use App\Http\Controllers\Staff\AccountPasswordController;
 use App\Http\Controllers\Staff\AssessmentController;
 use App\Http\Controllers\Staff\AssessmentScoreController;
@@ -73,6 +75,26 @@ Route::middleware(['auth', 'active'])->group(function (): void {
                 Route::put('fitness/tests/{fitnessTest}', [FitnessTestController::class, 'update'])->name('fitness.tests.update');
                 Route::delete('fitness/tests/{fitnessTest}', [FitnessTestController::class, 'destroy'])->name('fitness.tests.destroy');
                 Route::put('fitness/tests/{fitnessTest}/results', [FitnessTestController::class, 'recordResults'])->name('fitness.tests.results');
+            });
+        });
+
+        // Statements of Account: viewing and PDF (accounts.view); recording and
+        // voiding entries, and the categories (accounts.manage). Staff only.
+        Route::middleware('can:'.Permission::ViewAccounts->value)->group(function (): void {
+            Route::get('accounts', [AccountController::class, 'index'])->name('accounts.index');
+            Route::get('accounts/{candidate}', [AccountController::class, 'show'])->name('accounts.show')->whereNumber('candidate');
+            Route::get('accounts/{candidate}/statement', [AccountController::class, 'statement'])->name('accounts.statement')
+                ->whereNumber('candidate')->middleware('throttle:record-downloads');
+
+            Route::middleware('can:'.Permission::ManageAccounts->value)->group(function (): void {
+                Route::post('accounts/{candidate}/entries', [AccountController::class, 'store'])->name('accounts.entries.store')->whereNumber('candidate');
+                Route::post('account-entries/{accountEntry}/void', [AccountController::class, 'void'])->name('accounts.entries.void')->whereNumber('accountEntry');
+
+                Route::get('account-categories', [AccountCategoryController::class, 'index'])->name('accounts.categories.index');
+                Route::get('account-categories/create', [AccountCategoryController::class, 'create'])->name('accounts.categories.create');
+                Route::post('account-categories', [AccountCategoryController::class, 'store'])->name('accounts.categories.store');
+                Route::get('account-categories/{accountCategory}/edit', [AccountCategoryController::class, 'edit'])->name('accounts.categories.edit')->whereNumber('accountCategory');
+                Route::put('account-categories/{accountCategory}', [AccountCategoryController::class, 'update'])->name('accounts.categories.update')->whereNumber('accountCategory');
             });
         });
 

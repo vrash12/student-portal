@@ -27,6 +27,8 @@ export interface AppBranding {
     /** Small "Powered by" credit on the sign-in page; null hides it. */
     poweredBy: { name: string; logoUrl: string | null } | null;
     timezone: string;
+    /** ISO 4217 code for Statements of Account, e.g. "PHP". */
+    currency: string;
 }
 
 export interface SharedProps {

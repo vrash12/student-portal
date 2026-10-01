@@ -75,6 +75,22 @@ export const routes = {
             results: (testId: number) => `/fitness/tests/${testId}/results`,
         },
     },
+    accounts: {
+        index: (query?: Record<string, string>) => withQuery('/accounts', query),
+        show: (candidateId: number, query?: Record<string, string>) => withQuery(`/accounts/${candidateId}`, query),
+        statement: (candidateId: number, query?: Record<string, string>) => withQuery(`/accounts/${candidateId}/statement`, query),
+        entries: {
+            store: (candidateId: number) => `/accounts/${candidateId}/entries`,
+            void: (entryId: number) => `/account-entries/${entryId}/void`,
+        },
+        categories: {
+            index: () => '/account-categories',
+            create: () => '/account-categories/create',
+            store: () => '/account-categories',
+            edit: (categoryId: number) => `/account-categories/${categoryId}/edit`,
+            update: (categoryId: number) => `/account-categories/${categoryId}`,
+        },
+    },
     instructors: {
         index: () => '/instructors',
         show: (instructorId: number) => `/instructors/${instructorId}`,

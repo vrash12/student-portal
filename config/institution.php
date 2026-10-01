@@ -22,8 +22,9 @@ return [
     // Public URL of the approved logo. Null renders a neutral placeholder.
     'logo_url' => env('ORGANIZATION_LOGO_URL'),
 
-    // Owner-provided login photograph, served locally for intranet use.
-    'login_image_url' => env('LOGIN_IMAGE_URL', '/branding/login-training.jpg'),
+    // Optional sign-in image (a local path such as /branding/login.jpg). When
+    // empty, the sign-in page shows the institution's mark and names instead.
+    'login_image_url' => env('LOGIN_IMAGE_URL') ?: null,
 
     // Small "Powered by" credit under the sign-in form (placeholder supplied
     // by the owner). Leave POWERED_BY_NAME empty to hide it.
@@ -35,5 +36,8 @@ return [
 
     // Timezone used when presenting dates to users. Data is stored in UTC.
     'timezone' => env('INSTITUTION_TIMEZONE', 'UTC'),
+
+    // ISO 4217 code of the currency used on Statements of Account, e.g. PHP.
+    'currency' => env('INSTITUTION_CURRENCY', 'PHP'),
 
 ];

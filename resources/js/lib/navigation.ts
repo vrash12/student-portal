@@ -5,6 +5,7 @@ import {
     Dumbbell,
     GraduationCap,
     LayoutDashboard,
+    ReceiptText,
     School,
     ShieldCheck,
     UserRoundCog,
@@ -81,7 +82,16 @@ export const staffNavigation: NavigationSection[] = [
     },
     {
         label: 'Records',
-        items: [{ label: 'Military Fitness', href: routes.fitness.index(), icon: Dumbbell, permission: Permission.ViewFitness }],
+        items: [
+            { label: 'Military Fitness', href: routes.fitness.index(), icon: Dumbbell, permission: Permission.ViewFitness },
+            {
+                label: 'Statements of Account',
+                href: routes.accounts.index(),
+                icon: ReceiptText,
+                permission: Permission.ViewAccounts,
+                activeFor: [routes.accounts.categories.index()],
+            },
+        ],
     },
     {
         label: 'Administration',

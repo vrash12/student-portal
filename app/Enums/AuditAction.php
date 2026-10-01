@@ -64,6 +64,12 @@ enum AuditAction: string
     case FitnessTestDeleted = 'fitness_test.deleted';
     case FitnessResultsRecorded = 'fitness_test.results_recorded';
 
+    case AccountEntryRecorded = 'account_entry.recorded';
+    case AccountEntryVoided = 'account_entry.voided';
+    case AccountCategoryCreated = 'account_category.created';
+    case AccountCategoryUpdated = 'account_category.updated';
+    case AccountStatementDownloaded = 'account_statement.downloaded';
+
     public function label(): string
     {
         return match ($this) {
@@ -121,6 +127,11 @@ enum AuditAction: string
             self::FitnessTestUpdated => 'Updated fitness test',
             self::FitnessTestDeleted => 'Deleted fitness test',
             self::FitnessResultsRecorded => 'Recorded fitness results',
+            self::AccountEntryRecorded => 'Recorded statement of account entry',
+            self::AccountEntryVoided => 'Voided statement of account entry',
+            self::AccountCategoryCreated => 'Created account category',
+            self::AccountCategoryUpdated => 'Updated account category',
+            self::AccountStatementDownloaded => 'Downloaded statement of account PDF',
         };
     }
 }

@@ -4,6 +4,7 @@ namespace Tests\Feature\Security;
 
 use App\Enums\Permission;
 use App\Enums\SystemRole;
+use App\Models\AccountCategory;
 use App\Models\Assessment;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
@@ -12,6 +13,7 @@ use App\Models\InstructorAssignment;
 use App\Models\Question;
 use App\Models\QuestionMedia;
 use App\Models\Subject;
+use App\Services\Accounts\AccountService;
 use App\Services\Examinations\CandidateAttemptService;
 use App\Services\Fitness\FitnessStandardService;
 use App\Services\Fitness\FitnessTestService;
@@ -95,8 +97,16 @@ class RouteAccessMatrixTest extends TestCase
         ]);
         $fitnessTest = app(FitnessTestService::class)->create($this->batchB, ['title' => 'Fitness Test B', 'tested_on' => '2026-09-01', 'notes' => null], [$fitnessEvent->id], $this->userWithRole(SystemRole::SuperAdministrator));
 
+        // A statement of account entry of candidate B1 (staff with account permissions only).
+        $accountEntry = app(AccountService::class)->record($this->candidateInB, [
+            'account_category_id' => (int) AccountCategory::query()->orderBy('id')->value('id'), 'entry_type' => 'charge',
+            'amount' => '100.00', 'posted_on' => '2026-09-01', 'description' => 'Uniform set', 'reference' => null,
+        ], $this->userWithRole(SystemRole::SuperAdministrator));
+
         $this->parameters = [
             'academicPeriod' => (string) $this->activePeriod->id,
+            'accountCategory' => (string) $accountEntry->account_category_id,
+            'accountEntry' => (string) $accountEntry->id,
             'assessment' => (string) $assessment->id,
             'attempt' => (string) $this->attemptOfB1->id,
             'candidate' => (string) $this->candidateInB->id,

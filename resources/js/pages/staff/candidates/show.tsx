@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { ChartColumn, Pencil } from 'lucide-react';
+import { ChartColumn, Pencil, ReceiptText } from 'lucide-react';
 import { CandidateInformationPanels } from '@/components/candidates/candidate-information';
 import { RecordDownloads } from '@/components/candidates/record-downloads';
 import { CandidateExaminationResults } from '@/components/candidates/examination-results';
@@ -22,6 +22,7 @@ import { Panel } from '@/components/ui/panel';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
 import { formatGrade } from '@/lib/format';
+import { Permission, usePermissions } from '@/lib/permissions';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import type { GradingThresholds, OverallStanding, SubjectGrade } from '@/types/grading';
@@ -81,6 +82,8 @@ export default function CandidateShow({
 }: CandidateShowProps) {
 
     const classTerm = terms.classBatch.singular;
+    // Visibility only; the statement page is authorized by the server (accounts.view).
+    const { can } = usePermissions();
     const overallLabel = standing.scope === 'all' ? 'Overall Standing' : 'Standing in Your Subjects';
     const showsStanding = standing.monitored && standing.thresholds !== null;
     // Why no standing is shown, when it is not.
@@ -121,7 +124,11 @@ export default function CandidateShow({
                 }
                 breadcrumbs={breadcrumbs}
                 actions={
-                    <>{canBrowseCandidates && <RecordDownloads baseUrl={`/candidates/${candidate.id}/documents`} />}{canEdit && (
+                    <>{canBrowseCandidates && <RecordDownloads baseUrl={`/candidates/${candidate.id}/documents`} />}{can(Permission.ViewAccounts) && (
+                        <ButtonLink href={routes.accounts.show(candidate.id)} icon={<ReceiptText className="size-4" aria-hidden="true" />}>
+                            Statement of Account
+                        </ButtonLink>
+                    )}{canEdit && (
                         <ButtonLink href={routes.candidates.edit(candidate.id)} icon={<Pencil className="size-4" aria-hidden="true" />}>
                             Edit Candidate
                         </ButtonLink>

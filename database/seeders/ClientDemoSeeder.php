@@ -96,6 +96,9 @@ class ClientDemoSeeder extends Seeder
 
         // Sample fitness events and a diagnostic test with synthetic results.
         $this->call(DemoFitnessSeeder::class);
+
+        // The Finance Officer finance1 and synthetic charges and credits on the candidates' statements of account.
+        $this->call(DemoAccountStatementsSeeder::class);
     }
 
     private function staff(string $username, string $name, SystemRole $role): User

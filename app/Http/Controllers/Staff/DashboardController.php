@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicPeriod;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Accounts\AccountLedger;
 use App\Services\AdministratorDashboardService;
 use App\Services\Grading\GradingThresholds;
 use App\Services\Monitoring\AcademicMonitoring;
@@ -34,7 +35,7 @@ class DashboardController extends Controller
         private readonly MonitoringPresenter $presenter,
     ) {}
 
-    public function __invoke(Request $request, TeachingOverview $teaching, AdministratorDashboardService $administratorDashboard): Response
+    public function __invoke(Request $request, TeachingOverview $teaching, AdministratorDashboardService $administratorDashboard, AccountLedger $ledger): Response
     {
         $user = $request->user();
         $canMonitor = $user->hasPermission(Permission::ViewAcademicMonitoring);
@@ -52,6 +53,8 @@ class DashboardController extends Controller
             'thresholdSetup' => $user->hasPermission(Permission::ConfigureGrading) ? $this->missingThresholds() : null,
             'accountSummary' => $user->can('viewAny', User::class) ? $this->accountSummary() : null,
             'administratorOverview' => $showAcademicOverview ? $administratorDashboard->overview() : null,
+            // Statements of Account balances and the latest entries (not sign-in accounts).
+            'statementsOverview' => $user->hasPermission(Permission::ViewAccounts) ? $ledger->overview() : null,
         ]);
     }
 

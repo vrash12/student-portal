@@ -1,5 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { BellRing, CalendarClock, ChartColumn, ClipboardList } from 'lucide-react';
+import { StatementsOverview } from '@/components/accounts/statements-overview';
+import type { AccountOverview } from '@/components/accounts/types';
 import { BarList } from '@/components/charts/bar-list';
 import { ChartFigure } from '@/components/charts/chart-figure';
 import { ColumnChart } from '@/components/charts/column-chart';
@@ -68,6 +70,8 @@ interface DashboardProps {
     /** Present only for users allowed to view accounts. */
     accountSummary: RoleAccountCount[] | null;
     administratorOverview: AdministratorOverviewData | null;
+    /** Statements of Account totals (accounts.view); not the sign-in accounts above. */
+    statementsOverview: AccountOverview | null;
 }
 
 interface AdministratorOverviewData {
@@ -91,6 +95,7 @@ export default function Dashboard({
     thresholdSetup,
     accountSummary,
     administratorOverview,
+    statementsOverview,
 }: DashboardProps) {
     const { app, auth } = usePage().props;
     const userName = auth.user?.name ?? '';
@@ -118,6 +123,8 @@ export default function Dashboard({
                 )}
 
                 {administratorOverview !== null && <AdministratorOverview overview={administratorOverview} />}
+
+                {statementsOverview !== null && <StatementsOverview overview={statementsOverview} />}
 
                 {accountSummary !== null && (
                     <Panel title="Active Accounts" description="Accounts that can currently sign in, by role.">

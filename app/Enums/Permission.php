@@ -36,6 +36,8 @@ enum Permission: string
     case ViewAuditHistory = 'audit_history.view';
     case ViewFitness = 'fitness.view';
     case ManageFitness = 'fitness.manage';
+    case ViewAccounts = 'accounts.view';
+    case ManageAccounts = 'accounts.manage';
 
     public function label(): string
     {
@@ -61,6 +63,8 @@ enum Permission: string
             self::ViewAuditHistory => 'View audit history',
             self::ViewFitness => 'View military fitness records',
             self::ManageFitness => 'Manage military fitness tests',
+            self::ViewAccounts => 'View statements of account',
+            self::ManageAccounts => 'Record statement of account entries',
         };
     }
 
@@ -88,6 +92,8 @@ enum Permission: string
             self::ViewAuditHistory => 'Read institutional audit records and academic change metadata. Does not allow modifying history.',
             self::ViewFitness => 'View fitness tests, their results, and the fitness history on candidate profiles.',
             self::ManageFitness => 'Set the fitness events and their standards, create fitness tests for classes, and record candidates\' results.',
+            self::ViewAccounts => 'View candidates\' statements of account (charges, credits, and balances) and download them as PDF.',
+            self::ManageAccounts => 'Record charges and credits on candidates\' statements of account, void mistaken entries with a reason, and manage the account categories. Records amounts only; no payments are processed.',
         };
     }
 
@@ -106,6 +112,7 @@ enum Permission: string
             self::ViewAuditHistory => 'Administration',
             self::ManageQuestionBank, self::ManageExaminations => 'Assessments',
             self::ViewFitness, self::ManageFitness => 'Military Fitness',
+            self::ViewAccounts, self::ManageAccounts => 'Accounts',
         };
     }
 }
