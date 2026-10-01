@@ -3,6 +3,8 @@ import { ChartColumn, Pencil } from 'lucide-react';
 import { CandidateInformationPanels } from '@/components/candidates/candidate-information';
 import { RecordDownloads } from '@/components/candidates/record-downloads';
 import { CandidateExaminationResults } from '@/components/candidates/examination-results';
+import { CandidateFitness } from '@/components/fitness/candidate-fitness';
+import type { CandidateFitnessTest } from '@/types/fitness';
 import type { CandidateInformation, CandidateExaminationResult } from '@/types/candidates';
 import type { Paginated } from '@/types';
 import { GradeStatusBadge, StandingCell, ThresholdSummary } from '@/components/grading/standing';
@@ -57,6 +59,8 @@ interface CandidateShowProps {
     /** Results of finalized assessments, by visible subject. */
     assessmentResults: SubjectResults[];
     recentActivity: ActivityEntry[];
+    /** Military fitness history, newest first; null when the viewer may not see fitness records. */
+    fitness: CandidateFitnessTest[] | null;
     canEdit: boolean;
     /** Administrators browse all candidates; instructors arrive from a class they teach. */
     canBrowseCandidates: boolean;
@@ -71,6 +75,7 @@ export default function CandidateShow({
     assessmentResults,
     examinationResults,
     recentActivity,
+    fitness,
     canEdit,
     canBrowseCandidates,
 }: CandidateShowProps) {
@@ -213,6 +218,7 @@ export default function CandidateShow({
                 {assessmentResults.length > 0 && <AssessmentResults subjects={assessmentResults} />}
 
                 <CandidateExaminationResults results={examinationResults} />
+                {fitness !== null && <CandidateFitness tests={fitness} />}
                 {candidate.classBatch !== null && <RecentActivity entries={recentActivity} />}
             </div>
         </>

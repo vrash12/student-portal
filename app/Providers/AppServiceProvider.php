@@ -12,6 +12,8 @@ use App\Models\ClassBatch;
 use App\Models\ClassSubject;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
+use App\Models\FitnessEvent;
+use App\Models\FitnessTest;
 use App\Models\InstructorAssignment;
 use App\Models\Question;
 use App\Models\Role;
@@ -99,6 +101,8 @@ class AppServiceProvider extends ServiceProvider
             // Created by the examination builder (Milestone 8).
             'examination' => Examination::class,
             'examination_attempt' => ExaminationAttempt::class,
+            'fitness_event' => FitnessEvent::class,
+            'fitness_test' => FitnessTest::class,
         ]);
     }
 

@@ -10,6 +10,7 @@ use App\Http\Requests\Candidates\UpdateCandidateRequest;
 use App\Models\Candidate;
 use App\Models\ClassSubject;
 use App\Services\CandidateService;
+use App\Services\Fitness\FitnessResults;
 use App\Services\Grading\GradeCalculationService;
 use App\Services\Grading\GradingThresholds;
 use App\Services\Monitoring\CandidateAcademicRecord;
@@ -27,6 +28,9 @@ use Inertia\Response;
 class CandidateController extends Controller
 {
     private const PER_PAGE = 25;
+
+    /** Fitness tests shown on a candidate profile, newest first. */
+    private const FITNESS_HISTORY = 5;
 
     public function __construct(private readonly CandidateService $candidates) {}
 
@@ -83,7 +87,7 @@ class CandidateController extends Controller
         return redirect()->route('candidates.show', $candidate);
     }
 
-    public function show(Request $request, Candidate $candidate, GradeCalculationService $grades, CandidateAcademicRecord $record, CandidateProfileRecord $profile): Response
+    public function show(Request $request, Candidate $candidate, GradeCalculationService $grades, CandidateAcademicRecord $record, CandidateProfileRecord $profile, FitnessResults $fitness): Response
     {
         $candidate->load(['user', 'classBatch.academicPeriod']);
         $viewer = $request->user();
@@ -167,6 +171,8 @@ class CandidateController extends Controller
             'assessmentResults' => $record->assessmentResults($candidate, $offerings, $monitored),
             'examinationResults' => $profile->examinationResults($candidate, false, $seesAllSubjects ? null : $offerings->modelKeys()),
             'recentActivity' => $record->recentActivity($candidate, $offerings->modelKeys(), $monitored),
+            // Military fitness history (newest first), for staff who may view fitness records.
+            'fitness' => $viewer->hasPermission(Permission::ViewFitness) ? $fitness->history($candidate, self::FITNESS_HISTORY) : null,
             'canEdit' => $canManage,
             // Instructors return to the class they teach, not the full candidate list.
             'canBrowseCandidates' => $viewer->can('viewAny', Candidate::class),

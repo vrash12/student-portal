@@ -34,6 +34,8 @@ enum Permission: string
     case ManageExaminations = 'examinations.manage';
     case ViewReports = 'reports.view';
     case ViewAuditHistory = 'audit_history.view';
+    case ViewFitness = 'fitness.view';
+    case ManageFitness = 'fitness.manage';
 
     public function label(): string
     {
@@ -57,6 +59,8 @@ enum Permission: string
             self::ManageExaminations => 'Manage quizzes and examinations',
             self::ViewReports => 'View academic and examination reports',
             self::ViewAuditHistory => 'View audit history',
+            self::ViewFitness => 'View military fitness records',
+            self::ManageFitness => 'Manage military fitness tests',
         };
     }
 
@@ -82,6 +86,8 @@ enum Permission: string
             self::ManageExaminations => 'Create quizzes and examinations for the class subjects they are assigned to teach, choose their questions from the question bank, configure them, and publish them.',
             self::ViewReports => 'View and print reports for all candidates when permitted, otherwise only assigned classes and subjects.',
             self::ViewAuditHistory => 'Read institutional audit records and academic change metadata. Does not allow modifying history.',
+            self::ViewFitness => 'View fitness tests, their results, and the fitness history on candidate profiles.',
+            self::ManageFitness => 'Set the fitness events and their standards, create fitness tests for classes, and record candidates\' results.',
         };
     }
 
@@ -99,6 +105,7 @@ enum Permission: string
             self::ViewReports => 'Monitoring',
             self::ViewAuditHistory => 'Administration',
             self::ManageQuestionBank, self::ManageExaminations => 'Assessments',
+            self::ViewFitness, self::ManageFitness => 'Military Fitness',
         };
     }
 }

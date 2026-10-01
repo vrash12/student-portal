@@ -69,6 +69,8 @@ enum SystemRole: string
             Permission::ViewAcademicMonitoring,
             Permission::ViewReports,
             Permission::ViewAuditHistory,
+            Permission::ViewFitness,
+            Permission::ManageFitness,
         ];
 
         return match ($this) {

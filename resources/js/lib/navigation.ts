@@ -2,6 +2,7 @@ import {
     Activity,
     BookOpen,
     CalendarRange,
+    Dumbbell,
     GraduationCap,
     LayoutDashboard,
     School,
@@ -77,6 +78,10 @@ export const staffNavigation: NavigationSection[] = [
                 permission: Permission.ManageAcademicPeriods,
             },
         ],
+    },
+    {
+        label: 'Records',
+        items: [{ label: 'Military Fitness', href: routes.fitness.index(), icon: Dumbbell, permission: Permission.ViewFitness }],
     },
     {
         label: 'Administration',

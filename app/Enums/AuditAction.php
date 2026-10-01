@@ -57,6 +57,13 @@ enum AuditAction: string
 
     case ExaminationAccessCodeRejected = 'examination.access_code_rejected';
 
+    case FitnessEventCreated = 'fitness_event.created';
+    case FitnessEventUpdated = 'fitness_event.updated';
+    case FitnessTestCreated = 'fitness_test.created';
+    case FitnessTestUpdated = 'fitness_test.updated';
+    case FitnessTestDeleted = 'fitness_test.deleted';
+    case FitnessResultsRecorded = 'fitness_test.results_recorded';
+
     public function label(): string
     {
         return match ($this) {
@@ -108,6 +115,12 @@ enum AuditAction: string
             self::ExaminationEssayGraded => 'Graded examination essay',
             self::ExaminationPosted => 'Posted examination to gradebook',
             self::ExaminationAccessCodeRejected => 'Entered an incorrect examination access code',
+            self::FitnessEventCreated => 'Created fitness event',
+            self::FitnessEventUpdated => 'Updated fitness event',
+            self::FitnessTestCreated => 'Created fitness test',
+            self::FitnessTestUpdated => 'Updated fitness test',
+            self::FitnessTestDeleted => 'Deleted fitness test',
+            self::FitnessResultsRecorded => 'Recorded fitness results',
         };
     }
 }

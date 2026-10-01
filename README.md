@@ -74,7 +74,7 @@ On 2026-10-01 the local database was reset to a small set for client demonstrati
 | `instructor2` | Instructor, Subject 2 |
 | `student01` … `student20` | Candidates in Class A |
 
-It includes grading weights, passing/warning grades (75/80), finalized scores (a mix of Passing, At Risk, Failing and Incomplete), five questions per subject and one published online quiz per subject, open for 7 days. To rebuild it on an empty database (this deletes all data):
+It includes grading weights, passing/warning grades (75/80), finalized scores (a mix of Passing, At Risk, Failing and Incomplete), five questions per subject and one published online quiz per subject, open for 7 days, plus three sample fitness events (placeholder standards) and a "Diagnostic Fitness Test" with synthetic results for Class A (`DemoFitnessSeeder`, also runnable on its own). To rebuild it on an empty database (this deletes all data):
 
 ```bash
 php artisan migrate:fresh

@@ -56,6 +56,25 @@ export const routes = {
         removeSubject: (classId: number, classSubjectId: number) => `/classes/${classId}/subjects/${classSubjectId}`,
         grading: (classId: number, classSubjectId: number) => `/classes/${classId}/subjects/${classSubjectId}/grading`,
     },
+    fitness: {
+        index: () => '/fitness',
+        standards: {
+            index: () => '/fitness/standards',
+            create: () => '/fitness/standards/create',
+            store: () => '/fitness/standards',
+            edit: (eventId: number) => `/fitness/standards/${eventId}/edit`,
+            update: (eventId: number) => `/fitness/standards/${eventId}`,
+        },
+        tests: {
+            create: () => '/fitness/tests/create',
+            store: () => '/fitness/tests',
+            show: (testId: number) => `/fitness/tests/${testId}`,
+            edit: (testId: number) => `/fitness/tests/${testId}/edit`,
+            update: (testId: number) => `/fitness/tests/${testId}`,
+            destroy: (testId: number) => `/fitness/tests/${testId}`,
+            results: (testId: number) => `/fitness/tests/${testId}/results`,
+        },
+    },
     instructors: {
         index: () => '/instructors',
         show: (instructorId: number) => `/instructors/${instructorId}`,

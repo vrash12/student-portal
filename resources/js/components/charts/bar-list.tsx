@@ -17,6 +17,8 @@ interface BarListProps {
     renderLabel?: (bar: ChartBar, index: number) => ReactNode;
     /** Text shown instead of a value when a bar has none. */
     emptyValue?: string;
+    /** Formats a bar's value; two decimals by default (grades). */
+    formatValue?: (value: number) => string;
 }
 
 /**
@@ -24,7 +26,7 @@ interface BarListProps {
  * labelled with its value, with optional reference lines such as the passing
  * and warning grades. Values are printed beside every bar.
  */
-export function BarList({ bars, references = [], renderLabel, emptyValue = 'No grades yet' }: BarListProps) {
+export function BarList({ bars, references = [], renderLabel, emptyValue = 'No grades yet', formatValue = formatGrade }: BarListProps) {
     const markers = references.slice(0, REFERENCE_STYLES.length);
 
     return (
@@ -49,7 +51,7 @@ export function BarList({ bars, references = [], renderLabel, emptyValue = 'No g
                             ))}
                         </div>
                         <div className="text-right text-sm font-semibold text-ink tabular-nums">
-                            {bar.value === null ? <span className="font-normal text-ink-muted">{emptyValue}</span> : formatGrade(bar.value)}
+                            {bar.value === null ? <span className="font-normal text-ink-muted">{emptyValue}</span> : formatValue(bar.value)}
                         </div>
                     </li>
                 ))}

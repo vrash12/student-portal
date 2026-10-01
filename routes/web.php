@@ -18,6 +18,8 @@ use App\Http\Controllers\Staff\CandidateController;
 use App\Http\Controllers\Staff\ClassBatchController;
 use App\Http\Controllers\Staff\ClassSubjectController;
 use App\Http\Controllers\Staff\DashboardController;
+use App\Http\Controllers\Staff\FitnessEventController;
+use App\Http\Controllers\Staff\FitnessTestController;
 use App\Http\Controllers\Staff\GradebookController;
 use App\Http\Controllers\Staff\GradingSchemeController;
 use App\Http\Controllers\Staff\GradingThresholdController;
@@ -52,6 +54,27 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('monitoring', AcademicMonitoringController::class)
             ->name('academic-monitoring.index')
             ->can(Permission::ViewAcademicMonitoring->value);
+
+        // Military fitness: viewing (fitness.view), standards, tests and results (fitness.manage).
+        Route::middleware('can:'.Permission::ViewFitness->value)->group(function (): void {
+            Route::get('fitness', [FitnessTestController::class, 'index'])->name('fitness.index');
+            Route::get('fitness/tests/{fitnessTest}', [FitnessTestController::class, 'show'])->name('fitness.tests.show')->whereNumber('fitnessTest');
+
+            Route::middleware('can:'.Permission::ManageFitness->value)->group(function (): void {
+                Route::get('fitness/standards', [FitnessEventController::class, 'index'])->name('fitness.standards.index');
+                Route::get('fitness/standards/create', [FitnessEventController::class, 'create'])->name('fitness.standards.create');
+                Route::post('fitness/standards', [FitnessEventController::class, 'store'])->name('fitness.standards.store');
+                Route::get('fitness/standards/{fitnessEvent}/edit', [FitnessEventController::class, 'edit'])->name('fitness.standards.edit');
+                Route::put('fitness/standards/{fitnessEvent}', [FitnessEventController::class, 'update'])->name('fitness.standards.update');
+
+                Route::get('fitness/tests/create', [FitnessTestController::class, 'create'])->name('fitness.tests.create');
+                Route::post('fitness/tests', [FitnessTestController::class, 'store'])->name('fitness.tests.store');
+                Route::get('fitness/tests/{fitnessTest}/edit', [FitnessTestController::class, 'edit'])->name('fitness.tests.edit');
+                Route::put('fitness/tests/{fitnessTest}', [FitnessTestController::class, 'update'])->name('fitness.tests.update');
+                Route::delete('fitness/tests/{fitnessTest}', [FitnessTestController::class, 'destroy'])->name('fitness.tests.destroy');
+                Route::put('fitness/tests/{fitnessTest}/results', [FitnessTestController::class, 'recordResults'])->name('fitness.tests.results');
+            });
+        });
 
         Route::get('users', [UserController::class, 'index'])->name('users.index')->can('viewAny', User::class);
         Route::get('users/create', [UserController::class, 'create'])->name('users.create')->can('create', User::class);

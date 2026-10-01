@@ -13,6 +13,8 @@ use App\Models\Question;
 use App\Models\QuestionMedia;
 use App\Models\Subject;
 use App\Services\Examinations\CandidateAttemptService;
+use App\Services\Fitness\FitnessStandardService;
+use App\Services\Fitness\FitnessTestService;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as Router;
 use Illuminate\Support\Str;
@@ -86,6 +88,13 @@ class RouteAccessMatrixTest extends TestCase
         $media->created_by = $this->bravo->id;
         $media->save();
 
+        // A fitness event and a test of Batch B (managed only by administrators).
+        $fitnessEvent = app(FitnessStandardService::class)->create([
+            'name' => 'Push-ups', 'description' => null, 'unit' => 'repetitions', 'higher_is_better' => true,
+            'passing_value' => 40.0, 'maximum_value' => 60.0, 'sort_order' => 1,
+        ]);
+        $fitnessTest = app(FitnessTestService::class)->create($this->batchB, ['title' => 'Fitness Test B', 'tested_on' => '2026-09-01', 'notes' => null], [$fitnessEvent->id], $this->userWithRole(SystemRole::SuperAdministrator));
+
         $this->parameters = [
             'academicPeriod' => (string) $this->activePeriod->id,
             'assessment' => (string) $assessment->id,
@@ -94,6 +103,8 @@ class RouteAccessMatrixTest extends TestCase
             'classBatch' => (string) $this->batchB->id,
             'classSubject' => (string) $this->offeringB1->id,
             'examination' => (string) $exam->id,
+            'fitnessEvent' => (string) $fitnessEvent->id,
+            'fitnessTest' => (string) $fitnessTest->id,
             'instructor' => (string) $this->bravo->id,
             'instructorAssignment' => (string) InstructorAssignment::query()->where('instructor_id', $this->bravo->id)->value('id'),
             'medium' => (string) $media->id,

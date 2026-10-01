@@ -93,6 +93,9 @@ class ClientDemoSeeder extends Seeder
         foreach ($offerings as $number => $offering) {
             $this->onlineQuiz($offering, $instructors[$number], $number === 1);
         }
+
+        // Sample fitness events and a diagnostic test with synthetic results.
+        $this->call(DemoFitnessSeeder::class);
     }
 
     private function staff(string $username, string $name, SystemRole $role): User

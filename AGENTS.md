@@ -252,6 +252,7 @@ The platform should support the following major modules:
 - Examination results
 - Reporting
 - Audit logs
+- Military fitness testing (approved by the owner on 2026-10-01: configurable events and standards, tests per class, results scored by the server; a separate record that does not change academic grades or standing; staff only)
 
 ---
 

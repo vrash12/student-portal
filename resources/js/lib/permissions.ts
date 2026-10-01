@@ -27,6 +27,8 @@ export const Permission = {
     ManageExaminations: 'examinations.manage',
     ViewReports: 'reports.view',
     ViewAuditHistory: 'audit_history.view',
+    ViewFitness: 'fitness.view',
+    ManageFitness: 'fitness.manage',
 } as const;
 
 export type PermissionCode = (typeof Permission)[keyof typeof Permission];
