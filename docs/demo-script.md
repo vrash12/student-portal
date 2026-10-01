@@ -1,6 +1,6 @@
 # Demonstration Script (Milestone 20)
 
-A step-by-step guide for presenting the prototype. All data is synthetic (`ClientDemoSeeder`): Class A, Subjects 1–2, `Instructor One` / `Instructor Two`, `Student 01` … `Student 20`. Nothing needs public internet access: fonts, images, icons and scripts are served by the application itself.
+A step-by-step guide for presenting the prototype. All data is synthetic (`ClientDemoSeeder`): Class A, Subjects 1–2, instructors Ramon S. Estrada and Liza M. Tan, and twenty candidates with fictional Filipino names and illustrated profile pictures. Nothing needs public internet access: fonts, images, icons and scripts are served by the application itself.
 
 ## Accounts
 
@@ -17,7 +17,7 @@ Every demo account uses the password `password`.
 
 1. Start XAMPP **MySQL**, then `php artisan serve --host=0.0.0.0` (tablets on the same network open `http://<server-address>:8000`), and `php artisan schedule:work` in a second window so attempts end on time without anyone opening the page.
 2. Run `npm run build` once if the frontend changed since the last build.
-3. Make sure `instructor1` still teaches Subject 1: **Classes → Class A → Subject 1 → Assign Instructor** (on the current local database this assignment was removed on 2026-10-01).
+3. Make sure `instructor1` still teaches Subject 1: **Classes → Class A → Subject 1 → Assign Instructor** (re-assigned on the local database on 2026-10-02).
 4. Sign in once with each account you will show, so the first page load is fast.
 5. Optional, recommended: use a **separate demo database** so the live demonstration never touches working data, and can be reset between rehearsals:
 
@@ -74,7 +74,7 @@ Each step lists what to open and what to point out. Roughly 20–25 minutes in t
 ### 6. Results (`instructor1`, then `admin`)
 
 - Objective items are scored automatically; **Essay Grading** queue → grade an essay with a comment; the final result is calculated.
-- **Item Analysis:** which questions most candidates missed, choice distribution.
+- **Item Analysis** on the completed *Diagnostic Quiz* (18 submissions): which questions most candidates missed, choice distribution, discrimination.
 - **Post to Gradebook** (after the examination ends and results are released) turns the scores into an assessment.
 - As `admin`, reopen the candidate profile: the examination result and the updated standing.
 

@@ -30,6 +30,8 @@ use RuntimeException;
  *   instructor1, instructor2   Instructors (Subject 1 and Subject 2)
  *   student01 … student20      Candidates in Class A
  *
+ * Display names are fictional Filipino names (DemoPeopleSeeder).
+ *
  * Every account uses the password "password" and is not asked to change it.
  * Adds grading weights, passing/warning grades, finalized scores (through
  * DemoGradingSeeder), five questions per subject, and one published online
@@ -60,10 +62,10 @@ class ClientDemoSeeder extends Seeder
             throw new RuntimeException('Client demo data must not be seeded in production.');
         }
 
-        $this->staff('admin', 'Administrator', SystemRole::SuperAdministrator);
+        $this->staff('admin', DemoPeopleSeeder::STAFF['admin'], SystemRole::SuperAdministrator);
         $instructors = [
-            1 => $this->staff('instructor1', 'Instructor One', SystemRole::Instructor),
-            2 => $this->staff('instructor2', 'Instructor Two', SystemRole::Instructor),
+            1 => $this->staff('instructor1', DemoPeopleSeeder::STAFF['instructor1'], SystemRole::Instructor),
+            2 => $this->staff('instructor2', DemoPeopleSeeder::STAFF['instructor2'], SystemRole::Instructor),
         ];
 
         $period = AcademicPeriod::query()->firstOrCreate(
@@ -104,6 +106,12 @@ class ClientDemoSeeder extends Seeder
 
         // Company/platoon, placeholder performance areas, merits/demerits and attendance.
         $this->call(DemoPerformanceSeeder::class);
+
+        // A completed diagnostic quiz per subject, taken by most of the class.
+        $this->call(DemoActivitySeeder::class);
+
+        // Fictional Filipino names and illustrated profile pictures.
+        $this->call(DemoPeopleSeeder::class);
     }
 
     private function staff(string $username, string $name, SystemRole $role): User

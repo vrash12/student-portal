@@ -71,10 +71,10 @@ On 2026-10-01 the local database was reset to a small set for client demonstrati
 
 | Username | Role |
 | --- | --- |
-| `admin` | Super Administrator |
-| `instructor1` | Instructor, Subject 1 |
-| `instructor2` | Instructor, Subject 2 |
-| `student01` … `student20` | Candidates in Class A |
+| `admin` | Super Administrator (Teresita P. Vergara) |
+| `instructor1` | Instructor, Subject 1 (Ramon S. Estrada) |
+| `instructor2` | Instructor, Subject 2 (Liza M. Tan) |
+| `student01` … `student20` | Candidates in Class A (fictional Filipino names, e.g. `student01` Mark Anthony Dizon Villanueva) |
 
 It includes grading weights, passing/warning grades (75/80), finalized scores (a mix of Passing, At Risk, Failing and Incomplete), five questions per subject and one published online quiz per subject, open for 7 days, plus three sample fitness events (placeholder standards) and a "Diagnostic Fitness Test" with synthetic results for Class A (`DemoFitnessSeeder`, also runnable on its own), plus sample expenses (`DemoAccountStatementsSeeder`: four expenses assigned to every class of the active period and a few one-off charges; no payments, since candidates are scholars). To rebuild it on an empty database (this deletes all data):
 
@@ -88,6 +88,13 @@ The last step of `ClientDemoSeeder` is `DemoPerformanceSeeder` (merits/demerits,
 
 ```bash
 php artisan db:seed --class=DemoPerformanceSeeder
+```
+
+`ClientDemoSeeder` then runs `DemoActivitySeeder` (ten more questions per subject and a completed "Diagnostic Quiz" held on 14 September 2026: 18 of 20 candidates took it, varied scores, essays graded, results released) and `DemoPeopleSeeder` (fictional Filipino names for the demo accounts and an illustrated profile picture for each candidate; only placeholder names are replaced and uploaded photos are kept; usernames do not change). Both are safe to run again on an existing demo database:
+
+```bash
+php artisan db:seed --class=DemoActivitySeeder
+php artisan db:seed --class=DemoPeopleSeeder
 ```
 
 ## Trying an online quiz (local development only)
