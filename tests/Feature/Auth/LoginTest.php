@@ -37,17 +37,19 @@ class LoginTest extends TestCase
         config([
             'institution.organization_name' => 'Sample School',
             'institution.short_name' => 'Sample System',
-            'institution.login' => ['header_title' => null, 'header_subtitle' => null, 'core_values' => [], 'motto' => null, 'tagline' => null, 'help_desk' => null],
+            'institution.system_name' => 'Sample Monitoring',
+            'institution.login' => ['header_title' => null, 'header_subtitle' => null, 'card_title' => null, 'core_values' => [], 'motto' => null, 'tagline' => null, 'help_desk' => null],
         ]);
         $this->get('/login')->assertInertia(fn (Assert $page) => $page
-            ->where('app.login', ['headerTitle' => 'Sample School', 'headerSubtitle' => 'Sample System', 'coreValues' => [], 'motto' => null, 'tagline' => null, 'helpDesk' => null]));
+            ->where('app.login', ['headerTitle' => 'Sample School', 'headerSubtitle' => 'Sample System', 'cardTitle' => 'Sample Monitoring', 'coreValues' => [], 'motto' => null, 'tagline' => null, 'helpDesk' => null]));
 
         config(['institution.login' => [
-            'header_title' => 'Officer Candidate School', 'header_subtitle' => 'Philippine Army', 'core_values' => ['Discipline', 'Integrity'],
+            'header_title' => 'Officer Candidate School', 'header_subtitle' => 'Philippine Army', 'card_title' => 'Officer Candidate Training Management System', 'core_values' => ['Discipline', 'Integrity'],
             'motto' => 'Leaders for a Stronger Philippines', 'tagline' => 'Secure platform.', 'help_desk' => 'Local 123',
         ]]);
         $this->get('/login')->assertInertia(fn (Assert $page) => $page
             ->where('app.login.headerTitle', 'Officer Candidate School')
+            ->where('app.login.cardTitle', 'Officer Candidate Training Management System')
             ->where('app.login.coreValues', ['Discipline', 'Integrity'])
             ->where('app.login.helpDesk', 'Local 123'));
     }

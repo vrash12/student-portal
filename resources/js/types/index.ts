@@ -30,6 +30,8 @@ export interface AppBranding {
     login: {
         headerTitle: string;
         headerSubtitle: string;
+        /** Title of the sign-in card (defaults to the system name). */
+        cardTitle: string;
         coreValues: string[];
         motto: string | null;
         tagline: string | null;

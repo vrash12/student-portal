@@ -35,6 +35,8 @@ return [
         // Header title and subtitle; default to the organization and short system names.
         'header_title' => env('LOGIN_HEADER_TITLE') ?: null,
         'header_subtitle' => env('LOGIN_HEADER_SUBTITLE') ?: null,
+        // Title of the sign-in card; defaults to the system name (APP_NAME).
+        'card_title' => env('LOGIN_CARD_TITLE') ?: null,
         // Comma-separated, e.g. "Discipline,Integrity,Valor,Duty".
         'core_values' => array_values(array_filter(array_map('trim', explode(',', (string) env('INSTITUTION_CORE_VALUES', ''))))),
         'motto' => env('LOGIN_MOTTO') ?: null,
