@@ -54,6 +54,21 @@ class LoginTest extends TestCase
         $this->get(route('home'))->assertRedirect(route('portal.home'));
     }
 
+    public function test_a_page_remembered_before_sign_in_is_opened_only_within_the_users_own_area(): void
+    {
+        $this->userWithRole(SystemRole::Candidate, ['username' => 'candidate.test']);
+        $this->userWithRole(SystemRole::AcademicAdministrator, ['username' => 'admin.test']);
+
+        // A staff page remembered on a shared tablet does not send a candidate to an access-denied page.
+        $this->get('/candidates')->assertRedirect(route('login'));
+        $this->post('/login', ['username' => 'candidate.test', 'password' => 'password'])->assertRedirect(route('home'));
+        $this->post('/logout');
+
+        // Staff still return to the page they asked for.
+        $this->get('/candidates')->assertRedirect(route('login'));
+        $this->post('/login', ['username' => 'admin.test', 'password' => 'password'])->assertRedirect('/candidates');
+    }
+
     public function test_username_is_trimmed_and_not_case_sensitive(): void
     {
         $user = $this->userWithRole(SystemRole::Instructor, ['username' => 'instructor.test']);

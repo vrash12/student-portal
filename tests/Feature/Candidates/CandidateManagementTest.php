@@ -162,6 +162,29 @@ class CandidateManagementTest extends TestCase
         $this->assertSame(['candidate_number' => 'OC-0215', 'last_name' => 'Sample', 'class' => 'Sample Batch A', 'status' => 'on_leave'], $entry->new_values);
     }
 
+    /**
+     * Milestone 19: moving a candidate between classes, and refusing a class
+     * that does not exist.
+     */
+    public function test_a_candidate_moves_to_another_class_and_unknown_classes_are_refused(): void
+    {
+        $candidate = Candidate::factory()->create(['class_batch_id' => $this->classBatch->id]);
+        $other = ClassBatch::factory()->for($this->classBatch->academicPeriod)->create(['name' => 'Sample Batch B']);
+
+        $this->actingAs($this->admin)
+            ->put("/candidates/{$candidate->id}", $this->updatePayload($candidate, ['class_batch_id' => $other->id]))
+            ->assertRedirect(route('candidates.show', $candidate));
+        $this->assertSame($other->id, $candidate->fresh()->class_batch_id);
+        $entry = AuditLog::query()->where('action', AuditAction::CandidateUpdated->value)->sole();
+        $this->assertSame(['class' => 'Sample Batch A'], $entry->old_values);
+        $this->assertSame(['class' => 'Sample Batch B'], $entry->new_values);
+
+        $this->actingAs($this->admin)
+            ->put("/candidates/{$candidate->id}", $this->updatePayload($candidate->fresh(), ['class_batch_id' => 999999]))
+            ->assertSessionHasErrors('class_batch_id');
+        $this->assertSame($other->id, $candidate->fresh()->class_batch_id);
+    }
+
     public function test_deactivated_candidate_accounts_cannot_sign_in(): void
     {
         $candidate = Candidate::factory()->create(['candidate_number' => 'OC-0214']);

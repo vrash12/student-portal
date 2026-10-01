@@ -39,6 +39,15 @@ function plural(count: number, one: string, many: string): string {
 
 /** The server refused a save (not a connection failure). */
 class SaveRejected extends Error { constructor(message: string, readonly status: number) { super(message); } }
+/**
+ * Failures that say nothing about the answer itself: no connection, the
+ * server or its gateway unavailable (5xx), a timeout, or rate limiting. The
+ * answer is kept on the tablet and sent again later.
+ */
+function isTransient(error: unknown): boolean {
+    return error instanceof TypeError || (error instanceof SaveRejected && (error.status >= 500 || error.status === 408 || error.status === 429));
+}
+type FlushOutcome = 'synced' | 'offline' | 'failed';
 interface Attempt { id: number; title: string; expiresAt: string; serverNow: string; allowBackNavigation: boolean; oneQuestionAtATime: boolean; position: number; revision: number; answers: Record<number, Answer> }
 
 export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; questions: Item[] }) {
@@ -275,10 +284,12 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
         return { revision: result?.revision ?? payload.revision, status: result?.status ?? 'in_progress' };
     }
 
-    async function flushPending(): Promise<void> {
-        if (flushing.current || saving.current || !navigator.onLine || pendingRef.current.length === 0) return;
+    async function flushPending(): Promise<FlushOutcome> {
+        if (pendingRef.current.length === 0) return 'synced';
+        if (!navigator.onLine) return 'offline';
+        if (flushing.current || saving.current) return 'failed';
         flushing.current = true;
-        setBusy(true);
+        // Background sync keeps the buttons usable; a tap waits for it (see waitForIdle).
         report('syncing');
         try {
             while (pendingRef.current.length > 0 && navigator.onLine) {
@@ -292,12 +303,14 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
                 if (result.status !== 'in_progress') {
                     await clearRecovery(attempt.id);
                     router.visit('/portal/attempts/' + attempt.id + '/success');
-                    return;
+                    return 'failed';
                 }
             }
             persistLocal(answersRef.current, positionRef.current);
             setConnection(navigator.onLine ? 'online' : 'offline');
             report(pendingRef.current.length > 0 ? 'offline' : dirty.current ? 'unsaved' : 'saved');
+
+            return pendingRef.current.length > 0 ? 'offline' : 'synced';
         } catch (error) {
             if (error instanceof SaveRejected && error.status === 422) {
                 // The server refused a queued answer (the attempt changed on another
@@ -307,20 +320,46 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
                 await clearRecovery(attempt.id);
                 report('failed', `${error.message} The answers saved on the server are being loaded again.`);
                 window.setTimeout(() => window.location.reload(), 2500);
-                return;
+                return 'failed';
+            }
+            if (isTransient(error)) {
+                // The server is still unreachable: the queue stays on the tablet and is sent again later.
+                setConnection('offline');
+                report('offline');
+
+                return 'offline';
             }
             report('failed', error instanceof Error ? error.message : 'Try again when the connection returns.');
+
+            return 'failed';
         } finally {
             flushing.current = false;
-            setBusy(false);
+        }
+    }
+
+    /**
+     * Waits (up to 15 s) for a save or sync already in progress. A tap on Save
+     * and Next, a question in the list, or Submit while an autosave is running
+     * then continues instead of being lost or reported as a connection failure.
+     */
+    async function waitForIdle(): Promise<void> {
+        for (let waited = 0; (saving.current || flushing.current) && waited < 15000; waited += 100) {
+            await new Promise((resolve) => window.setTimeout(resolve, 100));
         }
     }
 
     async function save(next = positionRef.current): Promise<boolean> {
-        if (!recoveryReady || saving.current || flushing.current) return false;
+        if (!recoveryReady) return false;
+        await waitForIdle();
+        if (saving.current || flushing.current) return false;
+        // Answers already queued on the tablet are sent first, in order. While the
+        // server stays unreachable this answer joins the queue, so the candidate
+        // can keep working through the examination.
+        let queueOnly = !navigator.onLine;
         if (pendingRef.current.length > 0 && navigator.onLine) {
-            await flushPending();
-            if (pendingRef.current.length > 0) return false;
+            const outcome = await flushPending();
+            if (outcome === 'failed') return false;
+            queueOnly = outcome === 'offline';
         }
         const currentItem = getQuestion(questions, positionRef.current);
         const currentAnswer = answersRef.current[currentItem.id] ?? { value: null, flagged: false };
@@ -329,11 +368,12 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
         const moving = next !== positionRef.current;
         const payload: RecoveryPayload = { position: positionRef.current, next_position: next, revision: tail ? tail.revision + 1 : revision.current, answer: currentAnswer.value, flagged: currentAnswer.flagged };
         saving.current = true;
-        setBusy(true);
+        // Background autosaves keep the buttons usable; moving to another question disables them.
+        setBusy(moving);
         setNavigating(moving);
         report('saving');
         try {
-            if (!navigator.onLine) throw new TypeError('offline');
+            if (queueOnly || !navigator.onLine) throw new TypeError('offline');
             const result = await requestSave(payload);
             revision.current = result.revision;
             // Answers typed while this save was in flight are still unsaved.
@@ -348,7 +388,7 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
             if (result.status !== 'in_progress') router.visit(`/portal/attempts/${attempt.id}/success`);
             return result.status === 'in_progress';
         } catch (error) {
-            if (error instanceof TypeError || !navigator.onLine) {
+            if (isTransient(error) || !navigator.onLine) {
                 if (!await enqueueRecovery(attempt.id, payload)) {
                     setStorageAvailable(false);
                     setConnection('offline');
