@@ -69,6 +69,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::get('academic-periods', [AcademicPeriodController::class, 'index'])->name('academic-periods.index');
             Route::get('academic-periods/create', [AcademicPeriodController::class, 'create'])->name('academic-periods.create');
             Route::post('academic-periods', [AcademicPeriodController::class, 'store'])->name('academic-periods.store');
+            Route::get('academic-periods/{academicPeriod}', [AcademicPeriodController::class, 'show'])->name('academic-periods.show')->whereNumber('academicPeriod');
             Route::get('academic-periods/{academicPeriod}/edit', [AcademicPeriodController::class, 'edit'])->name('academic-periods.edit');
             Route::put('academic-periods/{academicPeriod}', [AcademicPeriodController::class, 'update'])->name('academic-periods.update');
             Route::post('academic-periods/{academicPeriod}/activate', [AcademicPeriodController::class, 'activate'])->name('academic-periods.activate');

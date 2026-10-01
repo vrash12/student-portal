@@ -104,6 +104,7 @@ class ClassBatchController extends Controller
                 'id' => $classBatch->id,
                 'name' => $classBatch->name,
                 'period' => [
+                    'id' => $classBatch->academicPeriod->id,
                     'name' => $classBatch->academicPeriod->name,
                     'isActive' => $classBatch->academicPeriod->is_active,
                 ],
@@ -147,6 +148,7 @@ class ClassBatchController extends Controller
                 'manageAssignments' => $request->user()->hasPermission(Permission::ManageInstructorAssignments),
                 'viewCandidates' => $request->user()->can('viewAny', Candidate::class),
                 'configureGrading' => $request->user()->hasPermission(Permission::ConfigureGrading),
+                'viewPeriod' => $request->user()->hasPermission(Permission::ManageAcademicPeriods),
             ],
         ]);
     }

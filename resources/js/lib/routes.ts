@@ -32,6 +32,7 @@ export const routes = {
         index: () => '/academic-periods',
         create: () => '/academic-periods/create',
         store: () => '/academic-periods',
+        show: (periodId: number) => `/academic-periods/${periodId}`,
         edit: (periodId: number) => `/academic-periods/${periodId}/edit`,
         update: (periodId: number) => `/academic-periods/${periodId}`,
         activate: (periodId: number) => `/academic-periods/${periodId}/activate`,

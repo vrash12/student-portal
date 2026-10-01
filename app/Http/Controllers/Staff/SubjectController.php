@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\SubjectRequest;
+use App\Models\AcademicPeriod;
+use App\Models\ClassSubject;
 use App\Models\Subject;
 use App\Services\SubjectService;
 use App\Support\QueryFilters;
@@ -26,8 +28,14 @@ class SubjectController extends Controller
             'status' => QueryFilters::oneOf($request, 'status', ['active', 'inactive']),
         ];
 
+        $activePeriod = AcademicPeriod::query()->active()->first(['id', 'name']);
+
         $subjects = Subject::query()
             ->withCount('classSubjects')
+            // Where each subject is taught in the active period, and by whom.
+            ->with(['classSubjects' => fn ($offerings) => $offerings
+                ->whereHas('classBatch', fn (Builder $classes) => $classes->where('academic_period_id', $activePeriod?->id ?? 0))
+                ->with(['classBatch:id,name', 'instructorAssignments.instructor:id,name'])])
             ->when($filters['search'] !== '', fn (Builder $query) => $query->where(function (Builder $match) use ($filters): void {
                 $term = QueryFilters::likeTerm($filters['search']);
                 $match->where('code', 'like', $term)->orWhere('name', 'like', $term);
@@ -43,11 +51,21 @@ class SubjectController extends Controller
                 'name' => $subject->name,
                 'isActive' => $subject->is_active,
                 'classCount' => (int) $subject->class_subjects_count,
+                'taughtIn' => $subject->classSubjects
+                    ->sortBy(fn (ClassSubject $offering): string => $offering->classBatch->name)
+                    ->map(fn (ClassSubject $offering): array => [
+                        'classId' => $offering->classBatch->id,
+                        'className' => $offering->classBatch->name,
+                        'instructors' => $offering->instructorAssignments->map(fn ($assignment): string => $assignment->instructor->name)->sort()->values()->all(),
+                    ])
+                    ->values()
+                    ->all(),
             ]);
 
         return Inertia::render('staff/subjects/index', [
             'subjects' => $subjects,
             'filters' => $filters,
+            'activePeriod' => $activePeriod === null ? null : ['id' => $activePeriod->id, 'name' => $activePeriod->name],
         ]);
     }
 

@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { CalendarRange, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Button, ButtonLink } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
 import { formatCalendarDate, formatGrade } from '@/lib/format';
 import { routes } from '@/lib/routes';
+import { terms } from '@/lib/terminology';
 import type { GradingThresholds } from '@/types/grading';
 
 interface PeriodRow {
@@ -63,7 +64,7 @@ export default function AcademicPeriodsIndex({ periods, can }: AcademicPeriodsIn
 
             <PageHeader
                 title="Academic Periods"
-                description="Terms or cycles that group classes. One period is active at a time."
+                description={`Terms or cycles that group ${terms.classBatch.plural.toLowerCase()}. One period is active at a time.`}
                 actions={createAction}
             />
 
@@ -72,7 +73,7 @@ export default function AcademicPeriodsIndex({ periods, can }: AcademicPeriodsIn
                     <EmptyState
                         icon={CalendarRange}
                         title="No academic periods yet"
-                        description="Create the first academic period, then add classes to it."
+                        description={`Create the first academic period, then add ${terms.classBatch.plural.toLowerCase()} to it.`}
                         action={createAction}
                     />
                 ) : (
@@ -82,7 +83,7 @@ export default function AcademicPeriodsIndex({ periods, can }: AcademicPeriodsIn
                             <Th>Dates</Th>
                             <Th>Status</Th>
                             <Th>Grading Thresholds</Th>
-                            <Th align="right">Classes</Th>
+                            <Th align="right">{terms.classBatch.plural}</Th>
                             <Th align="right">
                                 <span className="sr-only">Actions</span>
                             </Th>
@@ -90,7 +91,11 @@ export default function AcademicPeriodsIndex({ periods, can }: AcademicPeriodsIn
                         <TableBody>
                             {periods.map((period) => (
                                 <Tr key={period.id}>
-                                    <Td className="font-medium text-ink">{period.name}</Td>
+                                    <Td className="font-medium text-ink">
+                                        <Link href={routes.academicPeriods.show(period.id)} className="text-primary-700 underline">
+                                            {period.name}
+                                        </Link>
+                                    </Td>
                                     <Td className="text-ink-muted">
                                         {formatCalendarDate(period.startsOn)} – {formatCalendarDate(period.endsOn)}
                                     </Td>
@@ -116,6 +121,9 @@ export default function AcademicPeriodsIndex({ periods, can }: AcademicPeriodsIn
                                     </Td>
                                     <Td align="right">
                                         <div className="flex justify-end gap-1">
+                                            <RowAction href={routes.academicPeriods.show(period.id)} label={`View ${period.name}: classes, subjects and instructors`}>
+                                                View
+                                            </RowAction>
                                             {!period.isActive && (
                                                 <Button variant="ghost" size="sm" onClick={() => setActivating(period)}>
                                                     Set Active

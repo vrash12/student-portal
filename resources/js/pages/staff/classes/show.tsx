@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { BookOpen, GraduationCap, Pencil, Plus, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { WeightSummary } from '@/components/grading/offering-context';
@@ -46,12 +46,12 @@ interface InstructorOption {
 }
 
 interface ClassShowProps {
-    classBatch: { id: number; name: string; period: { name: string; isActive: boolean } };
+    classBatch: { id: number; name: string; period: { id: number; name: string; isActive: boolean } };
     offerings: Offering[];
     candidates: Paginated<CandidateRow>;
     subjectOptions: Array<{ id: number; code: string; name: string }>;
     instructorOptions: InstructorOption[];
-    can: { manageAssignments: boolean; viewCandidates: boolean; configureGrading: boolean };
+    can: { manageAssignments: boolean; viewCandidates: boolean; configureGrading: boolean; viewPeriod: boolean };
 }
 
 export default function ClassShow({ classBatch, offerings, candidates, subjectOptions, instructorOptions, can }: ClassShowProps) {
@@ -65,7 +65,14 @@ export default function ClassShow({ classBatch, offerings, candidates, subjectOp
                 title={classBatch.name}
                 description={
                     <>
-                        Academic period: {classBatch.period.name}{' '}
+                        Academic period:{' '}
+                        {can.viewPeriod ? (
+                            <Link href={routes.academicPeriods.show(classBatch.period.id)} className="text-primary-700 underline">
+                                {classBatch.period.name}
+                            </Link>
+                        ) : (
+                            classBatch.period.name
+                        )}{' '}
                         {classBatch.period.isActive && <StatusBadge tone="success">Active</StatusBadge>}
                     </>
                 }
