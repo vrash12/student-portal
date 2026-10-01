@@ -12,6 +12,7 @@ The system is designed to run on an internal network (LAN, private Wi-Fi, local 
 | [UI_UX_DESIGN.md](UI_UX_DESIGN.md) | Visual, responsive, accessibility, and interaction standards |
 | [MILESTONES.md](MILESTONES.md) | Development order and acceptance criteria |
 | [SESSION_HANDOFF.md](SESSION_HANDOFF.md) | Current implementation state for the next development session |
+| [docs/demo-script.md](docs/demo-script.md) | Demonstration script: accounts, pre-demo checklist, the six-step demo flow, troubleshooting |
 | [docs/performance-and-qualification.md](docs/performance-and-qualification.md) | Performance areas, overall score, qualification, class rank, merits/demerits and attendance: rules, setup and questions for OCS |
 
 ## Stack
