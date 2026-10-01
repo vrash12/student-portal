@@ -406,8 +406,9 @@ Earlier applied attempt migrations 000300â€“000800 remain the authoritative M9â€
 
 ## Follow-up considerations
 
-### Hostinger trial deployment (2026-09-30, live)
+### Hostinger trial deployment (2026-09-30, live; updated 2026-10-02)
 
+- **Updated 2026-10-02 to commit `4e032e1`** (owner request) over SSH with the key `~/.ssh/claude_hostinger_ed25519` (host `46.202.186.73`, port 65002; never use or record a password). Backups first in `~/backups/testwebsitetrial.site/`: `db-before-update-20261002.sql` (mysqldump using the server's own `.env`), `files-before-update-20261002.tar.gz` (academic-app + public_html, verified) and `env-before-update-20261002`. Release = `git archive HEAD` (without `docs/proposal`) + `public/build`, rsynced into `academic-app` (keeping `.env`, `storage/`, `vendor/`), `composer install --no-dev -o` with PHP 8.4, 17 migrations, `AccessControlSeeder`, `public/` rsynced to `public_html` (keeping its `index.php`, `.htaccess`, `storage` link), config/route/view cache. Non-secret display settings added to the live `.env`: the sign-in texts and images as in local (`LOGIN_*`, `INSTITUTION_CORE_VALUES`) and `PORTAL_SHOW_FITNESS=false`. Checked: `/up` and `/login` 200 with the new card title, new assets 200, `/.env` 403, no new log entries, 3 users / 1 candidate kept, no demo data (owner not asked yet). **Pushing to GitHub does not deploy:** repeat these steps for later updates. The scheduler cron is still not installed.
 - Target: `testwebsitetrial.site`, SSH account `u330835917` on port `65002`. Do not record SSH or database passwords in this file or Git.
 - The previous Node.js site is backed up at `/home/u330835917/backups/testwebsitetrial.site/before-academic-20260930-084502.tar.gz` (verified with `gzip -t`). Its old `public_html` and `hbuilds` were removed after successful cutover. Unrelated account databases were preserved.
 - Current code and built Vite assets are at `/home/u330835917/domains/testwebsitetrial.site/academic-app`. `composer install --no-dev` succeeded with CLI PHP 8.4.19 at `/opt/alt/php84/usr/bin/php`. The lockfile requires PHP 8.4 even though default CLI/web PHP is 8.3.
@@ -422,7 +423,7 @@ Earlier applied attempt migrations 000300â€“000800 remain the authoritative M9â€
 - Review access-code storage, production sessions/rate limits and sensitive browser history in the planned M17 security pass. Do not claim production readiness from implementation completion.
 - `php artisan serve` is a development server; hundreds of tablets require an appropriate PHP web server.
 - Class/subject removal is restricted when academic/exam history depends on it. Existing inactive accounts and historical assignments are intentionally retained.
-- The Hostinger trial deployment predates the 2026-10-01 changes (component tests, dashboard fix, leave-screen detection, question media, landscape PDFs). Deploying them needs `composer install --no-dev`, `php artisan migrate` (two new migrations), `npm run build`, and backups that include `storage/app/private/question-media` and `storage/app/private/candidate-photos`.
+- The Hostinger trial deployment was updated on 2026-10-02 (see above); later changes need the same steps, with backups that include `storage/app/private/question-media` and `storage/app/private/candidate-photos`.
 
 ## Milestone 6 review findings deferred by the owner (2026-09-30)
 
