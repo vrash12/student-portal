@@ -20,6 +20,11 @@ export function formatGrade(value: number | null): string {
     return value === null ? EMPTY_VALUE : value.toFixed(2);
 }
 
+/** Configured points without needless decimals ("60", "62.5"), e.g. in a fitness points table. */
+export function formatPoints(value: number): string {
+    return String(Math.round(value * 100) / 100);
+}
+
 /** "84.50%", or a dash when there is no value. */
 export function formatPercent(value: number | null): string {
     return value === null ? EMPTY_VALUE : `${value.toFixed(2)}%`;

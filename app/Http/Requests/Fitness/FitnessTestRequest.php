@@ -9,7 +9,8 @@ use Illuminate\Validation\Rule;
 
 /**
  * Create a fitness test (class, details, events) or update its details.
- * Authorization is enforced by the `can:fitness.manage` route middleware.
+ * Authorization is enforced by the `can:fitness.manage` route middleware
+ * and FitnessTestPolicy (only classes in the user's FitnessScope).
  */
 class FitnessTestRequest extends FormRequest
 {

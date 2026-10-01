@@ -19,7 +19,8 @@ use Tests\TestCase;
 /**
  * Standard military fitness (owner request, 2026-10-01): configurable events
  * and standards, tests per class with a copy of the standards, raw results
- * scored by the server, audited changes, staff-only access.
+ * scored by the server, audited changes, staff-only access. Points tables
+ * and instructor access: FitnessPointsTableTest, InstructorFitnessAccessTest.
  */
 class FitnessTest extends TestCase
 {
@@ -45,11 +46,11 @@ class FitnessTest extends TestCase
         $this->second = Candidate::factory()->create(['class_batch_id' => $this->classA->id, 'candidate_number' => 'C-002']);
 
         $this->actingAs($this->admin)->post('/fitness/standards', [
-            'name' => 'Push-ups', 'unit' => 'repetitions', 'higher_is_better' => true,
+            'name' => 'Push-ups', 'unit' => 'repetitions', 'higher_is_better' => true, 'scoring_method' => 'scaled', 'passing_points' => '60',
             'passing_value' => '40', 'maximum_value' => '60', 'sort_order' => 1,
         ])->assertRedirect('/fitness/standards');
         $this->actingAs($this->admin)->post('/fitness/standards', [
-            'name' => '3.2 km Run', 'unit' => 'time', 'higher_is_better' => false,
+            'name' => '3.2 km Run', 'unit' => 'time', 'higher_is_better' => false, 'scoring_method' => 'scaled', 'passing_points' => '60',
             'passing_value' => '15:00', 'maximum_value' => '11:00', 'sort_order' => 2,
         ])->assertRedirect('/fitness/standards');
 
@@ -74,12 +75,12 @@ class FitnessTest extends TestCase
     public function test_the_maximum_standard_must_be_better_than_the_passing_standard(): void
     {
         $this->actingAs($this->admin)->post('/fitness/standards', [
-            'name' => 'Sit-ups', 'unit' => 'repetitions', 'higher_is_better' => true,
+            'name' => 'Sit-ups', 'unit' => 'repetitions', 'higher_is_better' => true, 'scoring_method' => 'scaled', 'passing_points' => '60',
             'passing_value' => '50', 'maximum_value' => '40', 'sort_order' => 3,
         ])->assertSessionHasErrors(['maximum_value' => 'When higher results are better, the maximum standard must be higher than the passing standard.']);
 
         $this->actingAs($this->admin)->post('/fitness/standards', [
-            'name' => 'Swim', 'unit' => 'time', 'higher_is_better' => false,
+            'name' => 'Swim', 'unit' => 'time', 'higher_is_better' => false, 'scoring_method' => 'scaled', 'passing_points' => '60',
             'passing_value' => '5:75', 'maximum_value' => '4:00', 'sort_order' => 3,
         ])->assertSessionHasErrors('passing_value');
 
@@ -97,7 +98,7 @@ class FitnessTest extends TestCase
 
         // A later change to the standard does not alter the test.
         $this->actingAs($this->admin)->put("/fitness/standards/{$this->pushUps->id}", [
-            'name' => 'Push-ups', 'unit' => 'repetitions', 'higher_is_better' => true,
+            'name' => 'Push-ups', 'unit' => 'repetitions', 'higher_is_better' => true, 'scoring_method' => 'scaled', 'passing_points' => '60',
             'passing_value' => '55', 'maximum_value' => '70', 'sort_order' => 1, 'is_active' => true,
         ])->assertRedirect();
 
@@ -196,16 +197,20 @@ class FitnessTest extends TestCase
                 ->where('fitness.0.outcome.status.value', 'incomplete'));
     }
 
-    public function test_instructors_and_candidates_cannot_see_or_record_fitness(): void
+    public function test_candidates_and_instructors_of_other_classes_cannot_see_or_record_fitness(): void
     {
         $test = $this->createTest();
 
+        $this->actingAs($this->first->user)->get('/fitness')->assertForbidden();
+        // An instructor who does not teach Class A sees an empty list and nothing of its tests.
+        $this->actingAs($this->userWithRole(SystemRole::Instructor))->get('/fitness')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->has('tests.data', 0)->where('can.manage', false));
+
         foreach ([$this->userWithRole(SystemRole::Instructor), $this->first->user] as $user) {
-            $this->actingAs($user)->get('/fitness')->assertForbidden();
             $this->actingAs($user)->get("/fitness/tests/{$test->id}")->assertForbidden();
             $this->actingAs($user)->put("/fitness/tests/{$test->id}/results", ['entries' => [$this->first->id => [$this->eventIdIn($test, $this->pushUps) => '45']]])->assertForbidden();
-            $this->actingAs($user)->post('/fitness/standards', ['name' => 'X'])->assertForbidden();
         }
+        $this->actingAs($this->first->user)->post('/fitness/standards', ['name' => 'X'])->assertForbidden();
 
         $this->assertSame(0, FitnessResult::query()->count());
     }

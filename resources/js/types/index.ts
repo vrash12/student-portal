@@ -40,6 +40,11 @@ export interface AppBranding {
     };
     /** Small "Powered by" credit on the sign-in page; null hides it. */
     poweredBy: { name: string; logoUrl: string | null } | null;
+    /** Candidate portal pages the institution may turn off. */
+    portal: {
+        /** Physical Fitness page and Home tile; off by default (military fitness is staff only). */
+        showFitness: boolean;
+    };
     timezone: string;
     /** ISO 4217 code for Statements of Account, e.g. "PHP". */
     currency: string;

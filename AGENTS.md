@@ -252,7 +252,7 @@ The platform should support the following major modules:
 - Examination results
 - Reporting
 - Audit logs
-- Military fitness testing (approved by the owner on 2026-10-01: configurable events and standards, tests per class, results scored by the server; it does not change subject grades or academic standing; candidates see their own results in the portal)
+- Military fitness testing (approved by the owner on 2026-10-01: configurable events and standards, tests per class, results scored by the server; it does not change subject grades or academic standing. Owner decision 2026-10-02: staff only — administrators, and instructors for the classes they teach, who also set the events and their points tables; candidates do not see fitness tests unless the institution turns the portal page on with `PORTAL_SHOW_FITNESS`)
 - Merits & demerits, attendance, company/platoon, and performance areas with qualification and class rank (approved by the owner on 2026-10-01; see `docs/performance-and-qualification.md`: configurable areas, weights, passing grades and must-pass rules; fitness is a must-pass area; class rank is staff only)
 
 ---
@@ -329,7 +329,7 @@ The first implementation should primarily support candidate access for:
 - examinations
 - authorized assessments
 
-Owner decision (2026-10-01): candidates see their own grades, examination results, performance areas and qualification checklist, merits/demerits, attendance and fitness tests in the portal (each on its own page), always only their own records. Class rank and other candidates' data are never sent to the portal.
+Owner decision (2026-10-01): candidates see their own grades, examination results, performance areas and qualification checklist, merits/demerits and attendance in the portal (each on its own page), always only their own records. Class rank and other candidates' data are never sent to the portal. Fitness tests are staff only since 2026-10-02 (owner decision); the portal's Physical Fitness page is off unless `PORTAL_SHOW_FITNESS=true`.
 
 Do not automatically expose:
 

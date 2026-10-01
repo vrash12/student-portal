@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Enums\FitnessScoringMethod;
 use App\Enums\FitnessUnit;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Fitness\FitnessEventRequest;
@@ -13,7 +14,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Fitness events and their standards (route middleware: fitness.manage).
+ * Fitness events, their points tables or standards, and passing points
+ * (route middleware: fitness.configure).
  */
 class FitnessEventController extends Controller
 {
@@ -37,7 +39,7 @@ class FitnessEventController extends Controller
     public function create(): Response
     {
         return Inertia::render('staff/fitness/standards/create', [
-            'unitOptions' => FitnessUnit::options(),
+            ...$this->formOptions(),
             'nextSortOrder' => (int) FitnessEvent::query()->max('sort_order') + 1,
         ]);
     }
@@ -60,7 +62,7 @@ class FitnessEventController extends Controller
                 ...$this->present($fitnessEvent),
                 'testCount' => $fitnessEvent->testEvents()->count(),
             ],
-            'unitOptions' => FitnessUnit::options(),
+            ...$this->formOptions(),
         ]);
     }
 
@@ -74,12 +76,26 @@ class FitnessEventController extends Controller
     }
 
     /**
+     * @return array{unitOptions: list<array{value: string, label: string}>, methodOptions: list<array{value: string, label: string, description: string}>, maximumRows: int}
+     */
+    private function formOptions(): array
+    {
+        return [
+            'unitOptions' => FitnessUnit::options(),
+            'methodOptions' => FitnessScoringMethod::options(),
+            'maximumRows' => FitnessEventRequest::MAXIMUM_ROWS,
+        ];
+    }
+
+    /**
+     * The event and its standard; points and displays come from
+     * FitnessStandard.
+     *
      * @return array<string, mixed>
      */
     private function present(FitnessEvent $event): array
     {
-        $passing = (float) $event->passing_value;
-        $maximum = (float) $event->maximum_value;
+        $standard = $event->standard();
 
         return [
             'id' => $event->id,
@@ -87,8 +103,12 @@ class FitnessEventController extends Controller
             'description' => $event->description,
             'unit' => ['value' => $event->unit->value, 'label' => $event->unit->label()],
             'higherIsBetter' => $event->higher_is_better,
-            'passingDisplay' => FitnessValue::format($passing, $event->unit),
-            'maximumDisplay' => FitnessValue::format($maximum, $event->unit),
+            'method' => ['value' => $standard->method->value, 'label' => $standard->method->label()],
+            'passingPoints' => $standard->passingPoints,
+            'maximumPoints' => $standard->maximumPoints(),
+            'passingDisplay' => FitnessValue::format($standard->passingValue, $event->unit),
+            'maximumDisplay' => FitnessValue::format($standard->maximumValue, $event->unit),
+            'table' => $standard->toArray()['table'],
             'sortOrder' => $event->sort_order,
             'isActive' => $event->is_active,
         ];

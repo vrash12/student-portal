@@ -141,9 +141,18 @@ The test suite refuses to run against any database whose name does not end in `_
 Candidate routes live under `/portal` and require the candidate portal permission.
 The portal pages are Home (`/portal`), Examinations (`/portal/examinations`), My Grades
 (`/portal/grades`), My Performance (`/portal/performance`: qualification, areas,
-merits/demerits, attendance), Physical Fitness (`/portal/fitness`) and My Information
-(`/portal/profile`). Each shows only the signed-in candidate's own records; class rank is
-never shown to candidates.
+merits/demerits, attendance) and My Information (`/portal/profile`). Each shows only the
+signed-in candidate's own records; class rank is never shown to candidates. Military fitness
+is staff only (owner decision 2026-10-02): the Physical Fitness page (`/portal/fitness`) and
+its Home tile appear only with `PORTAL_SHOW_FITNESS=true`.
+
+Military fitness (staff): administrators see every class; instructors see, create and record
+the fitness tests of the classes they teach, and set the events under **Military Fitness →
+Events and Points**. An event is scored with a **points table** (each result and the points it
+earns, e.g. 25 push-ups = 60 points, 30 = 70; a result earns the points of the best row it
+reaches, and *Fill the table in steps* builds a table quickly) or scaled between a passing and a
+maximum standard. Each event has its own passing points (60 by default). Tests keep the points
+they were created with, so later changes never alter recorded results.
 A published examination must have a positive duration and questions before a candidate
 can start. Candidates see only their assigned class's currently available examinations.
 The attempt screen supports MCQ, true/false, essay, persisted question/choice order,

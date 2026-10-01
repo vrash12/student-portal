@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Award, CalendarClock, CalendarDays, ClipboardList, Dumbbell, GraduationCap, IdCard, PartyPopper, Users } from 'lucide-react';
 import { QualificationBadge } from '@/components/performance/area-status';
 import { ExamCard, type PortalExam } from '@/components/portal/exam-card';
@@ -33,6 +33,8 @@ interface HomeProps {
  * live on each section's own page.
  */
 export default function PortalHome({ summary, available, upcoming, performance, sections }: HomeProps) {
+    // Military fitness is staff only unless the institution shows it to candidates.
+    const { showFitness } = usePage().props.app.portal;
     const dates = useDateFormatter();
 
     return (
@@ -113,7 +115,7 @@ export default function PortalHome({ summary, available, upcoming, performance, 
                     <h2 id="sections-title" className="mb-4 text-xl font-semibold text-primary-900">
                         My Records
                     </h2>
-                    <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className={`grid gap-5 sm:grid-cols-2 ${showFitness ? 'xl:grid-cols-4' : 'lg:grid-cols-3'}`}>
                         <PortalTile href={routes.portal.grades()} icon={GraduationCap} title="My Grades" cta="View Grades">
                             <span className="flex flex-col items-start gap-2">
                                 {sections.grades.overall.standing === null ? (
@@ -153,19 +155,21 @@ export default function PortalHome({ summary, available, upcoming, performance, 
                             )}
                         </PortalTile>
 
-                        <PortalTile href={routes.portal.fitness()} icon={Dumbbell} title="Physical Fitness" cta="View Fitness Tests">
-                            {sections.fitness === null ? (
-                                <span className="text-ink-muted">No fitness tests yet.</span>
-                            ) : (
-                                <span className="flex flex-col items-start gap-2">
-                                    <StatusBadge tone={sections.fitness.status.tone as StatusTone}>{sections.fitness.status.label}</StatusBadge>
-                                    <span className="text-ink-muted">
-                                        {sections.fitness.title} · {formatCalendarDate(sections.fitness.testedOn)}
-                                        {sections.fitness.points !== null && ` · ${formatGrade(sections.fitness.points)} pts`}
+                        {showFitness && (
+                            <PortalTile href={routes.portal.fitness()} icon={Dumbbell} title="Physical Fitness" cta="View Fitness Tests">
+                                {sections.fitness === null ? (
+                                    <span className="text-ink-muted">No fitness tests yet.</span>
+                                ) : (
+                                    <span className="flex flex-col items-start gap-2">
+                                        <StatusBadge tone={sections.fitness.status.tone as StatusTone}>{sections.fitness.status.label}</StatusBadge>
+                                        <span className="text-ink-muted">
+                                            {sections.fitness.title} · {formatCalendarDate(sections.fitness.testedOn)}
+                                            {sections.fitness.points !== null && ` · ${formatGrade(sections.fitness.points)} pts`}
+                                        </span>
                                     </span>
-                                </span>
-                            )}
-                        </PortalTile>
+                                )}
+                            </PortalTile>
+                        )}
                     </div>
                 </section>
             </div>

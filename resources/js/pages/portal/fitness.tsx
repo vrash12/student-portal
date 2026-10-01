@@ -3,7 +3,7 @@ import { CalendarDays, CircleCheck, CircleMinus, CircleX, Dumbbell, Gauge, Trend
 import { BarList } from '@/components/charts/bar-list';
 import { PortalEmpty, PortalHeading, PortalSection, StatTile } from '@/components/portal/portal-ui';
 import { StatusBadge, type StatusTone } from '@/components/ui/status-badge';
-import { formatCalendarDate, formatGrade } from '@/lib/format';
+import { formatCalendarDate, formatGrade, formatPoints } from '@/lib/format';
 import type { CandidateFitnessTest } from '@/types/fitness';
 
 interface FitnessProps {
@@ -12,10 +12,14 @@ interface FitnessProps {
     tests: CandidateFitnessTest[];
 }
 
-/** Meeting an event's passing standard scores 60 points (FitnessStandard on the server). */
-const PASSING_POINTS = 60;
-
 const points = (value: number) => `${formatGrade(value)} pts`;
+
+/** A passing-points line for a chart when every event of the test shares the same passing points (set per event on the server). */
+function passingReference(test: CandidateFitnessTest): Array<{ label: string; value: number }> {
+    const values = [...new Set(test.events.map((event) => event.passingPoints))];
+
+    return values.length === 1 && values[0] !== undefined ? [{ label: `Passing points (${formatPoints(values[0])})`, value: values[0] }] : [];
+}
 
 /** Candidate "Physical Fitness": own fitness tests, event by event, and progress across tests. */
 export default function PortalFitness({ tests }: FitnessProps) {
@@ -27,7 +31,7 @@ export default function PortalFitness({ tests }: FitnessProps) {
             <PortalHeading
                 icon={Dumbbell}
                 title="Physical Fitness"
-                description="Your fitness test results. Each event scores 60 points at its passing standard and 100 at its maximum; every event must be passed."
+                description="Your fitness test results. Each result earns points up to 100; every event must reach its passing points."
             />
 
             {latest === undefined ? (
@@ -57,7 +61,7 @@ export default function PortalFitness({ tests }: FitnessProps) {
 
                             <BarList
                                 bars={latest.events.map((event) => ({ label: event.name, value: event.result?.points ?? null }))}
-                                references={[{ label: 'Passing standard (60 points)', value: PASSING_POINTS }]}
+                                references={passingReference(latest)}
                                 formatValue={points}
                                 emptyValue="Not recorded"
                             />
@@ -71,7 +75,7 @@ export default function PortalFitness({ tests }: FitnessProps) {
                                         </div>
                                         <p className="text-3xl font-bold text-ink tabular-nums">{event.result?.display ?? '—'}</p>
                                         <p className="text-sm text-ink-muted">
-                                            Passing {event.passingDisplay} · Maximum {event.maximumDisplay}
+                                            Passing {event.passingDisplay} ({formatPoints(event.passingPoints)} pts) · Best {event.maximumDisplay}
                                             {event.result !== null && ` · ${points(event.result.points)}`}
                                         </p>
                                     </li>
@@ -85,7 +89,7 @@ export default function PortalFitness({ tests }: FitnessProps) {
                             <div className="flex flex-col gap-8">
                                 <BarList
                                     bars={[...tests].reverse().map((test) => ({ label: `${test.title} · ${formatCalendarDate(test.testedOn)}`, value: test.outcome.points }))}
-                                    references={[{ label: 'Passing standard (60 points)', value: PASSING_POINTS }]}
+                                    references={passingReference(latest)}
                                     formatValue={points}
                                     emptyValue="Incomplete"
                                 />

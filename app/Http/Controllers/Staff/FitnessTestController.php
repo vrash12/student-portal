@@ -12,19 +12,22 @@ use App\Models\ClassBatch;
 use App\Models\FitnessEvent;
 use App\Models\FitnessTest;
 use App\Services\Fitness\FitnessResults;
+use App\Services\Fitness\FitnessScope;
 use App\Services\Fitness\FitnessTestService;
 use App\Services\Fitness\FitnessValue;
-use App\Support\AcademicOptions;
 use App\Support\QueryFilters;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
  * Military fitness tests: the list and results (fitness.view), creating
  * tests and recording results (fitness.manage). Permissions are enforced by
- * route middleware.
+ * route middleware; everything is scoped by class (FitnessScope,
+ * FitnessTestPolicy): users who can view all candidates see every class,
+ * instructors only the classes they teach.
  */
 class FitnessTestController extends Controller
 {
@@ -37,7 +40,8 @@ class FitnessTestController extends Controller
 
     public function index(Request $request): Response
     {
-        $periods = AcademicOptions::academicPeriods();
+        $scope = FitnessScope::for($request->user());
+        $periods = $scope->periods();
         $periodIds = array_column($periods, 'id');
         $requestedPeriod = QueryFilters::id($request, 'period');
         $filters = [
@@ -46,7 +50,7 @@ class FitnessTestController extends Controller
             'class' => QueryFilters::id($request, 'class'),
         ];
 
-        $classes = ClassBatch::query()->where('academic_period_id', (int) $filters['period'])->orderBy('name')->get(['id', 'name']);
+        $classes = $scope->classes()->where('academic_period_id', (int) $filters['period'])->orderBy('name')->get(['id', 'name']);
         if (! $classes->contains('id', (int) $filters['class'])) {
             $filters['class'] = '';
         }
@@ -81,23 +85,41 @@ class FitnessTestController extends Controller
             'filters' => $filters,
             'periods' => array_map(fn (array $period): array => ['id' => $period['id'], 'name' => $period['name']], $periods),
             'classes' => $classes->map(fn (ClassBatch $class): array => ['id' => $class->id, 'name' => $class->name])->all(),
+            // "all": every class; "taught": only the classes the user teaches.
+            'scope' => $scope->allClasses ? 'all' : 'taught',
             'can' => [
-                'manage' => $request->user()->hasPermission(Permission::ManageFitness),
+                'manage' => $request->user()->hasPermission(Permission::ManageFitness) && $scope->classes()->exists(),
+                'configure' => $request->user()->hasPermission(Permission::ConfigureFitness),
             ],
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        $scope = FitnessScope::for($request->user());
+        $classOptions = $scope->classOptions();
+        $requestedClass = (int) QueryFilters::id($request, 'class');
+        $available = collect($classOptions)->flatMap(fn (array $group): array => array_column($group['classes'], 'id'))->all();
+
         return Inertia::render('staff/fitness/tests/create', [
-            'classOptions' => AcademicOptions::classBatchesByPeriod(),
-            'events' => FitnessEvent::query()->active()->ordered()->get()->map(fn (FitnessEvent $event): array => [
-                'id' => $event->id,
-                'name' => $event->name,
-                'unitLabel' => $event->unit->label(),
-                'passingDisplay' => FitnessValue::format((float) $event->passing_value, $event->unit),
-                'maximumDisplay' => FitnessValue::format((float) $event->maximum_value, $event->unit),
-            ])->all(),
+            'classOptions' => $classOptions,
+            // Pre-selects the class the list was filtered by, when the user may use it.
+            'selectedClassId' => in_array($requestedClass, $available, true) ? $requestedClass : null,
+            'scope' => $scope->allClasses ? 'all' : 'taught',
+            'events' => FitnessEvent::query()->active()->ordered()->get()->map(function (FitnessEvent $event): array {
+                $standard = $event->standard();
+
+                return [
+                    'id' => $event->id,
+                    'name' => $event->name,
+                    'unitLabel' => $event->unit->label(),
+                    'methodLabel' => $standard->method->label(),
+                    'passingPoints' => $standard->passingPoints,
+                    'maximumPoints' => $standard->maximumPoints(),
+                    'passingDisplay' => FitnessValue::format($standard->passingValue, $event->unit),
+                    'maximumDisplay' => FitnessValue::format($standard->maximumValue, $event->unit),
+                ];
+            })->all(),
             'today' => now()->timezone(config('institution.timezone'))->toDateString(),
         ]);
     }
@@ -105,6 +127,7 @@ class FitnessTestController extends Controller
     public function store(FitnessTestRequest $request): RedirectResponse
     {
         $classBatch = ClassBatch::query()->findOrFail((int) $request->validated('class_batch_id'));
+        Gate::authorize('create', [FitnessTest::class, $classBatch]);
         $test = $this->tests->create($classBatch, $request->details(), $request->eventIds(), $request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Fitness test {$test->title} created. Record the results below."]);
@@ -115,7 +138,7 @@ class FitnessTestController extends Controller
     public function show(Request $request, FitnessTest $fitnessTest): Response
     {
         $fitnessTest->load(['classBatch.academicPeriod', 'creator:id,name']);
-        $canManage = $request->user()->hasPermission(Permission::ManageFitness);
+        $canManage = $request->user()->can('manage', $fitnessTest);
         $sheet = $this->results->sheet($fitnessTest);
         $hasResults = $fitnessTest->results()->exists();
 
@@ -128,7 +151,8 @@ class FitnessTestController extends Controller
             'can' => [
                 'manage' => $canManage,
                 'delete' => $canManage && ! $hasResults,
-                'viewCandidates' => $request->user()->hasPermission(Permission::ViewAllCandidates),
+                // Staff who can view all candidates, or the class's instructors (CandidatePolicy).
+                'viewCandidates' => $request->user()->hasPermission(Permission::ViewAllCandidates) || $request->user()->teachesClass($fitnessTest->class_batch_id),
             ],
         ]);
     }

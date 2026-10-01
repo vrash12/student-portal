@@ -66,24 +66,28 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             ->name('academic-monitoring.index')
             ->can(Permission::ViewAcademicMonitoring->value);
 
-        // Military fitness: viewing (fitness.view), standards, tests and results (fitness.manage).
+        // Military fitness: viewing (fitness.view), tests and results (fitness.manage), events and
+        // their points (fitness.configure). Tests are scoped by class (FitnessTestPolicy): instructors
+        // only see and record the classes they teach. Route-level `can` runs before validation.
         Route::middleware('can:'.Permission::ViewFitness->value)->group(function (): void {
             Route::get('fitness', [FitnessTestController::class, 'index'])->name('fitness.index');
-            Route::get('fitness/tests/{fitnessTest}', [FitnessTestController::class, 'show'])->name('fitness.tests.show')->whereNumber('fitnessTest');
+            Route::get('fitness/tests/{fitnessTest}', [FitnessTestController::class, 'show'])->name('fitness.tests.show')->whereNumber('fitnessTest')->can('view', 'fitnessTest');
 
             Route::middleware('can:'.Permission::ManageFitness->value)->group(function (): void {
+                Route::get('fitness/tests/create', [FitnessTestController::class, 'create'])->name('fitness.tests.create');
+                Route::post('fitness/tests', [FitnessTestController::class, 'store'])->name('fitness.tests.store');
+                Route::get('fitness/tests/{fitnessTest}/edit', [FitnessTestController::class, 'edit'])->name('fitness.tests.edit')->can('manage', 'fitnessTest');
+                Route::put('fitness/tests/{fitnessTest}', [FitnessTestController::class, 'update'])->name('fitness.tests.update')->can('manage', 'fitnessTest');
+                Route::delete('fitness/tests/{fitnessTest}', [FitnessTestController::class, 'destroy'])->name('fitness.tests.destroy')->can('manage', 'fitnessTest');
+                Route::put('fitness/tests/{fitnessTest}/results', [FitnessTestController::class, 'recordResults'])->name('fitness.tests.results')->can('manage', 'fitnessTest');
+            });
+
+            Route::middleware('can:'.Permission::ConfigureFitness->value)->group(function (): void {
                 Route::get('fitness/standards', [FitnessEventController::class, 'index'])->name('fitness.standards.index');
                 Route::get('fitness/standards/create', [FitnessEventController::class, 'create'])->name('fitness.standards.create');
                 Route::post('fitness/standards', [FitnessEventController::class, 'store'])->name('fitness.standards.store');
                 Route::get('fitness/standards/{fitnessEvent}/edit', [FitnessEventController::class, 'edit'])->name('fitness.standards.edit');
                 Route::put('fitness/standards/{fitnessEvent}', [FitnessEventController::class, 'update'])->name('fitness.standards.update');
-
-                Route::get('fitness/tests/create', [FitnessTestController::class, 'create'])->name('fitness.tests.create');
-                Route::post('fitness/tests', [FitnessTestController::class, 'store'])->name('fitness.tests.store');
-                Route::get('fitness/tests/{fitnessTest}/edit', [FitnessTestController::class, 'edit'])->name('fitness.tests.edit');
-                Route::put('fitness/tests/{fitnessTest}', [FitnessTestController::class, 'update'])->name('fitness.tests.update');
-                Route::delete('fitness/tests/{fitnessTest}', [FitnessTestController::class, 'destroy'])->name('fitness.tests.destroy');
-                Route::put('fitness/tests/{fitnessTest}/results', [FitnessTestController::class, 'recordResults'])->name('fitness.tests.results');
             });
         });
 

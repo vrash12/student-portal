@@ -10,6 +10,7 @@ import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components
 import { formatCalendarDate } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
+import { withQuery } from '@/lib/url';
 import { useQueryFilters } from '@/lib/use-query-filters';
 import type { Paginated } from '@/types';
 
@@ -29,17 +30,19 @@ interface FitnessIndexProps {
     filters: { period: string; class: string };
     periods: Array<{ id: number; name: string }>;
     classes: Array<{ id: number; name: string }>;
-    can: { manage: boolean };
+    /** "all": every class; "taught": only the classes the user teaches. */
+    scope: 'all' | 'taught';
+    can: { manage: boolean; configure: boolean };
 }
 
-export default function FitnessIndex({ tests, filters, periods, classes, can }: FitnessIndexProps) {
+export default function FitnessIndex({ tests, filters, periods, classes, scope, can }: FitnessIndexProps) {
     const { singular, plural } = terms.classBatch;
     const defaultPeriod = String(periods[0]?.id ?? '');
     const { values, update, updateMany } = useQueryFilters(routes.fitness.index(), { period: filters.period, class: filters.class });
     const canReset = values.period !== defaultPeriod || values.class !== '';
 
     const newTestAction = can.manage && (
-        <ButtonLink href={routes.fitness.tests.create()} variant="primary" icon={<Plus className="size-4" aria-hidden="true" />}>
+        <ButtonLink href={withQuery(routes.fitness.tests.create(), { class: values.class })} variant="primary" icon={<Plus className="size-4" aria-hidden="true" />}>
             New Fitness Test
         </ButtonLink>
     );
@@ -50,13 +53,15 @@ export default function FitnessIndex({ tests, filters, periods, classes, can }: 
 
             <PageHeader
                 title="Military Fitness"
-                description={`Standard fitness tests of each ${singular.toLowerCase()} and their results. A candidate passes a test by meeting the passing standard of every event.`}
+                description={`${scope === 'taught' ? `Fitness tests of the ${plural.toLowerCase()} you teach` : `Standard fitness tests of each ${singular.toLowerCase()}`} and their results. A candidate passes a test by reaching the passing points of every event.`}
                 actions={
-                    can.manage && (
+                    (can.configure || can.manage) && (
                         <>
-                            <ButtonLink href={routes.fitness.standards.index()} icon={<SlidersHorizontal className="size-4" aria-hidden="true" />}>
-                                Fitness Standards
-                            </ButtonLink>
+                            {can.configure && (
+                                <ButtonLink href={routes.fitness.standards.index()} icon={<SlidersHorizontal className="size-4" aria-hidden="true" />}>
+                                    Events and Points
+                                </ButtonLink>
+                            )}
                             {newTestAction}
                         </>
                     )

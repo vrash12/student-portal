@@ -6,6 +6,8 @@ import { Button, ButtonLink } from '@/components/ui/button';
 import { CheckboxField, FormField, SelectInput, TextArea, TextInput } from '@/components/ui/form-field';
 import { FormActions, FormSection } from '@/components/ui/form-section';
 import { PageHeader } from '@/components/ui/page-header';
+import { formatPoints } from '@/lib/format';
+import { usePermissions, Permission } from '@/lib/permissions';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 
@@ -13,12 +15,19 @@ interface EventOption {
     id: number;
     name: string;
     unitLabel: string;
+    methodLabel: string;
+    passingPoints: number;
+    maximumPoints: number;
     passingDisplay: string;
     maximumDisplay: string;
 }
 
 interface CreateFitnessTestProps {
+    /** Classes the user may test: every class, or only the classes they teach. */
     classOptions: ClassOptionGroup[];
+    /** The class the list was filtered by, when the user may use it. */
+    selectedClassId: number | null;
+    scope: 'all' | 'taught';
     events: EventOption[];
     /** Today in the institution's timezone (Y-m-d). */
     today: string;
@@ -32,10 +41,11 @@ interface FitnessTestFormData {
     event_ids: number[];
 }
 
-export default function CreateFitnessTest({ classOptions, events, today }: CreateFitnessTestProps) {
-    const { singular } = terms.classBatch;
+export default function CreateFitnessTest({ classOptions, selectedClassId, scope, events, today }: CreateFitnessTestProps) {
+    const { singular, plural } = terms.classBatch;
+    const { can } = usePermissions();
     const form = useForm<FitnessTestFormData>({
-        class_batch_id: String(classOptions[0]?.classes[0]?.id ?? ''),
+        class_batch_id: String(selectedClassId ?? classOptions[0]?.classes[0]?.id ?? ''),
         title: '',
         tested_on: today,
         notes: '',
@@ -67,18 +77,25 @@ export default function CreateFitnessTest({ classOptions, events, today }: Creat
 
                 {events.length === 0 ? (
                     <Alert tone="warning" title="No active fitness events">
-                        Add the fitness events and their standards before creating a test.
-                        <div className="mt-2">
-                            <ButtonLink href={routes.fitness.standards.create()} variant="secondary">
-                                Add Fitness Event
-                            </ButtonLink>
-                        </div>
+                        Add the fitness events and their points before creating a test.
+                        {can(Permission.ConfigureFitness) && (
+                            <div className="mt-2">
+                                <ButtonLink href={routes.fitness.standards.create()} variant="secondary">
+                                    Add Fitness Event
+                                </ButtonLink>
+                            </div>
+                        )}
                     </Alert>
                 ) : (
                     <form onSubmit={submit} noValidate className="flex flex-col gap-6">
                         <FormSection title="Test Details">
                             <div className="grid gap-5 sm:grid-cols-2">
-                                <FormField label={singular} required error={form.errors.class_batch_id}>
+                                <FormField
+                                    label={singular}
+                                    required
+                                    error={form.errors.class_batch_id}
+                                    hint={scope === 'taught' ? `Only the ${plural.toLowerCase()} you teach are listed.` : undefined}
+                                >
                                     <SelectInput
                                         name="class_batch_id"
                                         value={form.data.class_batch_id}
@@ -117,7 +134,7 @@ export default function CreateFitnessTest({ classOptions, events, today }: Creat
                                     <CheckboxField
                                         key={event.id}
                                         label={event.name}
-                                        description={`${event.unitLabel} · passing ${event.passingDisplay} (60 pts) · maximum ${event.maximumDisplay} (100 pts)`}
+                                        description={`${event.unitLabel} · ${event.methodLabel} · passing ${event.passingDisplay} (${formatPoints(event.passingPoints)} pts) · best ${event.maximumDisplay} (${formatPoints(event.maximumPoints)} pts)`}
                                         checked={form.data.event_ids.includes(event.id)}
                                         onChange={(changeEvent) => toggleEvent(event.id, changeEvent.target.checked)}
                                     />

@@ -2,11 +2,13 @@
 
 namespace Tests\Unit;
 
+use App\Enums\FitnessScoringMethod;
 use App\Enums\FitnessStatus;
 use App\Enums\FitnessUnit;
 use App\Services\Fitness\FitnessOutcome;
 use App\Services\Fitness\FitnessStandard;
 use App\Services\Fitness\FitnessValue;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -67,6 +69,74 @@ class FitnessScoringTest extends TestCase
 
         $this->assertSame($points, $standard->points($value));
         $this->assertSame($passes, $standard->passes($value));
+    }
+
+    /**
+     * Push-ups by points table (rows in any order): 20 = 50, 25 = 60, 30 = 70, 40 = 100; passing 60 points.
+     *
+     * @return array<string, array{float, float, bool}>
+     */
+    public static function pushUpTable(): array
+    {
+        return [
+            'below the first row' => [19, 0.0, false],
+            'first row' => [20, 50.0, false],
+            'between rows keeps the lower row' => [24, 50.0, false],
+            'passing row' => [25, 60.0, true],
+            'between passing and next' => [29, 60.0, true],
+            'top row' => [40, 100.0, true],
+            'beyond the top row' => [55, 100.0, true],
+        ];
+    }
+
+    #[DataProvider('pushUpTable')]
+    public function test_a_points_table_gives_the_points_of_the_best_row_reached(float $value, float $points, bool $passes): void
+    {
+        $standard = FitnessStandard::pointsTable(FitnessUnit::Repetitions, true, [
+            ['value' => 30, 'points' => 70], ['value' => 20, 'points' => 50], ['value' => 40, 'points' => 100], ['value' => 25, 'points' => 60],
+        ]);
+
+        $this->assertSame(FitnessScoringMethod::Table, $standard->method);
+        $this->assertSame($points, $standard->points($value));
+        $this->assertSame($passes, $standard->passes($value));
+    }
+
+    public function test_a_timed_points_table_rewards_faster_times_and_derives_its_standards(): void
+    {
+        // 16:00 = 60, 14:30 = 80, 13:00 = 100; passing 70 points.
+        $standard = FitnessStandard::pointsTable(FitnessUnit::Time, false, [
+            ['value' => 780, 'points' => 100], ['value' => 960, 'points' => 60], ['value' => 870, 'points' => 80],
+        ], 70);
+
+        $this->assertSame(0.0, $standard->points(961));
+        $this->assertSame(60.0, $standard->points(900));
+        $this->assertFalse($standard->passes(900));
+        $this->assertSame(80.0, $standard->points(870));
+        $this->assertTrue($standard->passes(870));
+        $this->assertSame(100.0, $standard->points(700));
+        // The first result reaching the passing points, and the first reaching the top points.
+        $this->assertSame(870.0, $standard->passingValue);
+        $this->assertSame(780.0, $standard->maximumValue);
+        $this->assertSame(100.0, $standard->maximumPoints());
+        $this->assertSame(['16:00', '14:30', '13:00'], array_column($standard->toArray()['table'], 'display'));
+    }
+
+    public function test_a_points_table_must_reach_the_passing_points(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        FitnessStandard::pointsTable(FitnessUnit::Repetitions, true, [['value' => 20, 'points' => 40]]);
+    }
+
+    public function test_scaled_standards_use_their_passing_points(): void
+    {
+        // Passing 10 earns 70 points, maximum 20 earns 100.
+        $standard = new FitnessStandard(FitnessUnit::Repetitions, true, 10, 20, 70);
+
+        $this->assertSame(70.0, $standard->points(10));
+        $this->assertSame(85.0, $standard->points(15));
+        $this->assertSame(35.0, $standard->points(5));
+        $this->assertSame(100.0, $standard->maximumPoints());
     }
 
     public function test_the_outcome_fails_on_any_failed_event_and_passes_only_when_complete(): void

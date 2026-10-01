@@ -56,6 +56,13 @@ return [
     // Timezone used when presenting dates to users. Data is stored in UTC.
     'timezone' => env('INSTITUTION_TIMEZONE', 'UTC'),
 
+    'portal' => [
+        // Owner decision 2026-10-02: military fitness is for staff only
+        // (administrators and instructors). true shows candidates their own
+        // fitness tests again (Physical Fitness page and Home tile).
+        'show_fitness' => (bool) env('PORTAL_SHOW_FITNESS', false),
+    ],
+
     // ISO 4217 code of the currency used on Statements of Account, e.g. PHP.
     'currency' => env('INSTITUTION_CURRENCY', 'PHP'),
 

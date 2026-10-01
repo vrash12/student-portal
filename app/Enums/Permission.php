@@ -36,6 +36,7 @@ enum Permission: string
     case ViewAuditHistory = 'audit_history.view';
     case ViewFitness = 'fitness.view';
     case ManageFitness = 'fitness.manage';
+    case ConfigureFitness = 'fitness.configure';
     case ViewAccounts = 'accounts.view';
     case ManageAccounts = 'accounts.manage';
     case ManageConduct = 'conduct.manage';
@@ -67,6 +68,7 @@ enum Permission: string
             self::ViewAuditHistory => 'View audit history',
             self::ViewFitness => 'View military fitness records',
             self::ManageFitness => 'Manage military fitness tests',
+            self::ConfigureFitness => 'Configure military fitness standards',
             self::ViewAccounts => 'View statements of account',
             self::ManageAccounts => 'Record statement of account entries',
             self::ManageConduct => 'Record merits and demerits',
@@ -98,8 +100,9 @@ enum Permission: string
             self::ManageExaminations => 'Create quizzes and examinations for the class subjects they are assigned to teach, choose their questions from the question bank, configure them, and publish them.',
             self::ViewReports => 'View and print reports for all candidates when permitted, otherwise only assigned classes and subjects.',
             self::ViewAuditHistory => 'Read institutional audit records and academic change metadata. Does not allow modifying history.',
-            self::ViewFitness => 'View fitness tests, their results, and the fitness history on candidate profiles.',
-            self::ManageFitness => 'Set the fitness events and their standards, create fitness tests for classes, and record candidates\' results.',
+            self::ViewFitness => 'View fitness tests, their results, and the fitness history on candidate profiles: for every class when the user can view all candidates, otherwise for the classes the user teaches.',
+            self::ManageFitness => 'Create fitness tests and record candidates\' results: for every class when the user can view all candidates, otherwise for the classes the user teaches.',
+            self::ConfigureFitness => 'Set the fitness events (push-ups, sit-ups, runs and others), their points tables and passing points. Changes apply to fitness tests created afterwards.',
             self::ViewAccounts => 'View candidates\' statements of account (charges, credits, and balances) and download them as PDF.',
             self::ManageAccounts => 'Record charges and credits on candidates\' statements of account, void mistaken entries with a reason, and manage the account categories. Records amounts only; no payments are processed.',
             self::ManageConduct => 'Record merits and demerits and void mistaken entries with a reason: for every candidate when the user can view all candidates, otherwise for the classes the user teaches.',
@@ -123,7 +126,7 @@ enum Permission: string
             self::ViewReports => 'Monitoring',
             self::ViewAuditHistory => 'Administration',
             self::ManageQuestionBank, self::ManageExaminations => 'Assessments',
-            self::ViewFitness, self::ManageFitness => 'Military Fitness',
+            self::ViewFitness, self::ManageFitness, self::ConfigureFitness => 'Military Fitness',
             self::ViewAccounts, self::ManageAccounts => 'Accounts',
             self::ManageConduct, self::ManageAttendance => 'Conduct & Attendance',
             self::ConfigurePerformance, self::ViewPerformance => 'Performance',

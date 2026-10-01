@@ -55,7 +55,8 @@ final class CandidateHomeService
             'sections' => [
                 'grades' => ['overall' => $academics['overall'], 'subjectCount' => count($academics['subjects']), 'outstandingCount' => $this->outstanding($candidate)->total()],
                 'examinations' => ['openCount' => $available->total(), 'upcomingCount' => $upcoming->total(), 'releasedCount' => $this->releasedResults($candidate)->count()],
-                'fitness' => $this->latestFitness($candidate),
+                // Null as well when the portal does not show fitness (staff only by default).
+                'fitness' => config('institution.portal.show_fitness') ? $this->latestFitness($candidate) : null,
             ],
         ];
     }

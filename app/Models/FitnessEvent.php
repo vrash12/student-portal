@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\FitnessScoringMethod;
 use App\Enums\FitnessUnit;
+use App\Services\Fitness\FitnessStandard;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,11 +12,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * A configurable fitness event (e.g. push-ups, a timed run) with its passing
- * and maximum standards. Events that have been used in a test are
+ * A configurable fitness event (e.g. push-ups, a timed run) with its
+ * standard: a points table, or passing and maximum values (FitnessStandard),
+ * and its passing points. Events that have been used in a test are
  * deactivated, never deleted. Change through FitnessStandardService.
  */
-#[Fillable(['name', 'description', 'unit', 'higher_is_better', 'passing_value', 'maximum_value', 'sort_order'])]
+#[Fillable(['name', 'description', 'unit', 'higher_is_better', 'scoring_method', 'passing_points', 'passing_value', 'maximum_value', 'points_table', 'sort_order'])]
 class FitnessEvent extends Model
 {
     /**
@@ -33,11 +36,27 @@ class FitnessEvent extends Model
         return [
             'unit' => FitnessUnit::class,
             'higher_is_better' => 'boolean',
+            'scoring_method' => FitnessScoringMethod::class,
+            'passing_points' => 'decimal:2',
             'passing_value' => 'decimal:2',
             'maximum_value' => 'decimal:2',
+            'points_table' => 'array',
             'sort_order' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function standard(): FitnessStandard
+    {
+        return FitnessStandard::fromColumns(
+            $this->unit,
+            $this->higher_is_better,
+            $this->scoring_method ?? FitnessScoringMethod::Scaled,
+            (float) ($this->passing_points ?? FitnessStandard::DEFAULT_PASSING_POINTS),
+            $this->passing_value === null ? null : (float) $this->passing_value,
+            $this->maximum_value === null ? null : (float) $this->maximum_value,
+            $this->points_table,
+        );
     }
 
     /**

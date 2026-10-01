@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\FitnessScoringMethod;
 use App\Enums\FitnessUnit;
 use App\Services\Fitness\FitnessStandard;
 use Illuminate\Database\Eloquent\Model;
@@ -24,8 +25,11 @@ class FitnessTestEvent extends Model
         return [
             'unit' => FitnessUnit::class,
             'higher_is_better' => 'boolean',
+            'scoring_method' => FitnessScoringMethod::class,
+            'passing_points' => 'decimal:2',
             'passing_value' => 'decimal:2',
             'maximum_value' => 'decimal:2',
+            'points_table' => 'array',
             'position' => 'integer',
         ];
     }
@@ -56,6 +60,14 @@ class FitnessTestEvent extends Model
 
     public function standard(): FitnessStandard
     {
-        return new FitnessStandard($this->unit, $this->higher_is_better, (float) $this->passing_value, (float) $this->maximum_value);
+        return FitnessStandard::fromColumns(
+            $this->unit,
+            $this->higher_is_better,
+            $this->scoring_method,
+            (float) $this->passing_points,
+            $this->passing_value === null ? null : (float) $this->passing_value,
+            $this->maximum_value === null ? null : (float) $this->maximum_value,
+            $this->points_table,
+        );
     }
 }

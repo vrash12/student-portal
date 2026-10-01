@@ -149,7 +149,8 @@ class QuestionConfidentialityTest extends TestCase
             array_keys($this->propsOf($response)),
             ['app', 'auth', 'errors', 'flash', 'summary', 'available', 'upcoming', 'performance', 'sections'],
         ));
-        // Nor do the other portal pages.
+        // Nor do the other portal pages (Physical Fitness included when it is shown).
+        config(['institution.portal.show_fitness' => true]);
         foreach (['/portal/examinations', '/portal/grades', '/portal/performance', '/portal/fitness', '/portal/profile'] as $url) {
             $this->assertDoesNotReveal($this->get($url)->assertOk()->getContent(), [self::PROMPT, self::RIGHT_CHOICE, self::WRONG_CHOICE, self::EXPLANATION, 'isCorrect', 'is_correct']);
         }

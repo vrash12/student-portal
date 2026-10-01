@@ -49,8 +49,11 @@ final class FitnessTestService
                     'name' => $event->name,
                     'unit' => $event->unit,
                     'higher_is_better' => $event->higher_is_better,
+                    'scoring_method' => $event->scoring_method,
+                    'passing_points' => $event->passing_points,
                     'passing_value' => $event->passing_value,
                     'maximum_value' => $event->maximum_value,
+                    'points_table' => $event->points_table,
                     'position' => $index + 1,
                 ])->save();
             }

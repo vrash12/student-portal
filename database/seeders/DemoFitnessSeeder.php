@@ -18,7 +18,7 @@ use RuntimeException;
 /**
  * Demonstration military fitness data: three SAMPLE events (the standards
  * are placeholders, not institutional requirements; replace them with the
- * official standards in Military Fitness → Fitness Standards) and one
+ * official standards in Military Fitness → Events and Points) and one
  * diagnostic test with synthetic results for every class of the active
  * period. Safe to run again: existing events and tests are kept.
  */

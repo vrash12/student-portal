@@ -9,7 +9,7 @@ import { SearchField } from '@/components/ui/filter-bar';
 import { TextInput } from '@/components/ui/form-field';
 import { StatusBadge, type StatusTone } from '@/components/ui/status-badge';
 import { Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
-import { formatGrade } from '@/lib/format';
+import { formatGrade, formatPoints } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import type { FitnessEventResult, FitnessSheetRow, FitnessTestEvent } from '@/types/fitness';
 
@@ -126,7 +126,7 @@ export function ResultsSheet({ testId, events, rows, editable, linkCandidates }:
                             <Th key={event.id}>
                                 {event.name}
                                 <span className="block font-normal normal-case tracking-normal">
-                                    Pass {event.passingDisplay} · Max {event.maximumDisplay}
+                                    Pass {event.passingDisplay} ({formatPoints(event.passingPoints)} pts) · Best {event.maximumDisplay}
                                 </span>
                             </Th>
                         ))}

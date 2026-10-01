@@ -9,12 +9,12 @@ import { routes } from '@/lib/routes';
 import { useFocusMainOnNavigate } from '@/lib/use-focus-main-on-navigate';
 
 /** The portal's pages, in navigation order; each is active for its own page components. */
-const PORTAL_SECTIONS: Array<{ href: string; label: string; icon: LucideIcon; isActive: (component: string) => boolean }> = [
+const PORTAL_SECTIONS: Array<{ href: string; label: string; icon: LucideIcon; isActive: (component: string) => boolean; fitness?: true }> = [
     { href: routes.portal.home(), label: 'Home', icon: House, isActive: (component) => component === 'portal/home' },
     { href: routes.portal.examinations(), label: 'Examinations', icon: ClipboardList, isActive: (component) => component.startsWith('portal/examinations/') },
     { href: routes.portal.grades(), label: 'My Grades', icon: GraduationCap, isActive: (component) => component === 'portal/grades' },
     { href: routes.portal.performance(), label: 'My Performance', icon: Award, isActive: (component) => component === 'portal/performance' },
-    { href: routes.portal.fitness(), label: 'Physical Fitness', icon: Dumbbell, isActive: (component) => component === 'portal/fitness' },
+    { href: routes.portal.fitness(), label: 'Physical Fitness', icon: Dumbbell, isActive: (component) => component === 'portal/fitness', fitness: true },
     { href: routes.portal.profile(), label: 'My Information', icon: UserRound, isActive: (component) => component === 'portal/profile' },
 ];
 
@@ -26,6 +26,8 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
     const { app, auth } = usePage().props;
     const { component } = usePage();
     const userId = auth.user?.id ?? null;
+    // Military fitness is staff only unless the institution shows it to candidates.
+    const sections = PORTAL_SECTIONS.filter((item) => !item.fitness || app.portal.showFitness);
     useFocusMainOnNavigate();
     // Set during render: child pages (the attempt screen) read recovery data
     // in their own effects, which run before this layout's effects.
@@ -73,9 +75,9 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
                     </div>
                 </div>
                 {component !== 'portal/examinations/attempt' && <nav aria-label="Candidate portal" className="mx-auto max-w-7xl px-2 pb-2 sm:px-4">
-                    {/* Equal tabs, icon above the label: one row of six from tablet width, two rows of three on phones. Nothing is hidden or scrolled. */}
-                    <ul className="grid grid-cols-3 gap-1 sm:grid-cols-6">
-                        {PORTAL_SECTIONS.map((item) => {
+                    {/* Equal tabs, icon above the label: one row from tablet width, rows of three on phones. Nothing is hidden or scrolled. */}
+                    <ul className={`grid grid-cols-3 gap-1 ${sections.length === 6 ? 'sm:grid-cols-6' : 'sm:grid-cols-5'}`}>
+                        {sections.map((item) => {
                             const active = item.isActive(component);
 
                             return <li key={item.href}>

@@ -71,6 +71,7 @@ enum SystemRole: string
             Permission::ViewAuditHistory,
             Permission::ViewFitness,
             Permission::ManageFitness,
+            Permission::ConfigureFitness,
             Permission::ManageConduct,
             Permission::ManageAttendance,
             Permission::ConfigurePerformance,
@@ -92,6 +93,10 @@ enum SystemRole: string
                 Permission::ViewReports,
                 Permission::ManageConduct,
                 Permission::ManageAttendance,
+                // Military fitness for the classes they teach, and its standards (owner request 2026-10-02).
+                Permission::ViewFitness,
+                Permission::ManageFitness,
+                Permission::ConfigureFitness,
             ],
             self::Candidate => [
                 Permission::AccessExamPortal,

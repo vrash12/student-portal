@@ -15,8 +15,9 @@ use Illuminate\Validation\Validator;
  * entries[candidate id][test event id] = "42" or "12:30"; an empty value
  * removes a result. Values are parsed in the event's unit; each invalid
  * value is reported on its own field (entries.{candidate}.{event}).
- * Authorization is enforced by the `can:fitness.manage` route middleware;
- * class membership is checked by FitnessTestService.
+ * Authorization is enforced by the `can:fitness.manage` route middleware and
+ * the route-level FitnessTestPolicy check (before validation); class
+ * membership is checked by FitnessTestService.
  */
 class RecordFitnessResultsRequest extends FormRequest
 {

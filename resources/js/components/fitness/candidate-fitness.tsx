@@ -3,7 +3,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Panel } from '@/components/ui/panel';
 import { StatusBadge, type StatusTone } from '@/components/ui/status-badge';
 import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
-import { formatCalendarDate, formatGrade } from '@/lib/format';
+import { formatCalendarDate, formatGrade, formatPoints } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import type { CandidateFitnessTest } from '@/types/fitness';
 
@@ -44,7 +44,7 @@ export function CandidateFitness({ tests }: { tests: CandidateFitnessTest[] }) {
                         <TableHead>
                             <Th>Event</Th>
                             <Th align="right">Result</Th>
-                            <Th align="right">Passing / Maximum</Th>
+                            <Th align="right">Passing / Best</Th>
                             <Th align="right">Points</Th>
                             <Th>Outcome</Th>
                         </TableHead>
@@ -56,7 +56,7 @@ export function CandidateFitness({ tests }: { tests: CandidateFitnessTest[] }) {
                                         {event.result?.display ?? '—'}
                                     </Td>
                                     <Td align="right" numeric className="text-ink-muted">
-                                        {event.passingDisplay} / {event.maximumDisplay}
+                                        {event.passingDisplay} ({formatPoints(event.passingPoints)} pts) / {event.maximumDisplay}
                                     </Td>
                                     <Td align="right" numeric className="text-ink">
                                         {event.result === null ? '—' : formatGrade(event.result.points)}

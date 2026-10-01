@@ -51,7 +51,7 @@ class HandleInertiaRequests extends Middleware
                 'login' => [
                     'headerTitle' => config('institution.login.header_title') ?? config('institution.organization_name'),
                     'headerSubtitle' => config('institution.login.header_subtitle') ?? config('institution.short_name'),
-                'cardTitle' => config('institution.login.card_title') ?? config('institution.system_name'),
+                    'cardTitle' => config('institution.login.card_title') ?? config('institution.system_name'),
                     'coreValues' => config('institution.login.core_values'),
                     'motto' => config('institution.login.motto'),
                     'tagline' => config('institution.login.tagline'),
@@ -60,6 +60,10 @@ class HandleInertiaRequests extends Middleware
                 'poweredBy' => filled(config('institution.powered_by_name'))
                     ? ['name' => config('institution.powered_by_name'), 'logoUrl' => config('institution.powered_by_logo_url') ?: null]
                     : null,
+                // Candidate portal pages that the institution may turn off.
+                'portal' => [
+                    'showFitness' => (bool) config('institution.portal.show_fitness'),
+                ],
                 'timezone' => config('institution.timezone'),
                 'currency' => config('institution.currency'),
             ],

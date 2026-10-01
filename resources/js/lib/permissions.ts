@@ -29,6 +29,7 @@ export const Permission = {
     ViewAuditHistory: 'audit_history.view',
     ViewFitness: 'fitness.view',
     ManageFitness: 'fitness.manage',
+    ConfigureFitness: 'fitness.configure',
     ViewAccounts: 'accounts.view',
     ManageAccounts: 'accounts.manage',
     ManageConduct: 'conduct.manage',
