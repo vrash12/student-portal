@@ -47,6 +47,9 @@ class HandleInertiaRequests extends Middleware
                 'organizationName' => config('institution.organization_name'),
                 'logoUrl' => config('institution.logo_url'),
                 'loginImageUrl' => config('institution.login_image_url'),
+                'poweredBy' => filled(config('institution.powered_by_name'))
+                    ? ['name' => config('institution.powered_by_name'), 'logoUrl' => config('institution.powered_by_logo_url') ?: null]
+                    : null,
                 'timezone' => config('institution.timezone'),
             ],
             'auth' => fn (): array => $this->authPayload($request->user()),

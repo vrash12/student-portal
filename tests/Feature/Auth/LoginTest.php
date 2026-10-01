@@ -20,6 +20,18 @@ class LoginTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page->component('auth/login'));
     }
 
+    public function test_login_page_shows_the_configurable_powered_by_credit(): void
+    {
+        config(['institution.powered_by_name' => 'ServLife Solutions', 'institution.powered_by_logo_url' => '/branding/powered-by-logo.png']);
+
+        $this->get('/login')->assertInertia(fn (Assert $page) => $page
+            ->where('app.poweredBy', ['name' => 'ServLife Solutions', 'logoUrl' => '/branding/powered-by-logo.png']));
+        $this->assertFileExists(public_path('branding/powered-by-logo.png'));
+
+        config(['institution.powered_by_name' => '']);
+        $this->get('/login')->assertInertia(fn (Assert $page) => $page->where('app.poweredBy', null));
+    }
+
     public function test_staff_member_signs_in_and_lands_on_the_dashboard(): void
     {
         $user = $this->userWithRole(SystemRole::Instructor, ['username' => 'instructor.test']);

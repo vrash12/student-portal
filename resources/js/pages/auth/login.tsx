@@ -1,10 +1,11 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { FormField, PasswordInput, TextInput } from '@/components/ui/form-field';
 import { routes } from '@/lib/routes';
 
 export default function Login() {
+    const { poweredBy } = usePage().props.app;
     const form = useForm({
         username: '',
         password: '',
@@ -53,6 +54,17 @@ export default function Login() {
             </form>
 
             <p className="mt-6 text-sm text-ink-muted">Forgot your password? Contact your system administrator.</p>
+
+            {poweredBy !== null && (
+                <p className="mt-8 flex items-center justify-center gap-2 border-t border-line pt-4 text-xs text-ink-muted">
+                    <span>Powered by</span>
+                    {poweredBy.logoUrl !== null ? (
+                        <img src={poweredBy.logoUrl} alt={poweredBy.name} width={48} height={34} className="h-8 w-auto" />
+                    ) : (
+                        <span className="font-medium text-ink">{poweredBy.name}</span>
+                    )}
+                </p>
+            )}
         </>
     );
 }

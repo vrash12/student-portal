@@ -25,6 +25,11 @@ return [
     // Owner-provided login photograph, served locally for intranet use.
     'login_image_url' => env('LOGIN_IMAGE_URL', '/branding/login-training.jpg'),
 
+    // Small "Powered by" credit under the sign-in form (placeholder supplied
+    // by the owner). Leave POWERED_BY_NAME empty to hide it.
+    'powered_by_name' => env('POWERED_BY_NAME', 'ServLife Solutions'),
+    'powered_by_logo_url' => env('POWERED_BY_LOGO_URL', '/branding/powered-by-logo.png'),
+
     // Public URL of the browser-tab icon. Defaults to the neutral placeholder.
     'favicon_url' => env('ORGANIZATION_FAVICON_URL') ?: '/favicon.svg',
 

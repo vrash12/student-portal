@@ -24,6 +24,8 @@ export interface AppBranding {
     organizationName: string;
     logoUrl: string | null;
     loginImageUrl: string | null;
+    /** Small "Powered by" credit on the sign-in page; null hides it. */
+    poweredBy: { name: string; logoUrl: string | null } | null;
     timezone: string;
 }
 
