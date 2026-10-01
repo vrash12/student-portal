@@ -9,6 +9,8 @@ use App\Models\ClassBatch;
 use App\Models\FitnessTest;
 use App\Services\Fitness\FitnessStandardService;
 use App\Services\Fitness\FitnessTestService;
+use App\Services\Performance\PerformanceAreaService;
+use App\Services\Performance\PortalQualification;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -95,6 +97,45 @@ class CandidateFitnessPageTest extends TestCase
                 ->where('app.portal.showFitness', false)
                 ->where('sections.fitness', null));
         $this->assertStringNotContainsString('Diagnostic Test', $response->getContent());
+    }
+
+    public function test_by_default_my_performance_names_the_fitness_area_only_as_a_staff_assessed_requirement(): void
+    {
+        config(['institution.portal.show_fitness' => false]);
+        $areas = app(PerformanceAreaService::class);
+        $area = fn (string $name, string $source, int $order, array $extra = []): array => [
+            'name' => $name, 'description' => null, 'source' => $source, 'weight' => '50', 'passing_grade' => '60',
+            'must_pass' => true, 'base_rating' => null, 'merit_value' => null, 'demerit_value' => null, 'sort_order' => $order,
+            'is_active' => true, ...$extra,
+        ];
+        $areas->create($area('Conduct', 'conduct', 1, ['base_rating' => '85', 'merit_value' => '1', 'demerit_value' => '1']));
+        $fitness = $areas->create($area('Physical Fitness', 'fitness', 2));
+
+        // The classmate failed push-ups (31 of 40), so the fitness area fails: Not Qualified.
+        $props = $this->actingAs($this->classmate->user)->get('/portal/performance')->assertOk()->inertiaProps();
+        $json = (string) json_encode($props);
+        $this->assertSame(['Conduct'], array_column($props['areas'], 'name'));
+        $this->assertNotContains($fitness->id, array_column($props['result']['areas'], 'areaId'));
+        $this->assertSame(1, $props['staffAssessedAreas']);
+        $this->assertSame('not_qualified', $props['result']['qualification']['status']['value']);
+        $this->assertSame([PortalQualification::STAFF_ASSESSED_REASON], $props['result']['qualification']['reasons']);
+        $this->assertStringNotContainsString('Physical Fitness', $json);
+        $this->assertStringNotContainsString('Diagnostic Test', $json);
+
+        $home = $this->actingAs($this->classmate->user)->get('/portal')->assertOk()->inertiaProps();
+        $this->assertSame([PortalQualification::STAFF_ASSESSED_REASON], $home['performance']['reasons']);
+        $this->assertStringNotContainsString('Physical Fitness', (string) json_encode($home));
+
+        // Staff still see the area by name.
+        $this->actingAs($this->userWithRole(SystemRole::AcademicAdministrator))->get("/candidates/{$this->classmate->id}")->assertOk()
+            ->assertSee('Physical Fitness requirement not met', false);
+
+        // When the institution shows fitness to candidates, the area is listed again.
+        config(['institution.portal.show_fitness' => true]);
+        $props = $this->actingAs($this->classmate->user)->get('/portal/performance')->assertOk()->inertiaProps();
+        $this->assertSame(['Conduct', 'Physical Fitness'], array_column($props['areas'], 'name'));
+        $this->assertSame(['Physical Fitness requirement not met'], $props['result']['qualification']['reasons']);
+        $this->assertSame(0, $props['staffAssessedAreas']);
     }
 
     public function test_staff_cannot_open_the_candidate_fitness_page(): void

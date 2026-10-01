@@ -93,10 +93,10 @@ enum SystemRole: string
                 Permission::ViewReports,
                 Permission::ManageConduct,
                 Permission::ManageAttendance,
-                // Military fitness for the classes they teach, and its standards (owner request 2026-10-02).
+                // Military fitness for the classes they teach (owner request 2026-10-02). The events
+                // and their points (ConfigureFitness) apply to every class: administrators only.
                 Permission::ViewFitness,
                 Permission::ManageFitness,
-                Permission::ConfigureFitness,
             ],
             self::Candidate => [
                 Permission::AccessExamPortal,

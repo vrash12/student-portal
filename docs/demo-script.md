@@ -44,6 +44,7 @@ Each step lists what to open and what to point out. Roughly 20–25 minutes in t
 - **Academic Monitoring:** filter by standing (e.g. Failing); open a candidate.
 - **Candidate profile:** subject grades with standing in words, current warnings ("2 missing scores" — missing scores are never counted as zero), recent assessments, qualification panel, Registration and Academic Record PDFs.
 - **Records → Qualification:** performance areas, must-pass rules, Qualified / Pending / Not Qualified and class rank (staff only).
+- **Records → Military Fitness → Events and Points** (administrators only): **Edit** an event → *Points table*: each result and its points (e.g. 25 push-ups = 60 points), **Fill the table in steps**, and the passing points; existing tests keep their points.
 - Optional: **Classes → Class A** (subjects, grading weights, instructor assignments), **Audit History** (every change with who, when, before and after).
 
 ### 2. Instructor: grades (`instructor1`)
@@ -51,7 +52,7 @@ Each step lists what to open and what to point out. Roughly 20–25 minutes in t
 - **Dashboard:** my subjects, candidates, academic alerts.
 - **My Classes → Class A → Subject 1:** grading components and weights, assessments, the gradebook with each candidate's current grade and standing.
 - Open the draft **Midterm Examination → Record Scores**, enter a few scores, **Save Scores**; point out that drafts do not count until **Finalize Assessment**, and that later changes to finalized scores require a reason and keep their history.
-- **Records → Military Fitness:** the fitness tests of Class A only (an instructor sees the classes they teach); open a test and record results. **Events and Points → Edit** an event → *Points table*: each result and its points (e.g. 25 push-ups = 60 points), **Fill the table in steps**, and the passing points; existing tests keep their points.
+- **Records → Military Fitness:** the fitness tests of Class A only (an instructor sees the classes they teach); open a test and record results.
 
 ### 3. Examination builder (`instructor1`)
 

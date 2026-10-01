@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Award, CalendarCheck, ChartColumn, ListChecks, Medal, Scale, Settings2, ThumbsDown, ThumbsUp, UsersRound } from 'lucide-react';
 import { BarList } from '@/components/charts/bar-list';
 import { formatPoints, formatNetPoints } from '@/components/conduct/conduct-totals';
@@ -18,6 +18,8 @@ interface MyPerformanceProps {
     areas: PerformanceAreaSummary[];
     /** The candidate's own results; null without a class. Never contains a rank. */
     result: CandidateQualificationData | null;
+    /** Areas assessed by staff only (military fitness): counted in the status and overall score, never listed. */
+    staffAssessedAreas: number;
     conduct: OwnConduct;
     attendance: CandidateAttendanceRecord;
 }
@@ -27,7 +29,9 @@ interface MyPerformanceProps {
  * merits/demerits and attendance. Nothing about other candidates and no
  * class rank; every figure comes from the server.
  */
-export default function MyPerformance({ candidate, areas, result, conduct, attendance }: MyPerformanceProps) {
+export default function MyPerformance({ candidate, areas, result, staffAssessedAreas, conduct, attendance }: MyPerformanceProps) {
+    const { showFitness } = usePage().props.app.portal;
+    const sources = showFitness ? 'your grades, fitness tests, conduct and attendance' : `your grades, conduct and attendance${staffAssessedAreas > 0 ? ', and requirements assessed by staff' : ''}`;
     const evaluated = result !== null && areas.length > 0;
     const resultsByArea = new Map((result?.areas ?? []).map((areaResult) => [areaResult.areaId, areaResult]));
     const conductPages = useClientPagination(conduct.entries);
@@ -38,7 +42,7 @@ export default function MyPerformance({ candidate, areas, result, conduct, atten
             <PortalHeading
                 icon={Award}
                 title="My Performance"
-                description={`${candidate.className ?? 'No class yet'}${candidate.period ? ` · ${candidate.period}` : ''}. Calculated from your grades, fitness tests, conduct and attendance.`}
+                description={`${candidate.className ?? 'No class yet'}${candidate.period ? ` · ${candidate.period}` : ''}. Calculated from ${sources}.`}
             />
 
             <div className="flex flex-col gap-10">
@@ -65,7 +69,11 @@ export default function MyPerformance({ candidate, areas, result, conduct, atten
                                     icon={Scale}
                                     label="Overall Score"
                                     value={formatAreaGrade(result.overall.score)}
-                                    hint={result.overall.score === null ? 'No area has a grade yet.' : result.overall.complete ? 'Weighted mean of your areas.' : 'Partial: some areas have no grade yet.'}
+                                    hint={
+                                        result.overall.score === null
+                                            ? 'No area has a grade yet.'
+                                            : `${result.overall.complete ? 'Weighted mean of your areas' : 'Partial: some areas have no grade yet'}${staffAssessedAreas > 0 ? ', including requirements assessed by staff' : ''}.`
+                                    }
                                 />
                             </dl>
                             <div>

@@ -305,6 +305,12 @@ final class QualificationEngine
      *
      * @param  list<AreaResult>  $results
      */
+    /** The reason given for a failed must-pass area. */
+    public static function reasonFor(string $areaName): string
+    {
+        return "{$areaName} requirement not met";
+    }
+
     public function qualify(array $results): QualificationDecision
     {
         if ($results === []) {
@@ -319,7 +325,7 @@ final class QualificationEngine
             }
 
             if ($result->status === AreaStatus::Failed) {
-                $reasons[] = "{$result->area->name} requirement not met";
+                $reasons[] = self::reasonFor($result->area->name);
             } elseif ($result->status !== AreaStatus::Passed) {
                 $pending[] = $result->area->name;
             }

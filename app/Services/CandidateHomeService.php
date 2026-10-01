@@ -10,6 +10,7 @@ use App\Models\ExaminationAttempt;
 use App\Services\Fitness\FitnessResults;
 use App\Services\Grading\GradingThresholds;
 use App\Services\Monitoring\CandidateProfileRecord;
+use App\Services\Performance\PortalQualification;
 use App\Services\Performance\QualificationEngine;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -205,7 +206,8 @@ final class CandidateHomeService
         return [
             // Without active areas the status is Pending until administrators configure them.
             'configured' => $qualification->areas !== [],
-            ...$qualification->qualification->toArray(),
+            // Staff-only areas (fitness) are named only as staff-assessed requirements.
+            ...PortalQualification::decision($qualification),
         ];
     }
 

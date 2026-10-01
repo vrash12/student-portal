@@ -252,7 +252,7 @@ The platform should support the following major modules:
 - Examination results
 - Reporting
 - Audit logs
-- Military fitness testing (approved by the owner on 2026-10-01: configurable events and standards, tests per class, results scored by the server; it does not change subject grades or academic standing. Owner decision 2026-10-02: staff only — administrators, and instructors for the classes they teach, who also set the events and their points tables; candidates do not see fitness tests unless the institution turns the portal page on with `PORTAL_SHOW_FITNESS`)
+- Military fitness testing (approved by the owner on 2026-10-01: configurable events and standards, tests per class, results scored by the server; it does not change subject grades or academic standing. Owner decision 2026-10-02: staff only — administrators, and instructors for the classes they teach; only administrators set the events and their points tables; candidates do not see fitness tests or the fitness performance area unless the institution turns them on with `PORTAL_SHOW_FITNESS`)
 - Merits & demerits, attendance, company/platoon, and performance areas with qualification and class rank (approved by the owner on 2026-10-01; see `docs/performance-and-qualification.md`: configurable areas, weights, passing grades and must-pass rules; fitness is a must-pass area; class rank is staff only)
 
 ---

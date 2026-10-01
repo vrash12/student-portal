@@ -12,8 +12,9 @@ return new class extends Migration
     /**
      * Military fitness for instructors (owner request, 2026-10-02): the new
      * "configure fitness standards" permission (events and their points,
-     * previously part of fitness.manage), and instructors receive viewing,
-     * managing (for the classes they teach) and configuring by default.
+     * previously part of fitness.manage), and instructors receive viewing and
+     * managing (for the classes they teach). Configuring is for
+     * administrators (2026_10_02_000300).
      */
     private const CODES = [
         PermissionCode::ViewFitness,

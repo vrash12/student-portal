@@ -22,9 +22,10 @@ use Tests\TestCase;
 
 /**
  * Military fitness for instructors (owner request 2026-10-02): instructors
- * see, create and record the fitness tests of the classes they teach and
- * adjust the events and their points; the tests of other classes stay
- * forbidden even when their URL is known.
+ * see, create and record the fitness tests of the classes they teach; the
+ * tests of other classes stay forbidden even when their URL is known. The
+ * events and their points apply to every class and are set by
+ * administrators only.
  */
 class InstructorFitnessAccessTest extends TestCase
 {
@@ -73,10 +74,12 @@ class InstructorFitnessAccessTest extends TestCase
 
     public function test_instructors_receive_military_fitness_by_default(): void
     {
-        foreach ([Permission::ViewFitness, Permission::ManageFitness, Permission::ConfigureFitness] as $permission) {
+        foreach ([Permission::ViewFitness, Permission::ManageFitness] as $permission) {
             $this->assertContains($permission, SystemRole::Instructor->defaultPermissions());
             $this->assertTrue($this->alpha->hasPermission($permission));
         }
+        $this->assertNotContains(Permission::ConfigureFitness, SystemRole::Instructor->defaultPermissions());
+        $this->assertContains(Permission::ConfigureFitness, SystemRole::AcademicAdministrator->defaultPermissions());
         $this->assertNotContains(Permission::ViewFitness, SystemRole::Candidate->defaultPermissions());
     }
 
@@ -90,7 +93,7 @@ class InstructorFitnessAccessTest extends TestCase
                 ->where('classes.0.name', 'Class A')
                 ->where('scope', 'taught')
                 ->where('can.manage', true)
-                ->where('can.configure', true));
+                ->where('can.configure', false));
 
         $this->actingAs($this->admin)->get('/fitness')->assertOk()
             ->assertInertia(fn (Assert $page) => $page->has('tests.data', 2)->where('scope', 'all'));
@@ -148,15 +151,20 @@ class InstructorFitnessAccessTest extends TestCase
         $this->assertFalse(FitnessScope::for($unassigned)->classes()->exists());
     }
 
-    public function test_an_instructor_adjusts_the_events_and_their_points(): void
+    public function test_only_administrators_set_the_events_and_their_points(): void
     {
-        $this->actingAs($this->alpha)->get('/fitness/standards')->assertOk();
-        $this->actingAs($this->alpha)->post('/fitness/standards', [
+        $payload = [
             'name' => 'Sit-ups', 'unit' => 'repetitions', 'higher_is_better' => true, 'sort_order' => 2,
             'scoring_method' => 'table', 'passing_points' => '60',
             'points_table' => [['value' => '30', 'points' => '60'], ['value' => '40', 'points' => '80'], ['value' => '50', 'points' => '100']],
-        ])->assertRedirect('/fitness/standards');
+        ];
 
+        $this->actingAs($this->alpha)->get('/fitness/standards')->assertForbidden();
+        $this->actingAs($this->alpha)->get("/fitness/standards/{$this->pushUps->id}/edit")->assertForbidden();
+        $this->actingAs($this->alpha)->post('/fitness/standards', $payload)->assertForbidden();
+        $this->assertDatabaseMissing('fitness_events', ['name' => 'Sit-ups']);
+
+        $this->actingAs($this->admin)->post('/fitness/standards', $payload)->assertRedirect('/fitness/standards');
         $this->assertDatabaseHas('fitness_events', ['name' => 'Sit-ups', 'scoring_method' => 'table']);
     }
 

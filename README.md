@@ -146,9 +146,11 @@ signed-in candidate's own records; class rank is never shown to candidates. Mili
 is staff only (owner decision 2026-10-02): the Physical Fitness page (`/portal/fitness`) and
 its Home tile appear only with `PORTAL_SHOW_FITNESS=true`.
 
-Military fitness (staff): administrators see every class; instructors see, create and record
-the fitness tests of the classes they teach, and set the events under **Military Fitness →
-Events and Points**. An event is scored with a **points table** (each result and the points it
+Military fitness (staff): administrators see every class and set the events under **Military
+Fitness → Events and Points**; instructors see, create and record the fitness tests of the
+classes they teach. On **My Performance**, candidates do not see the fitness area either: a
+failed or pending fitness requirement is named only as a "staff-assessed requirement". An
+event is scored with a **points table** (each result and the points it
 earns, e.g. 25 push-ups = 60 points, 30 = 70; a result earns the points of the best row it
 reaches, and *Fill the table in steps* builds a table quickly) or scaled between a passing and a
 maximum standard. Each event has its own passing points (60 by default). Tests keep the points

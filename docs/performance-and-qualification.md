@@ -103,7 +103,7 @@ Each candidate may have a company and a platoon (free text, up to 50 characters,
 | **Candidate profile → Performance & Qualification** | Users who view all candidates | Area results, overall score, qualification with reasons; the class rank only with *View qualification and class ranking*. Instructors do not see this panel: area grades combine subjects they do not teach. |
 | **Candidate profile → Conduct** | Staff who may record merits/demerits for the candidate, and users who view all candidates | Totals and the latest entries (voided ones marked), link to the full record. |
 | **Candidate profile → Attendance** | Staff who keep the attendance of the candidate's class, and users who view all candidates | Rate, hours, counts and the latest sessions with links to the roll calls. |
-| **Portal → My Performance** | The candidate, for themselves only | Their area grades and statuses, overall score, a checklist of the required areas (Passed / Pending / Not met — always as text with an icon), their merits and demerits that count, their attendance summary and recent sessions. A **My Records** tile on Home links there. |
+| **Portal → My Performance** | The candidate, for themselves only | Their area grades and statuses, overall score, a checklist of the required areas (Passed / Pending / Not met — always as text with an icon), their merits and demerits that count, their attendance summary and recent sessions. A **My Records** tile on Home links there. While fitness is staff only (`PORTAL_SHOW_FITNESS` off, the default), the fitness area is not listed and an unmet or pending fitness requirement appears only as "Staff-assessed requirement not met" / "staff-assessed requirements" (`PortalQualification`); the status and overall score are unchanged. |
 | **Portal → Physical Fitness** | The candidate, for themselves only — **off by default** (owner decision 2026-10-02: fitness is staff only; `PORTAL_SHOW_FITNESS=true` turns it on) | Their fitness tests: each event's result, points and standard, the overall result, and charts of event points and of progress across tests. |
 
 **Candidates never see:** the class rank, anything about other candidates, voided entries, staff names, or the remarks staff write on the roll call.
@@ -112,7 +112,7 @@ Each candidate may have a company and a platoon (free text, up to 50 characters,
 
 1. **Subjects.** Make sure every subject that should count exists (Academics → Subjects) and is offered to the class.
 2. **Merit and demerit types.** Records → Merits & Demerits → *Merit & Demerit Types*. Edit the placeholder types or add the official catalogue (name, merit or demerit, default points). Deactivate types that are not used.
-3. **Fitness events and points.** Records → Military Fitness → *Events and Points* (administrators and instructors): the official events, each with a points table (each result and the points it earns) or passing and maximum values, and its passing points.
+3. **Fitness events and points.** Records → Military Fitness → *Events and Points* (administrators only): the official events, each with a points table (each result and the points it earns) or passing and maximum values, and its passing points.
 4. **Performance areas.** Records → Qualification → *Performance Areas* → *Add Area* (or edit a placeholder):
    1. Name, optional description, and the **source**.
    2. **Weight** and **passing grade**; tick **Must pass to qualify** when required.
