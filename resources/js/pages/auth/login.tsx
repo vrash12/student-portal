@@ -62,7 +62,7 @@ export default function Login() {
             <Head title="Sign In" />
 
             <div className="mb-5 text-center">
-                <BrandMark round className="mx-auto mb-3 size-24 shadow-md sm:size-28" />
+                <BrandMark round className="mx-auto mb-4 size-32 shadow-lg sm:size-40 [@media(max-height:820px)]:size-32" />
                 <h1 className="font-serif text-2xl font-bold leading-tight text-auth-navy sm:text-[1.7rem]">{name}</h1>
                 <div className="mx-auto my-3 h-0.5 w-16 bg-accent-400" aria-hidden="true" />
                 {login.tagline !== null && <p className="text-sm leading-relaxed text-ink-muted">{login.tagline}</p>}
