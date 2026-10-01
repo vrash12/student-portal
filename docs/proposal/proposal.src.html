@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Academic Monitoring System — System Proposal</title>
+<style>
+    @font-face { font-family: "Inter"; src: url("assets/inter-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-style: normal; }
+    @page { size: letter; margin: 0; }
+    :root {
+        --navy: #0b2a3d;
+        --navy-2: #12384f;
+        --green: #14472f;
+        --green-2: #1d6142;
+        --green-soft: #e8f1ec;
+        --gold: #c9a227;
+        --gold-2: #e2bf4c;
+        --gold-soft: #f7efd6;
+        --ink: #17262e;
+        --muted: #586a72;
+        --line: #e2e5df;
+        --paper: #ffffff;
+        --tint: #f6f7f3;
+        --danger: #a23b2a;
+        --warn: #9a6a00;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: "Inter", "Segoe UI", sans-serif; color: var(--ink); font-size: 10.2pt; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #9aa5a0; }
+    h1, h2, h3, .serif { font-family: Georgia, "Times New Roman", serif; }
+    p { margin: 0 0 8pt; }
+    ul { margin: 0; padding: 0; list-style: none; }
+
+    .page { width: 8.5in; height: 11in; position: relative; overflow: hidden; background: var(--paper); page-break-after: always; break-after: page; }
+    .page:last-child { page-break-after: auto; break-after: auto; }
+    @media screen { .page { margin: 0 auto 24px; box-shadow: 0 4px 24px rgba(0,0,0,.25); } body.single .page { display: none; margin: 0; box-shadow: none; } body.single .page.show { display: block; } }
+
+    /* Interior page frame */
+    .inner { padding: 0.62in 0.7in 0.75in; height: 100%; display: flex; flex-direction: column; }
+    .running { position: absolute; top: 0; left: 0; right: 0; height: 0.36in; display: flex; align-items: center; justify-content: space-between; padding: 0 0.7in; font-size: 7.4pt; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line); }
+    .running .brand { display: flex; align-items: center; gap: 7px; font-weight: 600; color: var(--green); }
+    .running .brand img { width: 16px; height: 16px; border-radius: 50%; }
+    .folio { position: absolute; bottom: 0.32in; left: 0.7in; right: 0.7in; display: flex; justify-content: space-between; font-size: 7.4pt; color: var(--muted); }
+    .folio .num { font-weight: 700; color: var(--green); }
+    .accent-bar { position: absolute; left: 0; top: 0.36in; bottom: 0; width: 5px; background: linear-gradient(var(--green), var(--gold)); }
+
+    .section-head { display: flex; align-items: flex-end; gap: 14px; margin: 6pt 0 12pt; }
+    .section-num { font-family: Georgia, serif; font-size: 40pt; line-height: .8; color: var(--gold); font-weight: 700; }
+    .eyebrow { font-size: 7.6pt; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--green-2); }
+    h2 { font-size: 22pt; line-height: 1.1; margin: 2pt 0 0; color: var(--navy); }
+    h3 { font-size: 12.5pt; margin: 0 0 4pt; color: var(--navy); }
+    .lead { font-size: 11pt; color: #33454d; line-height: 1.55; }
+    .muted { color: var(--muted); }
+    .small { font-size: 8.6pt; }
+    .rule { height: 3px; width: 44px; background: var(--gold); border-radius: 2px; margin: 6pt 0 10pt; }
+
+    .grid { display: grid; gap: 10pt; }
+    .g2 { grid-template-columns: 1fr 1fr; }
+    .g3 { grid-template-columns: 1fr 1fr 1fr; }
+    .g4 { grid-template-columns: repeat(4, 1fr); }
+
+    .card { border: 1px solid var(--line); border-radius: 10px; padding: 11pt 12pt; background: #fff; }
+    .card.tint { background: var(--tint); }
+    .card h4 { margin: 0 0 3pt; font-size: 10.4pt; color: var(--navy); }
+    .card p { margin: 0; font-size: 9pt; color: #3b4d55; }
+    .ico { width: 30px; height: 30px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; background: var(--green-soft); color: var(--green); margin-bottom: 6pt; flex: none; }
+    .ico svg { width: 17px; height: 17px; }
+    .ico.gold { background: var(--gold-soft); color: #7a5c00; }
+    .ico.navy { background: #e6edf2; color: var(--navy); }
+    .ico.red { background: #f6e5e1; color: var(--danger); }
+
+    .checks li { position: relative; padding-left: 18px; margin-bottom: 4pt; font-size: 9.3pt; }
+    .checks li::before { content: ""; position: absolute; left: 0; top: 4px; width: 11px; height: 11px; border-radius: 50%; background: var(--green-2); box-shadow: inset 0 0 0 3px #d4e6dc; }
+    .dots li { position: relative; padding-left: 12px; margin-bottom: 2.5pt; font-size: 8.9pt; color: #33454d; }
+    .dots li::before { content: ""; position: absolute; left: 0; top: 6px; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); }
+
+    .callout { border-radius: 12px; padding: 14pt 16pt; background: linear-gradient(120deg, var(--navy), var(--green)); color: #fff; }
+    .callout p { color: #dfe9e4; }
+    .callout strong { color: var(--gold-2); }
+
+    /* Cover */
+    .cover { background: radial-gradient(1200px 700px at 85% -10%, #1d5a40 0%, rgba(29,90,64,0) 60%), linear-gradient(160deg, var(--navy) 0%, #0e3346 45%, var(--green) 100%); color: #fff; }
+    .cover .stripes { position: absolute; inset: 0; background: repeating-linear-gradient(-58deg, rgba(201,162,39,0) 0 120px, rgba(201,162,39,.07) 120px 128px); }
+    .cover .gold-band { position: absolute; left: -10%; right: -10%; bottom: 2.15in; height: 6px; background: linear-gradient(90deg, rgba(201,162,39,0), var(--gold) 20%, var(--gold-2) 50%, var(--gold) 80%, rgba(201,162,39,0)); transform: rotate(-4deg); opacity: .9; }
+    .cover .wrap { position: relative; padding: 0.7in 0.75in; height: 100%; display: flex; flex-direction: column; }
+    .cover .org { display: flex; align-items: center; gap: 14px; }
+    .cover .org img { width: 64px; height: 64px; border-radius: 50%; background: #fff; padding: 3px; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+    .cover .org .name { font-family: Georgia, serif; font-size: 15pt; font-weight: 700; line-height: 1.15; }
+    .cover .org .sub { font-size: 7.6pt; letter-spacing: .2em; text-transform: uppercase; color: var(--gold-2); margin-top: 3px; font-weight: 600; }
+    .cover .kicker { margin-top: 0.62in; display: inline-flex; align-items: center; gap: 8px; font-size: 8pt; font-weight: 700; letter-spacing: .24em; text-transform: uppercase; color: var(--gold-2); }
+    .cover .kicker::before { content: ""; width: 28px; height: 2px; background: var(--gold-2); }
+    .cover h1 { font-size: 40pt; line-height: 1.04; margin: 10pt 0 10pt; letter-spacing: -.01em; }
+    .cover .tagline { font-size: 12.4pt; line-height: 1.5; color: #d9e6df; max-width: 5.6in; }
+    .shot { margin-top: 0.34in; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,.25); box-shadow: 0 18px 50px rgba(0,0,0,.45); background: #0b2a3d; }
+    .shot .bar { height: 18px; background: #e9ece8; display: flex; align-items: center; gap: 5px; padding: 0 8px; }
+    .shot .bar i { width: 7px; height: 7px; border-radius: 50%; background: #c4c9c4; display: block; }
+    .shot .bar span { margin-left: 10px; font-size: 6.5pt; color: #6b7672; background: #fff; border-radius: 4px; padding: 1px 10px; }
+    .shot img { display: block; width: 100%; }
+    .cover .meta { margin-top: auto; display: grid; grid-template-columns: 1.4fr 1fr 0.8fr; gap: 14px; border-top: 1px solid rgba(255,255,255,.22); padding-top: 12pt; }
+    .cover .meta .k { font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: var(--gold-2); font-weight: 700; }
+    .cover .meta .v { font-size: 9.6pt; color: #fff; margin-top: 2px; font-weight: 500; }
+
+    /* Contents */
+    .toc li { display: flex; align-items: baseline; gap: 10px; padding: 7.5pt 0; border-bottom: 1px dashed #d8dcd5; font-size: 10.6pt; }
+    .toc .n { font-family: Georgia, serif; color: var(--gold); font-weight: 700; width: 24px; font-size: 12pt; }
+    .toc .t { flex: 1; font-weight: 600; color: var(--navy); }
+    .toc .p { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .glance { background: var(--navy); color: #fff; border-radius: 14px; padding: 16pt 16pt 10pt; }
+    .glance h3 { color: #fff; font-size: 13pt; }
+    .glance .row { display: flex; gap: 10px; align-items: flex-start; padding: 7pt 0; border-bottom: 1px solid rgba(255,255,255,.12); }
+    .glance .row:last-child { border-bottom: 0; }
+    .glance .big { font-family: Georgia, serif; font-size: 17pt; color: var(--gold-2); font-weight: 700; min-width: 42px; line-height: 1.1; }
+    .glance .big svg { width: 20px; height: 20px; }
+    .glance .txt { font-size: 9pt; color: #d7e2dd; line-height: 1.4; }
+    .glance .txt b { color: #fff; display: block; font-size: 9.6pt; }
+
+    /* Hub diagram */
+    .modules { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8pt; }
+    .module { border: 1px solid var(--line); border-radius: 10px; padding: 9pt 9pt 8pt; background: #fff; }
+    .module .ico { width: 26px; height: 26px; margin-bottom: 4pt; }
+    .module .ico svg { width: 15px; height: 15px; }
+    .module b { display: block; font-size: 8.8pt; color: var(--navy); line-height: 1.25; }
+    .module span { display: block; font-size: 7.8pt; color: var(--muted); line-height: 1.35; margin-top: 2pt; }
+
+    .network { display: flex; align-items: stretch; gap: 0; margin-top: 6pt; }
+    .node { flex: 1; text-align: center; border-radius: 12px; padding: 12pt 8pt; background: var(--tint); border: 1px solid var(--line); }
+    .node .ico { margin: 0 auto 6pt; width: 38px; height: 38px; border-radius: 50%; }
+    .node .ico svg { width: 20px; height: 20px; }
+    .node b { display: block; font-size: 9.4pt; color: var(--navy); }
+    .node span { font-size: 8pt; color: var(--muted); line-height: 1.35; display: block; margin-top: 2pt; }
+    .link { width: 34px; display: flex; align-items: center; justify-content: center; color: var(--gold); }
+    .link svg { width: 18px; height: 18px; }
+    .no-internet { margin-top: 9pt; display: flex; align-items: center; gap: 10px; padding: 9pt 12pt; border-radius: 10px; background: var(--gold-soft); border: 1px solid #ead9a0; font-size: 9.2pt; color: #4d3b00; }
+    .no-internet svg { width: 18px; height: 18px; color: #7a5c00; flex: none; }
+
+    /* Roles */
+    .role { display: grid; grid-template-columns: 44px 1fr; gap: 12px; padding: 11pt 12pt; border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8pt; background: #fff; }
+    .role .badge { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; }
+    .role .badge svg { width: 22px; height: 22px; }
+    .role h4 { margin: 0; font-size: 11pt; color: var(--navy); }
+    .role .who { font-size: 8.4pt; color: var(--muted); margin: 1pt 0 5pt; }
+    .role ul { columns: 2; column-gap: 18px; }
+    .role li { break-inside: avoid; }
+
+    /* Features */
+    .feature { display: grid; grid-template-columns: 40px 1fr; gap: 12px; padding: 11pt 0; border-bottom: 1px solid var(--line); }
+    .feature:last-child { border-bottom: 0; }
+    .feature .ico { width: 40px; height: 40px; border-radius: 11px; margin: 0; }
+    .feature .ico svg { width: 21px; height: 21px; }
+    .feature .tag { font-size: 7.2pt; font-weight: 700; letter-spacing: .14em; color: var(--gold); text-transform: uppercase; }
+    .feature h3 { margin: 0 0 3pt; font-size: 13pt; }
+    .feature p { font-size: 9.4pt; color: #33454d; margin-bottom: 5pt; }
+    .feature .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+    .pill { display: inline-block; font-size: 7.6pt; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin: 0 4px 3px 0; border: 1px solid; }
+    .pill.pass { color: #1d6142; background: #e6f2eb; border-color: #b9dbc7; }
+    .pill.risk { color: #8a5d00; background: #fbf1d6; border-color: #ecd394; }
+    .pill.fail { color: #9b2f20; background: #f8e5e1; border-color: #e7bcb3; }
+    .pill.inc  { color: #44535a; background: #eef1f2; border-color: #d0d7da; }
+    .pill.plain { color: var(--navy); background: #eef2f5; border-color: #d4dde4; font-weight: 600; }
+    .note { font-size: 8.2pt; color: var(--muted); font-style: italic; }
+
+    /* Workflow */
+    .flow { display: flex; align-items: stretch; gap: 0; margin: 6pt 0 2pt; }
+    .step { flex: 1; background: var(--tint); border: 1px solid var(--line); border-radius: 10px; padding: 8pt 8pt 7pt; position: relative; }
+    .step .n { font-family: Georgia, serif; font-size: 13pt; font-weight: 700; color: var(--gold); line-height: 1; }
+    .step .n svg { width: 16px; height: 16px; color: var(--green-2); }
+    .step b { display: block; font-size: 8.7pt; color: var(--navy); margin-top: 3pt; line-height: 1.25; }
+    .step span { display: block; font-size: 7.7pt; color: var(--muted); margin-top: 2pt; line-height: 1.32; }
+    .arrow { width: 16px; display: flex; align-items: center; justify-content: center; color: var(--gold); }
+    .arrow svg { width: 13px; height: 13px; }
+    .wf { margin-bottom: 12pt; }
+    .wf-head { display: flex; align-items: center; gap: 8px; }
+    .wf-head .ico { margin: 0; width: 28px; height: 28px; }
+    .wf-head h3 { margin: 0; font-size: 12pt; }
+
+    /* Comparison table */
+    table.compare { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 8.9pt; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .compare th { text-align: left; padding: 8pt 10pt; font-size: 8pt; letter-spacing: .1em; text-transform: uppercase; }
+    .compare th.area { background: #eef1ec; color: var(--navy); width: 22%; }
+    .compare th.before { background: #f4ece9; color: #8a3a2a; width: 37%; }
+    .compare th.after { background: var(--green); color: #fff; width: 41%; }
+    .compare td { padding: 7pt 10pt; vertical-align: top; border-top: 1px solid var(--line); line-height: 1.4; }
+    .compare td.area { font-weight: 700; color: var(--navy); background: #fafbf8; }
+    .compare td.before { color: #5a4a46; }
+    .compare td.after { color: #183c2b; background: #f5faf7; }
+
+    .benefit { display: flex; gap: 10px; align-items: flex-start; }
+    .benefit .ico { margin: 0; }
+
+    /* Phases */
+    .phases { position: relative; margin-top: 4pt; }
+    .phase { display: grid; grid-template-columns: 34px 1fr; gap: 12px; padding-bottom: 9pt; position: relative; }
+    .phase::before { content: ""; position: absolute; left: 16px; top: 30px; bottom: 0; width: 2px; background: linear-gradient(var(--gold), rgba(201,162,39,.2)); }
+    .phase:last-child::before { display: none; }
+    .phase .dot { width: 34px; height: 34px; border-radius: 50%; background: var(--navy); color: var(--gold-2); display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; font-weight: 700; font-size: 12pt; border: 3px solid var(--gold-soft); }
+    .phase h4 { margin: 4pt 0 2pt; font-size: 10.6pt; color: var(--navy); }
+    .phase p { font-size: 9pt; color: #3b4d55; margin: 0; }
+
+    .closing { position: relative; border-radius: 16px; overflow: hidden; background: linear-gradient(140deg, var(--navy), var(--green)); color: #fff; padding: 20pt 22pt; }
+    .closing .stripes { position: absolute; inset: 0; background: repeating-linear-gradient(-58deg, rgba(201,162,39,0) 0 80px, rgba(201,162,39,.08) 80px 86px); }
+    .closing > * { position: relative; }
+    .closing h3 { color: #fff; font-size: 15pt; }
+    .closing p { color: #dbe7e1; font-size: 10pt; }
+    .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 18pt; }
+    .sign .line { border-top: 1px solid #6c7d84; padding-top: 4pt; font-size: 8.4pt; color: var(--muted); }
+    .sign .line b { display: block; color: var(--ink); font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<!-- ============================ COVER ============================ -->
+<section class="page cover" id="p1">
+    <div class="stripes"></div>
+    <div class="gold-band"></div>
+    <div class="wrap">
+        <div class="org">
+            <img src="../../public/branding/logo.jpg" alt="School logo">
+            <div>
+                <div class="name">Philippine Army<br>Officer Candidate School</div>
+                <div class="sub">Academic System</div>
+            </div>
+        </div>
+
+        <div class="kicker">System Proposal</div>
+        <h1>Academic Monitoring<br>System</h1>
+        <p class="tagline">One secure platform for candidate records, grades, digital quizzes and examinations, and academic monitoring&nbsp;— running on the school’s own network.</p>
+
+        <div class="shot">
+            <div class="bar"><i></i><i></i><i></i><span>Academic Monitoring System · Sign In</span></div>
+            <img src="assets/login.png" alt="The system's sign-in page">
+        </div>
+
+        <div class="meta">
+            <div><div class="k">Prepared for</div><div class="v">Philippine Army Officer Candidate School</div></div>
+            <div><div class="k">Prepared by</div><div class="v">ServLife Solutions</div></div>
+            <div><div class="k">Date</div><div class="v">October 2026</div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================ CONTENTS ============================ -->
+<section class="page" id="p2">
+    <div class="running"><span class="brand"><img src="../../public/branding/logo.jpg" alt="">Academic Monitoring System</span><span>System Proposal</span></div>
+    <div class="accent-bar"></div>
+    <div class="inner">
+        <div class="eyebrow">Overview</div>
+        <h2>Contents</h2>
+        <div class="rule"></div>
+        <div class="grid" style="grid-template-columns: 1.15fr 1fr; gap: 26pt; margin-top: 4pt;">
+            <div>
+            <ul class="toc">
+                <li><span class="n">1</span><span class="t">Executive Summary</span><span class="p">3</span></li>
+                <li><span class="n">2</span><span class="t">The Challenge</span><span class="p">4</span></li>
+                <li><span class="n">3</span><span class="t">The Proposed System</span><span class="p">5</span></li>
+                <li><span class="n">4</span><span class="t">Who Uses the System</span><span class="p">6</span></li>
+                <li><span class="n">5</span><span class="t">Features and Modules</span><span class="p">7</span></li>
+                <li><span class="n">6</span><span class="t">How Everyday Work Changes</span><span class="p">11</span></li>
+                <li><span class="n">7</span><span class="t">Benefits to the School</span><span class="p">12</span></li>
+                <li><span class="n">8</span><span class="t">Security, Privacy and Setup</span><span class="p">13</span></li>
+            </ul>
+            <div class="card tint" style="margin-top: 16pt;">
+                <div class="ico gold">{{target}}</div>
+                <h4>Purpose of this proposal</h4>
+                <p>To present the Academic Monitoring System to the school’s leadership: what it is, what it does, who uses it, how it fits the school’s daily work, and how it can be introduced step by step.</p>
+            </div>
+            </div>
+            <div class="glance">
+                <h3>At a Glance</h3>
+                <div class="row"><div class="big">4</div><div class="txt"><b>User roles</b>Administrators, instructors and candidates each see only what they need.</div></div>
+                <div class="row"><div class="big">4</div><div class="txt"><b>Academic standings</b>Passing, At Risk, Failing and Incomplete, computed automatically.</div></div>
+                <div class="row"><div class="big">3</div><div class="txt"><b>Question types</b>Multiple choice, true or false, and essay, with images, audio and video.</div></div>
+                <div class="row"><div class="big">8</div><div class="txt"><b>Ready-made reports</b>Standing, class and subject performance, at-risk and failing lists, results and grade distribution.</div></div>
+                <div class="row"><div class="big">{{wifi-off}}</div><div class="txt"><b>No internet needed</b>Runs on the school’s own server and network.</div></div>
+                <div class="row"><div class="big">{{history}}</div><div class="txt"><b>Full audit history</b>Important changes record who made them, when and why.</div></div>
+            </div>
+        </div>
+        <div class="callout" style="margin-top: auto;">
+            <p style="margin:0; font-size: 10pt;"><strong>About this document.</strong> This proposal describes the Academic Monitoring System as it has been built. Every feature listed here is already working in the system and can be shown in a live demonstration.</p>
+        </div>
+    </div>
+    <div class="folio"><span>Academic Monitoring System · System Proposal</span><span class="num">2</span></div>
+</section>
+
+<!-- ============================ 1 EXECUTIVE SUMMARY ============================ -->
+<section class="page" id="p3">
+    <div class="running"><span class="brand"><img src="../../public/branding/logo.jpg" alt="">Academic Monitoring System</span><span>Executive Summary</span></div>
+    <div class="accent-bar"></div>
+    <div class="inner">
+        <div class="section-head"><div class="section-num">1</div><div><div class="eyebrow">Section One</div><h2>Executive Summary</h2></div></div>
+        <p class="lead">The <b>Academic Monitoring System</b> is a web-based platform built for the Philippine Army Officer Candidate School. It brings candidate records, grading, quizzes and examinations, academic monitoring, military fitness records and candidate expenses together in one place.</p>
+        <p class="lead">Staff use the system from an ordinary computer. Candidates take quizzes and examinations on school-issued tablets. Everything runs on the school’s own server and internal network, so the system <b>does not depend on internet access</b> and the school’s records stay on the school’s own equipment.</p>
+        <p class="lead">Its purpose is simple: help instructors and administrators <b>record results accurately</b>, <b>see early which candidates need help</b>, and <b>run examinations reliably</b>, with less paperwork and no manual grade computation.</p>
+
+        <div class="grid g2" style="margin-top: 8pt;">
+            <div class="card tint"><div class="ico">{{calculator}}</div><h4>Accurate, automatic grades</h4><p>Grades are computed by the system from the school’s own grading weights. No hand computation and no separate spreadsheets.</p></div>
+            <div class="card tint"><div class="ico gold">{{triangle-alert}}</div><h4>Early warning</h4><p>Candidates who are at risk or failing are flagged as soon as scores are recorded, not at the end of the period.</p></div>
+            <div class="card tint"><div class="ico navy">{{tablet}}</div><h4>Reliable digital examinations</h4><p>Tablet examinations with a timer, automatic saving and protection against brief Wi-Fi interruptions. Objective items are scored instantly.</p></div>
+            <div class="card tint"><div class="ico">{{shield-check}}</div><h4>Accountability</h4><p>Each user sees only what their role allows, and important changes, such as grade corrections, record who, when and why.</p></div>
+        </div>
+
+        <h3 style="margin-top: 16pt;">What the school receives</h3>
+        <div class="grid g2" style="gap: 0 22px;">
+            <ul class="checks">
+                <li>Central records for candidates, classes, subjects and instructors</li>
+                <li>Configurable grading with automatic academic standing</li>
+                <li>Dashboards and reports built from live records</li>
+                <li>A reusable question bank for quizzes and examinations</li>
+            </ul>
+            <ul class="checks">
+                <li>Tablet-based examinations with live instructor monitoring</li>
+                <li>A personal portal for each candidate</li>
+                <li>Military fitness testing records and scoring</li>
+                <li>Expense assignment to classes or individual candidates</li>
+            </ul>
+        </div>
+    </div>
+    <div class="folio"><span>Academic Monitoring System · System Proposal</span><span class="num">3</span></div>
+</section>
+
+<!-- ============================ 2 THE CHALLENGE ============================ -->
+<section class="page" id="p4">
+    <div class="running"><span class="brand"><img src="../../public/branding/logo.jpg" alt="">Academic Monitoring System</span><span>The Challenge</span></div>
+    <div class="accent-bar"></div>
+    <div class="inner">
+        <div class="section-head"><div class="section-num">2</div><div><div class="eyebrow">Section Two</div><h2>The Challenge</h2></div></div>
+        <p class="lead">Training schools that manage candidate records on paper and in separate spreadsheets commonly face the challenges below. Each one grows as the number of candidates, subjects and examinations increases. The system was designed to address all of them.</p>
+
+        <div class="grid g2" style="margin-top: 6pt;">
+            <div class="card"><div class="ico red">{{file-text}}</div><h4>Paper-based quizzes and examinations</h4><p>Printing, distributing, collecting and checking papers by hand takes many hours, and papers can be misplaced.</p></div>
+            <div class="card"><div class="ico red">{{calculator}}</div><h4>Manual grade computation</h4><p>Weighted grades computed by hand or in separate files are slow to prepare, and errors are easy to make and hard to find.</p></div>
+            <div class="card"><div class="ico red">{{clock}}</div><h4>Problems noticed too late</h4><p>A candidate who is falling behind may only be noticed when final grades are prepared, when there is little time left to help.</p></div>
+            <div class="card"><div class="ico red">{{folders}}</div><h4>Scattered records</h4><p>Grades, examination results, fitness results and expenses are often kept in different files, offices and formats.</p></div>
+            <div class="card"><div class="ico red">{{file-chart-column}}</div><h4>Slow reporting</h4><p>Summaries of class and subject performance must be compiled by hand each time management asks for them.</p></div>
+            <div class="card"><div class="ico red">{{search}}</div><h4>Limited traceability</h4><p>When a grade is changed, it can be hard to know who changed it, when, and for what reason.</p></div>
+        </div>
+
+        <div class="callout" style="margin-top: auto;">
+            <h3 style="color:#fff; margin-bottom: 4pt;">The answer: one trusted source of information</h3>
+            <p style="margin:0;">The Academic Monitoring System replaces scattered paper and spreadsheet work with <strong>one secure system</strong>. Results are recorded once, grades are computed automatically, problems are visible immediately, and every important change is recorded.</p>
+        </div>
+    </div>
+    <div class="folio"><span>Academic Monitoring System · System Proposal</span><span class="num">4</span></div>
+</section>
+
+<!-- ============================ 3 THE PROPOSED SYSTEM ============================ -->
+<section class="page" id="p5">
+    <div class="running"><span class="brand"><img src="../../public/branding/logo.jpg" alt="">Academic Monitoring System</span><span>The Proposed System</span></div>
+    <div class="accent-bar"></div>
+    <div class="inner">
+        <div class="section-head"><div class="section-num">3</div><div><div class="eyebrow">Section Three</div><h2>The Proposed System</h2></div></div>
+        <p class="lead">The system is organized into modules that share the same records. A score entered by an instructor immediately updates the candidate’s grade, standing, dashboards and reports.</p>
+
+        <div class="modules" style="margin-top: 4pt;">
+            <div class="module"><div class="ico">{{graduation-cap}}</div><b>Candidate Records</b><span>Profiles, photos, classes and official PDFs</span></div>
+            <div class="module"><div class="ico">{{school}}</div><b>Academic Structure</b><span>Periods, classes, subjects and instructors</span></div>
+            <div class="module"><div class="ico">{{calculator}}</div><b>Grades and Standing</b><span>Weights, assessments and automatic grades</span></div>
+            <div class="module"><div class="ico gold">{{activity}}</div><b>Academic Monitoring</b><span>Dashboards and early warning</span></div>
+            <div class="module"><div class="ico navy">{{library}}</div><b>Question Bank</b><span>Reusable questions with media</span></div>
+            <div class="module"><div class="ico navy">{{clipboard-check}}</div><b>Quizzes and Exams</b><span>Builder, settings and publishing</span></div>
+            <div class="module"><div class="ico navy">{{tablet}}</div><b>Tablet Examinations</b><span>Timer, autosave and recovery</span></div>
+            <div class="module"><div class="ico gold">{{monitor-check}}</div><b>Live Monitoring</b><span>Who is active, done or away</span></div>
+            <div class="module"><div class="ico">{{file-chart-column}}</div><b>Reports</b><span>Eight reports with charts and printing</span></div>
+            <div class="module"><div class="ico">{{dumbbell}}</div><b>Military Fitness</b><span>Events, standards and scoring</span></div>
+            <div class="module"><div class="ico gold">{{wallet-cards}}</div><b>Expenses</b><span>Assigned to classes or candidates</span></div>
+            <div class="module"><div class="ico navy">{{history}}</div><b>Audit History</b><span>Who changed what, when and why</span></div>
+        </div>
+
+        <h3 style="margin-top: 16pt;">How it runs at the school</h3>
+        <p class="muted" style="font-size: 9.3pt;">The system is installed on a server at the school. Computers and tablets connect to it through the school’s own Wi-Fi or local network, the same way they would open a web page.</p>
+        <div class="network">
+            <div class="node"><div class="ico navy">{{tablet}}</div><b>Candidate Tablets</b><span>Quizzes and examinations; installable as an app</span></div>
+            <div class="link">{{arrow-right-left}}</div>
+            <div class="node"><div class="ico">{{monitor}}</div><b>Staff Computers</b><span>Administrators and instructors</span></div>
+            <div class="link">{{arrow-right-left}}</div>
+            <div class="node"><div class="ico gold">{{wifi}}</div><b>School Network</b><span>Internal Wi-Fi or local area network</span></div>
+            <div class="link">{{arrow-right-left}}</div>
+            <div class="node"><div class="ico navy">{{server}}</div><b>School Server</b><span>The system and its database, kept on site</span></div>
+        </div>
+        <div class="no-internet">{{wifi-off}}<span><b>No public internet required.</b> The system does not rely on outside services, cloud storage or online resources to work, and the school’s records do not leave the school’s network.</span></div>
+    </div>
+    <div class="folio"><span>Academic Monitoring System · System Proposal</span><span class="num">5</span></div>
+</section>
+
+<!-- ============================ 4 WHO USES THE SYSTEM ============================ -->
+<section class="page" id="p6">
+    <div class="running"><span class="brand"><img src="../../public/branding/logo.jpg" alt="">Academic Monitoring System</span><span>Who Uses the System</span></div>
+    <div class="accent-bar"></div>
+    <div class="inner">
+        <div class="section-head"><div class="section-num">4</div><div><div class="eyebrow">Section Four</div><h2>Who Uses the System</h2></div></div>
+        <p class="lead" style="margin-bottom: 10pt;">Every user signs in with their own account. What they can see and do depends on their role and, for instructors, on the classes and subjects assigned to them.</p>
+
+        <div class="role"><div class="badge" style="background: var(--navy);">{{shield-check}}</div><div><h4>Super Administrator</h4><div class="who">Overall system management</div>
+            <ul class="dots"><li>Manages user accounts, roles and permissions</li><li>Has access to every module and record</li><li>Reviews the full audit history</li><li>Charges candidates for expenses, such as uniforms or meals</li></ul></div></div>
+
+        <div class="role"><div class="badge" style="background: var(--green);">{{user-round-cog}}</div><div><h4>Academic Administrator</h4><div class="who">Academic office</div>
+            <ul class="dots"><li>Manages candidates, classes, subjects and academic periods</li><li>Assigns instructors to classes and subjects</li><li>Sets grading rules and passing and warning grades</li><li>Views monitoring, reports, fitness and audit history</li></ul></div></div>
+
+        <div class="role"><div class="badge" style="background: var(--green-2);">{{presentation}}</div><div><h4>Instructor</h4><div class="who">Only for assigned classes and subjects</div>
+            <ul class="dots"><li>Records and finalizes grades for assigned subjects</li><li>Builds questions, quizzes and examinations</li><li>Monitors examinations live and grades essays</li><li>Sees alerts and reports for their own candidates</li></ul></div></div>
+
+        <div class="role" style="margin-bottom: 0;"><div class="badge" style="background: #33505f;">{{graduation-cap}}</div><div><h4>Candidate</h4><div class="who">Signs in with their candidate number, on a school tablet</div>
+            <ul class="dots"><li>Takes available quizzes and examinations</li><li>Sees their own grades, standing and released results</li><li>Views their own information, subjects and instructors</li><li>Downloads their own registration and academic record</li></ul></div></div>
+    </div>
+    <div class="folio"><span>Academic Monitoring System · System Proposal</span><span class="num">6</span></div>
+</section>
+
+<!-- ============================ 5 FEATURES (1/4) ============================ -->
+<section class="page" id="p7">
+    <div class="running"><span class="brand"><img src="../../public/branding/logo.jpg" alt="">Academic Monitoring System</span><span>Features and Modules</span></div>
+    <div class="accent-bar"></div>
+    <div class="inner">
+        <div class="section-head"><div class="section-num">5</div><div><div class="eyebrow">Section Five</div><h2>Features and Modules</h2></div></div>
+
+        <div class="feature"><div class="ico">{{graduation-cap}}</div><div>
+            <div class="tag">Module 5.1</div><h3>Candidate and Academic Records</h3>
+            <p>All candidate information is kept in one place and linked to the school’s academic structure: academic periods, classes or batches, subjects and instructor assignments.</p>
+            <div class="cols"><ul class="dots"><li>Candidate number, name, class, training group and status</li><li>Candidate photo, stored privately on the school server</li><li>Enrollment statuses: enrolled, on leave, withdrawn, completed</li></ul>
+            <ul class="dots"><li>Academic periods, classes, subjects and instructor assignments</li><li>Period overview showing every class, subject and instructor</li><li>Printable <b>Certificate of Registration</b> and <b>Academic Record</b> PDFs</li></ul></div>
+        </div></div>
+
+        <div class="feature"><div class="ico">{{calculator}}</div><div>
+            <div class="tag">Module 5.2</div><h3>Grades and Academic Standing</h3>
+            <p>Each subject has its own grading categories and weights, set by the academic office. For example, Quizzes 20%, Examinations 30%, Practical 30% and Other Requirements 20%. Instructors record scores, and the system computes every grade.</p>
+            <div class="cols"><ul class="dots"><li>Assessments with raw scores, finalized when complete</li><li>Passing and warning grades set for each academic period</li><li>Corrections to finalized scores require a reason and are kept in history</li></ul>
+            <ul class="dots"><li>Missing scores are shown as missing, never silently counted as zero</li><li>Academic standing is computed automatically:</li></ul></div>
+            <div style="margin-top: 4pt;"><span class="pill pass">Passing</span><span class="pill risk">At Risk</span><span class="pill fail">Failing</span><span class="pill inc">Incomplete</span></div>
+        </div></div>
+
+        <div class="feature"><div class="ico gold">{{activity}}</div><div>
+            <div class="tag">Module 5.3</div><h3>Academic Monitoring and Early Warning</h3>
+            <p>Dashboards show the academic status of the school at a glance and point directly to the candidates who need attention.</p>
+            <div class="cols"><ul class="dots"><li>Administrator dashboard: totals by standing, standing distribution, subject performance and grade distribution charts</li><li>Instructor dashboard: assigned subjects, upcoming assessments and academic alerts by subject</li></ul>
+            <ul class="dots"><li>Lists of at-risk and failing candidates with filters</li><li>Candidate academic profile: grades by subject, recent assessments and overall standing</li></ul></div>
+        </div></div>
+    </div>
+    <div class="folio"><span>Academic Monitoring System · System Proposal</span><span class="num">7</span></div>
+</section>
+
+<!-- ============================ 5 FEATURES (2/4) ============================ -->
+<section class="page" id="p8">
+    <div class="running"><span class="brand"><img src="../../public/branding/logo.jpg" alt="">Academic Monitoring System</span><span>Features and Modules</span></div>
+    <div class="accent-bar"></div>
+    <div class="inner">
+        <div class="feature" style="padding-top: 4pt;"><div class="ico navy">{{library}}</div><div>
+            <div class="tag">Module 5.4</div><h3>Question Bank</h3>
+            <p>Instructors build a library of reusable questions for each subject, organized by topic. Questions can be used again in later quizzes and examinations.</p>
+            <div style="margin-bottom: 5pt;"><span class="pill plain">Multiple Choice</span><span class="pill plain">True or False</span><span class="pill plain">Essay</span></div>
+            <div class="cols"><ul class="dots"><li>Points, topic and an optional explanation for each question</li><li>Images, audio and video can be added to a question</li><li>Images can also be used inside answer choices</li></ul>
+            <ul class="dots"><li>Import many questions at once from a prepared CSV file</li><li>Duplicate a question to make a variation quickly</li><li>Questions are deactivated rather than deleted, so past examinations keep their history</li></ul></div>
+        </div></div>
+
+        <div class="feature"><div class="ico navy">{{clipboard-check}}</div><div>
+            <div class="tag">Module 5.5</div><h3>Quiz and Examination Builder</h3>
+            <p>Instructors create a quiz or examination in three guided steps: settings, questions, then review and publish. They can only publish to the classes they are assigned to.</p>
+            <div class="grid g2" style="gap: 6pt 14pt; margin-top: 4pt;">
+                <div class="card tint" style="padding: 8pt 10pt;"><h4 style="font-size: 9.4pt;">Schedule and limits</h4><ul class="dots"><li>Opening and closing date and time</li><li>Time limit and number of attempts allowed</li><li>Passing score</li></ul></div>
+                <div class="card tint" style="padding: 8pt 10pt;"><h4 style="font-size: 9.4pt;">Fairness and integrity</h4><ul class="dots"><li>Shuffle the order of questions and answer choices</li><li>Give each candidate a random set of questions from a larger pool</li><li>Optional access code to start</li></ul></div>
+                <div class="card tint" style="padding: 8pt 10pt;"><h4 style="font-size: 9.4pt;">Navigation</h4><ul class="dots"><li>One question at a time or all questions on one page</li><li>Allow or prevent going back to earlier questions</li></ul></div>
+                <div class="card tint" style="padding: 8pt 10pt;"><h4 style="font-size: 9.4pt;">Results</h4><ul class="dots"><li>Automatic submission when time runs out</li><li>Instructor decides when candidates may see results</li></ul></div>
+            </div>
+        </div></div>
+
+        <div class="feature"><div class="ico navy">{{tablet}}</div><div>
+            <div class="tag">Module 5.6</div><h3>Tablet Examination Experience</h3>
+            <p>Candidates take quizzes and examinations on tablets through a simple, distraction-free screen designed for touch. The candidate portal can be installed on the tablet’s home screen and opens full screen like an app.</p>
+            <div class="cols"><ul class="dots"><li>Large answer buttons, clear progress and a visible timer</li><li>Question list showing answered, unanswered and flagged questions</li><li>Answers are <b>saved automatically</b> as the candidate works</li></ul>
+            <ul class="dots"><li>If Wi-Fi drops briefly, answers are kept on the tablet and sent when the connection returns</li><li>Clear save status: saved, saving, or stored on the device</li><li>Submission confirmation and a receipt; a second submission is not possible</li></ul></div>
+        </div></div>
+    </div>
+    <div class="folio"><span>Academic Monitoring System · System Proposal</span><span class="num">8</span></div>
+</section>
+
+<!-- ============================ 5 FEATURES (3/4) ============================ -->
+<section class="page" id="p9">
+    <div class="running"><span class="brand"><img src="../../public/branding/logo.jpg" alt="">Academic Monitoring System</span><span>Features and Modules</span></div>
+    <div class="accent-bar"></div>
+    <div class="inner">
+        <div class="feature" style="padding-top: 4pt;"><div class="ico gold">{{monitor-check}}</div><div>
+            <div class="tag">Module 5.7</div><h3>Live Examination Monitoring</h3>
+            <p>While an examination is running, the instructor’s screen refreshes on its own and shows the progress of the whole class. Candidates’ answers are never shown on this screen.</p>
+            <div class="grid g4" style="gap: 6pt; margin: 4pt 0 6pt;">
+                <div class="card tint" style="padding: 7pt 8pt; text-align:center;"><b style="color:var(--navy); font-size: 9pt;">Active</b><div class="small muted">answering now</div></div>
+                <div class="card tint" style="padding: 7pt 8pt; text-align:center;"><b style="color:var(--navy); font-size: 9pt;">Submitted</b><div class="small muted">finished</div></div>
+                <div class="card tint" style="padding: 7pt 8pt; text-align:center;"><b style="color:var(--navy); font-size: 9pt;">Not started</b><div class="small muted">yet to begin</div></div>
+                <div class="card tint" style="padding: 7pt 8pt; text-align:center;"><b style="color:var(--navy); font-size: 9pt;">Inactive</b><div class="small muted">no recent contact</div></div>
+            </div>
+            <ul class="dots"><li><b>Leaving the examination screen is recorded.</b> If a candidate switches to another app or window, the instructor sees how many times and for how long. It is an indicator for the instructor; it does not use the camera or microphone and does not penalize anyone automatically.</li></ul>
+        </div></div>
+
+        <div class="feature"><div class="ico">{{badge-check}}</div><div>
+            <div class="tag">Module 5.8</div><h3>Scoring, Essay Grading and Results</h3>
+            <p>Multiple-choice and true-or-false items are scored instantly when a candidate submits. Essays go to a grading queue for the instructor.</p>
+            <div class="cols"><ul class="dots"><li>Essay grading queue with points and feedback</li><li>Results are shown to candidates only after the instructor releases them</li><li>Grading changes are kept in a history</li></ul>
+            <ul class="dots"><li><b>Post to gradebook:</b> examination scores can be sent into the subject’s grades in one step, choosing the highest or latest attempt</li><li><b>Item analysis:</b> shows how many candidates got each question right and which answers they chose, helping instructors spot questions that were too hard, too easy or unclear</li></ul></div>
+        </div></div>
+
+        <div class="feature"><div class="ico">{{file-chart-column}}</div><div>
+            <div class="tag">Module 5.9</div><h3>Reports and Dashboards</h3>
+            <p>Reports are built directly from the system’s records, so they are always current. Each report can be filtered by academic period, class, subject or candidate, shown with charts, and printed or saved as a PDF.</p>
+            <div class="grid g4" style="gap: 5pt; margin-top: 4pt;">
+                <span class="pill plain" style="text-align:center; margin:0;">Candidate standing</span><span class="pill plain" style="text-align:center; margin:0;">Class performance</span><span class="pill plain" style="text-align:center; margin:0;">Subject performance</span><span class="pill plain" style="text-align:center; margin:0;">At-risk candidates</span>
+                <span class="pill plain" style="text-align:center; margin:0;">Failing candidates</span><span class="pill plain" style="text-align:center; margin:0;">Examination results</span><span class="pill plain" style="text-align:center; margin:0;">Quiz results</span><span class="pill plain" style="text-align:center; margin:0;">Grade distribution</span>
+            </div>
+        </div></div>
+
+        <div class="card tint" style="margin-top: 10pt; padding: 12pt 14pt;">
+            <h4 style="font-size: 10.6pt;">From score to report, without re-typing</h4>
+            <p style="margin-bottom: 6pt;">A result is entered once. Everything that depends on it is updated by the system.</p>
+            <div class="flow" style="margin: 0;">
+                <div class="step" style="background:#fff;"><div class="n">{{pencil-line}}</div><b>Score recorded</b><span>By the instructor, or scored from an examination</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step" style="background:#fff;"><div class="n">{{calculator}}</div><b>Grade computed</b><span>Using the subject’s own weights</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step" style="background:#fff;"><div class="n">{{badge-check}}</div><b>Standing updated</b><span>Passing, At Risk, Failing or Incomplete</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step" style="background:#fff;"><div class="n">{{layout-dashboard}}</div><b>Dashboards and reports</b><span>Show the new status at once</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="folio"><span>Academic Monitoring System · System Proposal</span><span class="num">9</span></div>
+</section>
+
+<!-- ============================ 5 FEATURES (4/4) ============================ -->
+<section class="page" id="p10">
+    <div class="running"><span class="brand"><img src="../../public/branding/logo.jpg" alt="">Academic Monitoring System</span><span>Features and Modules</span></div>
+    <div class="accent-bar"></div>
+    <div class="inner">
+        <div class="feature" style="padding-top: 4pt;"><div class="ico">{{dumbbell}}</div><div>
+            <div class="tag">Module 5.10</div><h3>Military Fitness Testing</h3>
+            <p>The school defines its own fitness events and standards, records test results for each class, and the system scores them. Fitness results are kept as a <b>separate record</b> and do not change academic grades.</p>
+            <div class="cols"><ul class="dots"><li>Events measured in repetitions or time, each with a passing and a maximum standard</li><li>Standards are copied into each test, so later changes never alter past results</li></ul>
+            <ul class="dots"><li>Results show passed, failed or incomplete, with charts by event</li><li>Each candidate’s profile shows their latest fitness results</li></ul></div>
+        </div></div>
+
+        <div class="feature"><div class="ico gold">{{wallet-cards}}</div><div>
+            <div class="tag">Module 5.11</div><h3>Expenses</h3>
+            <p>The administrator defines an expense once, for example a uniform set or a month of meals, with its category, amount and due date, then assigns it to a whole class or to chosen candidates in one action.</p>
+            <div class="cols"><ul class="dots"><li>Assign to a whole class or pick candidates by class or by search</li><li>A candidate can never be charged the same expense twice</li></ul>
+            <ul class="dots"><li>A mistaken charge is voided with a reason, never erased</li><li>Lists of charged candidates and totals for each expense</li></ul></div>
+            <p class="note" style="margin-top: 4pt;">The system records amounts only. It does not process payments or connect to banks.</p>
+        </div></div>
+
+        <div class="feature"><div class="ico navy">{{house}}</div><div>
+            <div class="tag">Module 5.12</div><h3>Candidate Portal</h3>
+            <p>Each candidate has a simple personal portal that shows only their own information.</p>
+            <div class="cols"><ul class="dots"><li><b>My Home:</b> open and upcoming examinations, academic standing and recent released results</li><li>Assessments that still have no recorded score</li></ul>
+            <ul class="dots"><li><b>My Information:</b> details, subjects, instructors, grades and history</li><li>Download their own Certificate of Registration and Academic Record</li></ul></div>
+        </div></div>
+
+        <div class="feature"><div class="ico navy">{{history}}</div><div>
+            <div class="tag">Module 5.13</div><h3>Audit History</h3>
+            <p>Important actions are recorded automatically, including sign-ins, account and role changes, candidate record changes, grade entries and corrections, examination publishing and result release. Administrators can search this history by person, action and date.</p>
+        </div></div>
+
+        <div class="card" style="margin-top: auto; border-color: #ead9a0; background: #fffcf3;">
+            <h4 style="font-size: 10.6pt;">Clear limits, by design</h4>
+            <p style="margin-bottom: 5pt;">To keep the system focused, safe and easy to run, it intentionally does <b>not</b>:</p>
+            <div class="grid g2" style="gap: 0 18px;">
+                <ul class="dots"><li>process payments or connect to banks</li><li>use cameras, microphones or screen recording</li></ul>
+                <ul class="dots"><li>depend on the internet or outside cloud services</li><li>show candidates any other candidate’s records</li></ul>
+            </div>
+        </div>
+    </div>
+    <div class="folio"><span>Academic Monitoring System · System Proposal</span><span class="num">10</span></div>
+</section>
+
+<!-- ============================ 6 WORKFLOWS ============================ -->
+<section class="page" id="p11">
+    <div class="running"><span class="brand"><img src="../../public/branding/logo.jpg" alt="">Academic Monitoring System</span><span>How Everyday Work Changes</span></div>
+    <div class="accent-bar"></div>
+    <div class="inner">
+        <div class="section-head"><div class="section-num">6</div><div><div class="eyebrow">Section Six</div><h2>How Everyday Work Changes</h2></div></div>
+        <p class="lead">The most common tasks follow short, clear steps. Below are the main workflows as they work in the system today.</p>
+
+        <div class="wf"><div class="wf-head"><div class="ico">{{presentation}}</div><h3>Instructor: recording grades</h3></div>
+            <div class="flow">
+                <div class="step"><div class="n">1</div><b>Sign in</b><span>Sees assigned subjects and alerts</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">2</div><b>Open a class subject</b><span>The gradebook lists every candidate</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">3</div><b>Record scores</b><span>Enter scores for an assessment</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">4</div><b>Finalize</b><span>Grades update automatically</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">5</div><b>See standing</b><span>Passing, At Risk, Failing, Incomplete</span></div>
+            </div></div>
+
+        <div class="wf"><div class="wf-head"><div class="ico navy">{{tablet}}</div><h3>Candidate: taking an examination</h3></div>
+            <div class="flow">
+                <div class="step"><div class="n">1</div><b>Open the portal</b><span>On a school tablet</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">2</div><b>Sign in</b><span>With the candidate number</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">3</div><b>Start the exam</b><span>Access code if required</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">4</div><b>Answer</b><span>Saved automatically</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">5</div><b>Submit</b><span>Receipt shown; results when released</span></div>
+            </div></div>
+
+        <div class="wf"><div class="wf-head"><div class="ico gold">{{clipboard-check}}</div><h3>Instructor: running an examination</h3></div>
+            <div class="flow">
+                <div class="step"><div class="n">1</div><b>Build</b><span>Settings and questions from the bank</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">2</div><b>Publish</b><span>To an assigned class</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">3</div><b>Monitor live</b><span>Active, submitted, away</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">4</div><b>Grade essays</b><span>Objective items already scored</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">5</div><b>Release and post</b><span>Results and gradebook</span></div>
+            </div></div>
+
+        <div class="wf" style="margin-bottom: 0;"><div class="wf-head"><div class="ico">{{user-round-cog}}</div><h3>Administrator: reviewing academic status</h3></div>
+            <div class="flow">
+                <div class="step"><div class="n">1</div><b>Sign in</b><span>Dashboard opens</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">2</div><b>See overall status</b><span>Counts and charts by standing</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">3</div><b>Find who needs help</b><span>At-risk and failing lists</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">4</div><b>Review a candidate</b><span>Academic profile</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">5</div><b>Report</b><span>Filter, print or save PDF</span></div>
+            </div></div>
+
+        <div class="wf" style="margin: 12pt 0 0;"><div class="wf-head"><div class="ico gold">{{wallet-cards}}</div><h3>Administrator: charging an expense</h3></div>
+            <div class="flow">
+                <div class="step"><div class="n">1</div><b>Create the expense</b><span>Name, category, amount, due date</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">2</div><b>Choose who</b><span>A whole class or chosen candidates</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">3</div><b>Set the date</b><span>The date of the charge</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">4</div><b>Charge</b><span>Each candidate once; others skipped</span></div><div class="arrow">{{chevron-right}}</div>
+                <div class="step"><div class="n">5</div><b>Review</b><span>Totals; void mistakes with a reason</span></div>
+            </div></div>
+    </div>
+    <div class="folio"><span>Academic Monitoring System · System Proposal</span><span class="num">11</span></div>
+</section>
+
+<!-- ============================ 7 BENEFITS ============================ -->
+<section class="page" id="p12">
+    <div class="running"><span class="brand"><img src="../../public/branding/logo.jpg" alt="">Academic Monitoring System</span><span>Benefits to the School</span></div>
+    <div class="accent-bar"></div>
+    <div class="inner">
+        <div class="section-head"><div class="section-num">7</div><div><div class="eyebrow">Section Seven</div><h2>Benefits to the School</h2></div></div>
+        <p class="lead" style="margin-bottom: 9pt;">The table compares common manual practices with how the same work is done in the system.</p>
+
+        <table class="compare">
+            <thead><tr><th class="area">Area</th><th class="before">Typical manual process</th><th class="after">With the Academic Monitoring System</th></tr></thead>
+            <tbody>
+                <tr><td class="area">Examinations</td><td class="before">Printed papers, collected and checked by hand</td><td class="after">Taken on tablets; objective items scored instantly</td></tr>
+                <tr><td class="area">Grade computation</td><td class="before">Weighted grades computed by hand or in spreadsheets</td><td class="after">Computed automatically from the school’s own weights</td></tr>
+                <tr><td class="area">Struggling candidates</td><td class="before">Often noticed only when final grades are prepared</td><td class="after">Flagged as At Risk or Failing as soon as scores are recorded</td></tr>
+                <tr><td class="area">Records</td><td class="before">Spread across files, offices and formats</td><td class="after">One central, linked record for each candidate</td></tr>
+                <tr><td class="area">Reports</td><td class="before">Compiled by hand for each request</td><td class="after">Eight ready-made reports, filtered and printed in minutes</td></tr>
+                <tr><td class="area">Grade changes</td><td class="before">Hard to trace who changed what</td><td class="after">Every correction records the person, time and reason</td></tr>
+                <tr><td class="area">Examination integrity</td><td class="before">Same paper for everyone; limited oversight</td><td class="after">Shuffled questions, random question sets, live monitoring</td></tr>
+                <tr><td class="area">Candidate access</td><td class="before">Candidates ask the office for grades and records</td><td class="after">Candidates see their own released results and records</td></tr>
+            </tbody>
+        </table>
+
+        <div class="grid g3" style="margin-top: 14pt;">
+            <div class="benefit"><div class="ico">{{clock}}</div><div><h4 style="margin:0 0 2pt; color: var(--navy);">Saves staff time</h4><p class="small muted" style="margin:0;">Less checking, computing and compiling by hand.</p></div></div>
+            <div class="benefit"><div class="ico gold">{{target}}</div><div><h4 style="margin:0 0 2pt; color: var(--navy);">Improves accuracy</h4><p class="small muted" style="margin:0;">One set of rules applied the same way for everyone.</p></div></div>
+            <div class="benefit"><div class="ico navy">{{heart-handshake}}</div><div><h4 style="margin:0 0 2pt; color: var(--navy);">Helps candidates sooner</h4><p class="small muted" style="margin:0;">Early warning gives time to act.</p></div></div>
+            <div class="benefit"><div class="ico">{{eye}}</div><div><h4 style="margin:0 0 2pt; color: var(--navy);">Clear visibility</h4><p class="small muted" style="margin:0;">Current status for management at any time.</p></div></div>
+            <div class="benefit"><div class="ico gold">{{lock}}</div><div><h4 style="margin:0 0 2pt; color: var(--navy);">Protects records</h4><p class="small muted" style="margin:0;">Role-based access and a complete audit history.</p></div></div>
+            <div class="benefit"><div class="ico navy">{{leaf}}</div><div><h4 style="margin:0 0 2pt; color: var(--navy);">Less paper</h4><p class="small muted" style="margin:0;">Fewer printed examinations and forms.</p></div></div>
+        </div>
+
+        <div class="callout" style="margin-top: auto;">
+            <h3 style="color:#fff; margin-bottom: 4pt;">In short</h3>
+            <p style="margin:0;">Instructors spend less time on paperwork and more time teaching. Administrators see the academic status of every class <strong>as it happens</strong>. Candidates get fair, reliable examinations and clear access to their own results.</p>
+        </div>
+    </div>
+    <div class="folio"><span>Academic Monitoring System · System Proposal</span><span class="num">12</span></div>
+</section>
+
+<!-- ============================ 8 SECURITY & SETUP ============================ -->
+<section class="page" id="p13">
+    <div class="running"><span class="brand"><img src="../../public/branding/logo.jpg" alt="">Academic Monitoring System</span><span>Security, Privacy and Setup</span></div>
+    <div class="accent-bar"></div>
+    <div class="inner">
+        <div class="section-head"><div class="section-num">8</div><div><div class="eyebrow">Section Eight</div><h2>Security, Privacy and Setup</h2></div></div>
+        <p class="lead">Academic records and examinations are sensitive. The system was built with protection in mind from the start.</p>
+
+        <div class="grid g2" style="margin-top: 4pt;">
+            <div class="card"><div class="ico">{{key-round}}</div><h4>Controlled access</h4><p>Personal accounts with securely stored passwords. Access is granted by role and permission; instructors see only their assigned classes. Staff accounts created or reset by an administrator must set a new password at the next sign-in.</p></div>
+            <div class="card"><div class="ico gold">{{lock}}</div><h4>Protected examinations</h4><p>Answer keys are never sent to candidate tablets. Time limits and attempt limits are enforced by the server, not only by the tablet. Results stay hidden until released.</p></div>
+            <div class="card"><div class="ico navy">{{shield-check}}</div><h4>Safeguards against misuse</h4><p>Repeated failed sign-ins and repeated access-code guesses are slowed down. Inactive accounts cannot sign in. Candidates can never open another candidate’s records.</p></div>
+            <div class="card"><div class="ico">{{history}}</div><h4>Traceable changes</h4><p>Important actions are recorded in the audit history. Finalized grades are never silently overwritten: corrections keep the old value, new value, person and reason.</p></div>
+        </div>
+
+        <h3 style="margin-top: 16pt;">What the school needs to run the system</h3>
+        <div class="grid g3" style="margin-top: 4pt;">
+            <div class="card tint"><div class="ico navy">{{server}}</div><h4>A school server</h4><p>One computer at the school to host the system and its database, ideally with a regular backup routine.</p></div>
+            <div class="card tint"><div class="ico gold">{{wifi}}</div><h4>The school network</h4><p>The school’s existing Wi-Fi or local network, reaching classrooms and examination rooms.</p></div>
+            <div class="card tint"><div class="ico">{{tablet}}</div><h4>Devices</h4><p>Staff computers and candidate tablets with a modern web browser. No other software is required.</p></div>
+        </div>
+        <p class="note" style="margin-top: 10pt;">Records stay on the school’s own server. Regular database backups, and occasional test restores, are recommended as part of normal operations.</p>
+    </div>
+    <div class="folio"><span>Academic Monitoring System · System Proposal</span><span class="num">13</span></div>
+</section>
+
+<script>
+    // Screen preview helper: proposal.html#p5 shows only that page (used to check the layout).
+    const page = location.hash.slice(1);
+    if (page) { document.body.classList.add('single'); document.getElementById(page)?.classList.add('show'); }
+</script>
+</body>
+</html>

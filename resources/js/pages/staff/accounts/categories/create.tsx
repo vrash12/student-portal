@@ -33,9 +33,9 @@ export default function CreateAccountCategory({ entryTypes, nextSortOrder }: Cre
             <div className="mx-auto max-w-3xl">
                 <PageHeader
                     title="Add Account Category"
-                    description="A category of charges or credits on statements of account."
+                    description="A category of expenses and other charges."
                     breadcrumbs={[
-                        { label: 'Statements of Account', href: routes.accounts.index() },
+                        { label: 'Expenses', href: routes.accounts.expenses.index() },
                         { label: 'Categories', href: routes.accounts.categories.index() },
                         { label: 'Add Category' },
                     ]}

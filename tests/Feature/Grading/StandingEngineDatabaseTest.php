@@ -697,10 +697,11 @@ class StandingEngineDatabaseTest extends TestCase
         $smallResponse->assertOk();
         $largeResponse->assertOk();
         $this->assertCount(2, $smallResponse->inertiaProps('grades.data'));
-        $this->assertCount(12, $largeResponse->inertiaProps('grades.data'));
+        // 12 candidates; the page shows the first 10.
+        $this->assertCount(10, $largeResponse->inertiaProps('grades.data'));
         $this->assertSame(
             ['value' => 'at_risk', 'label' => 'At Risk', 'tone' => 'warning'],
-            $largeResponse->inertiaProps('grades.data')[11]['result']['standing'],
+            $largeResponse->inertiaProps('grades.data')[9]['result']['standing'],
         );
         // The log really captured the page (at least the six queries of the
         // calculation itself), and twelve candidates cost no more than two.

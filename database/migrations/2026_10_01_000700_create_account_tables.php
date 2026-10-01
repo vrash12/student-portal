@@ -88,12 +88,13 @@ return new class extends Migration
         Schema::dropIfExists('account_entries');
         Schema::dropIfExists('account_categories');
         Permission::query()->whereIn('code', [PermissionCode::ViewAccounts->value, PermissionCode::ManageAccounts->value])->delete();
-        Role::query()->where('code', SystemRole::FinanceOfficer->value)->whereDoesntHave('users')->delete();
     }
 
     /**
-     * Adds the new permissions and the Finance Officer role to existing
-     * databases (AccessControlSeeder does the same for new ones).
+     * Adds the new permissions to existing databases (AccessControlSeeder
+     * does the same for new ones). This migration also created a Finance
+     * Officer role; that role was dropped on 2026-10-01 (migration
+     * 2026_10_01_000830), so it is no longer created here.
      */
     private function grantPermissions(): void
     {
@@ -106,13 +107,6 @@ return new class extends Migration
                 )->id;
             }
 
-            $finance = Role::query()->firstOrNew(['code' => SystemRole::FinanceOfficer->value]);
-            $finance->fill(['name' => SystemRole::FinanceOfficer->label(), 'description' => SystemRole::FinanceOfficer->description()]);
-            $finance->is_system = true;
-            $finance->rank = SystemRole::FinanceOfficer->rank();
-            $finance->save();
-
-            $allIds = Permission::query()->pluck('id', 'code');
             foreach (SystemRole::cases() as $systemRole) {
                 $role = Role::query()->where('code', $systemRole->value)->first();
                 if ($role === null) {
@@ -120,9 +114,7 @@ return new class extends Migration
                 }
 
                 $defaults = array_map(fn (PermissionCode $permission): string => $permission->value, $systemRole->defaultPermissions());
-                $role->permissions()->syncWithoutDetaching($systemRole === SystemRole::FinanceOfficer
-                    ? array_values(array_filter(array_map(fn (string $code): ?int => $allIds[$code] ?? null, $defaults)))
-                    : array_values(array_intersect_key($ids, array_flip($defaults))));
+                $role->permissions()->syncWithoutDetaching(array_values(array_intersect_key($ids, array_flip($defaults))));
             }
         });
     }

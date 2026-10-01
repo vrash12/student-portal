@@ -476,28 +476,28 @@ class GradebookAndIntegrationTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page->has('grades.data', 0));
     }
 
-    public function test_gradebook_shows_fifty_candidates_per_page(): void
+    public function test_gradebook_shows_ten_candidates_per_page(): void
     {
         Candidate::factory()->count(55)->create(['class_batch_id' => $this->batchA->id]);
 
         $response = $this->actingAs($this->alpha)->get($this->gradebookUrl($this->offeringA1));
         $response->assertInertia(fn (Assert $page) => $page
             ->where('gradableCount', 57)
-            ->has('grades.data', 50)
-            ->where('grades.per_page', 50)
+            ->has('grades.data', 10)
+            ->where('grades.per_page', 10)
             ->where('grades.total', 57)
             ->where('grades.current_page', 1)
-            ->where('grades.last_page', 2));
+            ->where('grades.last_page', 6));
 
         $this->actingAs($this->alpha)
-            ->get($this->gradebookUrl($this->offeringA1).'?page=2')
+            ->get($this->gradebookUrl($this->offeringA1).'?page=6')
             ->assertInertia(fn (Assert $page) => $page
                 ->has('grades.data', 7)
-                ->where('grades.current_page', 2));
+                ->where('grades.current_page', 6));
 
         // The search is kept when moving between pages.
         $searched = $this->actingAs($this->alpha)->get($this->gradebookUrl($this->offeringA1).'?search=Candidate');
-        $searched->assertInertia(fn (Assert $page) => $page->where('grades.total', 57)->has('grades.data', 50));
+        $searched->assertInertia(fn (Assert $page) => $page->where('grades.total', 57)->has('grades.data', 10));
         $this->assertStringContainsString('search=Candidate', (string) $searched->inertiaProps('grades.next_page_url'));
     }
 

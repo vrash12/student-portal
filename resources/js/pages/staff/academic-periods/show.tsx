@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Pencil, Plus, SlidersHorizontal, Users } from 'lucide-react';
 import { Alert } from '@/components/ui/alert';
 import { ButtonLink } from '@/components/ui/button';
+import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { MetricCard } from '@/components/ui/metric-card';
 import { PageHeader } from '@/components/ui/page-header';
@@ -122,71 +123,79 @@ export default function AcademicPeriodShow({ period, classes, totals, can }: Aca
                         />
                     </div>
                 ) : (
-                    classes.map((classBatch) => (
-                        <Panel
-                            key={classBatch.id}
-                            title={classBatch.name}
-                            description={`${classBatch.candidateCount} ${classBatch.candidateCount === 1 ? 'candidate' : 'candidates'} · ${classBatch.subjects.length} ${classBatch.subjects.length === 1 ? 'subject' : 'subjects'}`}
-                            actions={
-                                can.manageClasses ? (
-                                    <ButtonLink href={routes.classes.show(classBatch.id)} size="sm">
-                                        Manage {singular}
-                                    </ButtonLink>
-                                ) : undefined
-                            }
-                            bodyClassName="p-0"
-                        >
-                            {classBatch.subjects.length === 0 ? (
-                                <p className="px-4 py-4 text-sm text-ink-muted">No subjects added to this {singular.toLowerCase()} yet.</p>
-                            ) : (
-                                <Table caption={`Subjects and instructors of ${classBatch.name}`} className="min-w-[32rem]">
-                                    <TableHead>
-                                        <Th>Code</Th>
-                                        <Th>Subject</Th>
-                                        <Th>Instructors</Th>
-                                    </TableHead>
-                                    <TableBody>
-                                        {classBatch.subjects.map((subject) => (
-                                            <Tr key={subject.classSubjectId}>
-                                                <Td className="font-medium text-ink">{subject.code}</Td>
-                                                <Td>
-                                                    {subject.name}{' '}
-                                                    {!subject.isActive && <StatusBadge tone="neutral">Inactive</StatusBadge>}
-                                                </Td>
-                                                <Td>
-                                                    {subject.instructors.length === 0 ? (
-                                                        <StatusBadge tone="warning">No instructor assigned</StatusBadge>
-                                                    ) : (
-                                                        <ul className="flex flex-wrap gap-x-3 gap-y-1">
-                                                            {subject.instructors.map((instructor) => (
-                                                                <li key={instructor.id}>
-                                                                    {can.manageAssignments ? (
-                                                                        <Link href={routes.instructors.show(instructor.id)} className="text-primary-700 underline">
-                                                                            {instructor.name}
-                                                                        </Link>
-                                                                    ) : (
-                                                                        instructor.name
-                                                                    )}
-                                                                    {!instructor.isActive && (
-                                                                        <>
-                                                                            {' '}
-                                                                            <StatusBadge tone="neutral">Inactive</StatusBadge>
-                                                                        </>
-                                                                    )}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    )}
-                                                </Td>
-                                            </Tr>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            )}
-                        </Panel>
-                    ))
+                    classes.map((classBatch) => <ClassSubjectsPanel key={classBatch.id} classBatch={classBatch} can={can} />)
                 )}
             </div>
         </>
+    );
+}
+
+/** One class with its subjects and assigned instructors, paged so long subject lists stay readable. */
+function ClassSubjectsPanel({ classBatch, can }: { classBatch: PeriodClass; can: AcademicPeriodShowProps['can'] }) {
+    const { singular } = terms.classBatch;
+    const pagination = useClientPagination(classBatch.subjects);
+
+    return (
+        <Panel
+            title={classBatch.name}
+            description={`${classBatch.candidateCount} ${classBatch.candidateCount === 1 ? 'candidate' : 'candidates'} · ${classBatch.subjects.length} ${classBatch.subjects.length === 1 ? 'subject' : 'subjects'}`}
+            actions={
+                can.manageClasses ? (
+                    <ButtonLink href={routes.classes.show(classBatch.id)} size="sm">
+                        Manage {singular}
+                    </ButtonLink>
+                ) : undefined
+            }
+            bodyClassName="p-0"
+        >
+            {classBatch.subjects.length === 0 ? (
+                <p className="px-4 py-4 text-sm text-ink-muted">No subjects added to this {singular.toLowerCase()} yet.</p>
+            ) : (
+                <Table caption={`Subjects and instructors of ${classBatch.name}`} className="min-w-[32rem]">
+                    <TableHead>
+                        <Th>Code</Th>
+                        <Th>Subject</Th>
+                        <Th>Instructors</Th>
+                    </TableHead>
+                    <TableBody>
+                        {pagination.rows.map((subject) => (
+                            <Tr key={subject.classSubjectId}>
+                                <Td className="font-medium text-ink">{subject.code}</Td>
+                                <Td>
+                                    {subject.name}{' '}
+                                    {!subject.isActive && <StatusBadge tone="neutral">Inactive</StatusBadge>}
+                                </Td>
+                                <Td>
+                                    {subject.instructors.length === 0 ? (
+                                        <StatusBadge tone="warning">No instructor assigned</StatusBadge>
+                                    ) : (
+                                        <ul className="flex flex-wrap gap-x-3 gap-y-1">
+                                            {subject.instructors.map((instructor) => (
+                                                <li key={instructor.id}>
+                                                    {can.manageAssignments ? (
+                                                        <Link href={routes.instructors.show(instructor.id)} className="text-primary-700 underline">
+                                                            {instructor.name}
+                                                        </Link>
+                                                    ) : (
+                                                        instructor.name
+                                                    )}
+                                                    {!instructor.isActive && (
+                                                        <>
+                                                            {' '}
+                                                            <StatusBadge tone="neutral">Inactive</StatusBadge>
+                                                        </>
+                                                    )}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </Td>
+                            </Tr>
+                        ))}
+                    </TableBody>
+                </Table>
+            )}
+            <ClientPagination pagination={pagination} noun={{ one: 'subject', other: 'subjects' }} label={`Subject pages of ${classBatch.name}`} />
+        </Panel>
     );
 }

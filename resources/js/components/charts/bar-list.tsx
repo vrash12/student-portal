@@ -19,6 +19,8 @@ interface BarListProps {
     emptyValue?: string;
     /** Formats a bar's value; two decimals by default (grades). */
     formatValue?: (value: number) => string;
+    /** Legend text for per-bar markers (ChartBar.marker), e.g. "Passing grade of each area". */
+    markerLabel?: string;
 }
 
 /**
@@ -26,8 +28,9 @@ interface BarListProps {
  * labelled with its value, with optional reference lines such as the passing
  * and warning grades. Values are printed beside every bar.
  */
-export function BarList({ bars, references = [], renderLabel, emptyValue = 'No grades yet', formatValue = formatGrade }: BarListProps) {
+export function BarList({ bars, references = [], renderLabel, emptyValue = 'No grades yet', formatValue = formatGrade, markerLabel }: BarListProps) {
     const markers = references.slice(0, REFERENCE_STYLES.length);
+    const hasBarMarkers = markerLabel !== undefined && bars.some((bar) => bar.marker !== undefined && bar.marker !== null);
 
     return (
         <div className="@container flex flex-col gap-4">
@@ -49,6 +52,9 @@ export function BarList({ bars, references = [], renderLabel, emptyValue = 'No g
                                     style={{ left: `${clampPercent(reference.value)}%` }}
                                 />
                             ))}
+                            {hasBarMarkers && bar.marker !== undefined && bar.marker !== null && (
+                                <div className="absolute -inset-y-1.5 border-l-[3px] border-dotted border-ink" style={{ left: `${clampPercent(bar.marker)}%` }} />
+                            )}
                         </div>
                         <div className="text-right text-sm font-semibold text-ink tabular-nums">
                             {bar.value === null ? <span className="font-normal text-ink-muted">{emptyValue}</span> : formatValue(bar.value)}
@@ -56,8 +62,14 @@ export function BarList({ bars, references = [], renderLabel, emptyValue = 'No g
                     </li>
                 ))}
             </ul>
-            {markers.length > 0 && (
+            {(markers.length > 0 || hasBarMarkers) && (
                 <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink">
+                    {hasBarMarkers && (
+                        <li className="flex items-center gap-2">
+                            <span aria-hidden="true" className="h-4 w-0 border-l-[3px] border-dotted border-ink" />
+                            {markerLabel}
+                        </li>
+                    )}
                     {markers.map((reference, markerIndex) => (
                         <li key={reference.label} className="flex items-center gap-2">
                             <span aria-hidden="true" className={cn('h-4 w-0 border-l-2 border-ink', REFERENCE_STYLES[markerIndex])} />

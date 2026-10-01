@@ -3,6 +3,7 @@ import { BookOpen, GraduationCap, Pencil, Plus, SlidersHorizontal, Trash2, X } f
 import type { FormEvent } from 'react';
 import { WeightSummary } from '@/components/grading/offering-context';
 import { Button, ButtonLink } from '@/components/ui/button';
+import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { ConfirmAction } from '@/components/ui/confirm-action';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FormField, SelectInput } from '@/components/ui/form-field';
@@ -56,6 +57,7 @@ interface ClassShowProps {
 
 export default function ClassShow({ classBatch, offerings, candidates, subjectOptions, instructorOptions, can }: ClassShowProps) {
     const { singular, plural } = terms.classBatch;
+    const offeringPagination = useClientPagination(offerings);
 
     return (
         <>
@@ -98,7 +100,7 @@ export default function ClassShow({ classBatch, offerings, candidates, subjectOp
                             />
                         ) : (
                             <ul className={cn('divide-y divide-line', subjectOptions.length > 0 ? 'border-t border-line' : '[&>li:first-child]:pt-0')}>
-                                {offerings.map((offering) => (
+                                {offeringPagination.rows.map((offering) => (
                                     <OfferingItem
                                         key={offering.id}
                                         classBatch={classBatch}
@@ -110,6 +112,7 @@ export default function ClassShow({ classBatch, offerings, candidates, subjectOp
                                 ))}
                             </ul>
                         )}
+                        <ClientPagination pagination={offeringPagination} noun={{ one: 'subject', other: 'subjects' }} label="Subject pages" />
                     </div>
                 </Panel>
 

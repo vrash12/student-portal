@@ -17,7 +17,7 @@ use Inertia\Response;
  */
 class GradebookController extends Controller
 {
-    private const CANDIDATES_PER_PAGE = 50;
+    private const CANDIDATES_PER_PAGE = 10;
 
     public function __construct(private readonly Gradebook $gradebook) {}
 

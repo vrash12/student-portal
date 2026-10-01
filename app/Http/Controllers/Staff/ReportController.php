@@ -22,7 +22,7 @@ final class ReportController
         ]);
         $report = $reports->generate($request->user(), $filters);
         $print = $request->boolean('print');
-        $perPage = $print ? 5000 : 25;
+        $perPage = $print ? 5000 : 10;
         $rows = $report['rows'];
         // Charts summarize every row of the filtered report, not only the visible page.
         $report['charts'] = $charts->for($report['filters']['type'], $rows, (int) $report['filters']['period'] ?: null);

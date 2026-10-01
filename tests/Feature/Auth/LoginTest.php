@@ -32,6 +32,26 @@ class LoginTest extends TestCase
         $this->get('/login')->assertInertia(fn (Assert $page) => $page->where('app.poweredBy', null));
     }
 
+    public function test_login_page_texts_come_from_configuration_with_fallbacks(): void
+    {
+        config([
+            'institution.organization_name' => 'Sample School',
+            'institution.short_name' => 'Sample System',
+            'institution.login' => ['header_title' => null, 'header_subtitle' => null, 'core_values' => [], 'motto' => null, 'tagline' => null, 'help_desk' => null],
+        ]);
+        $this->get('/login')->assertInertia(fn (Assert $page) => $page
+            ->where('app.login', ['headerTitle' => 'Sample School', 'headerSubtitle' => 'Sample System', 'coreValues' => [], 'motto' => null, 'tagline' => null, 'helpDesk' => null]));
+
+        config(['institution.login' => [
+            'header_title' => 'Officer Candidate School', 'header_subtitle' => 'Philippine Army', 'core_values' => ['Discipline', 'Integrity'],
+            'motto' => 'Leaders for a Stronger Philippines', 'tagline' => 'Secure platform.', 'help_desk' => 'Local 123',
+        ]]);
+        $this->get('/login')->assertInertia(fn (Assert $page) => $page
+            ->where('app.login.headerTitle', 'Officer Candidate School')
+            ->where('app.login.coreValues', ['Discipline', 'Integrity'])
+            ->where('app.login.helpDesk', 'Local 123'));
+    }
+
     public function test_staff_member_signs_in_and_lands_on_the_dashboard(): void
     {
         $user = $this->userWithRole(SystemRole::Instructor, ['username' => 'instructor.test']);

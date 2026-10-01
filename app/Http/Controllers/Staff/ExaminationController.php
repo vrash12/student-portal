@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Enums\ExaminationKind;
 use App\Enums\ExaminationStatus;
 use App\Http\Requests\ExaminationRequest;
 use App\Models\Assessment;
@@ -11,6 +12,7 @@ use App\Models\Question;
 use App\Services\Examinations\ExaminationMonitoringService;
 use App\Services\Examinations\ExaminationService;
 use App\Services\QuestionBank\QuestionPresenter;
+use App\Support\ListCharts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -20,11 +22,17 @@ final class ExaminationController
     public function index(Request $request)
     {
         abort_unless($request->user()->canTeach(), 403);
-        $exams = Examination::with('classSubject.subject', 'classSubject.classBatch')
-            ->whereHas('classSubject.instructorAssignments', fn ($query) => $query->where('instructor_id', $request->user()->id))
-            ->latest()->paginate(20)->through(fn ($exam) => $exam->toArray() + ['lifecycle' => $exam->lifecycle()]);
+        $query = Examination::with('classSubject.subject', 'classSubject.classBatch')
+            ->whereHas('classSubject.instructorAssignments', fn ($query) => $query->where('instructor_id', $request->user()->id));
+        $charts = [
+            ListCharts::bars('By Status', 'Your quizzes and examinations by status.',
+                ListCharts::countBy($query, 'status', fn (mixed $value): string => ExaminationStatus::tryFrom((string) $value)?->label() ?? (string) $value), 'examination', 'examinations'),
+            ListCharts::bars('Quizzes and Examinations', 'How many of each kind you have created.',
+                ListCharts::countBy($query, 'kind', fn (mixed $value): string => ExaminationKind::tryFrom((string) $value)?->label() ?? (string) $value), 'item', 'items'),
+        ];
+        $exams = $query->latest()->paginate(10)->through(fn ($exam) => $exam->toArray() + ['lifecycle' => $exam->lifecycle()]);
 
-        return Inertia::render('staff/examinations/index', ['examinations' => $exams]);
+        return Inertia::render('staff/examinations/index', ['examinations' => $exams, 'charts' => $charts]);
     }
 
     public function create(Request $request)

@@ -24,6 +24,8 @@ export interface StandingGroup {
 export interface ChartBar {
     label: string;
     value: number | null;
+    /** This bar's own target on the same scale (e.g. each area's passing grade); see BarList markerLabel. */
+    marker?: number | null;
 }
 
 /** A labelled marker on a 0–100 scale, e.g. the passing grade. */

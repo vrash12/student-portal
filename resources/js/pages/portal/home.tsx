@@ -1,105 +1,186 @@
 import { Head } from '@inertiajs/react';
-import { ArrowRight, BookOpen, CalendarDays, ClipboardList, Clock3, FileText, UserRound } from 'lucide-react';
+import { Award, CalendarClock, CalendarDays, ClipboardList, Dumbbell, GraduationCap, IdCard, PartyPopper, Users } from 'lucide-react';
+import { QualificationBadge } from '@/components/performance/area-status';
+import { ExamCard, type PortalExam } from '@/components/portal/exam-card';
+import { PortalEmpty, PortalSection, PortalTile } from '@/components/portal/portal-ui';
+import { StandingBadge } from '@/components/grading/standing';
 import { ButtonLink } from '@/components/ui/button';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Panel } from '@/components/ui/panel';
-import { Pagination } from '@/components/ui/pagination';
 import { StatusBadge, type StatusTone } from '@/components/ui/status-badge';
-import { OverallStandingValue } from '@/components/grading/standing';
-import { formatCalendarDate, formatPercent, useDateFormatter } from '@/lib/format';
+import { formatCalendarDate, formatGrade, useDateFormatter } from '@/lib/format';
+import { routes } from '@/lib/routes';
 import type { Paginated } from '@/types';
-import type { OverallStanding } from '@/types/grading';
+import type { PortalPerformanceCard } from '@/types/candidate-performance';
+import type { OverallStanding, StatusValue } from '@/types/grading';
 
-interface Exam {
-    id: number; title: string; kind: string; subject: string;
-    durationMinutes: number; opensAt: string | null; closesAt: string | null;
-    attemptsUsed: number; attemptLimit: number; resumeId: number | null;
-}
 interface HomeProps {
-    summary: { name: string; number: string; className: string | null; period: string | null; subjectCount: number; overall: OverallStanding; eligible: boolean };
-    available: Paginated<Exam>;
-    upcoming: Paginated<Exam>;
-    outstanding: Paginated<{ id: number; title: string; subject: string; category: string; date: string | null }>;
-    recentResults: Array<{ id: number; title: string; subject: string; kind: string; attemptNumber: number; submittedAt: string | null; percentage: number | null; passed: boolean | null }>;
+    summary: { name: string; number: string; className: string | null; period: string | null; eligible: boolean; subjectCount: number; overall: OverallStanding };
+    /** Open now (the first few; the Examinations page lists all). */
+    available: Paginated<PortalExam>;
+    /** The next scheduled examinations. */
+    upcoming: Paginated<PortalExam>;
+    /** Own qualification status (never a rank); null without a class. */
+    performance: PortalPerformanceCard | null;
+    sections: {
+        grades: { overall: OverallStanding; subjectCount: number; outstandingCount: number };
+        examinations: { openCount: number; upcomingCount: number; releasedCount: number };
+        fitness: { title: string; testedOn: string; status: StatusValue; points: number | null } | null;
+    };
 }
 
-export default function PortalHome({ summary, available, upcoming, outstanding, recentResults }: HomeProps) {
+/**
+ * Candidate home: what to do now (open examinations), what comes next, and
+ * one tile per portal section with the single figure that matters. Details
+ * live on each section's own page.
+ */
+export default function PortalHome({ summary, available, upcoming, performance, sections }: HomeProps) {
     const dates = useDateFormatter();
-    return <>
-        <Head title="My Home" />
-        <section className="brand-dark mb-6 overflow-hidden rounded-2xl border border-primary-800 bg-primary-800 text-white shadow-md" aria-labelledby="welcome-title">
-            <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center">
-                <div className="min-w-0">
-                    <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-accent-300">My Home</p>
-                    <h1 id="welcome-title" className="text-2xl font-bold tracking-tight sm:text-3xl">Welcome, {summary.name}</h1>
-                    <p className="mt-3 max-w-xl text-sm leading-relaxed text-primary-100">Your examinations, results and academic standing.</p>
-                    <div className="mt-5 flex flex-wrap gap-2 text-xs font-medium">
-                        <span className="rounded-md border border-white/20 px-3 py-2">Candidate {summary.number}</span>
-                        <span className="rounded-md border border-white/20 px-3 py-2">{summary.className ?? 'Class not assigned'}</span>
-                        {summary.period && <span className="rounded-md border border-white/20 px-3 py-2">{summary.period}</span>}
+
+    return (
+        <>
+            <Head title="Home" />
+
+            <section className="brand-dark mb-10 rounded-3xl bg-primary-800 px-6 py-8 text-white shadow-md sm:px-10 sm:py-10" aria-labelledby="welcome-title">
+                <p className="text-sm font-bold uppercase tracking-[0.2em] text-accent-300">Welcome back</p>
+                <h1 id="welcome-title" className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+                    {summary.name}
+                </h1>
+                <ul className="mt-6 flex flex-wrap gap-3 text-sm">
+                    <li className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2">
+                        <IdCard className="size-4 text-accent-300" aria-hidden="true" />
+                        Candidate {summary.number}
+                    </li>
+                    <li className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2">
+                        <Users className="size-4 text-accent-300" aria-hidden="true" />
+                        {summary.className ?? 'Class not assigned'}
+                    </li>
+                    {summary.period && (
+                        <li className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2">
+                            <CalendarDays className="size-4 text-accent-300" aria-hidden="true" />
+                            {summary.period}
+                        </li>
+                    )}
+                </ul>
+            </section>
+
+            <div className="flex flex-col gap-10">
+                <PortalSection
+                    icon={ClipboardList}
+                    title="Open Now"
+                    description={available.total === 0 ? undefined : 'Examinations you can take right now.'}
+                    action={
+                        available.total > available.data.length && (
+                            <ButtonLink href={routes.portal.examinations()} variant="secondary">
+                                See All {available.total}
+                            </ButtonLink>
+                        )
+                    }
+                >
+                    {available.data.length === 0 ? (
+                        <PortalEmpty icon={PartyPopper} title="Nothing to take right now">
+                            {summary.eligible
+                                ? 'New quizzes and examinations appear here when your instructor opens them.'
+                                : 'An eligible class assignment is needed to take examinations. Please contact the academic office.'}
+                        </PortalEmpty>
+                    ) : (
+                        <div className="grid gap-5 md:grid-cols-2">
+                            {available.data.map((exam) => (
+                                <ExamCard key={exam.id} exam={exam} />
+                            ))}
+                        </div>
+                    )}
+                </PortalSection>
+
+                {upcoming.data.length > 0 && (
+                    <PortalSection icon={CalendarClock} title="Coming Up" flush>
+                        <ul className="divide-y divide-line">
+                            {upcoming.data.map((exam) => (
+                                <li key={exam.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-7">
+                                    <div className="min-w-0">
+                                        <p className="text-base font-semibold text-ink">{exam.title}</p>
+                                        <p className="text-sm text-ink-muted">{exam.subject}</p>
+                                    </div>
+                                    <p className="inline-flex items-center gap-2 text-sm font-medium text-ink">
+                                        <CalendarClock className="size-4 text-primary-600" aria-hidden="true" />
+                                        Opens {dates.dateTime(exam.opensAt)}
+                                    </p>
+                                </li>
+                            ))}
+                        </ul>
+                    </PortalSection>
+                )}
+
+                <section aria-labelledby="sections-title">
+                    <h2 id="sections-title" className="mb-4 text-xl font-semibold text-primary-900">
+                        My Records
+                    </h2>
+                    <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                        <PortalTile href={routes.portal.grades()} icon={GraduationCap} title="My Grades" cta="View Grades">
+                            <span className="flex flex-col items-start gap-2">
+                                {sections.grades.overall.standing === null ? (
+                                    <span className="text-ink-muted">No standing yet</span>
+                                ) : (
+                                    <StandingBadge standing={sections.grades.overall.standing} />
+                                )}
+                                <span className="text-ink-muted">
+                                    {sections.grades.subjectCount} {sections.grades.subjectCount === 1 ? 'subject' : 'subjects'}
+                                    {sections.grades.outstandingCount > 0 && ` · ${sections.grades.outstandingCount} awaiting a score`}
+                                </span>
+                            </span>
+                        </PortalTile>
+
+                        <PortalTile href={routes.portal.examinations()} icon={ClipboardList} title="Examinations" cta="View Examinations">
+                            <span className="flex flex-col gap-1">
+                                <span>
+                                    <span className="text-2xl font-bold tabular-nums">{sections.examinations.openCount}</span> open now
+                                </span>
+                                <span className="text-ink-muted">
+                                    {sections.examinations.upcomingCount} coming up · {sections.examinations.releasedCount}{' '}
+                                    {sections.examinations.releasedCount === 1 ? 'result' : 'results'}
+                                </span>
+                            </span>
+                        </PortalTile>
+
+                        <PortalTile href={routes.portal.performance()} icon={Award} title="My Performance" cta="View Performance">
+                            {performance === null ? (
+                                <span className="text-ink-muted">Available once you are assigned to a class.</span>
+                            ) : !performance.configured ? (
+                                <span className="text-ink-muted">Not set up yet by the academic office.</span>
+                            ) : (
+                                <span className="flex flex-col items-start gap-2">
+                                    <QualificationBadge status={performance.status} />
+                                    <span className="text-ink-muted">{performanceHint(performance)}</span>
+                                </span>
+                            )}
+                        </PortalTile>
+
+                        <PortalTile href={routes.portal.fitness()} icon={Dumbbell} title="Physical Fitness" cta="View Fitness Tests">
+                            {sections.fitness === null ? (
+                                <span className="text-ink-muted">No fitness tests yet.</span>
+                            ) : (
+                                <span className="flex flex-col items-start gap-2">
+                                    <StatusBadge tone={sections.fitness.status.tone as StatusTone}>{sections.fitness.status.label}</StatusBadge>
+                                    <span className="text-ink-muted">
+                                        {sections.fitness.title} · {formatCalendarDate(sections.fitness.testedOn)}
+                                        {sections.fitness.points !== null && ` · ${formatGrade(sections.fitness.points)} pts`}
+                                    </span>
+                                </span>
+                            )}
+                        </PortalTile>
                     </div>
-                </div>
-                <ButtonLink href="/portal/profile" variant="accent" size="lg" icon={<UserRound className="size-5" aria-hidden="true" />}>My Information<ArrowRight className="size-4" aria-hidden="true" /></ButtonLink>
+                </section>
             </div>
-            <nav aria-label="Home shortcuts" className="grid grid-cols-1 border-t border-white/15 bg-primary-900/40 sm:grid-cols-3">
-                {[{ href: '#available-examinations', label: 'Open examinations', value: available.total, icon: ClipboardList }, { href: '#upcoming-examinations', label: 'Coming up', value: upcoming.total, icon: CalendarDays }, { href: '#recent-results', label: 'Recent released results', value: recentResults.length, icon: FileText }].map((item) => <a key={item.href} href={item.href} className="flex min-h-16 items-center gap-3 px-6 py-4 text-sm hover:bg-white/10 sm:px-8"><item.icon className="size-5 text-accent-300" aria-hidden="true" /><span className="flex-1">{item.label}</span><span className="text-lg font-bold tabular-nums text-accent-100">{item.value}</span><ArrowRight className="size-4 text-primary-200" aria-hidden="true" /></a>)}
-            </nav>
-        </section>
-        <div className="flex flex-col gap-6">
-            <Panel title="Academic Summary" description="Current standing from finalized assessments in your assigned class.">
-                <div className="grid gap-5 sm:grid-cols-3">
-                    <div className="rounded-lg border border-line bg-surface-muted p-4"><p className="mb-1 text-sm text-ink-muted">Overall standing</p>{summary.overall.standing ? <OverallStandingValue overall={summary.overall} /> : <p className="text-sm">Not available yet</p>}</div>
-                    <div className="rounded-lg border border-primary-200 bg-primary-50 p-4"><BookOpen className="mb-3 size-5 text-primary-600" aria-hidden="true" /><p className="text-sm text-primary-800">Enrolled subjects</p><p className="mt-1 text-3xl font-bold tabular-nums text-primary-900">{summary.subjectCount}</p></div>
-                    <div className="rounded-lg border border-accent-300 bg-accent-50 p-4"><ClipboardList className="mb-3 size-5 text-accent-800" aria-hidden="true" /><p className="text-sm text-accent-800">Assessments awaiting a score</p><p className="mt-1 text-3xl font-bold tabular-nums text-primary-900">{outstanding.total}</p></div>
-                </div>
-                {!summary.eligible && <p className="mt-4 text-sm text-ink-muted">An eligible class assignment is required to take examinations. Contact the academic office to review your enrollment.</p>}
-            </Panel>
-            <div id="available-examinations" className="scroll-mt-6"><Panel title="Available Examinations" description="Start an open assessment, continue an attempt or review your submissions." bodyClassName="p-0">
-                {available.data.length === 0 ? <div className="p-5"><EmptyState icon={ClipboardList} headingLevel="h3" title="No examinations open now" description="Scheduled examinations are listed below when your instructor publishes them." /></div> : <div className="grid gap-4 p-5 sm:grid-cols-2">{available.data.map((exam) => <ExamCard key={exam.id} exam={exam} />)}</div>}
-                <Pagination page={available} noun={{ one: 'examination', other: 'examinations' }} />
-            </Panel>
-            </div><div id="upcoming-examinations" className="scroll-mt-6"><Panel title="Upcoming Examinations" description="Published assessments scheduled for your class. Times use the institution’s timezone." bodyClassName="p-0">
-                {upcoming.data.length === 0 ? <p className="p-5 text-sm text-ink-muted">No upcoming examinations scheduled.</p> : <div className="grid gap-4 p-5 sm:grid-cols-2">{upcoming.data.map((exam) => <ExamCard key={exam.id} exam={exam} upcoming />)}</div>}
-                <Pagination page={upcoming} noun={{ one: 'scheduled examination', other: 'scheduled examinations' }} />
-            </Panel>
-            </div><div className="grid items-start gap-6 lg:grid-cols-2">
-                <Panel title="Outstanding Assessments" description="Finalized assessments with no recorded score. Work may be outstanding or grading may still be pending; check with your instructor." bodyClassName="p-0">
-                    {outstanding.data.length === 0 ? <p className="p-5 text-sm text-ink-muted">No finalized assessments are missing a score.</p> : <ul className="divide-y divide-line">{outstanding.data.map((item) => <li key={item.id} className="p-5"><p className="font-semibold">{item.title}</p><p className="mt-1 text-sm text-ink-muted">{item.subject} · {item.category}</p>{item.date && <p className="text-sm text-ink-muted">Assessment date: {formatCalendarDate(item.date)}</p>}<div className="mt-2"><StatusBadge tone="warning">Awaiting score</StatusBadge></div></li>)}</ul>}
-                    <Pagination page={outstanding} noun={{ one: 'assessment', other: 'assessments' }} />
-                </Panel>
-                <div id="recent-results" className="min-w-0 scroll-mt-6"><Panel title="Recent Released Results" description="Your six most recent graded submissions whose results have been released." bodyClassName="p-0">
-                    {recentResults.length === 0 ? <p className="p-5 text-sm text-ink-muted">No released results yet. Results appear after grading and instructor release.</p> : <ul className="divide-y divide-line">{recentResults.map((result) => <li key={result.id} className="p-5"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{result.title}</p><p className="mt-1 text-sm text-ink-muted">{result.subject} · {result.kind}</p></div><span className="font-semibold tabular-nums">{formatPercent(result.percentage)}</span></div><p className="mt-1 text-xs text-ink-muted">Attempt {result.attemptNumber} · Submitted {dates.dateTime(result.submittedAt)}</p>{result.passed !== null && <div className="mt-2"><StatusBadge tone={result.passed ? 'success' : 'danger'}>{result.passed ? 'Passed' : 'Not passed'}</StatusBadge></div>}</li>)}</ul>}
-                    <div className="border-t border-line p-4"><ButtonLink href="/portal/profile" variant="secondary">View Academic Record</ButtonLink></div>
-                </Panel></div>
-            </div>
-        </div>
-    </>;
+        </>
+    );
 }
 
-function ExamCard({ exam, upcoming = false }: { exam: Exam; upcoming?: boolean }) {
-    const dates = useDateFormatter();
-    const exhausted = exam.attemptsUsed >= exam.attemptLimit;
-    // The state of this examination for the candidate, in words and with an icon (never color alone).
-    const state: { tone: StatusTone; label: string } = upcoming
-        ? { tone: 'neutral', label: 'Scheduled' }
-        : exam.resumeId
-          ? { tone: 'warning', label: 'In progress' }
-          : exhausted
-            ? { tone: 'neutral', label: 'All attempts used' }
-            : { tone: 'success', label: 'Open now' };
-
-    return <article className="flex flex-col rounded-xl border border-line border-t-4 border-t-primary-600 bg-surface p-5 shadow-sm">
-        <div className="flex items-start justify-between gap-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{exam.kind}</p>
-            <StatusBadge tone={state.tone}>{state.label}</StatusBadge>
-        </div>
-        <h3 className="mt-2 text-lg font-semibold leading-snug">{exam.title}</h3>
-        <p className="text-sm text-ink-muted">{exam.subject}</p>
-        <dl className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-surface-muted p-3 text-sm">
-            <div><dt className="text-xs text-ink-muted">Time limit</dt><dd className="mt-0.5 flex items-center gap-1.5 font-medium"><Clock3 className="size-4" aria-hidden="true" />{exam.durationMinutes} min</dd></div>
-            <div><dt className="text-xs text-ink-muted">Attempts</dt><dd className="mt-0.5 font-medium">{exam.attemptsUsed} of {exam.attemptLimit} used</dd></div>
-            <div className="col-span-2"><dt className="text-xs text-ink-muted">{upcoming ? 'Opens' : 'Closes'}</dt><dd className="mt-0.5 font-medium">{upcoming ? dates.dateTime(exam.opensAt) : exam.closesAt ? dates.dateTime(exam.closesAt) : 'No closing date'}</dd></div>
-        </dl>
-        <div className="mt-auto pt-4"><ButtonLink size="lg" className="w-full" variant={upcoming || exhausted ? 'secondary' : 'primary'} href={exam.resumeId && !upcoming ? `/portal/attempts/${exam.resumeId}` : `/portal/examinations/${exam.id}`}>{upcoming ? 'View Details' : exam.resumeId ? 'Continue Examination' : exhausted ? 'View Attempts' : exam.attemptsUsed > 0 ? 'View and Try Again' : 'View and Start'}</ButtonLink></div>
-    </article>;
+/** One short line under the qualification status. */
+function performanceHint(performance: PortalPerformanceCard): string {
+    switch (performance.status.value) {
+        case 'qualified':
+            return 'Every required area passed.';
+        case 'not_qualified':
+            return performance.reasons[0] ?? 'A required area is not met.';
+        case 'pending':
+            return performance.pending.length > 0 ? `Waiting for ${performance.pending.join(', ')}.` : 'Waiting for results.';
+    }
 }

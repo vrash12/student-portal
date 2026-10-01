@@ -9,6 +9,7 @@ use App\Models\Candidate;
 use App\Models\ClassBatch;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\CandidateGroups;
 use Closure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -109,6 +110,38 @@ final class CandidateService
         });
     }
 
+    /**
+     * Sets only the company and platoon (demo data, or a later bulk
+     * assignment), normalized like the form and audited as a candidate
+     * change. Blank names clear the assignment.
+     */
+    public function assignCompanyAndPlatoon(Candidate $candidate, ?string $company, ?string $platoon): Candidate
+    {
+        $names = ['company' => $this->groupName($company), 'platoon' => $this->groupName($platoon)];
+        foreach ($names as $field => $name) {
+            if ($name !== null && mb_strlen($name) > CandidateGroups::MAX_LENGTH) {
+                throw ValidationException::withMessages([$field => "The {$field} must not be greater than ".CandidateGroups::MAX_LENGTH.' characters.']);
+            }
+        }
+
+        return DB::transaction(function () use ($candidate, $names): Candidate {
+            $candidate = Candidate::query()->lockForUpdate()->findOrFail($candidate->id);
+            $before = $this->snapshot($candidate);
+
+            $candidate->fill($names)->save();
+            $this->audit->recordChanges(AuditAction::CandidateUpdated, $candidate, $before, $this->snapshot($candidate));
+
+            return $candidate;
+        });
+    }
+
+    private function groupName(?string $name): ?string
+    {
+        $name = $name === null ? '' : Str::squish($name);
+
+        return $name === '' ? null : $name;
+    }
+
     /** @param array<string, mixed> $data */
     private function withPhoto(array $data, Closure $save): Candidate
     {
@@ -132,7 +165,7 @@ final class CandidateService
     /** @param array<string, mixed> $data @return array<string, mixed> */
     private function identity(array $data): array
     {
-        return array_intersect_key($data, array_flip(['candidate_number', 'first_name', 'middle_name', 'last_name', 'suffix', 'training_group']));
+        return array_intersect_key($data, array_flip(['candidate_number', 'first_name', 'middle_name', 'last_name', 'suffix', 'training_group', 'company', 'platoon']));
     }
 
     private function accountName(Candidate $candidate): string
@@ -161,6 +194,8 @@ final class CandidateService
             'last_name' => $candidate->last_name,
             'suffix' => $candidate->suffix,
             'training_group' => $candidate->training_group,
+            'company' => $candidate->company,
+            'platoon' => $candidate->platoon,
             'has_profile_photo' => $candidate->profile_photo_path !== null,
             'class' => $candidate->classBatch?->name,
             'status' => $candidate->status->value,

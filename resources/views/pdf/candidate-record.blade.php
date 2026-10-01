@@ -81,6 +81,8 @@
             <td><table>
                 <tr><td class="k">Class / Section:</td><td class="v">{{ $candidate['classBatch']['name'] ?? 'Not assigned' }}</td></tr>
                 <tr><td class="k">Training Group:</td><td class="v">{{ $candidate['trainingGroup'] ?? 'Not assigned' }}</td></tr>
+                @php($unit = implode(' / ', array_filter([$candidate['company'] ?? null, $candidate['platoon'] ?? null])))
+                <tr><td class="k">Company / Platoon:</td><td class="v">{{ $unit !== '' ? $unit : 'Not assigned' }}</td></tr>
                 <tr><td class="k">Record Updated:</td><td class="v">{{ $date($candidate['updatedAt']) }}</td></tr>
             </table></td>
             <td><table>

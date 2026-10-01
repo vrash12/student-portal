@@ -13,7 +13,6 @@ enum SystemRole: string
 {
     case SuperAdministrator = 'super_admin';
     case AcademicAdministrator = 'academic_admin';
-    case FinanceOfficer = 'finance_officer';
     case Instructor = 'instructor';
     case Candidate = 'candidate';
 
@@ -22,7 +21,6 @@ enum SystemRole: string
         return match ($this) {
             self::SuperAdministrator => 'Super Administrator',
             self::AcademicAdministrator => 'Academic Administrator',
-            self::FinanceOfficer => 'Finance Officer',
             self::Instructor => 'Instructor',
             self::Candidate => 'Candidate',
         };
@@ -33,7 +31,6 @@ enum SystemRole: string
         return match ($this) {
             self::SuperAdministrator => 'Full system administration, including roles and administrator accounts.',
             self::AcademicAdministrator => 'Manages academic records and staff accounts below administrator level.',
-            self::FinanceOfficer => 'Records charges and credits on the statements of account of candidates. No access to academic records.',
             self::Instructor => 'Teaches assigned subjects and classes.',
             self::Candidate => 'Takes quizzes and examinations through the examination portal.',
         };
@@ -48,7 +45,6 @@ enum SystemRole: string
         return match ($this) {
             self::SuperAdministrator => 100,
             self::AcademicAdministrator => 80,
-            self::FinanceOfficer => 50,
             self::Instructor => 40,
             self::Candidate => 10,
         };
@@ -75,18 +71,17 @@ enum SystemRole: string
             Permission::ViewAuditHistory,
             Permission::ViewFitness,
             Permission::ManageFitness,
+            Permission::ManageConduct,
+            Permission::ManageAttendance,
+            Permission::ConfigurePerformance,
+            Permission::ViewPerformance,
         ];
 
         return match ($this) {
-            // Statements of Account: the Super Administrator records entries,
-            // the Academic Administrator may only view them.
+            // Expenses: the Super Administrator charges candidates (there is
+            // no finance role; owner decision 2026-10-01).
             self::SuperAdministrator => [...$academicAdministration, Permission::ViewRoles, Permission::ViewAccounts, Permission::ManageAccounts],
             self::AcademicAdministrator => [...$academicAdministration, Permission::ViewAccounts],
-            self::FinanceOfficer => [
-                Permission::AccessStaffArea,
-                Permission::ViewAccounts,
-                Permission::ManageAccounts,
-            ],
             self::Instructor => [
                 Permission::AccessStaffArea,
                 Permission::TeachClasses,
@@ -95,6 +90,8 @@ enum SystemRole: string
                 Permission::ManageQuestionBank,
                 Permission::ManageExaminations,
                 Permission::ViewReports,
+                Permission::ManageConduct,
+                Permission::ManageAttendance,
             ],
             self::Candidate => [
                 Permission::AccessExamPortal,

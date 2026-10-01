@@ -33,8 +33,10 @@ use RuntimeException;
  * Every account uses the password "password" and is not asked to change it.
  * Adds grading weights, passing/warning grades, finalized scores (through
  * DemoGradingSeeder), five questions per subject, and one published online
- * quiz per subject open for 7 days. Synthetic content only. Never runs in
- * production.
+ * quiz per subject open for 7 days, sample fitness results and expenses,
+ * and (DemoPerformanceSeeder) companies and platoons, placeholder
+ * performance areas, merits/demerits and attendance. Synthetic content
+ * only. Never runs in production.
  *
  * php artisan migrate:fresh
  * php artisan db:seed --class=AccessControlSeeder
@@ -97,8 +99,11 @@ class ClientDemoSeeder extends Seeder
         // Sample fitness events and a diagnostic test with synthetic results.
         $this->call(DemoFitnessSeeder::class);
 
-        // The Finance Officer finance1 and synthetic charges and credits on the candidates' statements of account.
+        // Sample expenses charged by the administrator.
         $this->call(DemoAccountStatementsSeeder::class);
+
+        // Company/platoon, placeholder performance areas, merits/demerits and attendance.
+        $this->call(DemoPerformanceSeeder::class);
     }
 
     private function staff(string $username, string $name, SystemRole $role): User

@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
+import { ListCharts, type ListChart } from '@/components/charts/list-charts';
 import { ClipboardList, Plus } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -21,7 +22,7 @@ interface Exam {
 
 const kindLabels: Record<string, string> = { examination: 'Examination', quiz: 'Quiz' };
 
-export default function ExaminationIndex({ examinations }: { examinations: Paginated<Exam> }) {
+export default function ExaminationIndex({ examinations, charts }: { examinations: Paginated<Exam>; charts: ListChart[] }) {
     const createAction = (
         <ButtonLink href={examinationRoutes.create()} variant="primary" icon={<Plus className="size-4" aria-hidden="true" />}>
             Create Examination
@@ -36,6 +37,8 @@ export default function ExaminationIndex({ examinations }: { examinations: Pagin
                 description="Build, review, and monitor assessments for your assigned subjects."
                 actions={createAction}
             />
+
+            <ListCharts charts={charts} />
 
             <section aria-label="Examinations" className="rounded-xl border border-line bg-surface">
                 {examinations.total === 0 ? (

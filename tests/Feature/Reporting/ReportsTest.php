@@ -312,9 +312,9 @@ class ReportsTest extends TestCase
     // Pagination and print mode
     // ------------------------------------------------------------------
 
-    public function test_reports_are_paginated_by_twenty_five(): void
+    public function test_reports_are_paginated_by_ten(): void
     {
-        for ($index = 1; $index <= 30; $index++) {
+        for ($index = 1; $index <= 15; $index++) {
             $this->makeCandidate($this->batchB, sprintf('%03d', $index));
         }
 
@@ -322,9 +322,9 @@ class ReportsTest extends TestCase
         $second = $this->reportProps($this->academicAdmin, ['page' => 2])['rows'];
         $beyond = $this->reportProps($this->academicAdmin, ['page' => 99])['rows'];
 
-        $this->assertSame(33, $first['total']);
-        $this->assertSame(25, $first['per_page']);
-        $this->assertCount(25, $first['data']);
+        $this->assertSame(18, $first['total']);
+        $this->assertSame(10, $first['per_page']);
+        $this->assertCount(10, $first['data']);
         $this->assertCount(8, $second['data']);
         $this->assertSame([], array_intersect(array_column($first['data'], 'number'), array_column($second['data'], 'number')));
         $this->assertSame([], $beyond['data']);

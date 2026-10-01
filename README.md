@@ -12,6 +12,7 @@ The system is designed to run on an internal network (LAN, private Wi-Fi, local 
 | [UI_UX_DESIGN.md](UI_UX_DESIGN.md) | Visual, responsive, accessibility, and interaction standards |
 | [MILESTONES.md](MILESTONES.md) | Development order and acceptance criteria |
 | [SESSION_HANDOFF.md](SESSION_HANDOFF.md) | Current implementation state for the next development session |
+| [docs/performance-and-qualification.md](docs/performance-and-qualification.md) | Performance areas, overall score, qualification, class rank, merits/demerits and attendance: rules, setup and questions for OCS |
 
 ## Stack
 
@@ -72,15 +73,20 @@ On 2026-10-01 the local database was reset to a small set for client demonstrati
 | `admin` | Super Administrator |
 | `instructor1` | Instructor, Subject 1 |
 | `instructor2` | Instructor, Subject 2 |
-| `finance1` | Finance Officer (Statements of Account) |
 | `student01` … `student20` | Candidates in Class A |
 
-It includes grading weights, passing/warning grades (75/80), finalized scores (a mix of Passing, At Risk, Failing and Incomplete), five questions per subject and one published online quiz per subject, open for 7 days, plus three sample fitness events (placeholder standards) and a "Diagnostic Fitness Test" with synthetic results for Class A (`DemoFitnessSeeder`, also runnable on its own), plus sample Statement of Account entries (`DemoAccountStatementsSeeder`). To rebuild it on an empty database (this deletes all data):
+It includes grading weights, passing/warning grades (75/80), finalized scores (a mix of Passing, At Risk, Failing and Incomplete), five questions per subject and one published online quiz per subject, open for 7 days, plus three sample fitness events (placeholder standards) and a "Diagnostic Fitness Test" with synthetic results for Class A (`DemoFitnessSeeder`, also runnable on its own), plus sample expenses (`DemoAccountStatementsSeeder`: four expenses assigned to every class of the active period and a few one-off charges; no payments, since candidates are scholars). To rebuild it on an empty database (this deletes all data):
 
 ```bash
 php artisan migrate:fresh
 php artisan db:seed --class=AccessControlSeeder
 php artisan db:seed --class=ClientDemoSeeder
+```
+
+The last step of `ClientDemoSeeder` is `DemoPerformanceSeeder` (merits/demerits, attendance and qualification; see [docs/performance-and-qualification.md](docs/performance-and-qualification.md)). It gives `student01`–`student10` Alpha Company and `student11`–`student20` Bravo Company (1st Platoon for the first five of each, 2nd Platoon for the next five), creates the five **placeholder** performance areas (Academic = Subject 1, Military Skills = Subject 2, Physical Fitness, Conduct, Attendance; all must pass), records merits and demerits for Class A, six attendance sessions with Present/Late/Excused/Absent, and a "Midterm Fitness Test" (the latest test with results is the one that counts). With the demo grades, **Records → Qualification** shows 6 Qualified, 3 Pending and 11 Not Qualified candidates, for academic, fitness, conduct or attendance reasons; `student01` sees the result under **My Performance** in the portal. It is safe to run again and only fills what is missing (existing companies/platoons, areas with the same names, recorded conduct and existing sessions are kept), so it can also be added to an existing client demo database:
+
+```bash
+php artisan db:seed --class=DemoPerformanceSeeder
 ```
 
 ## Trying an online quiz (local development only)
@@ -112,7 +118,7 @@ The test suite refuses to run against any database whose name does not end in `_
 
 ## Internal deployment notes
 
-- Sign-in image: place a photo in `public/branding/` (for example `login.jpg`) and set `LOGIN_IMAGE_URL=/branding/login.jpg` in `.env`. It fills the left panel of the sign-in page on wide screens; without it the panel shows the institution's mark and names. Run `php artisan config:clear` if configuration is cached.
+- Sign-in background: the owner-supplied campus image is bundled as `public/branding/login-campus.jpg` (its header, footer and drawn-in sign-in card were removed; the motto is part of the image, so `LOGIN_MOTTO` is empty). The earlier generated scene `login-background.png` is kept. Set `LOGIN_IMAGE_URL` in `.env` to use another local image, or leave it explicitly empty for a plain green background. The card is on the right on wide screens and centered on tablets/phones; the school logo and names still come from branding configuration. Run `php artisan config:clear` if configuration is cached.
 - Set `APP_ENV=production` and `APP_DEBUG=false`. Error pages then never show stack traces.
 - Use a dedicated database account limited to this application's database. Never use `root` in production.
 - Serve the application over HTTPS on the internal network. Secure cookies (`SESSION_SECURE_COOKIE=true`), browser-history encryption (`INERTIA_ENCRYPT_HISTORY=true`), and the tablet PWA all require a secure context.
@@ -125,6 +131,11 @@ The test suite refuses to run against any database whose name does not end in `_
 ## Candidate examination PWA (Milestone 9)
 
 Candidate routes live under `/portal` and require the candidate portal permission.
+The portal pages are Home (`/portal`), Examinations (`/portal/examinations`), My Grades
+(`/portal/grades`), My Performance (`/portal/performance`: qualification, areas,
+merits/demerits, attendance), Physical Fitness (`/portal/fitness`) and My Information
+(`/portal/profile`). Each shows only the signed-in candidate's own records; class rank is
+never shown to candidates.
 A published examination must have a positive duration and questions before a candidate
 can start. Candidates see only their assigned class's currently available examinations.
 The attempt screen supports MCQ, true/false, essay, persisted question/choice order,

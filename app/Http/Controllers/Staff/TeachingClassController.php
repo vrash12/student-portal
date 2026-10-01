@@ -19,7 +19,7 @@ use Inertia\Response;
  */
 class TeachingClassController extends Controller
 {
-    private const CANDIDATES_PER_PAGE = 25;
+    private const CANDIDATES_PER_PAGE = 10;
 
     public function __construct(private readonly TeachingOverview $teaching) {}
 

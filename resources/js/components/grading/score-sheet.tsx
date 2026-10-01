@@ -3,6 +3,7 @@ import { CircleAlert, PencilLine, Save, SearchX, TriangleAlert, Undo2 } from 'lu
 import { useEffect, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { ClientPagination, OtherPageErrors, pagesWhere, useClientPagination, useShowFirstErrorPage } from '@/components/ui/client-pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { SearchField } from '@/components/ui/filter-bar';
 import { TextInput } from '@/components/ui/form-field';
@@ -134,6 +135,19 @@ export function ScoreSheet({ assessmentId, maxScore, roster, edits, onEditsChang
             ? roster
             : roster.filter((row) => row.candidate.candidateNumber.toLowerCase().includes(term) || row.candidate.name.toLowerCase().includes(term));
 
+    const rowError = (row: RosterRow): string | undefined => errors[`entries.${row.candidate.id}.score`] ?? errors[`entries.${row.candidate.id}.comment`];
+
+    // Only the visible rows are paged; every entry stays in `edits`, so saving still sends all changed rows.
+    const pagination = useClientPagination(visibleRows);
+    const errorPages = pagesWhere(visibleRows, (row) => rowError(row) !== undefined);
+    const stalePages = pagesWhere(visibleRows, (row) => row.gradable && isRowChanged(row, edits[row.candidate.id]) && isRowStale(row, edits[row.candidate.id]));
+    useShowFirstErrorPage(errors, errorPages.length > 0 ? errorPages : stalePages, pagination.setPage);
+
+    const changeFilter = (value: string) => {
+        setFilter(value);
+        pagination.setPage(1);
+    };
+
     const updateRow = (row: RosterRow, patch: Partial<Pick<ScoreEdit, 'score' | 'comment'>>) => {
         onEditsChange((current) => ({
             ...current,
@@ -211,7 +225,7 @@ export function ScoreSheet({ assessmentId, maxScore, roster, edits, onEditsChang
         <>
             {/* The search sits outside the form so Enter or the keyboard's Search key never saves. */}
             <div className="border-b border-line p-4">
-                <SearchField label="Find Candidate" placeholder="Search candidates by number or name…" value={filter} onChange={setFilter} />
+                <SearchField label="Find Candidate" placeholder="Search candidates by number or name…" value={filter} onChange={changeFilter} />
             </div>
 
             <form onSubmit={save} noValidate>
@@ -270,12 +284,12 @@ export function ScoreSheet({ assessmentId, maxScore, roster, edits, onEditsChang
                             <Th>Comment</Th>
                         </TableHead>
                         <TableBody>
-                            {visibleRows.map((row) => (
+                            {pagination.rows.map((row) => (
                                 <ScoreRow
                                     key={row.candidate.id}
                                     row={row}
                                     edit={edits[row.candidate.id]}
-                                    error={errors[`entries.${row.candidate.id}.score`] ?? errors[`entries.${row.candidate.id}.comment`]}
+                                    error={rowError(row)}
                                     disabled={processing}
                                     onChange={(patch) => updateRow(row, patch)}
                                     onKeepEntry={() => keepEntry(row)}
@@ -285,6 +299,9 @@ export function ScoreSheet({ assessmentId, maxScore, roster, edits, onEditsChang
                         </TableBody>
                     </Table>
                 )}
+                <OtherPageErrors pagination={pagination} errorPages={errorPages} />
+                <OtherPageErrors pagination={pagination} errorPages={stalePages} label="Changed by another user on other pages" tone="warning" />
+                <ClientPagination pagination={pagination} noun={{ one: 'candidate', other: 'candidates' }} label="Score sheet pages" />
 
                 <div className="sticky bottom-0 z-10 flex flex-col gap-3 rounded-b-lg border-t border-line bg-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm text-ink-muted" role="status">

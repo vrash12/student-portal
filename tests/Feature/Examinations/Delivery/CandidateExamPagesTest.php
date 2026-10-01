@@ -60,9 +60,18 @@ class CandidateExamPagesTest extends TestCase
         $this->assertSame('automatic', $props['submissionKind']);
     }
 
-    public function test_the_sign_in_page_has_no_image_unless_one_is_configured(): void
+    public function test_the_sign_in_page_uses_the_configured_background_image(): void
     {
-        $this->get('/login')->assertOk()->assertInertia(fn ($page) => $page->where('app.loginImageUrl', null));
+        // Default: the local campus background (owner request, 2026-10-01).
+        $this->get('/login')->assertOk()->assertInertia(fn ($page) => $page->where('app.loginImageUrl', '/branding/login-campus.jpg'));
+        $this->assertFileExists(public_path('branding/login-campus.jpg'));
+        // Smaller screens use the background without the supplied design's card area.
+        $this->get('/login')->assertInertia(fn ($page) => $page->where('app.loginCompactImageUrl', '/branding/login-background.png'));
+        $this->assertFileExists(public_path('branding/login-background.png'));
+
+        // An explicitly empty value disables the photograph.
+        config(['institution.login_image_url' => null]);
+        $this->get('/login')->assertOk()->assertInertia(fn ($page) => $page->where('app.loginImageUrl', null)->where('app.loginCompactImageUrl', null));
 
         config(['institution.login_image_url' => '/branding/login.jpg']);
         $this->get('/login')->assertOk()->assertInertia(fn ($page) => $page->where('app.loginImageUrl', '/branding/login.jpg'));

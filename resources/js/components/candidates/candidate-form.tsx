@@ -1,5 +1,5 @@
 import type { InertiaForm } from '@inertiajs/react';
-import type { FormEvent } from 'react';
+import { useId, type FormEvent } from 'react';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { CheckboxField, FormField, PasswordInput, SelectInput, TextInput } from '@/components/ui/form-field';
 import { FormActions, FormSection } from '@/components/ui/form-section';
@@ -23,6 +23,8 @@ export interface CandidateFormData {
     middle_name: string;
     suffix: string;
     training_group: string;
+    company: string;
+    platoon: string;
     profile_photo: File | null;
     remove_photo: boolean;
     class_batch_id: string;
@@ -37,6 +39,9 @@ interface CandidateFormProps {
     mode: 'create' | 'edit';
     classOptions: ClassOptionGroup[];
     statusOptions?: StatusOption[];
+    /** Company and platoon names already in use, suggested while typing. */
+    companyOptions?: string[];
+    platoonOptions?: string[];
     /** Current sign-in username, when editing. */
     currentUsername?: string;
     currentPhotoUrl?: string | null;
@@ -50,6 +55,8 @@ export function CandidateForm({
     mode,
     classOptions,
     statusOptions = [],
+    companyOptions = [],
+    platoonOptions = [],
     currentUsername,
     currentPhotoUrl,
     submitLabel,
@@ -59,6 +66,8 @@ export function CandidateForm({
     const classTerm = terms.classBatch.singular;
     const username = form.data.candidate_number.trim().toLowerCase();
     const usernameChanges = mode === 'edit' && currentUsername !== undefined && username !== '' && username !== currentUsername;
+    const companyListId = useId();
+    const platoonListId = useId();
 
     return (
         <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
@@ -152,7 +161,31 @@ export function CandidateForm({
                         </FormField>
                     )}
                 </div>
-                <FormField label="Training Group / Section / Platoon" error={form.errors.training_group} hint="Optional. Leave blank if your training program does not use this grouping.">
+                <div className="grid gap-5 sm:grid-cols-2">
+                    <FormField label="Company" error={form.errors.company} hint={groupHint(companyOptions, 'Alpha Company')}>
+                        <TextInput
+                            name="company"
+                            value={form.data.company}
+                            onChange={(event) => form.setData('company', event.target.value)}
+                            maxLength={50}
+                            autoComplete="off"
+                            list={companyOptions.length > 0 ? companyListId : undefined}
+                        />
+                    </FormField>
+                    <FormField label="Platoon" error={form.errors.platoon} hint={groupHint(platoonOptions, '1st Platoon')}>
+                        <TextInput
+                            name="platoon"
+                            value={form.data.platoon}
+                            onChange={(event) => form.setData('platoon', event.target.value)}
+                            maxLength={50}
+                            autoComplete="off"
+                            list={platoonOptions.length > 0 ? platoonListId : undefined}
+                        />
+                    </FormField>
+                </div>
+                <Suggestions id={companyListId} values={companyOptions} />
+                <Suggestions id={platoonListId} values={platoonOptions} />
+                <FormField label="Training Group / Section" error={form.errors.training_group} hint="Optional. Leave blank if your training program does not use this grouping.">
                     <TextInput name="training_group" value={form.data.training_group} onChange={(event) => form.setData('training_group', event.target.value)} maxLength={100} />
                 </FormField>
             </FormSection>
@@ -218,5 +251,24 @@ export function CandidateForm({
                 </Button>
             </FormActions>
         </form>
+    );
+}
+
+function groupHint(options: string[], example: string): string {
+    return options.length > 0 ? 'Optional. Names already in use are suggested as you type.' : `Optional, e.g. ${example}.`;
+}
+
+/** Typing suggestions for a text field; the field still accepts any name. */
+function Suggestions({ id, values }: { id: string; values: string[] }) {
+    if (values.length === 0) {
+        return null;
+    }
+
+    return (
+        <datalist id={id}>
+            {values.map((value) => (
+                <option key={value} value={value} />
+            ))}
+        </datalist>
     );
 }

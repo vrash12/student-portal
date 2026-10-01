@@ -35,7 +35,7 @@ final class CandidateProfileRecord
     }
 
     /** Finalized current assessments and the candidate's recorded historical results. */
-    public function assessmentHistory(Candidate $candidate, int $perPage = 15, ?int $page = null): LengthAwarePaginator
+    public function assessmentHistory(Candidate $candidate, int $perPage = 10, ?int $page = null): LengthAwarePaginator
     {
         return Assessment::query()->finalized()
             ->where(function (Builder $query) use ($candidate): void {
@@ -72,7 +72,7 @@ final class CandidateProfileRecord
     }
 
     /** @param list<int>|null $offeringIds Null for the owner or an administrator; restricted IDs for instructors. */
-    public function examinationResults(Candidate $candidate, bool $portal, ?array $offeringIds = null, int $perPage = 15, ?int $page = null): LengthAwarePaginator
+    public function examinationResults(Candidate $candidate, bool $portal, ?array $offeringIds = null, int $perPage = 10, ?int $page = null): LengthAwarePaginator
     {
         return ExaminationAttempt::query()->where('candidate_id', $candidate->id)
             ->when($offeringIds !== null, fn (Builder $query) => $query->whereHas('examination', fn (Builder $exams) => $exams->whereIn('class_subject_id', $offeringIds)))

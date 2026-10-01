@@ -28,7 +28,7 @@ use Inertia\Response;
  */
 class FitnessTestController extends Controller
 {
-    private const PER_PAGE = 20;
+    private const PER_PAGE = 10;
 
     public function __construct(
         private readonly FitnessTestService $tests,

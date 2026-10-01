@@ -6,6 +6,7 @@ import { gradebookBreadcrumbs, OfferingDescription, WeightSummary } from '@/comp
 import { GradeStatusBadge, StandingCell, ThresholdSummary } from '@/components/grading/standing';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink } from '@/components/ui/button';
+import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FilterBar, SearchField } from '@/components/ui/filter-bar';
 import { PageHeader } from '@/components/ui/page-header';
@@ -52,6 +53,7 @@ export default function Gradebook({ offering, scheme, thresholds, assessments, g
     const isConfigured = scheme.length > 0;
     const canCreate = can.recordGrades && isConfigured;
     const createHref = routes.teaching.assessments.create(offering.classBatch.id, offering.id);
+    const assessmentPagination = useClientPagination(assessments);
 
     return (
         <>
@@ -119,7 +121,7 @@ export default function Gradebook({ offering, scheme, thresholds, assessments, g
                                 </Th>
                             </TableHead>
                             <TableBody>
-                                {assessments.map((assessment) => (
+                                {assessmentPagination.rows.map((assessment) => (
                                     <Tr key={assessment.id}>
                                         <Td className="font-medium text-ink">{assessment.title}</Td>
                                         <Td className="text-ink">{assessment.category.name}</Td>
@@ -149,6 +151,7 @@ export default function Gradebook({ offering, scheme, thresholds, assessments, g
                             </TableBody>
                         </Table>
                     )}
+                    <ClientPagination pagination={assessmentPagination} noun={{ one: 'assessment', other: 'assessments' }} label="Assessment pages" />
                 </Panel>
 
                 <Panel

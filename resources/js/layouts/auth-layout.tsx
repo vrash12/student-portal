@@ -1,65 +1,172 @@
 import { usePage } from '@inertiajs/react';
-import { useState, type ReactNode } from 'react';
+import { ShieldCheck } from 'lucide-react';
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
 import { Toaster } from '@/components/ui/toaster';
+import { cn } from '@/lib/cn';
+
+/** Same as the signin-wide CSS variant: the supplied picture is used, and the card lines up with it. */
+const WIDE_SCREEN = '(min-width: 80rem) and (min-height: 53.75rem)';
 
 /**
- * Sign-in shell. On wide screens a brand panel sits beside the form; it shows
- * the configured login image (LOGIN_IMAGE_URL) when one is set, and the
- * institution's mark and names otherwise. Narrow screens and tablets in
- * portrait show a compact brand header above the form.
+ * The supplied picture (login-campus.jpg) is 1672 x 805 px; its painted-over
+ * card area is x 834-1398, y 8-805 (the card covers x 846-1386, y 30-788). The picture is drawn with object-cover,
+ * anchored right, so the card can be placed over that area from the size of
+ * the image box.
+ */
+const PICTURE = { width: 1672, height: 805, left: 846, top: 30, areaWidth: 540, areaHeight: 758 };
+
+function cardOverPicture(box: { width: number; height: number }): CSSProperties {
+    const scale = Math.max(box.width / PICTURE.width, box.height / PICTURE.height);
+
+    return {
+        position: 'absolute',
+        left: box.width - PICTURE.width * scale + PICTURE.left * scale,
+        top: (box.height - PICTURE.height * scale) / 2 + PICTURE.top * scale,
+        width: PICTURE.areaWidth * scale,
+        height: PICTURE.areaHeight * scale,
+        maxWidth: 'none',
+        margin: 0,
+    };
+}
+
+/**
+ * Sign-in shell: navy header with the school's name and core values, the
+ * locally served photograph behind a glass sign-in card, the motto on wide
+ * screens, and a footer. On wide screens the card sits over the area of the
+ * supplied picture where the design had its own card; narrower screens use
+ * the compact background (loginCompactImageUrl) and a centered card. Texts
+ * come from configuration (institution.login); a missing or disabled image
+ * falls back to the institutional navy surface.
  */
 export default function AuthLayout({ children }: { children: ReactNode }) {
     const { app } = usePage().props;
+    const { login } = app;
     const [imageFailed, setImageFailed] = useState(false);
     const imageUrl = app.loginImageUrl && !imageFailed ? app.loginImageUrl : null;
+    const mainRef = useRef<HTMLElement>(null);
+    const [cardStyle, setCardStyle] = useState<CSSProperties | undefined>(undefined);
+
+    // On wide screens showing the supplied picture, keep the card over its painted area.
+    useEffect(() => {
+        const main = mainRef.current;
+        if (main === null || imageUrl === null || app.loginCompactImageUrl === null || typeof window.matchMedia !== 'function') {
+            setCardStyle(undefined);
+            return;
+        }
+        const wide = window.matchMedia(WIDE_SCREEN);
+        const update = () => setCardStyle(wide.matches ? cardOverPicture(main.getBoundingClientRect()) : undefined);
+        const observer = new ResizeObserver(update);
+        observer.observe(main);
+        wide.addEventListener('change', update);
+        update();
+
+        return () => {
+            observer.disconnect();
+            wide.removeEventListener('change', update);
+        };
+    }, [imageUrl, app.loginCompactImageUrl]);
+    const year = new Date().getFullYear();
 
     return (
-        <div className="flex min-h-dvh items-center justify-center bg-canvas px-4 py-8 sm:px-6 sm:py-12">
-            <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-line bg-surface shadow-xl lg:min-h-[36rem] lg:grid-cols-[1fr_1.05fr]">
-                <aside className="brand-dark relative hidden overflow-hidden bg-primary-900 text-white lg:flex lg:flex-col" aria-label={app.organizationName}>
-                    {imageUrl !== null ? (
-                        <>
-                            <img src={imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" onError={() => setImageFailed(true)} />
-                            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-primary-900/95 to-transparent" aria-hidden="true" />
-                        </>
-                    ) : (
-                        <div className="absolute inset-0 opacity-[0.07] [background-image:repeating-linear-gradient(135deg,#fff_0,#fff_1px,transparent_1px,transparent_18px)]" aria-hidden="true" />
+        <div className="flex min-h-dvh flex-col bg-auth-navy">
+            <header className="brand-dark relative z-10 overflow-hidden border-b border-accent-400/70 bg-auth-navy text-white">
+                {/* Gold diagonal accent behind the authorized-access notice (decorative). */}
+                <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 hidden w-[26rem] lg:block">
+                    <div className="absolute inset-y-0 left-10 w-3 -skew-x-[35deg] bg-gradient-to-b from-accent-300 to-accent-500" />
+                    <div className="absolute inset-y-0 left-16 right-0 -skew-x-[35deg] bg-gradient-to-r from-[#152f3f] to-[#0f2532]" />
+                </div>
+
+                <div className="relative mx-auto flex max-w-[110rem] items-center justify-between gap-6 px-4 py-3 sm:px-8 lg:px-10">
+                    <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                        <BrandMark round className="size-12 sm:size-16" />
+                        <div className="min-w-0">
+                            <p className="truncate font-serif text-base font-bold uppercase leading-tight tracking-[0.04em] sm:text-2xl">{login.headerTitle}</p>
+                            <p className="mt-1 truncate font-serif text-[10px] font-semibold uppercase tracking-[0.42em] text-accent-300 sm:text-sm">{login.headerSubtitle}</p>
+                        </div>
+                    </div>
+
+                    {login.coreValues.length > 0 && (
+                        <ul aria-label="Core values" className="hidden items-center gap-4 border-l border-white/25 pl-8 font-serif text-xs uppercase tracking-[0.28em] text-primary-100 min-[1560px]:flex">
+                            {login.coreValues.map((value, index) => (
+                                <Fragment key={value}>
+                                    {index > 0 && <li aria-hidden="true" className="size-1 rounded-full bg-accent-300" />}
+                                    <li>{value}</li>
+                                </Fragment>
+                            ))}
+                        </ul>
                     )}
 
-                    <div className="relative flex flex-1 flex-col justify-between p-10">
-                        {imageUrl === null && <div className="h-1.5 w-16 rounded-full bg-accent-300" aria-hidden="true" />}
-                        <div className={imageUrl === null ? 'my-auto' : 'mt-auto'}>
-                            {imageUrl === null && <BrandMark className="mb-8 size-28 drop-shadow-lg" />}
-                            <p className="text-sm font-medium uppercase tracking-[0.14em] text-accent-300">{app.organizationName}</p>
-                            <p className="mt-3 text-3xl font-bold leading-tight">{app.name}</p>
-                            <p className="mt-4 max-w-sm text-sm leading-relaxed text-primary-100">
-                                Examinations, grades and academic monitoring for the institution, on the internal network.
-                            </p>
-                        </div>
-                        <p className="relative mt-10 text-xs text-primary-200">For authorized users only. Sign-in activity is recorded.</p>
-                    </div>
-                </aside>
-
-                <main className="flex flex-col">
-                    {/* Compact brand header for tablets in portrait and phones. */}
-                    <div className="brand-dark flex items-center gap-4 border-b-4 border-accent-300 bg-primary-900 px-6 py-5 text-white lg:hidden">
-                        <BrandMark className="size-14 shrink-0" />
-                        <div className="min-w-0">
-                            <p className="text-xs font-medium text-primary-100">{app.organizationName}</p>
-                            <p className="mt-1 text-lg font-bold leading-snug">{app.name}</p>
+                    <div className="hidden shrink-0 items-center gap-3 sm:flex">
+                        <ShieldCheck className="size-9 text-accent-300" aria-hidden="true" />
+                        <div>
+                            <p className="text-sm font-medium uppercase tracking-wider">Authorized access</p>
+                            <p className="mt-0.5 text-[10px] uppercase tracking-wider text-primary-100">For official use only</p>
                         </div>
                     </div>
+                </div>
+            </header>
 
-                    <div className="flex flex-1 flex-col justify-center px-6 py-8 sm:px-12 sm:py-12">
-                        <div className="mx-auto w-full max-w-sm">{children}</div>
+            <main ref={mainRef} id="main-content" className="relative isolate flex flex-1 items-center">
+                {imageUrl !== null && (
+                    <picture>
+                        {app.loginCompactImageUrl !== null && <source media={WIDE_SCREEN} srcSet={imageUrl} />}
+                        <img
+                            src={app.loginCompactImageUrl ?? imageUrl}
+                            alt=""
+                            fetchPriority="high"
+                            className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover object-[38%_center] signin-wide:object-right"
+                            onError={() => setImageFailed(true)}
+                        />
+                    </picture>
+                )}
+                <div className="mx-auto grid w-full max-w-[110rem] grid-cols-1 items-center gap-8 px-4 py-6 sm:px-8 sm:py-7 lg:px-10">
+                    <div className="mx-auto w-full max-w-[31rem] rounded-2xl border border-white/70 bg-white/85 p-6 shadow-2xl backdrop-blur-md sm:px-10 sm:py-7 signin-wide:flex signin-wide:flex-col signin-wide:justify-center signin-wide:overflow-y-auto" style={cardStyle}>
+                        {children}
                     </div>
 
-                    <p className="border-t border-line px-6 py-4 text-center text-xs text-ink-subtle lg:hidden">For authorized users only. Sign-in activity is recorded.</p>
-                </main>
-            </div>
+                    {login.motto !== null && (
+                        <p className="hidden self-end pb-6 text-center font-serif uppercase text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.6)] xl:block">
+                            {mottoLines(login.motto).map((line) => (
+                                <span key={line} className={cn('block tracking-[0.34em]', line.length <= 5 ? 'my-1 text-base' : 'text-2xl leading-[1.5]')}>
+                                    {line}
+                                </span>
+                            ))}
+                            <span aria-hidden="true" className="mx-auto mt-4 block h-0.5 w-14 bg-accent-400" />
+                        </p>
+                    )}
+                </div>
+            </main>
+
+            <footer className="relative border-t border-white/15 bg-auth-navy px-4 py-3 text-xs text-primary-100 sm:px-8 lg:px-10">
+                <div className="mx-auto flex max-w-[110rem] flex-col items-center justify-between gap-2 sm:flex-row">
+                    <p>
+                        © {year} {app.organizationName}. All rights reserved. Sign-in activity is recorded.
+                    </p>
+                    {login.coreValues.length > 0 && (
+                        <p aria-hidden="true" className="hidden font-serif uppercase tracking-[0.24em] md:block">
+                            {login.coreValues.join('  •  ')}
+                        </p>
+                    )}
+                </div>
+            </footer>
 
             <Toaster position="top" />
         </div>
     );
+}
+
+/** One line per word, with short words ("for a") kept together on their own line, as on the approved design. */
+function mottoLines(motto: string): string[] {
+    const lines: string[] = [];
+    for (const word of motto.split(/\s+/).filter(Boolean)) {
+        const last = lines.at(-1);
+        if (last !== undefined && word.length <= 3 && last.split(' ').every((part) => part.length <= 3)) {
+            lines[lines.length - 1] = `${last} ${word}`;
+        } else {
+            lines.push(word);
+        }
+    }
+
+    return lines;
 }

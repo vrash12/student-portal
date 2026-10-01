@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import { ListCharts, type ListChart } from '@/components/charts/list-charts';
 import { BookOpenCheck, ClipboardList, FileUp, Plus, SearchX } from 'lucide-react';
 import { pointsLabel } from '@/components/question-bank/question-form-data';
 import { LockedIndicator, QuestionStatusBadge } from '@/components/question-bank/question-status';
@@ -23,6 +24,8 @@ interface QuestionBankFilters {
 }
 
 interface QuestionBankIndexProps {
+    /** Charts computed by the server from the filtered list. */
+    charts: ListChart[];
     questions: Paginated<QuestionSummary>;
     filters: QuestionBankFilters;
     /** The subjects the user teaches; the list never includes other subjects. */
@@ -32,7 +35,7 @@ interface QuestionBankIndexProps {
     types: QuestionTypeOption[];
 }
 
-export default function QuestionBankIndex({ questions, filters, subjects, topics, types }: QuestionBankIndexProps) {
+export default function QuestionBankIndex({ questions, filters, subjects, topics, types, charts }: QuestionBankIndexProps) {
     const { values, update, updateMany, reset, isFiltered } = useQueryFilters(routes.questionBank.index(), filters);
     const selectedSubject = subjects.find((subject) => String(subject.id) === filters.subject) ?? null;
     const onlySubjectFiltered = selectedSubject !== null && ['search', 'topic', 'type', 'status'].every((key) => values[key] === '');
@@ -68,6 +71,8 @@ export default function QuestionBankIndex({ questions, filters, subjects, topics
                     ) : undefined
                 }
             />
+
+            <ListCharts charts={charts} />
 
             {subjects.length === 0 ? (
                 <div className="rounded-lg border border-line bg-surface">

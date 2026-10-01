@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { Dumbbell, Plus } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
+import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -21,6 +22,7 @@ interface FitnessEventRow {
 }
 
 export default function FitnessStandards({ events }: { events: FitnessEventRow[] }) {
+    const pagination = useClientPagination(events);
     const addAction = (
         <ButtonLink href={routes.fitness.standards.create()} variant="primary" icon={<Plus className="size-4" aria-hidden="true" />}>
             Add Event
@@ -61,7 +63,7 @@ export default function FitnessStandards({ events }: { events: FitnessEventRow[]
                             </Th>
                         </TableHead>
                         <TableBody>
-                            {events.map((event) => (
+                            {pagination.rows.map((event) => (
                                 <Tr key={event.id}>
                                     <Td align="right" numeric>
                                         {event.sortOrder}
@@ -95,6 +97,7 @@ export default function FitnessStandards({ events }: { events: FitnessEventRow[]
                         </TableBody>
                     </Table>
                 )}
+                <ClientPagination pagination={pagination} noun={{ one: 'event', other: 'events' }} label="Fitness event pages" />
             </div>
         </>
     );

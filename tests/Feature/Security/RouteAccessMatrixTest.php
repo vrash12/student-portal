@@ -6,6 +6,7 @@ use App\Enums\Permission;
 use App\Enums\SystemRole;
 use App\Models\AccountCategory;
 use App\Models\Assessment;
+use App\Models\ConductType;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
 use App\Models\ExaminationQuestion;
@@ -14,9 +15,12 @@ use App\Models\Question;
 use App\Models\QuestionMedia;
 use App\Models\Subject;
 use App\Services\Accounts\AccountService;
+use App\Services\Attendance\AttendanceService;
+use App\Services\Conduct\ConductService;
 use App\Services\Examinations\CandidateAttemptService;
 use App\Services\Fitness\FitnessStandardService;
 use App\Services\Fitness\FitnessTestService;
+use App\Services\Performance\PerformanceAreaService;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as Router;
 use Illuminate\Support\Str;
@@ -102,22 +106,45 @@ class RouteAccessMatrixTest extends TestCase
             'account_category_id' => (int) AccountCategory::query()->orderBy('id')->value('id'), 'entry_type' => 'charge',
             'amount' => '100.00', 'posted_on' => '2026-09-01', 'description' => 'Uniform set', 'reference' => null,
         ], $this->userWithRole(SystemRole::SuperAdministrator));
+        $accountExpense = app(AccountService::class)->createExpense([
+            'name' => 'Uniform set', 'account_category_id' => (int) $accountEntry->account_category_id,
+            'amount' => '100.00', 'due_on' => null, 'description' => null,
+        ], $this->userWithRole(SystemRole::SuperAdministrator));
+
+        // A merit of candidate B1 and an attendance session of Batch B (in scope for
+        // Bravo and administrators only), a merit/demerit type and a performance
+        // area (administrators only).
+        $administrator = $this->userWithRole(SystemRole::SuperAdministrator);
+        $conductType = ConductType::query()->where('kind', 'merit')->orderBy('id')->firstOrFail();
+        $conductEntry = app(ConductService::class)->record($this->candidateInB, [
+            'conduct_type_id' => $conductType->id, 'points' => 2, 'occurred_on' => '2026-09-01', 'reason' => 'Assisted a classmate.',
+        ], $administrator);
+        $attendanceSession = app(AttendanceService::class)->create($this->batchB, ['held_on' => '2026-09-01', 'title' => 'Session B', 'hours' => '1', 'notes' => null], $administrator);
+        $performanceArea = app(PerformanceAreaService::class)->create([
+            'name' => 'Attendance', 'description' => null, 'source' => 'attendance', 'weight' => '10', 'passing_grade' => '90', 'must_pass' => true,
+            'base_rating' => null, 'merit_value' => null, 'demerit_value' => null, 'sort_order' => 1, 'is_active' => true,
+        ]);
 
         $this->parameters = [
             'academicPeriod' => (string) $this->activePeriod->id,
             'accountCategory' => (string) $accountEntry->account_category_id,
             'accountEntry' => (string) $accountEntry->id,
+            'accountExpense' => (string) $accountExpense->id,
             'assessment' => (string) $assessment->id,
             'attempt' => (string) $this->attemptOfB1->id,
+            'attendanceSession' => (string) $attendanceSession->id,
             'candidate' => (string) $this->candidateInB->id,
             'classBatch' => (string) $this->batchB->id,
             'classSubject' => (string) $this->offeringB1->id,
+            'conductEntry' => (string) $conductEntry->id,
+            'conductType' => (string) $conductType->id,
             'examination' => (string) $exam->id,
             'fitnessEvent' => (string) $fitnessEvent->id,
             'fitnessTest' => (string) $fitnessTest->id,
             'instructor' => (string) $this->bravo->id,
             'instructorAssignment' => (string) InstructorAssignment::query()->where('instructor_id', $this->bravo->id)->value('id'),
             'medium' => (string) $media->id,
+            'performanceArea' => (string) $performanceArea->id,
             'question' => (string) $question->id,
             'subject' => (string) $subject2->id,
             'type' => 'registration',
@@ -249,6 +276,8 @@ class RouteAccessMatrixTest extends TestCase
             '/my-classes/'.$this->parameters['classBatch'],
             '/my-classes/'.$this->parameters['classBatch'].'/subjects/'.$this->parameters['classSubject'],
             '/question-bank/'.$this->parameters['question'],
+            '/conduct/candidates/'.$this->parameters['candidate'],
+            '/attendance/sessions/'.$this->parameters['attendanceSession'],
         ] as $url) {
             $this->get($url)->assertOk();
         }

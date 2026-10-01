@@ -76,12 +76,17 @@ export const routes = {
         },
     },
     accounts: {
-        index: (query?: Record<string, string>) => withQuery('/accounts', query),
-        show: (candidateId: number, query?: Record<string, string>) => withQuery(`/accounts/${candidateId}`, query),
-        statement: (candidateId: number, query?: Record<string, string>) => withQuery(`/accounts/${candidateId}/statement`, query),
         entries: {
-            store: (candidateId: number) => `/accounts/${candidateId}/entries`,
             void: (entryId: number) => `/account-entries/${entryId}/void`,
+        },
+        expenses: {
+            index: () => '/account-expenses',
+            create: () => '/account-expenses/create',
+            store: () => '/account-expenses',
+            show: (expenseId: number, query?: Record<string, string>) => withQuery(`/account-expenses/${expenseId}`, query),
+            edit: (expenseId: number) => `/account-expenses/${expenseId}/edit`,
+            update: (expenseId: number) => `/account-expenses/${expenseId}`,
+            assign: (expenseId: number) => `/account-expenses/${expenseId}/assignments`,
         },
         categories: {
             index: () => '/account-categories',
@@ -91,6 +96,44 @@ export const routes = {
             update: (categoryId: number) => `/account-categories/${categoryId}`,
         },
     },
+    conduct: {
+        index: (query?: Record<string, string>) => withQuery('/conduct', query),
+        show: (candidateId: number) => `/conduct/candidates/${candidateId}`,
+        entries: {
+            store: (candidateId: number) => `/conduct/candidates/${candidateId}/entries`,
+            void: (entryId: number) => `/conduct-entries/${entryId}/void`,
+        },
+        types: {
+            index: () => '/conduct/types',
+            create: () => '/conduct/types/create',
+            store: () => '/conduct/types',
+            edit: (typeId: number) => `/conduct/types/${typeId}/edit`,
+            update: (typeId: number) => `/conduct/types/${typeId}`,
+        },
+    },
+    attendance: {
+        index: (query?: Record<string, string>) => withQuery('/attendance', query),
+        sessions: {
+            create: () => '/attendance/sessions/create',
+            store: () => '/attendance/sessions',
+            show: (sessionId: number) => `/attendance/sessions/${sessionId}`,
+            edit: (sessionId: number) => `/attendance/sessions/${sessionId}/edit`,
+            update: (sessionId: number) => `/attendance/sessions/${sessionId}`,
+            destroy: (sessionId: number) => `/attendance/sessions/${sessionId}`,
+            records: (sessionId: number) => `/attendance/sessions/${sessionId}/records`,
+        },
+    },
+    qualification: {
+        index: (query?: Record<string, string>) => withQuery('/qualification', query),
+    },
+    performanceAreas: {
+        index: () => '/performance-areas',
+        create: () => '/performance-areas/create',
+        store: () => '/performance-areas',
+        edit: (areaId: number) => `/performance-areas/${areaId}/edit`,
+        update: (areaId: number) => `/performance-areas/${areaId}`,
+    },
+    portalPerformance: () => '/portal/performance',
     instructors: {
         index: () => '/instructors',
         show: (instructorId: number) => `/instructors/${instructorId}`,
@@ -129,6 +172,11 @@ export const routes = {
     },
     portal: {
         home: () => '/portal',
+        examinations: () => '/portal/examinations',
+        grades: () => '/portal/grades',
+        fitness: () => '/portal/fitness',
+        performance: () => '/portal/performance',
+        profile: () => '/portal/profile',
         examination: (id: number) => `/portal/examinations/${id}`,
         start: (id: number) => `/portal/examinations/${id}/start`,
         attempt: (id: number) => `/portal/attempts/${id}`,

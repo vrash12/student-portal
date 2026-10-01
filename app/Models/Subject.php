@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -35,6 +36,17 @@ class Subject extends Model
         return [
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * The performance area the subject's grades count toward, if any. Not
+     * mass assignable: mapped from the area's page (PerformanceAreaService).
+     *
+     * @return BelongsTo<PerformanceArea, $this>
+     */
+    public function performanceArea(): BelongsTo
+    {
+        return $this->belongsTo(PerformanceArea::class);
     }
 
     /**

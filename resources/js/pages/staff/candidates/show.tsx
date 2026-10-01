@@ -1,9 +1,12 @@
 import { Head } from '@inertiajs/react';
-import { ChartColumn, Pencil, ReceiptText } from 'lucide-react';
+import { ChartColumn, Pencil } from 'lucide-react';
 import { CandidateInformationPanels } from '@/components/candidates/candidate-information';
 import { RecordDownloads } from '@/components/candidates/record-downloads';
 import { CandidateExaminationResults } from '@/components/candidates/examination-results';
+import { CandidateAttendance } from '@/components/attendance/candidate-attendance';
+import { CandidateConductPanel, CandidateQualificationPanel } from '@/components/candidate-performance/profile-panels';
 import { CandidateFitness } from '@/components/fitness/candidate-fitness';
+import type { ProfileAttendance, ProfileConduct, ProfileQualification } from '@/types/candidate-performance';
 import type { CandidateFitnessTest } from '@/types/fitness';
 import type { CandidateInformation, CandidateExaminationResult } from '@/types/candidates';
 import type { Paginated } from '@/types';
@@ -16,13 +19,13 @@ import {
     type SubjectResults,
 } from '@/components/monitoring/candidate-academic-record';
 import { ButtonLink } from '@/components/ui/button';
+import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader, type BreadcrumbItem } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
 import { formatGrade } from '@/lib/format';
-import { Permission, usePermissions } from '@/lib/permissions';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import type { GradingThresholds, OverallStanding, SubjectGrade } from '@/types/grading';
@@ -62,6 +65,12 @@ interface CandidateShowProps {
     recentActivity: ActivityEntry[];
     /** Military fitness history, newest first; null when the viewer may not see fitness records. */
     fitness: CandidateFitnessTest[] | null;
+    /** Areas and qualification; null for viewers who only see the subjects they teach. Rank only with performance.view. */
+    qualification: ProfileQualification | null;
+    /** Merits and demerits; null when the candidate is outside the viewer's conduct scope. */
+    conduct: ProfileConduct | null;
+    /** Attendance of the current class; null when the class is outside the viewer's attendance scope. */
+    attendance: ProfileAttendance | null;
     canEdit: boolean;
     /** Administrators browse all candidates; instructors arrive from a class they teach. */
     canBrowseCandidates: boolean;
@@ -77,13 +86,14 @@ export default function CandidateShow({
     examinationResults,
     recentActivity,
     fitness,
+    qualification,
+    conduct,
+    attendance,
     canEdit,
     canBrowseCandidates,
 }: CandidateShowProps) {
 
     const classTerm = terms.classBatch.singular;
-    // Visibility only; the statement page is authorized by the server (accounts.view).
-    const { can } = usePermissions();
     const overallLabel = standing.scope === 'all' ? 'Overall Standing' : 'Standing in Your Subjects';
     const showsStanding = standing.monitored && standing.thresholds !== null;
     // Why no standing is shown, when it is not.
@@ -100,6 +110,7 @@ export default function CandidateShow({
             ? routes.academicPeriods.thresholds(candidate.classBatch.periodId)
             : null;
     const instructorsBySubject = new Map(subjects.map((subject) => [subject.code, subject.instructors]));
+    const subjectPagination = useClientPagination(performance);
 
     const breadcrumbs: BreadcrumbItem[] = canBrowseCandidates
         ? [{ label: 'Candidates', href: routes.candidates.index() }, { label: candidate.name }]
@@ -124,11 +135,7 @@ export default function CandidateShow({
                 }
                 breadcrumbs={breadcrumbs}
                 actions={
-                    <>{canBrowseCandidates && <RecordDownloads baseUrl={`/candidates/${candidate.id}/documents`} />}{can(Permission.ViewAccounts) && (
-                        <ButtonLink href={routes.accounts.show(candidate.id)} icon={<ReceiptText className="size-4" aria-hidden="true" />}>
-                            Statement of Account
-                        </ButtonLink>
-                    )}{canEdit && (
+                    <>{canBrowseCandidates && <RecordDownloads baseUrl={`/candidates/${candidate.id}/documents`} />}{canEdit && (
                         <ButtonLink href={routes.candidates.edit(candidate.id)} icon={<Pencil className="size-4" aria-hidden="true" />}>
                             Edit Candidate
                         </ButtonLink>
@@ -187,7 +194,7 @@ export default function CandidateShow({
                                 </Th>
                             </TableHead>
                             <TableBody>
-                                {performance.map((subject) => {
+                                {subjectPagination.rows.map((subject) => {
                                     const instructors = instructorsBySubject.get(subject.code) ?? [];
 
                                     return (
@@ -220,12 +227,29 @@ export default function CandidateShow({
                             </TableBody>
                         </Table>
                     )}
+                    <ClientPagination pagination={subjectPagination} noun={{ one: 'subject', other: 'subjects' }} label="Subject grade pages" />
                 </Panel>
+
+                {qualification !== null && (
+                    <CandidateQualificationPanel
+                        qualification={qualification}
+                        classBatch={candidate.classBatch === null ? null : { id: candidate.classBatch.id, name: candidate.classBatch.name }}
+                    />
+                )}
 
                 {assessmentResults.length > 0 && <AssessmentResults subjects={assessmentResults} />}
 
                 <CandidateExaminationResults results={examinationResults} />
                 {fitness !== null && <CandidateFitness tests={fitness} />}
+                {conduct !== null && <CandidateConductPanel conduct={conduct} candidateId={candidate.id} />}
+                {attendance !== null && (
+                    <CandidateAttendance
+                        summary={attendance.summary}
+                        sessions={attendance.sessions}
+                        linkSessions={attendance.canManage}
+                        description="Training sessions of the current class, latest first. Excused and unrecorded sessions are left out of the rate."
+                    />
+                )}
                 {candidate.classBatch !== null && <RecentActivity entries={recentActivity} />}
             </div>
         </>

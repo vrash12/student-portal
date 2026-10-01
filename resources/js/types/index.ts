@@ -24,6 +24,18 @@ export interface AppBranding {
     organizationName: string;
     logoUrl: string | null;
     loginImageUrl: string | null;
+    /** Background for smaller screens; null uses loginImageUrl everywhere. */
+    loginCompactImageUrl: string | null;
+    /** Sign-in page texts from configuration. */
+    login: {
+        headerTitle: string;
+        headerSubtitle: string;
+        coreValues: string[];
+        motto: string | null;
+        tagline: string | null;
+        /** Help desk contact shown by "Need assistance?"; null: contact the system administrator. */
+        helpDesk: string | null;
+    };
     /** Small "Powered by" credit on the sign-in page; null hides it. */
     poweredBy: { name: string; logoUrl: string | null } | null;
     timezone: string;

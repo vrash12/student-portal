@@ -14,6 +14,7 @@ use App\Models\Subject;
 use App\Services\ClassBatchService;
 use App\Support\AcademicOptions;
 use App\Support\DecimalValue;
+use App\Support\ListCharts;
 use App\Support\QueryFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -23,9 +24,9 @@ use Inertia\Response;
 
 class ClassBatchController extends Controller
 {
-    private const PER_PAGE = 20;
+    private const PER_PAGE = 10;
 
-    private const CANDIDATES_PER_PAGE = 25;
+    private const CANDIDATES_PER_PAGE = 10;
 
     public function __construct(private readonly ClassBatchService $classes) {}
 
@@ -50,8 +51,24 @@ class ClassBatchController extends Controller
                 'subjectCount' => (int) $classBatch->class_subjects_count,
             ]);
 
+        $largest = ClassBatch::query()
+            ->withCount('candidates')
+            ->when($periodId !== null, fn (Builder $query) => $query->where('academic_period_id', $periodId))
+            ->orderByDesc('candidates_count')
+            ->orderBy('name')
+            ->limit(10)
+            ->get();
+        $charts = [
+            ListCharts::bars('Candidates per Class', 'The ten largest classes of the selected academic period.',
+                $largest->map(fn (ClassBatch $classBatch): array => ['label' => $classBatch->name, 'value' => (int) $classBatch->candidates_count])->all(), 'candidate', 'candidates'),
+            ListCharts::bars('Subjects per Class', 'Subjects offered in the same classes.',
+                ClassBatch::query()->withCount('classSubjects')->whereKey($largest->modelKeys())->orderByDesc('class_subjects_count')->get()
+                    ->map(fn (ClassBatch $classBatch): array => ['label' => $classBatch->name, 'value' => (int) $classBatch->class_subjects_count])->all(), 'subject', 'subjects'),
+        ];
+
         return Inertia::render('staff/classes/index', [
             'classes' => $classBatches,
+            'charts' => $charts,
             'filters' => ['period' => $periodId === null ? '' : (string) $periodId],
             'periods' => AcademicOptions::academicPeriods(),
         ]);

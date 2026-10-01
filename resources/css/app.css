@@ -7,6 +7,10 @@
  * Tailwind's default palette is cleared so every color in the interface
  * comes from this list. Contrast notes are against white (#ffffff).
  */
+/* Large desktop screens (wide and tall): the sign-in card lines up with the supplied background. */
+@custom-variant signin-wide (@media (min-width: 80rem) and (min-height: 53.75rem));
+
+
 @theme {
     --color-*: initial;
 
@@ -36,6 +40,10 @@
     --color-primary-700: #185a3d;
     --color-primary-800: #134a32;
     --color-primary-900: #0f3a28;
+
+    /* Owner-approved photographic sign-in page; other screens keep the green palette. */
+    --color-auth-navy: #092a3d;
+    --color-auth-navy-hover: #123e54;
 
     /* Logo-inspired yellow: dark green text on yellow, never white. */
     --color-accent-50: #fffbea;

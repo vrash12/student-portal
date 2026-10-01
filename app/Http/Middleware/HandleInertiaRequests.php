@@ -47,6 +47,15 @@ class HandleInertiaRequests extends Middleware
                 'organizationName' => config('institution.organization_name'),
                 'logoUrl' => config('institution.logo_url'),
                 'loginImageUrl' => config('institution.login_image_url'),
+                'loginCompactImageUrl' => config('institution.login_image_url') === null ? null : config('institution.login_compact_image_url'),
+                'login' => [
+                    'headerTitle' => config('institution.login.header_title') ?? config('institution.organization_name'),
+                    'headerSubtitle' => config('institution.login.header_subtitle') ?? config('institution.short_name'),
+                    'coreValues' => config('institution.login.core_values'),
+                    'motto' => config('institution.login.motto'),
+                    'tagline' => config('institution.login.tagline'),
+                    'helpDesk' => config('institution.login.help_desk'),
+                ],
                 'poweredBy' => filled(config('institution.powered_by_name'))
                     ? ['name' => config('institution.powered_by_name'), 'logoUrl' => config('institution.powered_by_logo_url') ?: null]
                     : null,

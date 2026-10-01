@@ -38,6 +38,10 @@ enum Permission: string
     case ManageFitness = 'fitness.manage';
     case ViewAccounts = 'accounts.view';
     case ManageAccounts = 'accounts.manage';
+    case ManageConduct = 'conduct.manage';
+    case ManageAttendance = 'attendance.manage';
+    case ConfigurePerformance = 'performance.configure';
+    case ViewPerformance = 'performance.view';
 
     public function label(): string
     {
@@ -65,6 +69,10 @@ enum Permission: string
             self::ManageFitness => 'Manage military fitness tests',
             self::ViewAccounts => 'View statements of account',
             self::ManageAccounts => 'Record statement of account entries',
+            self::ManageConduct => 'Record merits and demerits',
+            self::ManageAttendance => 'Record attendance',
+            self::ConfigurePerformance => 'Configure performance areas and qualification',
+            self::ViewPerformance => 'View qualification and class ranking',
         };
     }
 
@@ -94,6 +102,10 @@ enum Permission: string
             self::ManageFitness => 'Set the fitness events and their standards, create fitness tests for classes, and record candidates\' results.',
             self::ViewAccounts => 'View candidates\' statements of account (charges, credits, and balances) and download them as PDF.',
             self::ManageAccounts => 'Record charges and credits on candidates\' statements of account, void mistaken entries with a reason, and manage the account categories. Records amounts only; no payments are processed.',
+            self::ManageConduct => 'Record merits and demerits and void mistaken entries with a reason: for every candidate when the user can view all candidates, otherwise for the classes the user teaches.',
+            self::ManageAttendance => 'Create training sessions and record attendance: for every class when the user can view all candidates, otherwise for the classes the user teaches.',
+            self::ConfigurePerformance => 'Set the performance areas, their weights, passing grades and must-pass rules, which subjects belong to each area, the conduct rating rule, and the merit and demerit types.',
+            self::ViewPerformance => 'See every candidate\'s area results, qualification status, and class rank.',
         };
     }
 
@@ -113,6 +125,8 @@ enum Permission: string
             self::ManageQuestionBank, self::ManageExaminations => 'Assessments',
             self::ViewFitness, self::ManageFitness => 'Military Fitness',
             self::ViewAccounts, self::ManageAccounts => 'Accounts',
+            self::ManageConduct, self::ManageAttendance => 'Conduct & Attendance',
+            self::ConfigurePerformance, self::ViewPerformance => 'Performance',
         };
     }
 }

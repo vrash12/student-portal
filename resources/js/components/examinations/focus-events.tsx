@@ -1,4 +1,5 @@
 import { EyeOff } from 'lucide-react';
+import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { useDateFormatter } from '@/lib/format';
 
 export interface FocusSummary {
@@ -52,6 +53,7 @@ export function FocusSummaryCell({ summary }: { summary: FocusSummary | null }) 
 export function FocusEventList({ events }: { events: FocusEvent[] }) {
     const format = useDateFormatter();
     const total = events.reduce((sum, event) => sum + event.seconds, 0);
+    const pagination = useClientPagination(events);
 
     return (
         <section className="mt-8" aria-labelledby="focus-events-heading">
@@ -61,42 +63,45 @@ export function FocusEventList({ events }: { events: FocusEvent[] }) {
             <p className="mt-1 text-sm text-ink-muted">
                 Recorded when the candidate switched tabs or apps, minimized the browser, or focused another window. Browsers cannot tell why, so treat this as something to follow up on, not as proof. It does not affect the score.
             </p>
-            <div className="mt-3 overflow-x-auto rounded-xl border border-line bg-surface">
+            <div className="mt-3 rounded-xl border border-line bg-surface">
                 {events.length === 0 ? (
                     <p className="p-5 text-ink-muted">The candidate stayed on the examination screen.</p>
                 ) : (
-                    <table className="w-full min-w-[36rem] text-left text-sm">
-                        <caption className="sr-only">Times the candidate left the examination screen</caption>
-                        <thead className="border-b border-line bg-surface-muted">
-                            <tr>
-                                <th className="p-3">Left</th>
-                                <th className="p-3">Returned</th>
-                                <th className="p-3">Away for</th>
-                                <th className="p-3">Detected as</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {events.map((event) => (
-                                <tr key={event.leftAt} className="border-b border-line last:border-0">
-                                    <td className="p-3">{format.dateTime(event.leftAt)}</td>
-                                    <td className="p-3">{event.returnedAt === null ? 'Did not return before the attempt ended' : format.dateTime(event.returnedAt)}</td>
-                                    <td className="p-3 tabular-nums">{formatDuration(event.seconds)}</td>
-                                    <td className="p-3">{event.reason === 'hidden' ? 'Screen hidden (tab or app switch)' : 'Another window focused'}</td>
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-[36rem] text-left text-sm">
+                            <caption className="sr-only">Times the candidate left the examination screen</caption>
+                            <thead className="border-b border-line bg-surface-muted">
+                                <tr>
+                                    <th className="p-3">Left</th>
+                                    <th className="p-3">Returned</th>
+                                    <th className="p-3">Away for</th>
+                                    <th className="p-3">Detected as</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td className="p-3 font-medium" colSpan={2}>
-                                    {events.length} {events.length === 1 ? 'time' : 'times'} in total
-                                </td>
-                                <td className="p-3 font-medium tabular-nums" colSpan={2}>
-                                    {formatDuration(total)}
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {pagination.rows.map((event) => (
+                                    <tr key={event.leftAt} className="border-b border-line last:border-0">
+                                        <td className="p-3">{format.dateTime(event.leftAt)}</td>
+                                        <td className="p-3">{event.returnedAt === null ? 'Did not return before the attempt ended' : format.dateTime(event.returnedAt)}</td>
+                                        <td className="p-3 tabular-nums">{formatDuration(event.seconds)}</td>
+                                        <td className="p-3">{event.reason === 'hidden' ? 'Screen hidden (tab or app switch)' : 'Another window focused'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td className="p-3 font-medium" colSpan={2}>
+                                        {events.length} {events.length === 1 ? 'time' : 'times'} in total
+                                    </td>
+                                    <td className="p-3 font-medium tabular-nums" colSpan={2}>
+                                        {formatDuration(total)}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 )}
+                <ClientPagination pagination={pagination} noun={{ one: 'departure', other: 'departures' }} label="Departure pages" />
             </div>
         </section>
     );

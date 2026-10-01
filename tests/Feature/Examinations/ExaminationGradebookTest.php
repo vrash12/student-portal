@@ -139,13 +139,15 @@ class ExaminationGradebookTest extends TestCase
         $this->exam->opens_at = now()->addDay();
         $this->exam->save();
         $this->actingAs($this->candidateInA->user)->get('/portal')->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->component('portal/home')->has('upcoming.data', 1)->has('available.data', 0)->has('recentResults', 2)
-            ->missing('recentResults.0.answers')->missing('upcoming.data.0.access_code'));
+            ->component('portal/home')->has('upcoming.data', 1)->has('available.data', 0)->where('sections.examinations.releasedCount', 2)
+            ->missing('upcoming.data.0.access_code'));
+        $this->get('/portal/examinations')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->component('portal/examinations/index')->has('scoreTrend', 2)->missing('scoreTrend.0.answers'));
         $this->exam->release_results = false;
         $this->exam->save();
-        $home = app(CandidateHomeService::class)->overview($this->candidateInA);
-        $this->assertCount(0, $home['recentResults']);
+        $exams = app(CandidateHomeService::class)->examinations($this->candidateInA);
+        $this->assertCount(0, $exams['scoreTrend']);
         $this->actingAs($this->candidateInB->user)->get('/portal')->assertInertia(fn (Assert $page) => $page
-            ->has('upcoming.data', 0)->has('available.data', 0)->has('recentResults', 0)->has('outstanding.data', 0));
+            ->has('upcoming.data', 0)->has('available.data', 0)->where('sections.examinations.releasedCount', 0)->where('sections.grades.outstandingCount', 0));
     }
 }

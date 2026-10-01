@@ -28,7 +28,7 @@ use Inertia\Response;
  */
 class AcademicMonitoringController extends Controller
 {
-    private const PER_PAGE = 25;
+    private const PER_PAGE = 10;
 
     public function __construct(
         private readonly AcademicMonitoring $monitoring,

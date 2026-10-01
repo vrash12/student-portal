@@ -147,8 +147,12 @@ class QuestionConfidentialityTest extends TestCase
         // The home page lists examinations and results, never question content.
         $this->assertSame([], array_diff(
             array_keys($this->propsOf($response)),
-            ['app', 'auth', 'errors', 'flash', 'summary', 'available', 'upcoming', 'outstanding', 'recentResults'],
+            ['app', 'auth', 'errors', 'flash', 'summary', 'available', 'upcoming', 'performance', 'sections'],
         ));
+        // Nor do the other portal pages.
+        foreach (['/portal/examinations', '/portal/grades', '/portal/performance', '/portal/fitness', '/portal/profile'] as $url) {
+            $this->assertDoesNotReveal($this->get($url)->assertOk()->getContent(), [self::PROMPT, self::RIGHT_CHOICE, self::WRONG_CHOICE, self::EXPLANATION, 'isCorrect', 'is_correct']);
+        }
     }
 
     public function test_audit_entries_never_contain_question_text_answers_or_explanations(): void

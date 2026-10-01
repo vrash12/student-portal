@@ -27,7 +27,7 @@ final class ExaminationGradingController extends Controller
         $attempts = $examination->attempts()->with('candidate')->where('status', 'submitted')
             ->when($status === 'pending', fn ($query) => $query->where(fn ($query) => $query->where('result_status', 'pending_review')->orWhereNull('result_status')))
             ->when($status === 'graded', fn ($query) => $query->where('result_status', 'graded'))
-            ->orderBy('submitted_at')->orderBy('id')->paginate(20)->withQueryString();
+            ->orderBy('submitted_at')->orderBy('id')->paginate(10)->withQueryString();
         $attempts->through(fn (ExaminationAttempt $attempt) => [
             'id' => $attempt->id, 'number' => $attempt->attempt_number,
             'candidate' => $attempt->candidate->full_name, 'candidateNumber' => $attempt->candidate->candidate_number,

@@ -9,8 +9,9 @@ import {
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { PageHeader } from '@/components/ui/page-header';
 import { routes } from '@/lib/routes';
+import type { CandidateGroupOptions } from '@/types/candidates';
 
-interface EditCandidateProps {
+interface EditCandidateProps extends CandidateGroupOptions {
     candidate: {
         id: number;
         candidateNumber: string;
@@ -19,6 +20,8 @@ interface EditCandidateProps {
         middleName: string | null;
         suffix: string | null;
         trainingGroup: string | null;
+        company: string | null;
+        platoon: string | null;
         photoUrl: string | null;
         name: string;
         status: { value: string };
@@ -30,7 +33,7 @@ interface EditCandidateProps {
     statusOptions: StatusOption[];
 }
 
-export default function EditCandidate({ candidate, classOptions, statusOptions }: EditCandidateProps) {
+export default function EditCandidate({ candidate, classOptions, statusOptions, companyOptions, platoonOptions }: EditCandidateProps) {
     const [confirmingDeactivation, setConfirmingDeactivation] = useState(false);
 
     const form = useForm<CandidateFormData>({
@@ -40,6 +43,8 @@ export default function EditCandidate({ candidate, classOptions, statusOptions }
         middle_name: candidate.middleName ?? '',
         suffix: candidate.suffix ?? '',
         training_group: candidate.trainingGroup ?? '',
+        company: candidate.company ?? '',
+        platoon: candidate.platoon ?? '',
         profile_photo: null,
         remove_photo: false,
         class_batch_id: candidate.classBatch ? String(candidate.classBatch.id) : '',
@@ -89,6 +94,8 @@ export default function EditCandidate({ candidate, classOptions, statusOptions }
                     mode="edit"
                     classOptions={classOptions}
                     statusOptions={statusOptions}
+                    companyOptions={companyOptions}
+                    platoonOptions={platoonOptions}
                     currentUsername={candidate.username}
                     currentPhotoUrl={candidate.photoUrl}
                     submitLabel="Save Changes"

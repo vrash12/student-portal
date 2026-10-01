@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { School } from 'lucide-react';
+import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FormField, SelectInput } from '@/components/ui/form-field';
 import { PageHeader } from '@/components/ui/page-header';
@@ -33,6 +34,7 @@ export default function MyClasses({ classes, periods, filters }: MyClassesProps)
     const { singular, plural } = terms.classBatch;
     const title = `My ${plural}`;
     const shownPeriod = periods.find((period) => String(period.id) === filters.period) ?? null;
+    const pagination = useClientPagination(classes);
 
     return (
         <>
@@ -89,7 +91,7 @@ export default function MyClasses({ classes, periods, filters }: MyClassesProps)
                             </Th>
                         </TableHead>
                         <TableBody>
-                            {classes.map((classBatch) => (
+                            {pagination.rows.map((classBatch) => (
                                 <Tr key={classBatch.id}>
                                     <Td className="font-medium text-ink">{classBatch.name}</Td>
                                     <Td className="text-ink">{classBatch.subjects.map((subject) => subject.name).join(', ')}</Td>
@@ -106,6 +108,7 @@ export default function MyClasses({ classes, periods, filters }: MyClassesProps)
                         </TableBody>
                     </Table>
                 )}
+                <ClientPagination pagination={pagination} noun={{ one: singular.toLowerCase(), other: plural.toLowerCase() }} label={`${singular} pages`} />
             </div>
         </>
     );

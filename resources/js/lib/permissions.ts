@@ -31,6 +31,10 @@ export const Permission = {
     ManageFitness: 'fitness.manage',
     ViewAccounts: 'accounts.view',
     ManageAccounts: 'accounts.manage',
+    ManageConduct: 'conduct.manage',
+    ManageAttendance: 'attendance.manage',
+    ConfigurePerformance: 'performance.configure',
+    ViewPerformance: 'performance.view',
 } as const;
 
 export type PermissionCode = (typeof Permission)[keyof typeof Permission];

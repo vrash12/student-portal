@@ -1,6 +1,7 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { ChevronLeft, ChevronRight, CircleAlert } from 'lucide-react';
+import { Fragment, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/cn';
 
 export interface ClientPage<T> {
     /** Rows of the current page. */
@@ -18,7 +19,7 @@ export interface ClientPage<T> {
  * Pages a list the server already sent in full (e.g. a live monitoring
  * snapshot). The current page is clamped when the list shrinks on refresh.
  */
-export function useClientPagination<T>(items: readonly T[], pageSize = 25): ClientPage<T> {
+export function useClientPagination<T>(items: readonly T[], pageSize = 10): ClientPage<T> {
     const [requestedPage, setPage] = useState(1);
     const total = items.length;
     const pages = Math.max(1, Math.ceil(total / pageSize));
@@ -71,5 +72,76 @@ export function ClientPagination({ pagination, noun, label = 'Pagination' }: Cli
                 </div>
             )}
         </nav>
+    );
+}
+
+/** The 1-based pages that hold at least one matching item, in order. */
+export function pagesWhere<T>(items: readonly T[], matches: (item: T) => boolean, pageSize = 10): number[] {
+    const pages = new Set<number>();
+    items.forEach((item, index) => {
+        if (matches(item)) {
+            pages.add(Math.floor(index / pageSize) + 1);
+        }
+    });
+
+    return [...pages];
+}
+
+/**
+ * For data-entry grids that are paged on screen but saved as a whole: when a
+ * new set of validation errors arrives (a new `errors` object), shows the
+ * first page that holds an error. `errorPages` comes from pagesWhere().
+ */
+export function useShowFirstErrorPage(errors: object, errorPages: number[], setPage: (page: number) => void): void {
+    useEffect(() => {
+        const [firstPage] = errorPages;
+        if (firstPage !== undefined) {
+            setPage(firstPage);
+        }
+        // Only a new response (a new errors object) moves the page; paging or typing afterwards must not jump back.
+    }, [errors]);
+}
+
+interface OtherPageErrorsProps {
+    pagination: ClientPage<unknown>;
+    /** Pages holding rows with errors, from pagesWhere(). */
+    errorPages: number[];
+    label?: string;
+    tone?: 'danger' | 'warning';
+}
+
+/** "Errors on other pages: page 2, 3", with each page number going to that page. Hidden when there are none. */
+export function OtherPageErrors({ pagination, errorPages, label = 'Errors on other pages', tone = 'danger' }: OtherPageErrorsProps) {
+    const otherPages = errorPages.filter((page) => page !== pagination.page);
+
+    if (otherPages.length === 0) {
+        return null;
+    }
+
+    return (
+        <p
+            className={cn(
+                'flex flex-wrap items-center gap-x-1.5 gap-y-1 border-t border-line px-4 py-2 text-sm',
+                tone === 'danger' ? 'bg-danger-bg text-danger-fg' : 'bg-warning-bg text-warning-fg',
+            )}
+        >
+            <CircleAlert className="size-4 shrink-0" aria-hidden="true" />
+            <span>
+                {label}: {otherPages.length === 1 ? 'page' : 'pages'}
+            </span>
+            {otherPages.map((page, index) => (
+                <Fragment key={page}>
+                    <button
+                        type="button"
+                        onClick={() => pagination.setPage(page)}
+                        aria-label={`${label}: go to page ${page}`}
+                        className="font-semibold underline underline-offset-2 hover:no-underline"
+                    >
+                        {page}
+                    </button>
+                    {index < otherPages.length - 1 && <span aria-hidden="true">,</span>}
+                </Fragment>
+            ))}
+        </p>
     );
 }

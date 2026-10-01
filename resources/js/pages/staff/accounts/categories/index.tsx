@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react';
 import { Plus, Tags } from 'lucide-react';
 import type { AccountCategoryRow } from '@/components/accounts/types';
 import { ButtonLink } from '@/components/ui/button';
+import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -9,6 +10,7 @@ import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components
 import { routes } from '@/lib/routes';
 
 export default function AccountCategories({ categories }: { categories: AccountCategoryRow[] }) {
+    const pagination = useClientPagination(categories);
     const addAction = (
         <ButtonLink href={routes.accounts.categories.create()} variant="primary" icon={<Plus className="size-4" aria-hidden="true" />}>
             Add Category
@@ -21,8 +23,8 @@ export default function AccountCategories({ categories }: { categories: AccountC
 
             <PageHeader
                 title="Account Categories"
-                description="The categories of statement of account entries, such as billing, uniforms, meals and allowances. Categories in use are deactivated, never deleted."
-                breadcrumbs={[{ label: 'Statements of Account', href: routes.accounts.index() }, { label: 'Categories' }]}
+                description="The categories expenses belong to, such as billing, uniforms and meals. Categories in use are deactivated, never deleted."
+                breadcrumbs={[{ label: 'Expenses', href: routes.accounts.expenses.index() }, { label: 'Categories' }]}
                 actions={addAction}
             />
 
@@ -47,7 +49,7 @@ export default function AccountCategories({ categories }: { categories: AccountC
                             </Th>
                         </TableHead>
                         <TableBody>
-                            {categories.map((category) => (
+                            {pagination.rows.map((category) => (
                                 <Tr key={category.id}>
                                     <Td align="right" numeric>
                                         {category.sortOrder}
@@ -73,6 +75,7 @@ export default function AccountCategories({ categories }: { categories: AccountC
                         </TableBody>
                     </Table>
                 )}
+                <ClientPagination pagination={pagination} noun={{ one: 'category', other: 'categories' }} label="Account category pages" />
             </div>
         </>
     );

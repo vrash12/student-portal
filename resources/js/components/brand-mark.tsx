@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn';
  * Configured organization logo, or a neutral placeholder mark until approved
  * branding exists. Never replace this with fabricated insignia.
  */
-export function BrandMark({ className }: { className?: string }) {
+export function BrandMark({ className, round = false }: { className?: string; /** Circular crop, for round emblems. */ round?: boolean }) {
     const { app } = usePage().props;
 
     if (app.logoUrl) {
@@ -13,7 +13,7 @@ export function BrandMark({ className }: { className?: string }) {
             <img
                 src={app.logoUrl}
                 alt={`${app.organizationName} logo`}
-                className={cn('size-9 shrink-0 rounded-md object-contain', className)}
+                className={cn('size-9 shrink-0', round ? 'rounded-full object-cover' : 'rounded-md object-contain', className)}
             />
         );
     }

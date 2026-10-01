@@ -7,13 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicPeriod;
 use App\Models\Role;
 use App\Models\User;
-use App\Services\Accounts\AccountLedger;
 use App\Services\AdministratorDashboardService;
 use App\Services\Grading\GradingThresholds;
 use App\Services\Monitoring\AcademicMonitoring;
 use App\Services\Monitoring\MonitoredCandidate;
 use App\Services\Monitoring\MonitoringPresenter;
 use App\Services\Monitoring\MonitoringScope;
+use App\Services\Performance\QualificationOverview;
 use App\Services\TeachingOverview;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -35,12 +35,14 @@ class DashboardController extends Controller
         private readonly MonitoringPresenter $presenter,
     ) {}
 
-    public function __invoke(Request $request, TeachingOverview $teaching, AdministratorDashboardService $administratorDashboard, AccountLedger $ledger): Response
+    public function __invoke(Request $request, TeachingOverview $teaching, AdministratorDashboardService $administratorDashboard, QualificationOverview $qualification): Response
     {
         $user = $request->user();
         $canMonitor = $user->hasPermission(Permission::ViewAcademicMonitoring);
         $showAcademicOverview = $canMonitor && $user->hasPermission(Permission::ViewAllCandidates);
         $showAcademicAlerts = $canMonitor && $user->canTeach();
+        // The qualification of every candidate: the permission of /qualification.
+        $showQualification = $user->hasPermission(Permission::ViewPerformance);
 
         return Inertia::render('staff/dashboard', [
             'teaching' => $user->canTeach() ? $teaching->dashboard($user) : null,
@@ -53,8 +55,10 @@ class DashboardController extends Controller
             'thresholdSetup' => $user->hasPermission(Permission::ConfigureGrading) ? $this->missingThresholds() : null,
             'accountSummary' => $user->can('viewAny', User::class) ? $this->accountSummary() : null,
             'administratorOverview' => $showAcademicOverview ? $administratorDashboard->overview() : null,
-            // Statements of Account balances and the latest entries (not sign-in accounts).
-            'statementsOverview' => $user->hasPermission(Permission::ViewAccounts) ? $ledger->overview() : null,
+            'showQualification' => $showQualification,
+            // Qualification across the active period's classes (null: no active period).
+            'qualificationOverview' => $showQualification ? $qualification->activePeriod() : null,
+            'canConfigurePerformance' => $user->hasPermission(Permission::ConfigurePerformance),
         ]);
     }
 

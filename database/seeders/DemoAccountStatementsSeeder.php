@@ -7,22 +7,23 @@ use App\Enums\SystemRole;
 use App\Models\AcademicPeriod;
 use App\Models\AccountCategory;
 use App\Models\AccountEntry;
+use App\Models\AccountExpense;
 use App\Models\Candidate;
 use App\Models\ClassBatch;
-use App\Models\Role;
 use App\Models\User;
 use App\Services\Accounts\AccountService;
 use Illuminate\Database\Seeder;
 use RuntimeException;
 
 /**
- * Demonstration Statements of Account: the Finance Officer account
- * `finance1` (password as in ClientDemoSeeder) and a few synthetic charges
- * and credits for the candidates of every class of the active period, so
- * balances due, settled accounts, credit balances and one voided entry can
- * be shown. The amounts are invented. Entries go through AccountService, so
- * they are audited like real ones. Safe to run again: the account is kept
- * and candidates that already have entries are skipped.
+ * Demonstration expenses, charged by the administrator (`admin`, created
+ * by ClientDemoSeeder; nothing is seeded without one): four sample expenses
+ * assigned to the candidates of every class of the active period, a
+ * one-off charge for some candidates and one voided entry. No payments:
+ * candidates are scholars. The amounts are invented. Everything goes through
+ * AccountService, so it is audited like real work. Safe to run again:
+ * existing expenses are kept and candidates that already have entries are
+ * skipped.
  *
  * (DemoAccountsSeeder is a different seeder: it creates staff sign-in accounts.)
  */
@@ -34,10 +35,10 @@ class DemoAccountStatementsSeeder extends Seeder
             throw new RuntimeException('Demo statements of account must not be seeded in production.');
         }
 
-        $actor = $this->financeOfficer();
+        $actor = $this->administrator();
         $period = AcademicPeriod::query()->active()->first();
         $categories = AccountCategory::query()->active()->pluck('id', 'name');
-        if ($period === null) {
+        if ($period === null || $actor === null) {
             return;
         }
 
@@ -46,76 +47,66 @@ class DemoAccountStatementsSeeder extends Seeder
         $candidates = Candidate::query()
             ->whereIn('class_batch_id', $classIds)
             ->where('status', '!=', CandidateStatus::Withdrawn->value)
+            ->whereNotIn('id', AccountEntry::query()->select('candidate_id'))
             ->orderBy('candidate_number')
             ->get();
+        if ($candidates->isEmpty()) {
+            return;
+        }
 
-        foreach ($candidates->values() as $index => $candidate) {
-            if (AccountEntry::query()->where('candidate_id', $candidate->id)->exists()) {
+        // [name, category, amount, assessed on (days after the start), due (days after the start)]
+        $expenses = [
+            ['Training Fees, '.$period->name, 'Billing', '15000.00', 0, 30],
+            ['Uniform Set (two pieces)', 'Uniforms', '3500.00', 7, 14],
+            ['Meals, First Month', 'Meals', '4500.00', 28, 30],
+            ['Fitness Test Kit', 'Military Fitness', '1500.00', 14, 45],
+        ];
+        foreach ($expenses as [$name, $category, $amount, $assessedAfter, $dueAfter]) {
+            if (! isset($categories[$category])) {
                 continue;
             }
 
-            // Deterministic spread: settled, balance due (partly paid), balance due (unpaid), credit balance.
-            $payment = match ($index % 4) {
-                0 => '23000.00',
-                1 => '10000.00',
-                2 => null,
-                default => '25000.00',
-            };
+            $expense = AccountExpense::query()->where('name', $name)->first() ?? $accounts->createExpense([
+                'name' => $name,
+                'account_category_id' => (int) $categories[$category],
+                'amount' => $amount,
+                'due_on' => $start->copy()->addDays($dueAfter)->toDateString(),
+                'description' => null,
+            ], $actor);
+            if ($expense->is_active) {
+                $accounts->assignExpense($expense, $candidates, $start->copy()->addDays($assessedAfter)->toDateString(), $actor);
+            }
+        }
 
-            $entries = [
-                ['Billing', 'charge', '15000.00', $start, 'Training fees, '.$period->name, 'BILL-'.$start->format('Y').'-'.str_pad((string) ($index + 1), 3, '0', STR_PAD_LEFT)],
-                ['Uniforms', 'charge', '3500.00', $start->copy()->addDays(7), 'Uniform set (two pieces)', null],
-                ['Meals', 'charge', '4500.00', $start->copy()->addDays(28), 'Meals, first month', null],
-                ['Meal Allowance', 'credit', '1500.00', $start->copy()->addDays(28), 'Meal allowance, first month', null],
-                ['Military Fitness', 'charge', '1500.00', $start->copy()->addDays(14), 'Fitness test kit', null],
-            ];
-            if ($payment !== null) {
-                $entries[] = ['Payment Received', 'credit', $payment, $start->copy()->addDays(35), 'Payment received at the finance office', 'OR-'.str_pad((string) (1000 + $index), 5, '0', STR_PAD_LEFT)];
+        // Candidates are scholars: no payments. Every third candidate also has
+        // a one-off charge, and the first has a mistaken duplicate, voided.
+        foreach ($candidates->values() as $index => $candidate) {
+            if ($index % 3 !== 0 || ! isset($categories['Chargeable Items'])) {
+                continue;
             }
 
-            foreach ($entries as [$category, $type, $amount, $postedOn, $description, $reference]) {
-                if (! isset($categories[$category])) {
-                    continue;
-                }
+            $charge = [
+                'account_category_id' => (int) $categories['Chargeable Items'],
+                'entry_type' => 'charge',
+                'amount' => '250.00',
+                'posted_on' => $start->copy()->addDays(21)->toDateString(),
+                'due_on' => $start->copy()->addDays(45)->toDateString(),
+                'description' => 'Replacement ID card',
+                'reference' => null,
+            ];
+            $accounts->record($candidate, $charge, $actor);
 
-                $entry = $accounts->record($candidate, [
-                    'account_category_id' => (int) $categories[$category],
-                    'entry_type' => $type,
-                    'amount' => $amount,
-                    'posted_on' => $postedOn->toDateString(),
-                    'description' => $description,
-                    'reference' => $reference,
-                ], $actor);
-
-                // One mistaken entry, voided with a reason, for the first candidate.
-                if ($index === 0 && $category === 'Uniforms') {
-                    $duplicate = $accounts->record($candidate, [
-                        'account_category_id' => (int) $categories[$category],
-                        'entry_type' => $type,
-                        'amount' => $amount,
-                        'posted_on' => $entry->posted_on->toDateString(),
-                        'description' => $description,
-                        'reference' => null,
-                    ], $actor);
-                    $accounts->void($duplicate, 'Recorded twice; duplicate of the uniform charge of the same date.', $actor);
-                }
+            if ($index === 0) {
+                $duplicate = $accounts->record($candidate, $charge, $actor);
+                $accounts->void($duplicate, 'Recorded twice; duplicate of the ID card charge of the same date.', $actor);
             }
         }
     }
 
-    private function financeOfficer(): User
+    /** The administrator who charges candidates (`admin` in the demo set, else any Super Administrator). */
+    private function administrator(): ?User
     {
-        $user = User::query()->where('username', 'finance1')->first();
-        if ($user !== null) {
-            return $user;
-        }
-
-        $user = new User(['name' => 'Finance Officer One', 'username' => 'finance1', 'email' => null, 'password' => ClientDemoSeeder::PASSWORD]);
-        $user->role()->associate(Role::query()->where('code', SystemRole::FinanceOfficer->value)->firstOrFail());
-        $user->is_active = true;
-        $user->password_change_required = false;
-        $user->save();
-
-        return $user;
+        return User::query()->where('username', 'admin')->first()
+            ?? User::query()->whereHas('role', fn ($role) => $role->where('code', SystemRole::SuperAdministrator->value))->orderBy('id')->first();
     }
 }

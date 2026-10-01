@@ -7,18 +7,25 @@ use App\Http\Controllers\CandidatePhotoController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Portal\CandidateProfileController;
 use App\Http\Controllers\Portal\ExaminationController as PortalExaminationController;
+use App\Http\Controllers\Portal\ExaminationListController;
+use App\Http\Controllers\Portal\FitnessController as PortalFitnessController;
+use App\Http\Controllers\Portal\GradesController;
+use App\Http\Controllers\Portal\PerformanceController as PortalPerformanceController;
 use App\Http\Controllers\Portal\PortalHomeController;
 use App\Http\Controllers\Staff\AcademicMonitoringController;
 use App\Http\Controllers\Staff\AcademicPeriodController;
 use App\Http\Controllers\Staff\AccountCategoryController;
-use App\Http\Controllers\Staff\AccountController;
+use App\Http\Controllers\Staff\AccountExpenseController;
 use App\Http\Controllers\Staff\AccountPasswordController;
 use App\Http\Controllers\Staff\AssessmentController;
 use App\Http\Controllers\Staff\AssessmentScoreController;
+use App\Http\Controllers\Staff\AttendanceSessionController;
 use App\Http\Controllers\Staff\AuditHistoryController;
 use App\Http\Controllers\Staff\CandidateController;
 use App\Http\Controllers\Staff\ClassBatchController;
 use App\Http\Controllers\Staff\ClassSubjectController;
+use App\Http\Controllers\Staff\ConductController;
+use App\Http\Controllers\Staff\ConductTypeController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\FitnessEventController;
 use App\Http\Controllers\Staff\FitnessTestController;
@@ -27,6 +34,8 @@ use App\Http\Controllers\Staff\GradingSchemeController;
 use App\Http\Controllers\Staff\GradingThresholdController;
 use App\Http\Controllers\Staff\InstructorAssignmentController;
 use App\Http\Controllers\Staff\InstructorController;
+use App\Http\Controllers\Staff\PerformanceAreaController;
+use App\Http\Controllers\Staff\QualificationController;
 use App\Http\Controllers\Staff\ReportController;
 use App\Http\Controllers\Staff\RoleController;
 use App\Http\Controllers\Staff\SubjectController;
@@ -78,24 +87,64 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             });
         });
 
-        // Statements of Account: viewing and PDF (accounts.view); recording and
-        // voiding entries, and the categories (accounts.manage). Staff only.
-        Route::middleware('can:'.Permission::ViewAccounts->value)->group(function (): void {
-            Route::get('accounts', [AccountController::class, 'index'])->name('accounts.index');
-            Route::get('accounts/{candidate}', [AccountController::class, 'show'])->name('accounts.show')->whereNumber('candidate');
-            Route::get('accounts/{candidate}/statement', [AccountController::class, 'statement'])->name('accounts.statement')
-                ->whereNumber('candidate')->middleware('throttle:record-downloads');
+        // Expenses assigned to candidates, voiding a mistaken charge, and the
+        // account categories (accounts.manage). Staff only.
+        Route::middleware('can:'.Permission::ManageAccounts->value)->group(function (): void {
+            Route::post('account-entries/{accountEntry}/void', [AccountExpenseController::class, 'void'])->name('accounts.entries.void')->whereNumber('accountEntry');
 
-            Route::middleware('can:'.Permission::ManageAccounts->value)->group(function (): void {
-                Route::post('accounts/{candidate}/entries', [AccountController::class, 'store'])->name('accounts.entries.store')->whereNumber('candidate');
-                Route::post('account-entries/{accountEntry}/void', [AccountController::class, 'void'])->name('accounts.entries.void')->whereNumber('accountEntry');
+            Route::get('account-expenses', [AccountExpenseController::class, 'index'])->name('accounts.expenses.index');
+            Route::get('account-expenses/create', [AccountExpenseController::class, 'create'])->name('accounts.expenses.create');
+            Route::post('account-expenses', [AccountExpenseController::class, 'store'])->name('accounts.expenses.store');
+            Route::get('account-expenses/{accountExpense}', [AccountExpenseController::class, 'show'])->name('accounts.expenses.show')->whereNumber('accountExpense');
+            Route::get('account-expenses/{accountExpense}/edit', [AccountExpenseController::class, 'edit'])->name('accounts.expenses.edit')->whereNumber('accountExpense');
+            Route::put('account-expenses/{accountExpense}', [AccountExpenseController::class, 'update'])->name('accounts.expenses.update')->whereNumber('accountExpense');
+            Route::post('account-expenses/{accountExpense}/assignments', [AccountExpenseController::class, 'assign'])->name('accounts.expenses.assign')->whereNumber('accountExpense');
 
-                Route::get('account-categories', [AccountCategoryController::class, 'index'])->name('accounts.categories.index');
-                Route::get('account-categories/create', [AccountCategoryController::class, 'create'])->name('accounts.categories.create');
-                Route::post('account-categories', [AccountCategoryController::class, 'store'])->name('accounts.categories.store');
-                Route::get('account-categories/{accountCategory}/edit', [AccountCategoryController::class, 'edit'])->name('accounts.categories.edit')->whereNumber('accountCategory');
-                Route::put('account-categories/{accountCategory}', [AccountCategoryController::class, 'update'])->name('accounts.categories.update')->whereNumber('accountCategory');
-            });
+            Route::get('account-categories', [AccountCategoryController::class, 'index'])->name('accounts.categories.index');
+            Route::get('account-categories/create', [AccountCategoryController::class, 'create'])->name('accounts.categories.create');
+            Route::post('account-categories', [AccountCategoryController::class, 'store'])->name('accounts.categories.store');
+            Route::get('account-categories/{accountCategory}/edit', [AccountCategoryController::class, 'edit'])->name('accounts.categories.edit')->whereNumber('accountCategory');
+            Route::put('account-categories/{accountCategory}', [AccountCategoryController::class, 'update'])->name('accounts.categories.update')->whereNumber('accountCategory');
+        });
+
+        // Merits and demerits (conduct.manage; scoped to the classes the user
+        // teaches unless they can view all candidates). Types: performance.configure.
+        Route::middleware('can:'.Permission::ManageConduct->value)->group(function (): void {
+            Route::get('conduct', [ConductController::class, 'index'])->name('conduct.index');
+            Route::get('conduct/candidates/{candidate}', [ConductController::class, 'show'])->name('conduct.show')->whereNumber('candidate');
+            Route::post('conduct/candidates/{candidate}/entries', [ConductController::class, 'store'])->name('conduct.entries.store')->whereNumber('candidate');
+            Route::post('conduct-entries/{conductEntry}/void', [ConductController::class, 'void'])->name('conduct.entries.void')->whereNumber('conductEntry');
+        });
+        Route::middleware('can:'.Permission::ConfigurePerformance->value)->group(function (): void {
+            Route::get('conduct/types', [ConductTypeController::class, 'index'])->name('conduct.types.index');
+            Route::get('conduct/types/create', [ConductTypeController::class, 'create'])->name('conduct.types.create');
+            Route::post('conduct/types', [ConductTypeController::class, 'store'])->name('conduct.types.store');
+            Route::get('conduct/types/{conductType}/edit', [ConductTypeController::class, 'edit'])->name('conduct.types.edit')->whereNumber('conductType');
+            Route::put('conduct/types/{conductType}', [ConductTypeController::class, 'update'])->name('conduct.types.update')->whereNumber('conductType');
+        });
+
+        // Attendance (attendance.manage; scoped to the classes the user teaches
+        // unless they can view all candidates).
+        Route::middleware('can:'.Permission::ManageAttendance->value)->group(function (): void {
+            Route::get('attendance', [AttendanceSessionController::class, 'index'])->name('attendance.index');
+            Route::get('attendance/sessions/create', [AttendanceSessionController::class, 'create'])->name('attendance.sessions.create');
+            Route::post('attendance/sessions', [AttendanceSessionController::class, 'store'])->name('attendance.sessions.store');
+            Route::get('attendance/sessions/{attendanceSession}', [AttendanceSessionController::class, 'show'])->name('attendance.sessions.show')->whereNumber('attendanceSession');
+            Route::get('attendance/sessions/{attendanceSession}/edit', [AttendanceSessionController::class, 'edit'])->name('attendance.sessions.edit')->whereNumber('attendanceSession');
+            Route::put('attendance/sessions/{attendanceSession}', [AttendanceSessionController::class, 'update'])->name('attendance.sessions.update')->whereNumber('attendanceSession');
+            Route::delete('attendance/sessions/{attendanceSession}', [AttendanceSessionController::class, 'destroy'])->name('attendance.sessions.destroy')->whereNumber('attendanceSession');
+            Route::put('attendance/sessions/{attendanceSession}/records', [AttendanceSessionController::class, 'recordAttendance'])->name('attendance.sessions.records')->whereNumber('attendanceSession');
+        });
+
+        // Performance areas and qualification: ranking of every candidate
+        // (performance.view); configuration (performance.configure).
+        Route::get('qualification', [QualificationController::class, 'index'])->name('qualification.index')->can(Permission::ViewPerformance->value);
+        Route::middleware('can:'.Permission::ConfigurePerformance->value)->group(function (): void {
+            Route::get('performance-areas', [PerformanceAreaController::class, 'index'])->name('performance-areas.index');
+            Route::get('performance-areas/create', [PerformanceAreaController::class, 'create'])->name('performance-areas.create');
+            Route::post('performance-areas', [PerformanceAreaController::class, 'store'])->name('performance-areas.store');
+            Route::get('performance-areas/{performanceArea}/edit', [PerformanceAreaController::class, 'edit'])->name('performance-areas.edit')->whereNumber('performanceArea');
+            Route::put('performance-areas/{performanceArea}', [PerformanceAreaController::class, 'update'])->name('performance-areas.update')->whereNumber('performanceArea');
         });
 
         Route::get('users', [UserController::class, 'index'])->name('users.index')->can('viewAny', User::class);
@@ -222,8 +271,13 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         ->name('portal.')
         ->group(function (): void {
             Route::get('/', PortalHomeController::class)->name('home');
+            Route::get('examinations', ExaminationListController::class)->name('examinations.index');
+            Route::get('grades', GradesController::class)->name('grades');
+            Route::get('fitness', PortalFitnessController::class)->name('fitness');
             Route::get('profile', CandidateProfileController::class)->name('profile');
             Route::get('profile/photo', [CandidatePhotoController::class, 'own'])->name('profile.photo');
+            // The candidate's own areas, qualification, merits/demerits and attendance (no rank).
+            Route::get('performance', [PortalPerformanceController::class, 'show'])->name('performance');
             Route::get('profile/documents/{type}', [CandidatePdfController::class, 'own'])
                 ->whereIn('type', ['registration', 'academic'])->name('profile.documents')->middleware('throttle:record-downloads');
             Route::get('examinations/{examination}', [PortalExaminationController::class, 'show'])->name('examinations.show');

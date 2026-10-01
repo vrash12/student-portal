@@ -69,6 +69,20 @@ enum AuditAction: string
     case AccountCategoryCreated = 'account_category.created';
     case AccountCategoryUpdated = 'account_category.updated';
     case AccountStatementDownloaded = 'account_statement.downloaded';
+    case AccountExpenseCreated = 'account_expense.created';
+    case AccountExpenseUpdated = 'account_expense.updated';
+    case AccountExpenseAssigned = 'account_expense.assigned';
+
+    case ConductEntryRecorded = 'conduct_entry.recorded';
+    case ConductEntryVoided = 'conduct_entry.voided';
+    case ConductTypeCreated = 'conduct_type.created';
+    case ConductTypeUpdated = 'conduct_type.updated';
+    case AttendanceSessionCreated = 'attendance_session.created';
+    case AttendanceSessionUpdated = 'attendance_session.updated';
+    case AttendanceSessionDeleted = 'attendance_session.deleted';
+    case AttendanceRecorded = 'attendance_session.attendance_recorded';
+    case PerformanceAreaCreated = 'performance_area.created';
+    case PerformanceAreaUpdated = 'performance_area.updated';
 
     public function label(): string
     {
@@ -132,6 +146,19 @@ enum AuditAction: string
             self::AccountCategoryCreated => 'Created account category',
             self::AccountCategoryUpdated => 'Updated account category',
             self::AccountStatementDownloaded => 'Downloaded statement of account PDF',
+            self::AccountExpenseCreated => 'Created account expense',
+            self::AccountExpenseUpdated => 'Updated account expense',
+            self::AccountExpenseAssigned => 'Assigned account expense to candidates',
+            self::ConductEntryRecorded => 'Recorded merit or demerit',
+            self::ConductEntryVoided => 'Voided merit or demerit',
+            self::ConductTypeCreated => 'Created merit/demerit type',
+            self::ConductTypeUpdated => 'Updated merit/demerit type',
+            self::AttendanceSessionCreated => 'Created attendance session',
+            self::AttendanceSessionUpdated => 'Updated attendance session',
+            self::AttendanceSessionDeleted => 'Deleted attendance session',
+            self::AttendanceRecorded => 'Recorded attendance',
+            self::PerformanceAreaCreated => 'Created performance area',
+            self::PerformanceAreaUpdated => 'Updated performance area',
         };
     }
 }

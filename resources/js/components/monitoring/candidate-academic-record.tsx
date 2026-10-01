@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { History } from 'lucide-react';
 import { OverallStandingValue } from '@/components/grading/standing';
+import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Panel } from '@/components/ui/panel';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -134,42 +135,51 @@ export function AssessmentResults({ subjects }: { subjects: SubjectResults[] }) 
         <Panel title="Assessment Results" description="Finalized assessments only, newest first." bodyClassName="p-0">
             <div className="divide-y divide-line">
                 {subjects.map((subject) => (
-                    <section key={subject.classSubjectId} aria-labelledby={`results-${subject.classSubjectId}`}>
-                        <h3 id={`results-${subject.classSubjectId}`} className="px-5 pt-4 text-sm font-semibold text-ink">
-                            {subject.subject.name} <span className="font-normal text-ink-muted">({subject.subject.code})</span>
-                        </h3>
-                        {subject.assessments.length === 0 ? (
-                            <p className="px-5 pb-4 pt-1 text-sm text-ink-muted">No finalized assessments yet.</p>
-                        ) : (
-                            <Table caption={`Assessment results in ${subject.subject.name}`} className="min-w-[32rem]">
-                                <TableHead>
-                                    <Th>Assessment</Th>
-                                    <Th className="hidden md:table-cell">Category</Th>
-                                    <Th>Date</Th>
-                                    <Th align="right">Score</Th>
-                                    <Th align="right">Percentage</Th>
-                                </TableHead>
-                                <TableBody>
-                                    {subject.assessments.map((result) => (
-                                        <Tr key={result.assessment.id}>
-                                            <Td className="font-medium text-ink">{result.assessment.title}</Td>
-                                            <Td className="hidden text-ink-muted md:table-cell">{result.category}</Td>
-                                            <Td className="whitespace-nowrap text-ink">{formatCalendarDate(result.date)}</Td>
-                                            <Td align="right" numeric>
-                                                <ScoreText score={result.score} maxScore={result.maxScore} />
-                                            </Td>
-                                            <Td align="right" numeric>
-                                                {result.percentage === null ? '—' : formatPercent(result.percentage)}
-                                            </Td>
-                                        </Tr>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        )}
-                    </section>
+                    <SubjectAssessmentResults key={subject.classSubjectId} subject={subject} />
                 ))}
             </div>
         </Panel>
+    );
+}
+
+function SubjectAssessmentResults({ subject }: { subject: SubjectResults }) {
+    const pagination = useClientPagination(subject.assessments);
+
+    return (
+        <section aria-labelledby={`results-${subject.classSubjectId}`}>
+            <h3 id={`results-${subject.classSubjectId}`} className="px-5 pt-4 text-sm font-semibold text-ink">
+                {subject.subject.name} <span className="font-normal text-ink-muted">({subject.subject.code})</span>
+            </h3>
+            {subject.assessments.length === 0 ? (
+                <p className="px-5 pb-4 pt-1 text-sm text-ink-muted">No finalized assessments yet.</p>
+            ) : (
+                <Table caption={`Assessment results in ${subject.subject.name}`} className="min-w-[32rem]">
+                    <TableHead>
+                        <Th>Assessment</Th>
+                        <Th className="hidden md:table-cell">Category</Th>
+                        <Th>Date</Th>
+                        <Th align="right">Score</Th>
+                        <Th align="right">Percentage</Th>
+                    </TableHead>
+                    <TableBody>
+                        {pagination.rows.map((result) => (
+                            <Tr key={result.assessment.id}>
+                                <Td className="font-medium text-ink">{result.assessment.title}</Td>
+                                <Td className="hidden text-ink-muted md:table-cell">{result.category}</Td>
+                                <Td className="whitespace-nowrap text-ink">{formatCalendarDate(result.date)}</Td>
+                                <Td align="right" numeric>
+                                    <ScoreText score={result.score} maxScore={result.maxScore} />
+                                </Td>
+                                <Td align="right" numeric>
+                                    {result.percentage === null ? '—' : formatPercent(result.percentage)}
+                                </Td>
+                            </Tr>
+                        ))}
+                    </TableBody>
+                </Table>
+            )}
+            <ClientPagination pagination={pagination} noun={{ one: 'assessment', other: 'assessments' }} label={`Assessment pages in ${subject.subject.name}`} />
+        </section>
     );
 }
 

@@ -21,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * the candidate number as username. Create and update through
  * CandidateService so the account stays in sync.
  */
-#[Fillable(['candidate_number', 'first_name', 'middle_name', 'last_name', 'suffix', 'training_group'])]
+#[Fillable(['candidate_number', 'first_name', 'middle_name', 'last_name', 'suffix', 'training_group', 'company', 'platoon'])]
 #[UsePolicy(CandidatePolicy::class)]
 class Candidate extends Model
 {

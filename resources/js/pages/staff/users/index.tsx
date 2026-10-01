@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import { ListCharts, type ListChart } from '@/components/charts/list-charts';
 import { Plus, UserRoundX, Users as UsersIcon } from 'lucide-react';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -31,13 +32,15 @@ interface UserFilters {
 }
 
 interface UsersIndexProps {
+    /** Charts computed by the server from the filtered list. */
+    charts: ListChart[];
     users: Paginated<UserRow>;
     filters: UserFilters;
     roles: Array<{ code: string; name: string }>;
     canCreate: boolean;
 }
 
-export default function UsersIndex({ users, filters, roles, canCreate }: UsersIndexProps) {
+export default function UsersIndex({ users, filters, roles, canCreate, charts }: UsersIndexProps) {
     const { values, update, reset, isFiltered } = useQueryFilters(routes.users.index(), filters);
     const formatDate = useDateFormatter();
 
@@ -56,6 +59,8 @@ export default function UsersIndex({ users, filters, roles, canCreate }: UsersIn
                     )
                 }
             />
+
+            <ListCharts charts={charts} />
 
             <div className="rounded-lg border border-line bg-surface">
                 <FilterBar onReset={reset} canReset={isFiltered}>

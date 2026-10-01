@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import { ListCharts, type ListChart } from '@/components/charts/list-charts';
 import { Plus, UsersRound } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -26,12 +27,14 @@ interface PeriodOption {
 }
 
 interface ClassesIndexProps {
+    /** Charts computed by the server from the filtered list. */
+    charts: ListChart[];
     classes: Paginated<ClassRow>;
     filters: { period: string; [key: string]: string };
     periods: PeriodOption[];
 }
 
-export default function ClassesIndex({ classes, filters, periods }: ClassesIndexProps) {
+export default function ClassesIndex({ classes, filters, periods, charts }: ClassesIndexProps) {
     const { values, update } = useQueryFilters(routes.classes.index(), filters);
     const { singular, plural } = terms.classBatch;
 
@@ -50,6 +53,8 @@ export default function ClassesIndex({ classes, filters, periods }: ClassesIndex
                 description={`Each ${singular.toLowerCase()} belongs to one academic period and takes a set of subjects.`}
                 actions={periods.length > 0 && createAction}
             />
+
+            <ListCharts charts={charts} />
 
             <div className="rounded-lg border border-line bg-surface">
                 {periods.length > 0 && (

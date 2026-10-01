@@ -101,20 +101,20 @@ class AuditHistoryTest extends TestCase
     // Listing, pagination and filters
     // ------------------------------------------------------------------
 
-    public function test_entries_are_newest_first_and_paginated_by_twenty_five(): void
+    public function test_entries_are_newest_first_and_paginated_by_ten(): void
     {
-        for ($index = 1; $index <= 30; $index++) {
+        for ($index = 1; $index <= 15; $index++) {
             $this->log(AuditAction::SubjectUpdated, ['name' => "Subject {$index}"]);
         }
 
         $first = $this->historyProps(['action' => AuditAction::SubjectUpdated->value])['entries'];
         $second = $this->historyProps(['action' => AuditAction::SubjectUpdated->value, 'page' => 2])['entries'];
 
-        $this->assertSame(30, $first['total']);
-        $this->assertSame(25, $first['per_page']);
-        $this->assertCount(25, $first['data']);
+        $this->assertSame(15, $first['total']);
+        $this->assertSame(10, $first['per_page']);
+        $this->assertCount(10, $first['data']);
         $this->assertCount(5, $second['data']);
-        $this->assertSame(['name' => 'Subject 30'], $first['data'][0]['after']);
+        $this->assertSame(['name' => 'Subject 15'], $first['data'][0]['after']);
         $this->assertSame(['name' => 'Subject 1'], $second['data'][4]['after']);
         $this->assertStringContainsString('action=subject.updated', $first['next_page_url']);
         $this->assertSame([], $this->historyProps(['page' => 99])['entries']['data']);

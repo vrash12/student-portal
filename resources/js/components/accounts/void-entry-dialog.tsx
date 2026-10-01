@@ -1,6 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
-import type { StatementEntry } from '@/components/accounts/types';
+import type { ChargeEntry } from '@/components/accounts/types';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -10,7 +10,7 @@ import { routes } from '@/lib/routes';
 
 interface VoidEntryDialogProps {
     /** The entry to void; null closes the dialog. */
-    entry: StatementEntry | null;
+    entry: ChargeEntry | null;
     /** Already formatted amount of the entry. */
     amountLabel: string;
     onClose: () => void;
@@ -18,7 +18,7 @@ interface VoidEntryDialogProps {
 
 /**
  * Voids a mistaken entry (UI_UX_DESIGN.md §41–42). Entries are never edited
- * or deleted: the voided entry stays on the statement, struck through, and
+ * or deleted: the voided entry stays listed, marked as voided, and
  * no longer counts toward the balance. A reason is always required.
  */
 export function VoidEntryDialog({ entry, amountLabel, onClose }: VoidEntryDialogProps) {
@@ -44,7 +44,7 @@ export function VoidEntryDialog({ entry, amountLabel, onClose }: VoidEntryDialog
             onStart: () => setConnectionError(null),
             onSuccess: close,
             onNetworkError: () => {
-                setConnectionError('The entry was not voided because the connection was interrupted. The statement has not changed. Check the connection and try again.');
+                setConnectionError('The entry was not voided because the connection was interrupted. Nothing has changed. Check the connection and try again.');
 
                 return false;
             },

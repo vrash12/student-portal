@@ -244,9 +244,9 @@ class QuestionBankListTest extends TestCase
         }
     }
 
-    public function test_results_are_paginated_twenty_per_page_and_keep_the_filters(): void
+    public function test_results_are_paginated_ten_per_page_and_keep_the_filters(): void
     {
-        foreach (range(1, 25) as $number) {
+        foreach (range(1, 15) as $number) {
             Question::factory()->forSubject($this->subject1)->createdBy($this->alpha)->create([
                 'prompt' => "Paged question {$number}",
                 'created_at' => now()->subMinutes(100 - $number),
@@ -255,18 +255,18 @@ class QuestionBankListTest extends TestCase
         Question::factory()->forSubject($this->subject2)->count(3)->create();
 
         $first = $this->propsOf($this->actingAs($this->alpha)->get('/question-bank?search=Paged'))['questions'];
-        $this->assertCount(20, $first['data']);
-        $this->assertSame(25, $first['total']);
+        $this->assertCount(10, $first['data']);
+        $this->assertSame(15, $first['total']);
         $this->assertSame(1, $first['from']);
-        $this->assertSame(20, $first['to']);
+        $this->assertSame(10, $first['to']);
         $this->assertSame(2, $first['last_page']);
-        $this->assertSame('Paged question 25', Question::query()->findOrFail($first['data'][0]['id'])->prompt);
+        $this->assertSame('Paged question 15', Question::query()->findOrFail($first['data'][0]['id'])->prompt);
         $this->assertStringContainsString('search=Paged', (string) $first['next_page_url']);
 
         $second = $this->propsOf($this->actingAs($this->alpha)->get('/question-bank?search=Paged&page=2'))['questions'];
         $this->assertCount(5, $second['data']);
-        $this->assertSame(21, $second['from']);
-        $this->assertSame(25, $second['to']);
+        $this->assertSame(11, $second['from']);
+        $this->assertSame(15, $second['to']);
         $this->assertSame('Paged question 1', Question::query()->findOrFail($second['data'][4]['id'])->prompt);
         $this->assertSame([], array_intersect(array_column($first['data'], 'id'), array_column($second['data'], 'id')));
     }

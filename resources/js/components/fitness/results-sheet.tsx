@@ -3,6 +3,7 @@ import { CircleAlert, PencilLine, Save, SearchX, Undo2 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { ClientPagination, OtherPageErrors, pagesWhere, useClientPagination, useShowFirstErrorPage } from '@/components/ui/client-pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { SearchField } from '@/components/ui/filter-bar';
 import { TextInput } from '@/components/ui/form-field';
@@ -62,6 +63,17 @@ export function ResultsSheet({ testId, events, rows, editable, linkCandidates }:
     const visibleRows =
         term === '' ? rows : rows.filter((row) => row.candidate.candidateNumber.toLowerCase().includes(term) || row.candidate.name.toLowerCase().includes(term));
 
+    // Only the visible rows are paged; every entry stays in `edits`, so saving still sends all changed cells.
+    const pagination = useClientPagination(visibleRows);
+    const errorKeys = Object.keys(errors);
+    const errorPages = pagesWhere(visibleRows, (row) => errorKeys.some((key) => key === `entries.${row.candidate.id}` || key.startsWith(`entries.${row.candidate.id}.`)));
+    useShowFirstErrorPage(errors, errorPages, pagination.setPage);
+
+    const changeFilter = (value: string) => {
+        setFilter(value);
+        pagination.setPage(1);
+    };
+
     const setCell = (candidateId: number, eventId: number, value: string) => {
         setEdits((current) => ({ ...current, [candidateId]: { ...current[candidateId], [eventId]: value } }));
     };
@@ -106,94 +118,98 @@ export function ResultsSheet({ testId, events, rows, editable, linkCandidates }:
                 description={rows.length === 0 ? 'Candidates appear here once they are assigned to the class.' : 'Try a different number or name.'}
             />
         ) : (
-            <Table caption="Fitness results" className="min-w-[40rem]">
-                <TableHead>
-                    <Th>Candidate</Th>
-                    {events.map((event) => (
-                        <Th key={event.id}>
-                            {event.name}
-                            <span className="block font-normal normal-case tracking-normal">
-                                Pass {event.passingDisplay} · Max {event.maximumDisplay}
-                            </span>
-                        </Th>
-                    ))}
-                    <Th>Overall</Th>
-                </TableHead>
-                <TableBody>
-                    {visibleRows.map((row) => (
-                        <Tr key={row.candidate.id}>
-                            <Td className="text-ink">
-                                {linkCandidates ? (
-                                    <Link href={routes.candidates.show(row.candidate.id)} className="block font-medium text-primary-700 underline">
-                                        {row.candidate.name}
-                                    </Link>
-                                ) : (
-                                    <span className="block font-medium">{row.candidate.name}</span>
-                                )}
-                                <span className="text-xs text-ink-muted tabular-nums">{row.candidate.candidateNumber}</span>
-                                {!row.recordable && <span className="block text-xs text-ink-muted">No longer in this class · {row.candidate.status.label}</span>}
-                            </Td>
-                            {events.map((event) => {
-                                const saved = row.results[event.id] ?? null;
-                                const typed = edits[row.candidate.id]?.[event.id];
-                                const changed = typed !== undefined && typed.trim() !== savedText(saved);
-                                const error = errors[`entries.${row.candidate.id}.${event.id}`];
-                                const errorId = `fitness-error-${row.candidate.id}-${event.id}`;
+            <>
+                <Table caption="Fitness results" className="min-w-[40rem]">
+                    <TableHead>
+                        <Th>Candidate</Th>
+                        {events.map((event) => (
+                            <Th key={event.id}>
+                                {event.name}
+                                <span className="block font-normal normal-case tracking-normal">
+                                    Pass {event.passingDisplay} · Max {event.maximumDisplay}
+                                </span>
+                            </Th>
+                        ))}
+                        <Th>Overall</Th>
+                    </TableHead>
+                    <TableBody>
+                        {pagination.rows.map((row) => (
+                            <Tr key={row.candidate.id}>
+                                <Td className="text-ink">
+                                    {linkCandidates ? (
+                                        <Link href={routes.candidates.show(row.candidate.id)} className="block font-medium text-primary-700 underline">
+                                            {row.candidate.name}
+                                        </Link>
+                                    ) : (
+                                        <span className="block font-medium">{row.candidate.name}</span>
+                                    )}
+                                    <span className="text-xs text-ink-muted tabular-nums">{row.candidate.candidateNumber}</span>
+                                    {!row.recordable && <span className="block text-xs text-ink-muted">No longer in this class · {row.candidate.status.label}</span>}
+                                </Td>
+                                {events.map((event) => {
+                                    const saved = row.results[event.id] ?? null;
+                                    const typed = edits[row.candidate.id]?.[event.id];
+                                    const changed = typed !== undefined && typed.trim() !== savedText(saved);
+                                    const error = errors[`entries.${row.candidate.id}.${event.id}`];
+                                    const errorId = `fitness-error-${row.candidate.id}-${event.id}`;
 
-                                return (
-                                    <Td key={event.id}>
-                                        <div className="flex flex-col gap-1">
-                                            {editable && row.recordable ? (
-                                                <TextInput
-                                                    value={typed ?? savedText(saved)}
-                                                    onChange={(changeEvent) => setCell(row.candidate.id, event.id, changeEvent.target.value)}
-                                                    inputMode={event.unit === 'time' ? 'text' : 'numeric'}
-                                                    placeholder={event.unit === 'time' ? 'mm:ss' : undefined}
-                                                    autoComplete="off"
-                                                    disabled={processing}
-                                                    aria-label={`${event.name} for ${row.candidate.name}`}
-                                                    aria-invalid={error !== undefined || undefined}
-                                                    aria-describedby={error !== undefined ? errorId : undefined}
-                                                    className="w-24 tabular-nums aria-invalid:border-danger-fg"
-                                                />
-                                            ) : (
-                                                <span className="font-medium text-ink tabular-nums">{saved?.display ?? '—'}</span>
-                                            )}
-                                            {error !== undefined && (
-                                                <p id={errorId} className="flex max-w-48 items-start gap-1 text-xs text-danger-fg">
-                                                    <CircleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-                                                    <span>{error}</span>
-                                                </p>
-                                            )}
-                                            {changed ? (
-                                                <span className="inline-flex items-center gap-1 text-xs font-medium text-info-fg">
-                                                    <PencilLine className="size-3.5" aria-hidden="true" />
-                                                    Unsaved
-                                                </span>
-                                            ) : (
-                                                saved !== null && <EventScore result={saved} />
-                                            )}
-                                        </div>
-                                    </Td>
-                                );
-                            })}
-                            <Td>
-                                <StatusBadge tone={row.outcome.status.tone as StatusTone}>{row.outcome.status.label}</StatusBadge>
-                                {row.outcome.points !== null && (
-                                    <span className="mt-1 block text-sm font-semibold text-ink tabular-nums">{formatGrade(row.outcome.points)} pts</span>
-                                )}
-                            </Td>
-                        </Tr>
-                    ))}
-                </TableBody>
-            </Table>
+                                    return (
+                                        <Td key={event.id}>
+                                            <div className="flex flex-col gap-1">
+                                                {editable && row.recordable ? (
+                                                    <TextInput
+                                                        value={typed ?? savedText(saved)}
+                                                        onChange={(changeEvent) => setCell(row.candidate.id, event.id, changeEvent.target.value)}
+                                                        inputMode={event.unit === 'time' ? 'text' : 'numeric'}
+                                                        placeholder={event.unit === 'time' ? 'mm:ss' : undefined}
+                                                        autoComplete="off"
+                                                        disabled={processing}
+                                                        aria-label={`${event.name} for ${row.candidate.name}`}
+                                                        aria-invalid={error !== undefined || undefined}
+                                                        aria-describedby={error !== undefined ? errorId : undefined}
+                                                        className="w-24 tabular-nums aria-invalid:border-danger-fg"
+                                                    />
+                                                ) : (
+                                                    <span className="font-medium text-ink tabular-nums">{saved?.display ?? '—'}</span>
+                                                )}
+                                                {error !== undefined && (
+                                                    <p id={errorId} className="flex max-w-48 items-start gap-1 text-xs text-danger-fg">
+                                                        <CircleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                                                        <span>{error}</span>
+                                                    </p>
+                                                )}
+                                                {changed ? (
+                                                    <span className="inline-flex items-center gap-1 text-xs font-medium text-info-fg">
+                                                        <PencilLine className="size-3.5" aria-hidden="true" />
+                                                        Unsaved
+                                                    </span>
+                                                ) : (
+                                                    saved !== null && <EventScore result={saved} />
+                                                )}
+                                            </div>
+                                        </Td>
+                                    );
+                                })}
+                                <Td>
+                                    <StatusBadge tone={row.outcome.status.tone as StatusTone}>{row.outcome.status.label}</StatusBadge>
+                                    {row.outcome.points !== null && (
+                                        <span className="mt-1 block text-sm font-semibold text-ink tabular-nums">{formatGrade(row.outcome.points)} pts</span>
+                                    )}
+                                </Td>
+                            </Tr>
+                        ))}
+                    </TableBody>
+                </Table>
+                <OtherPageErrors pagination={pagination} errorPages={errorPages} />
+                <ClientPagination pagination={pagination} noun={{ one: 'candidate', other: 'candidates' }} label="Fitness result pages" />
+            </>
         );
 
     return (
         <>
             {/* The search sits outside the form so Enter never saves. */}
             <div className="border-b border-line p-4">
-                <SearchField label="Find Candidate" placeholder="Search candidates by number or name…" value={filter} onChange={setFilter} />
+                <SearchField label="Find Candidate" placeholder="Search candidates by number or name…" value={filter} onChange={changeFilter} />
             </div>
 
             {!editable ? (

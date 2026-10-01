@@ -170,11 +170,11 @@ class ExaminationBuilderAccessTest extends TestCase
 
     public function test_list_is_paginated(): void
     {
-        foreach (range(1, 21) as $number) {
+        foreach (range(1, 11) as $number) {
             $this->draft(['title' => "Synthetic draft {$number}"]);
         }
         $this->actingAs($this->alpha)->get('/examinations')->assertInertia(fn (Assert $page) => $page
-            ->has('examinations.data', 20)->where('examinations.total', 22));
+            ->has('examinations.data', 10)->where('examinations.total', 12));
         $this->get('/examinations?page=2')->assertInertia(fn (Assert $page) => $page->has('examinations.data', 2));
     }
 

@@ -1,6 +1,8 @@
 import {
     Activity,
+    Award,
     BookOpen,
+    CalendarCheck,
     CalendarRange,
     ClipboardCheck,
     Dumbbell,
@@ -9,12 +11,13 @@ import {
     History,
     LayoutDashboard,
     Library,
-    ReceiptText,
+    Medal,
     School,
     ShieldCheck,
     UserRoundCog,
     Users,
     UsersRound,
+    WalletCards,
     type LucideIcon,
 } from 'lucide-react';
 import { Permission, type PermissionCode } from '@/lib/permissions';
@@ -87,12 +90,21 @@ export const staffNavigation: NavigationSection[] = [
     {
         label: 'Records',
         items: [
-            { label: 'Military Fitness', href: routes.fitness.index(), icon: Dumbbell, permission: Permission.ViewFitness },
             {
-                label: 'Statements of Account',
-                href: routes.accounts.index(),
-                icon: ReceiptText,
-                permission: Permission.ViewAccounts,
+                label: 'Qualification',
+                href: routes.qualification.index(),
+                icon: Award,
+                permission: Permission.ViewPerformance,
+                activeFor: [routes.performanceAreas.index()],
+            },
+            { label: 'Military Fitness', href: routes.fitness.index(), icon: Dumbbell, permission: Permission.ViewFitness },
+            { label: 'Merits & Demerits', href: routes.conduct.index(), icon: Medal, permission: Permission.ManageConduct },
+            { label: 'Attendance', href: routes.attendance.index(), icon: CalendarCheck, permission: Permission.ManageAttendance },
+            {
+                label: 'Expenses',
+                href: routes.accounts.expenses.index(),
+                icon: WalletCards,
+                permission: Permission.ManageAccounts,
                 activeFor: [routes.accounts.categories.index()],
             },
         ],

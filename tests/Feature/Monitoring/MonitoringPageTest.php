@@ -868,26 +868,26 @@ class MonitoringPageTest extends TestCase
     // Pagination
     // ------------------------------------------------------------------
 
-    public function test_pagination_shows_25_per_page_and_keeps_path_and_query_string(): void
+    public function test_pagination_shows_10_per_page_and_keeps_path_and_query_string(): void
     {
-        $this->addUngradedCandidatesToBatchC(30); // C02 ... C31
+        $this->addUngradedCandidatesToBatchC(15); // C02 ... C16
         $query = ['class' => $this->batchC->id, 'sort' => 'name', 'search' => 'candidate c'];
 
         $first = $this->monitoringProps($this->academicAdmin, $query);
-        $this->assertSame(31, $first['candidates']['total']);
-        $this->assertSame(25, $first['candidates']['per_page']);
+        $this->assertSame(16, $first['candidates']['total']);
+        $this->assertSame(10, $first['candidates']['per_page']);
         $this->assertSame(1, $first['candidates']['current_page']);
         $this->assertSame(2, $first['candidates']['last_page']);
-        $this->assertCount(25, $first['candidates']['data']);
+        $this->assertCount(10, $first['candidates']['data']);
         $this->assertSame('Candidate C01', $first['candidates']['data'][0]['candidate']['name']);
-        $this->assertSame('Candidate C25', $first['candidates']['data'][24]['candidate']['name']);
+        $this->assertSame('Candidate C10', $first['candidates']['data'][9]['candidate']['name']);
         $this->assertNull($first['candidates']['prev_page_url']);
         $this->assertPageUrl($first['candidates']['next_page_url'], [...$query, 'page' => 2]);
 
         $second = $this->monitoringProps($this->academicAdmin, [...$query, 'page' => 2]);
         $this->assertSame(2, $second['candidates']['current_page']);
         $this->assertSame(
-            ['Candidate C26', 'Candidate C27', 'Candidate C28', 'Candidate C29', 'Candidate C30', 'Candidate C31'],
+            ['Candidate C11', 'Candidate C12', 'Candidate C13', 'Candidate C14', 'Candidate C15', 'Candidate C16'],
             array_map(fn (array $row): string => $row['candidate']['name'], $second['candidates']['data']),
         );
         $this->assertNull($second['candidates']['next_page_url']);
@@ -895,11 +895,11 @@ class MonitoringPageTest extends TestCase
 
         // No candidate appears twice or is skipped across pages.
         $all = [...$this->candidateIds($first), ...$this->candidateIds($second)];
-        $this->assertCount(31, array_unique($all));
+        $this->assertCount(16, array_unique($all));
 
         // The counts are for the whole class, not the page.
-        $this->assertSame(31, $second['counts']['monitored']);
-        $this->assertSame(31, $second['counts']['noStanding']);
+        $this->assertSame(16, $second['counts']['monitored']);
+        $this->assertSame(16, $second['counts']['noStanding']);
     }
 
     public function test_invalid_page_numbers_fall_back_to_the_first_page(): void

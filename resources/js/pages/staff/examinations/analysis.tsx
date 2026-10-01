@@ -6,6 +6,7 @@ import { ColumnChart } from '@/components/charts/column-chart';
 import { QuestionMediaList } from '@/components/question-bank/question-media';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink } from '@/components/ui/button';
+import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
@@ -210,6 +211,8 @@ function Stat({ label, value, description }: { label: string; value: string; des
 }
 
 function OverviewTable({ questions, sortLabel }: { questions: ItemAnalysisQuestion[]; sortLabel: string }) {
+    const pagination = useClientPagination(questions);
+
     return (
         <Panel title="Questions" description={`Ordered: ${sortLabel.toLowerCase()}. Percent correct counts unanswered deliveries as not correct; for essays it is the average score of graded responses.`} bodyClassName="p-0">
             <Table caption={`Item analysis by question, ${sortLabel.toLowerCase()}`} className="min-w-[56rem]">
@@ -223,38 +226,53 @@ function OverviewTable({ questions, sortLabel }: { questions: ItemAnalysisQuesti
                     <Th align="right">Discrimination</Th>
                     <Th>Review notes</Th>
                 </TableHead>
-                <TableBody>
-                    {questions.map((question) => (
-                        <Tr key={question.id}>
-                            <Td>
-                                <a href={`#question-${question.id}`} className="font-medium text-primary-700 underline-offset-2 hover:underline">
-                                    {questionName(question)}
-                                </a>
-                            </Td>
-                            <Td>{question.type.label}</Td>
-                            <Td align="right" numeric>
-                                {question.delivered}
-                            </Td>
-                            <Td align="right" numeric>
-                                {question.answered}
-                            </Td>
-                            <Td align="right" numeric>
-                                {question.unanswered}
-                            </Td>
-                            <Td align="right" numeric>
-                                {formatPercent(question.difficulty)}
-                            </Td>
-                            <Td align="right" numeric>
-                                {formatDiscrimination(question.discrimination)}
-                            </Td>
-                            <Td>
-                                <Flags flags={question.flags} />
-                            </Td>
-                        </Tr>
+                <tbody className="divide-y divide-line print:hidden">
+                    {pagination.rows.map((question) => (
+                        <OverviewRow key={question.id} question={question} />
                     ))}
-                </TableBody>
+                </tbody>
+                {/* The printed analysis always lists every question, whatever page is on screen. */}
+                <tbody className="hidden divide-y divide-line print:table-row-group">
+                    {questions.map((question) => (
+                        <OverviewRow key={question.id} question={question} />
+                    ))}
+                </tbody>
             </Table>
+            <div className="print:hidden">
+                <ClientPagination pagination={pagination} noun={{ one: 'question', other: 'questions' }} label="Question pages" />
+            </div>
         </Panel>
+    );
+}
+
+function OverviewRow({ question }: { question: ItemAnalysisQuestion }) {
+    return (
+        <Tr>
+            <Td>
+                <a href={`#question-${question.id}`} className="font-medium text-primary-700 underline-offset-2 hover:underline">
+                    {questionName(question)}
+                </a>
+            </Td>
+            <Td>{question.type.label}</Td>
+            <Td align="right" numeric>
+                {question.delivered}
+            </Td>
+            <Td align="right" numeric>
+                {question.answered}
+            </Td>
+            <Td align="right" numeric>
+                {question.unanswered}
+            </Td>
+            <Td align="right" numeric>
+                {formatPercent(question.difficulty)}
+            </Td>
+            <Td align="right" numeric>
+                {formatDiscrimination(question.discrimination)}
+            </Td>
+            <Td>
+                <Flags flags={question.flags} />
+            </Td>
+        </Tr>
     );
 }
 

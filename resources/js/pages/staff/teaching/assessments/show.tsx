@@ -7,6 +7,7 @@ import { ScoreHistory, type ScoreHistoryEntry } from '@/components/grading/score
 import { changedRows, ScoreSheet, type RosterRow, type ScoreEdits } from '@/components/grading/score-sheet';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink } from '@/components/ui/button';
+import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { ConfirmAction } from '@/components/ui/confirm-action';
 import { PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
@@ -238,60 +239,65 @@ interface ScoreTableProps {
 
 /** Read-only scores, with a Correct action per row for finalized assessments. */
 function ScoreTable({ roster, maxScore, finalized, onCorrect }: ScoreTableProps) {
+    const pagination = useClientPagination(roster);
+
     if (roster.length === 0) {
         return <p className="px-5 py-6 text-sm text-ink-muted">No candidates are assigned to this class.</p>;
     }
 
     return (
-        <Table caption="Candidate scores" className="min-w-[40rem]">
-            <TableHead>
-                <Th>Candidate No.</Th>
-                <Th>Name</Th>
-                <Th align="right">Score (of {maxScore})</Th>
-                <Th align="right">Percentage</Th>
-                <Th>Comment</Th>
-                {onCorrect !== null && (
-                    <Th align="right">
-                        <span className="sr-only">Actions</span>
-                    </Th>
-                )}
-            </TableHead>
-            <TableBody>
-                {roster.map((row) => (
-                    <Tr key={row.candidate.id}>
-                        <Td className="font-medium text-ink" numeric>
-                            {row.candidate.candidateNumber}
-                        </Td>
-                        <Td className="text-ink">
-                            <span className="block">{row.candidate.name}</span>
-                            {!row.gradable && <span className="text-xs text-ink-muted">No longer graded in this class</span>}
-                        </Td>
-                        <Td align="right" numeric className="text-ink">
-                            {row.score ?? (finalized ? <span className="text-xs font-medium text-warning-fg">Missing</span> : '—')}
-                        </Td>
-                        <Td align="right" numeric className="text-ink">
-                            {formatPercent(row.percentage)}
-                        </Td>
-                        <Td className="text-ink-muted">{row.comment ?? '—'}</Td>
-                        {onCorrect !== null && (
-                            <Td align="right">
-                                {row.gradable && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        icon={<PencilLine className="size-4" aria-hidden="true" />}
-                                        aria-label={`Correct score for ${row.candidate.name}`}
-                                        onClick={() => onCorrect(row)}
-                                    >
-                                        Correct
-                                    </Button>
-                                )}
+        <>
+            <Table caption="Candidate scores" className="min-w-[40rem]">
+                <TableHead>
+                    <Th>Candidate No.</Th>
+                    <Th>Name</Th>
+                    <Th align="right">Score (of {maxScore})</Th>
+                    <Th align="right">Percentage</Th>
+                    <Th>Comment</Th>
+                    {onCorrect !== null && (
+                        <Th align="right">
+                            <span className="sr-only">Actions</span>
+                        </Th>
+                    )}
+                </TableHead>
+                <TableBody>
+                    {pagination.rows.map((row) => (
+                        <Tr key={row.candidate.id}>
+                            <Td className="font-medium text-ink" numeric>
+                                {row.candidate.candidateNumber}
                             </Td>
-                        )}
-                    </Tr>
-                ))}
-            </TableBody>
-        </Table>
+                            <Td className="text-ink">
+                                <span className="block">{row.candidate.name}</span>
+                                {!row.gradable && <span className="text-xs text-ink-muted">No longer graded in this class</span>}
+                            </Td>
+                            <Td align="right" numeric className="text-ink">
+                                {row.score ?? (finalized ? <span className="text-xs font-medium text-warning-fg">Missing</span> : '—')}
+                            </Td>
+                            <Td align="right" numeric className="text-ink">
+                                {formatPercent(row.percentage)}
+                            </Td>
+                            <Td className="text-ink-muted">{row.comment ?? '—'}</Td>
+                            {onCorrect !== null && (
+                                <Td align="right">
+                                    {row.gradable && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            icon={<PencilLine className="size-4" aria-hidden="true" />}
+                                            aria-label={`Correct score for ${row.candidate.name}`}
+                                            onClick={() => onCorrect(row)}
+                                        >
+                                            Correct
+                                        </Button>
+                                    )}
+                                </Td>
+                            )}
+                        </Tr>
+                    ))}
+                </TableBody>
+            </Table>
+            <ClientPagination pagination={pagination} noun={{ one: 'candidate', other: 'candidates' }} label="Score pages" />
+        </>
     );
 }
 

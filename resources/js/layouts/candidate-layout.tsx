@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { House, LogOut, UserRound } from 'lucide-react';
+import { Award, ClipboardList, Dumbbell, GraduationCap, House, LogOut, UserRound, type LucideIcon } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
 import { buttonClasses } from '@/components/ui/button';
@@ -8,8 +8,18 @@ import { pruneRecovery, setRecoveryOwner } from '@/lib/exam-recovery';
 import { routes } from '@/lib/routes';
 import { useFocusMainOnNavigate } from '@/lib/use-focus-main-on-navigate';
 
+/** The portal's pages, in navigation order; each is active for its own page components. */
+const PORTAL_SECTIONS: Array<{ href: string; label: string; icon: LucideIcon; isActive: (component: string) => boolean }> = [
+    { href: routes.portal.home(), label: 'Home', icon: House, isActive: (component) => component === 'portal/home' },
+    { href: routes.portal.examinations(), label: 'Examinations', icon: ClipboardList, isActive: (component) => component.startsWith('portal/examinations/') },
+    { href: routes.portal.grades(), label: 'My Grades', icon: GraduationCap, isActive: (component) => component === 'portal/grades' },
+    { href: routes.portal.performance(), label: 'My Performance', icon: Award, isActive: (component) => component === 'portal/performance' },
+    { href: routes.portal.fitness(), label: 'Physical Fitness', icon: Dumbbell, isActive: (component) => component === 'portal/fitness' },
+    { href: routes.portal.profile(), label: 'My Information', icon: UserRound, isActive: (component) => component === 'portal/profile' },
+];
+
 /**
- * Candidate examination portal shell (UI_UX_DESIGN.md Â§20): deliberately
+ * Candidate examination portal shell (UI_UX_DESIGN.md §20): deliberately
  * simpler than the staff area, with no administrative navigation.
  */
 export default function CandidateLayout({ children }: { children: ReactNode }) {
@@ -62,13 +72,23 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
                         </Link>}
                     </div>
                 </div>
-                {component !== 'portal/examinations/attempt' && <nav aria-label="Candidate portal" className="mx-auto flex max-w-7xl gap-2 px-4 pb-3 sm:px-6">
-                    {[{ href: '/portal', label: 'My Home', icon: House, active: component !== 'portal/profile' }, { href: '/portal/profile', label: 'My Information', icon: UserRound, active: component === 'portal/profile' }].map((item) =>
-                        <Link key={item.href} href={item.href} aria-current={item.active ? 'page' : undefined} className={`inline-flex min-h-12 items-center gap-2 rounded-lg px-4 text-sm font-medium focus-visible:outline focus-visible:outline-2 ${item.active ? 'bg-accent-300 text-primary-900 shadow-sm' : 'text-primary-100 hover:bg-white/10'}`}><item.icon className="size-4" aria-hidden="true" />{item.label}</Link>)}
+                {component !== 'portal/examinations/attempt' && <nav aria-label="Candidate portal" className="mx-auto max-w-7xl px-2 pb-2 sm:px-4">
+                    {/* Equal tabs, icon above the label: one row of six from tablet width, two rows of three on phones. Nothing is hidden or scrolled. */}
+                    <ul className="grid grid-cols-3 gap-1 sm:grid-cols-6">
+                        {PORTAL_SECTIONS.map((item) => {
+                            const active = item.isActive(component);
+
+                            return <li key={item.href}>
+                                <Link href={item.href} aria-current={active ? 'page' : undefined} className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-center text-xs font-semibold leading-tight sm:text-sm focus-visible:outline focus-visible:outline-2 ${active ? 'bg-accent-300 text-primary-900 shadow-sm' : 'text-primary-100 hover:bg-white/10'}`}>
+                                    <item.icon className="size-5 shrink-0" aria-hidden="true" />{item.label}
+                                </Link>
+                            </li>;
+                        })}
+                    </ul>
                 </nav>}
             </header>
 
-            <main id="main-content" tabIndex={-1} className={`mx-auto w-full ${component === 'portal/examinations/attempt' ? 'max-w-6xl' : 'max-w-7xl'} flex-1 px-4 py-8 sm:px-6`}>
+            <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
                 {children}
             </main>
 

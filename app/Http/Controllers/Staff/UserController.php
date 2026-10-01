@@ -8,6 +8,7 @@ use App\Http\Requests\Users\UpdateUserRequest;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\UserAccountService;
+use App\Support\ListCharts;
 use App\Support\QueryFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -21,7 +22,7 @@ use Inertia\Response;
  */
 class UserController extends Controller
 {
-    private const PER_PAGE = 15;
+    private const PER_PAGE = 10;
 
     public function __construct(private readonly UserAccountService $accounts) {}
 
@@ -35,7 +36,7 @@ class UserController extends Controller
         ];
         $actor = $request->user();
 
-        $users = User::query()
+        $query = User::query()
             ->with('role.permissions')
             ->whereHas('role', fn (Builder $roles) => $roles->staff())
             ->when($filters['search'] !== '', function (Builder $query) use ($filters): void {
@@ -45,7 +46,16 @@ class UserController extends Controller
                     ->orWhere('username', 'like', $term));
             })
             ->when($filters['role'] !== '', fn (Builder $query) => $query->whereRelation('role', 'code', $filters['role']))
-            ->when($filters['status'] !== '', fn (Builder $query) => $query->where('is_active', $filters['status'] === 'active'))
+            ->when($filters['status'] !== '', fn (Builder $query) => $query->where('is_active', $filters['status'] === 'active'));
+        $roleNames = $staffRoles->pluck('name', 'id');
+        $charts = [
+            ListCharts::bars('Staff by Role', 'Matching staff accounts in each role.',
+                ListCharts::countBy($query, 'role_id', fn (mixed $value): string => (string) ($roleNames[$value] ?? 'Other role')), 'account', 'accounts'),
+            ListCharts::bars('Account Status', 'Active and inactive matching accounts.',
+                ListCharts::countBy($query, 'is_active', fn (mixed $value): string => (bool) $value ? 'Active' : 'Inactive'), 'account', 'accounts'),
+        ];
+
+        $users = $query
             ->orderBy('name')
             ->orderBy('id')
             ->paginate(self::PER_PAGE)
@@ -62,6 +72,7 @@ class UserController extends Controller
 
         return Inertia::render('staff/users/index', [
             'users' => $users,
+            'charts' => $charts,
             'filters' => $filters,
             'roles' => $staffRoles->map(fn (Role $role): array => ['code' => $role->code, 'name' => $role->name])->all(),
             'canCreate' => $actor->can('create', User::class),

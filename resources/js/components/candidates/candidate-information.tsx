@@ -25,7 +25,9 @@ export function CandidateInformationPanels({ candidate }: { candidate: Candidate
                 <Detail label={terms.classBatch.singular}>{candidate.classBatch?.name ?? 'Not assigned'}</Detail>
                 <Detail label="Candidate Status"><StatusBadge tone={candidate.status.tone}>{candidate.status.label}</StatusBadge></Detail>
                 <Detail label="Academic Period">{candidate.classBatch?.period ?? 'Not assigned'}</Detail>
-                <Detail label="Training Group / Section / Platoon">{candidate.trainingGroup ?? 'Not assigned'}</Detail>
+                <Detail label="Training Group / Section">{candidate.trainingGroup ?? 'Not assigned'}</Detail>
+                <Detail label="Company">{candidate.company ?? 'Not assigned'}</Detail>
+                <Detail label="Platoon">{candidate.platoon ?? 'Not assigned'}</Detail>
                 <Detail label="Record Created">{dates.dateTime(candidate.createdAt)}</Detail>
                 <Detail label="Last Updated">{dates.dateTime(candidate.updatedAt)}</Detail>
             </dl>

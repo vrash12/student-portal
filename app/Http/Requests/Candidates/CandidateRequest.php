@@ -6,8 +6,10 @@ use App\Http\Requests\Concerns\NormalizesTextInput;
 use App\Models\Candidate;
 use App\Models\User;
 use App\Services\CandidateService;
+use App\Support\CandidateGroups;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Validator;
@@ -18,6 +20,9 @@ use Illuminate\Validation\Validator;
 abstract class CandidateRequest extends FormRequest
 {
     use NormalizesTextInput;
+
+    /** Optional unit assignments (free text, see CandidateGroups). */
+    private const GROUP_FIELDS = ['company', 'platoon'];
 
     /**
      * The candidate being edited, or null when creating.
@@ -34,6 +39,15 @@ abstract class CandidateRequest extends FormRequest
             'last_name' => $this->trimmedInput('last_name'),
             'class_batch_id' => $classBatchId === '' ? null : $classBatchId,
         ]);
+
+        // Company and platoon names group candidates in filters, so "Alpha
+        // Company" and "Alpha  Company " are stored as the same value.
+        foreach (self::GROUP_FIELDS as $field) {
+            $value = $this->input($field);
+            if (is_string($value)) {
+                $this->merge([$field => Str::squish($value)]);
+            }
+        }
     }
 
     /**
@@ -54,6 +68,8 @@ abstract class CandidateRequest extends FormRequest
             'middle_name' => ['nullable', 'string', 'max:100'],
             'suffix' => ['nullable', 'string', 'max:20'],
             'training_group' => ['nullable', 'string', 'max:100'],
+            'company' => ['nullable', 'string', 'max:'.CandidateGroups::MAX_LENGTH],
+            'platoon' => ['nullable', 'string', 'max:'.CandidateGroups::MAX_LENGTH],
             'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=4096,max_height=4096', 'prohibited_if:remove_photo,1,true'],
             'remove_photo' => ['sometimes', 'boolean'],
             'class_batch_id' => ['nullable', 'integer', Rule::exists('class_batches', 'id')],
@@ -114,7 +130,7 @@ abstract class CandidateRequest extends FormRequest
     {
         // Preserve optional fields when older clients omit them.
         $data = [];
-        foreach (['middle_name', 'suffix', 'training_group'] as $field) {
+        foreach (['middle_name', 'suffix', 'training_group', ...self::GROUP_FIELDS] as $field) {
             if ($this->exists($field)) {
                 $data[$field] = $this->optionalInput($field);
             }

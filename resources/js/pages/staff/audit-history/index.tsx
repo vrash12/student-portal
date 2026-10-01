@@ -1,4 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
+import { ListCharts, type ListChart } from '@/components/charts/list-charts';
 import { History, SearchX } from 'lucide-react';
 import { AuditChangeList, humanizeKey, type AuditValues } from '@/components/audit/audit-change-list';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,8 @@ interface AuditFilters {
 }
 
 interface Props {
+    /** Charts computed by the server from the filtered list. */
+    charts: ListChart[];
     entries: Paginated<Entry>;
     actors: { id: number; name: string }[];
     actions: { value: string; label: string }[];
@@ -46,7 +49,7 @@ interface Props {
 
 const AUDIT_HISTORY_URL = '/audit-history';
 
-export default function AuditHistory({ entries, actors, actions, entities, filters }: Props) {
+export default function AuditHistory({ entries, actors, actions, entities, filters, charts }: Props) {
     const { values, update, reset, isFiltered } = useQueryFilters<AuditFilters>(AUDIT_HISTORY_URL, {
         actor: String(filters.actor ?? ''),
         action: String(filters.action ?? ''),
@@ -66,6 +69,8 @@ export default function AuditHistory({ entries, actors, actions, entities, filte
                 title="Audit History"
                 description="Read-only history of account, academic, question bank, and examination changes."
             />
+
+            <ListCharts charts={charts} />
 
             <div className="rounded-lg border border-line bg-surface">
                 <FilterBar onReset={reset} canReset={isFiltered}>

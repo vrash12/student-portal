@@ -22,9 +22,26 @@ return [
     // Public URL of the approved logo. Null renders a neutral placeholder.
     'logo_url' => env('ORGANIZATION_LOGO_URL'),
 
-    // Optional sign-in image (a local path such as /branding/login.jpg). When
-    // empty, the sign-in page shows the institution's mark and names instead.
-    'login_image_url' => env('LOGIN_IMAGE_URL') ?: null,
+    // Locally served sign-in background. An explicit empty value disables the
+    // photograph and keeps the institutional green background.
+    'login_image_url' => env('LOGIN_IMAGE_URL', '/branding/login-campus.jpg') ?: null,
+
+    // Background for smaller screens (below 1280 x 860), where the card cannot
+    // line up with the supplied picture. Empty: the main image everywhere.
+    'login_compact_image_url' => env('LOGIN_COMPACT_IMAGE_URL', '/branding/login-background.png') ?: null,
+
+    // Sign-in page texts. Empty values fall back (titles) or are hidden.
+    'login' => [
+        // Header title and subtitle; default to the organization and short system names.
+        'header_title' => env('LOGIN_HEADER_TITLE') ?: null,
+        'header_subtitle' => env('LOGIN_HEADER_SUBTITLE') ?: null,
+        // Comma-separated, e.g. "Discipline,Integrity,Valor,Duty".
+        'core_values' => array_values(array_filter(array_map('trim', explode(',', (string) env('INSTITUTION_CORE_VALUES', ''))))),
+        'motto' => env('LOGIN_MOTTO') ?: null,
+        'tagline' => env('LOGIN_TAGLINE', 'Secure platform for candidate records, training monitoring, evaluations, and administrative support.') ?: null,
+        // Shown by "Need assistance?"; without it users are told to contact the system administrator.
+        'help_desk' => env('HELP_DESK_CONTACT') ?: null,
+    ],
 
     // Small "Powered by" credit under the sign-in form (placeholder supplied
     // by the owner). Leave POWERED_BY_NAME empty to hide it.

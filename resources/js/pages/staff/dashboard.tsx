@@ -1,12 +1,11 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { BellRing, CalendarClock, ChartColumn, ClipboardList } from 'lucide-react';
-import { StatementsOverview } from '@/components/accounts/statements-overview';
-import type { AccountOverview } from '@/components/accounts/types';
+import { Award, BellRing, CalendarClock, ChartColumn, ClipboardList } from 'lucide-react';
 import { BarList } from '@/components/charts/bar-list';
 import { ChartFigure } from '@/components/charts/chart-figure';
 import { ColumnChart } from '@/components/charts/column-chart';
 import { StandingBreakdown, StandingDistribution } from '@/components/charts/standing-breakdown';
 import { AttentionList } from '@/components/monitoring/attention-list';
+import { QualificationDistribution } from '@/components/performance/qualification-distribution';
 import { StandingCounts } from '@/components/monitoring/standing-counts';
 import { Alert } from '@/components/ui/alert';
 import { ButtonLink } from '@/components/ui/button';
@@ -19,6 +18,7 @@ import { RowAction } from '@/components/ui/table';
 import { formatCalendarDate, useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
+import type { QualificationOverviewData } from '@/types/candidate-performance';
 import type { ChartColumn as DistributionColumn } from '@/types/charts';
 import type { GradingThresholds, StatusValue } from '@/types/grading';
 import type { MonitoringSummary, SubjectStandingSummary } from '@/types/monitoring';
@@ -70,8 +70,12 @@ interface DashboardProps {
     /** Present only for users allowed to view accounts. */
     accountSummary: RoleAccountCount[] | null;
     administratorOverview: AdministratorOverviewData | null;
-    /** Statements of Account totals (accounts.view); not the sign-in accounts above. */
-    statementsOverview: AccountOverview | null;
+    /** Qualification of every candidate: performance.view. */
+    showQualification: boolean;
+    /** Qualification across the classes of the active period; null when no period is active. */
+    qualificationOverview: QualificationOverviewData | null;
+    /** The user may configure the performance areas (performance.configure). */
+    canConfigurePerformance: boolean;
 }
 
 interface AdministratorOverviewData {
@@ -95,7 +99,9 @@ export default function Dashboard({
     thresholdSetup,
     accountSummary,
     administratorOverview,
-    statementsOverview,
+    showQualification,
+    qualificationOverview,
+    canConfigurePerformance,
 }: DashboardProps) {
     const { app, auth } = usePage().props;
     const userName = auth.user?.name ?? '';
@@ -122,9 +128,10 @@ export default function Dashboard({
                     )
                 )}
 
+                {showQualification && <QualificationOverview overview={qualificationOverview} canConfigure={canConfigurePerformance} />}
+
                 {administratorOverview !== null && <AdministratorOverview overview={administratorOverview} />}
 
-                {statementsOverview !== null && <StatementsOverview overview={statementsOverview} />}
 
                 {accountSummary !== null && (
                     <Panel title="Active Accounts" description="Accounts that can currently sign in, by role.">
@@ -137,6 +144,88 @@ export default function Dashboard({
                 )}
             </div>
         </>
+    );
+}
+
+/**
+ * Qualification across every class of the active period (performance.view),
+ * from the server's QualificationEngine: candidates per status and the
+ * required area failed most often. The class pages list the candidates.
+ */
+function QualificationOverview({ overview, canConfigure }: { overview: QualificationOverviewData | null; canConfigure: boolean }) {
+    const { plural } = terms.classBatch;
+
+    if (overview === null) {
+        return (
+            <Panel title="Qualification">
+                <EmptyState
+                    icon={CalendarClock}
+                    headingLevel="h3"
+                    title="No active academic period"
+                    description="Qualification of the active period appears here. Set an academic period as active to see it."
+                />
+            </Panel>
+        );
+    }
+
+    if (!overview.configured) {
+        return (
+            <Panel title="Qualification" description={overview.period.name}>
+                <EmptyState
+                    icon={Award}
+                    headingLevel="h3"
+                    title="No performance areas are configured"
+                    description="Qualification cannot be decided until the areas, their weights and passing grades are set."
+                    action={
+                        canConfigure && (
+                            <ButtonLink href={routes.performanceAreas.index()} variant="secondary">
+                                Configure Performance Areas
+                            </ButtonLink>
+                        )
+                    }
+                />
+            </Panel>
+        );
+    }
+
+    const { counts, mostCommonUnmet } = overview;
+
+    return (
+        <Panel
+            title="Qualification"
+            description={`${overview.period.name} · ${overview.classCount} ${(overview.classCount === 1 ? terms.classBatch.singular : plural).toLowerCase()} · candidates who are not withdrawn`}
+            actions={
+                <ButtonLink href={routes.qualification.index()} variant="secondary">
+                    Open Qualification
+                </ButtonLink>
+            }
+        >
+            {counts.total === 0 ? (
+                <p className="text-sm text-ink">No candidates are assigned to the {plural.toLowerCase()} of {overview.period.name} yet.</p>
+            ) : (
+                <div className="flex flex-col gap-5">
+                    <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        <MetricCard label="Candidates" value={counts.total} />
+                        <MetricCard label="Qualified" value={counts.qualified} description="Passed every required area." />
+                        <MetricCard label="Not Qualified" value={counts.notQualified} description="Failed at least one required area." />
+                        <MetricCard label="Pending" value={counts.pending} description="Waiting for results in a required area." />
+                    </dl>
+                    <ChartFigure title="Qualification Status" description="Share of candidates in each qualification status.">
+                        <QualificationDistribution counts={counts} />
+                    </ChartFigure>
+                    <p className="text-sm text-ink">
+                        {mostCommonUnmet === null ? (
+                            'No required area is failed by any candidate.'
+                        ) : (
+                            <>
+                                Most common unmet requirement: <span className="font-semibold">{mostCommonUnmet.name}</span>, failed by{' '}
+                                <span className="font-semibold tabular-nums">{mostCommonUnmet.count}</span> {mostCommonUnmet.count === 1 ? 'candidate' : 'candidates'}.
+                            </>
+                        )}
+                    </p>
+                </div>
+            )}
+        </Panel>
     );
 }
 

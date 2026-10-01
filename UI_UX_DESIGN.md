@@ -114,6 +114,8 @@ The application architecture should allow branding to be configured later.
 
 # 4. Color System
 
+Owner-approved sign-in update (2026-10-01): use the generated school/cadet scene as a locally served full-width background, with navy/gold header accents and a readable white sign-in card. On desktop the card sits to the right; on tablets and phones it centers with normal page scrolling when needed. Render the existing configured logo, all text, and working controls as HTML; keep the background free of pictured forms. Authentication behavior and the green palette on other screens stay unchanged.
+
 Owner-approved direction (2026-09-30): use the existing logo's green and yellow palette more visibly. Deep institutional green anchors navigation and the candidate welcome panel; yellow marks active navigation, key shortcuts and selected brand accents. Use a pale green canvas, white content surfaces and lightly tinted section headers. Keep dense tables and examination answers on light surfaces.
 
 Yellow brand accents use dark green text, never white text. Warning, danger, information and academic-standing colors retain their semantic meanings and explicit labels. Use yellow keyboard focus on dark green surfaces and green focus on light surfaces. Assets and typography remain locally bundled; use the configured organization logo without creating additional insignia.

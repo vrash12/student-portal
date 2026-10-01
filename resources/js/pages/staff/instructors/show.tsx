@@ -3,6 +3,7 @@ import { ClipboardList, Pencil, Trash2 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink } from '@/components/ui/button';
+import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { ConfirmAction } from '@/components/ui/confirm-action';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FormField, SelectInput } from '@/components/ui/form-field';
@@ -28,6 +29,7 @@ interface InstructorShowProps {
 
 export default function InstructorShow({ instructor, assignments, offeringOptions, canEditAccount }: InstructorShowProps) {
     const { singular } = terms.classBatch;
+    const pagination = useClientPagination(assignments);
 
     return (
         <>
@@ -86,7 +88,7 @@ export default function InstructorShow({ instructor, assignments, offeringOption
                             </Th>
                         </TableHead>
                         <TableBody>
-                            {assignments.map((assignment) => (
+                            {pagination.rows.map((assignment) => (
                                 <Tr key={assignment.id}>
                                     <Td>
                                         <Link
@@ -126,6 +128,7 @@ export default function InstructorShow({ instructor, assignments, offeringOption
                         </TableBody>
                     </Table>
                 )}
+                <ClientPagination pagination={pagination} noun={{ one: 'assignment', other: 'assignments' }} label="Teaching assignment pages" />
             </Panel>
         </>
     );

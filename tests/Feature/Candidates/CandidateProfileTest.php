@@ -48,16 +48,16 @@ class CandidateProfileTest extends TestCase
         $attempt->passed = true;
         $attempt->save();
 
-        $this->actingAs($candidate->user)->get('/portal/profile')->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->where('examinationResults.data.0.percentage', null)
-                ->where('examinationResults.data.0.score', null)->where('examinationResults.data.0.passed', null)
-                ->missing('examinationResults.data.0.scoring_key')->missing('examinationResults.data.0.answers'));
+        $this->actingAs($candidate->user)->get('/portal/examinations')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('results.data.0.percentage', null)
+                ->where('results.data.0.score', null)->where('results.data.0.passed', null)
+                ->missing('results.data.0.scoring_key')->missing('results.data.0.answers'));
         $exam->release_results = true;
         $exam->save();
-        $this->get('/portal/profile')->assertInertia(fn (Assert $page) => $page
-            ->where('examinationResults.data.0.percentage', 80)->where('examinationResults.data.0.passed', true));
+        $this->get('/portal/examinations')->assertInertia(fn (Assert $page) => $page
+            ->where('results.data.0.percentage', 80)->where('results.data.0.passed', true));
         $other = Candidate::factory()->create(['class_batch_id' => $batch->id]);
-        $this->actingAs($other->user)->get('/portal/profile')->assertInertia(fn (Assert $page) => $page->has('examinationResults.data', 0));
+        $this->actingAs($other->user)->get('/portal/examinations')->assertInertia(fn (Assert $page) => $page->has('results.data', 0));
     }
 
     public function test_admin_manages_identity_and_private_photo_and_candidate_can_only_read_own_profile(): void

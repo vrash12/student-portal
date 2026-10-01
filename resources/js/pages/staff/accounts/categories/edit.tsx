@@ -34,7 +34,7 @@ export default function EditAccountCategory({ category, entryTypes }: EditAccoun
                     title={category.name}
                     description={`Used by ${category.entryCount} ${category.entryCount === 1 ? 'entry' : 'entries'}`}
                     breadcrumbs={[
-                        { label: 'Statements of Account', href: routes.accounts.index() },
+                        { label: 'Expenses', href: routes.accounts.expenses.index() },
                         { label: 'Categories', href: routes.accounts.categories.index() },
                         { label: category.name },
                     ]}

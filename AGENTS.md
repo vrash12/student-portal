@@ -252,7 +252,8 @@ The platform should support the following major modules:
 - Examination results
 - Reporting
 - Audit logs
-- Military fitness testing (approved by the owner on 2026-10-01: configurable events and standards, tests per class, results scored by the server; a separate record that does not change academic grades or standing; staff only)
+- Military fitness testing (approved by the owner on 2026-10-01: configurable events and standards, tests per class, results scored by the server; it does not change subject grades or academic standing; candidates see their own results in the portal)
+- Merits & demerits, attendance, company/platoon, and performance areas with qualification and class rank (approved by the owner on 2026-10-01; see `docs/performance-and-qualification.md`: configurable areas, weights, passing grades and must-pass rules; fitness is a must-pass area; class rank is staff only)
 
 ---
 
@@ -327,6 +328,8 @@ The first implementation should primarily support candidate access for:
 - quizzes
 - examinations
 - authorized assessments
+
+Owner decision (2026-10-01): candidates see their own grades, examination results, performance areas and qualification checklist, merits/demerits, attendance and fitness tests in the portal (each on its own page), always only their own records. Class rank and other candidates' data are never sent to the portal.
 
 Do not automatically expose:
 
@@ -1901,7 +1904,7 @@ Do **not** implement the following unless explicitly requested later:
 - biometric authentication
 - proctoring / webcam monitoring (exception approved by the owner on 2026-10-01: the examination page records when a candidate leaves the exam screen — tab/app switch or another window focused — as an indicator for instructors; no camera, microphone, screen capture, or automatic penalties)
 - multi-tenant SaaS architecture
-- payment functionality (Statement of Account ledger approved by the owner on 2026-10-01; records amounts only, no payments)
+- payment functionality (owner decision 2026-10-01: only the Expenses feature remains — the Super Administrator defines expenses and assign them to a class or chosen candidates; the Statement of Account pages, PDF and candidate view, and the Finance Officer role, were removed; candidates are scholars, no payments)
 - public registration
 
 Focus only on the requirements currently needed for the prototype and initial system.

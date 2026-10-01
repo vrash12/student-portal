@@ -47,8 +47,11 @@ class CandidatePortalPagesTest extends TestCase
         $this->assertSame(0, $props['summary']['subjectCount']);
         $this->assertSame(0, $props['available']['total']);
         $this->assertSame(0, $props['upcoming']['total']);
-        $this->assertSame(0, $props['outstanding']['total']);
-        $this->assertSame([], $props['recentResults']);
+        $this->assertSame(0, $props['sections']['grades']['subjectCount']);
+        $this->assertSame(0, $props['sections']['grades']['outstandingCount']);
+        $this->assertNull($props['sections']['fitness']);
+        $this->assertSame(0, $this->pageProps($candidate->user, '/portal/grades', 'portal/grades')['outstanding']['total']);
+        $this->assertSame([], $this->pageProps($candidate->user, '/portal/examinations', 'portal/examinations/index')['scoreTrend']);
     }
 
     public function test_home_lists_only_open_published_examinations_of_the_own_class(): void
@@ -103,10 +106,11 @@ class CandidatePortalPagesTest extends TestCase
 
         $this->assertFalse($props['summary']['eligible']);
         $this->assertSame(0, $props['available']['total']);
-        $this->assertSame(0, $props['outstanding']['total']);
+        $this->assertSame(0, $props['sections']['grades']['outstandingCount']);
+        $this->assertSame(0, $this->pageProps($this->withdrawnInA->user, '/portal/grades', 'portal/grades')['outstanding']['total']);
     }
 
-    public function test_home_shows_only_released_graded_results_of_the_candidate(): void
+    public function test_score_chart_shows_only_released_graded_results_of_the_candidate(): void
     {
         $this->buildReportingFixtures();
         $released = $this->makeExamination($this->offeringA1, 'Released Exam', ['release_results' => true, 'attempt_limit' => 2]);
@@ -116,28 +120,29 @@ class CandidatePortalPagesTest extends TestCase
         $this->makeAttempt($unreleased, $this->candidateInA);
         $this->makeAttempt($released, $this->secondInA, ['percentage' => 40, 'earned_points' => 4, 'passed' => false]);
 
-        $props = $this->homeProps($this->candidateInA->user);
+        $props = $this->pageProps($this->candidateInA->user, '/portal/examinations', 'portal/examinations/index');
 
-        $this->assertCount(1, $props['recentResults']);
-        $this->assertSame('Released Exam', $props['recentResults'][0]['title']);
-        $this->assertSame(1, $props['recentResults'][0]['attemptNumber']);
-        $this->assertEquals(80, $props['recentResults'][0]['percentage']);
-        $this->assertTrue($props['recentResults'][0]['passed']);
-        $this->assertStringNotContainsString('Unreleased Exam', json_encode($props['recentResults']));
+        $this->assertCount(1, $props['scoreTrend']);
+        $this->assertSame('Released Exam', $props['scoreTrend'][0]['title']);
+        $this->assertSame(1, $props['scoreTrend'][0]['attemptNumber']);
+        $this->assertEquals(80, $props['scoreTrend'][0]['percentage']);
+        $this->assertTrue($props['scoreTrend'][0]['passed']);
+        $this->assertStringNotContainsString('Unreleased Exam', json_encode($props['scoreTrend']));
         $this->assertStringNotContainsString('synthetic-', json_encode($props));
+        $this->assertSame(1, $this->homeProps($this->candidateInA->user)['sections']['examinations']['releasedCount']);
     }
 
-    public function test_recent_results_are_limited_to_six(): void
+    public function test_score_chart_shows_the_latest_ten_results_oldest_first(): void
     {
         $this->buildReportingFixtures();
-        $exam = $this->makeExamination($this->offeringA1, 'Practice Exam', ['release_results' => true, 'attempt_limit' => 10]);
-        for ($number = 1; $number <= 8; $number++) {
+        $exam = $this->makeExamination($this->offeringA1, 'Practice Exam', ['release_results' => true, 'attempt_limit' => 12]);
+        for ($number = 1; $number <= 12; $number++) {
             $this->makeAttempt($exam, $this->candidateInA, ['attempt_number' => $number, 'submitted_at' => now()->subMinutes(100 - $number)]);
         }
 
-        $results = $this->homeProps($this->candidateInA->user)['recentResults'];
+        $trend = $this->pageProps($this->candidateInA->user, '/portal/examinations', 'portal/examinations/index')['scoreTrend'];
 
-        $this->assertSame([8, 7, 6, 5, 4, 3], array_column($results, 'attemptNumber'));
+        $this->assertSame([3, 4, 5, 6, 7, 8, 9, 10, 11, 12], array_column($trend, 'attemptNumber'));
     }
 
     public function test_outstanding_work_lists_finalized_assessments_without_the_candidates_score(): void
@@ -146,38 +151,47 @@ class CandidatePortalPagesTest extends TestCase
         // A2 has no score on Subject 2 Examination; a draft assessment is not outstanding.
         $this->createAssessment($this->quizzes, 'Draft Quiz', '100');
 
-        $a2 = $this->homeProps($this->secondInA->user)['outstanding'];
-        $a1 = $this->homeProps($this->candidateInA->user)['outstanding'];
+        $a2 = $this->pageProps($this->secondInA->user, '/portal/grades', 'portal/grades')['outstanding'];
+        $a1 = $this->pageProps($this->candidateInA->user, '/portal/grades', 'portal/grades')['outstanding'];
+        $this->assertSame(1, $this->homeProps($this->secondInA->user)['sections']['grades']['outstandingCount']);
 
         $this->assertSame(['Subject 2 Examination'], array_column($a2['data'], 'title'));
         $this->assertSame(['id', 'title', 'subject', 'category', 'date'], array_keys($a2['data'][0]));
         $this->assertSame(0, $a1['total']);
     }
 
-    public function test_home_pagination_parameters_are_separate_and_tolerant(): void
+    public function test_home_shows_the_first_few_and_the_examinations_page_pages_every_list(): void
     {
         $this->buildReportingFixtures();
-        for ($index = 1; $index <= 9; $index++) {
+        for ($index = 1; $index <= 12; $index++) {
             $this->makeExamination($this->offeringA1, "Exam {$index}", ['closes_at' => now()->addHours($index)]);
         }
-        for ($index = 1; $index <= 7; $index++) {
+        for ($index = 1; $index <= 12; $index++) {
             $this->makeExamination($this->offeringA1, "Later Exam {$index}", ['opens_at' => now()->addDays($index)]);
         }
 
-        $first = $this->homeProps($this->candidateInA->user);
-        $this->assertCount(8, $first['available']['data']);
-        $this->assertSame(9, $first['available']['total']);
-        $this->assertCount(6, $first['upcoming']['data']);
+        // Home: the first four open (closing soonest first) and the next three scheduled.
+        $home = $this->homeProps($this->candidateInA->user);
+        $this->assertSame(['Exam 1', 'Exam 2', 'Exam 3', 'Exam 4'], array_column($home['available']['data'], 'title'));
+        $this->assertSame(12, $home['available']['total']);
+        $this->assertCount(3, $home['upcoming']['data']);
+        $this->assertSame(12, $home['sections']['examinations']['openCount']);
 
-        $second = $this->homeProps($this->candidateInA->user, ['available_page' => 2]);
-        $this->assertSame(['Exam 9'], array_column($second['available']['data'], 'title'));
+        $url = '/portal/examinations';
+        $first = $this->pageProps($this->candidateInA->user, $url, 'portal/examinations/index');
+        $this->assertCount(10, $first['available']['data']);
+        $this->assertCount(10, $first['upcoming']['data']);
+
+        $second = $this->pageProps($this->candidateInA->user, $url.'?available_page=2', 'portal/examinations/index');
+        $this->assertSame(['Exam 11', 'Exam 12'], array_column($second['available']['data'], 'title'));
         // Only the requested list moves.
         $this->assertSame(1, $second['upcoming']['current_page']);
         $this->assertStringContainsString('available_page=2', $second['upcoming']['next_page_url']);
 
         foreach (['abc', '-3', '0', '999'] as $page) {
-            $props = $this->homeProps($this->candidateInA->user, ['available_page' => $page, 'upcoming_page' => $page, 'outstanding_page' => $page]);
-            $this->assertSame(9, $props['available']['total'], "page {$page}");
+            $props = $this->pageProps($this->candidateInA->user, $url.'?'.http_build_query(['available_page' => $page, 'upcoming_page' => $page, 'exams_page' => $page]), 'portal/examinations/index');
+            $this->assertSame(12, $props['available']['total'], "page {$page}");
+            $this->actingAs($this->candidateInA->user)->get('/portal/grades?'.http_build_query(['outstanding_page' => $page, 'assessments_page' => $page]))->assertOk();
         }
     }
 
@@ -202,7 +216,7 @@ class CandidatePortalPagesTest extends TestCase
         $candidate->user->forceFill(['is_active' => false])->save();
         $instructor = $this->userWithRole(SystemRole::Instructor);
         $admin = $this->userWithRole(SystemRole::AcademicAdministrator);
-        $pages = ['/portal', '/portal/profile', '/portal/profile/photo', '/portal/profile/documents/registration', '/portal/profile/documents/academic'];
+        $pages = ['/portal', '/portal/examinations', '/portal/grades', '/portal/performance', '/portal/fitness', '/portal/profile', '/portal/profile/photo', '/portal/profile/documents/registration', '/portal/profile/documents/academic'];
 
         foreach ($pages as $page) {
             $this->actingAs($instructor)->get($page)->assertForbidden();
@@ -217,7 +231,7 @@ class CandidatePortalPagesTest extends TestCase
     {
         $orphan = $this->userWithRole(SystemRole::Candidate);
 
-        foreach (['/portal', '/portal/profile', '/portal/profile/photo', '/portal/profile/documents/registration'] as $page) {
+        foreach (['/portal', '/portal/examinations', '/portal/grades', '/portal/performance', '/portal/fitness', '/portal/profile', '/portal/profile/photo', '/portal/profile/documents/registration'] as $page) {
             $this->actingAs($orphan)->get($page)->assertNotFound();
         }
     }
@@ -235,21 +249,30 @@ class CandidatePortalPagesTest extends TestCase
                 ->where('candidate.id', $candidate->id)
                 ->where('candidate.classBatch', null)
                 ->where('candidate.photoUrl', null)
+                // Personal details only: grades and results have their own pages.
+                ->missing('academics')
+                ->missing('examinationResults'));
+        $this->actingAs($candidate->user)->get('/portal/grades')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('portal/grades')
                 ->where('academics.subjects', [])
-                ->where('assessmentHistory.total', 0)
-                ->where('examinationResults.total', 0));
+                ->where('thresholds', null)
+                ->where('assessmentHistory.total', 0));
+        $this->actingAs($candidate->user)->get('/portal/examinations')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('portal/examinations/index')->where('results.total', 0));
     }
 
-    public function test_profile_shows_own_scores_only_and_pending_results_as_pending(): void
+    public function test_grades_and_results_show_own_scores_only_and_pending_results_as_pending(): void
     {
         $this->buildReportingFixtures();
         $exam = $this->makeExamination($this->offeringA1, 'Essay Exam', ['release_results' => true]);
         $this->makeAttempt($exam, $this->candidateInA, ['result_status' => 'pending_review', 'earned_points' => 6, 'percentage' => 60, 'passed' => false]);
 
-        $props = $this->actingAs($this->candidateInA->user)->get('/portal/profile?candidate_id='.$this->secondInA->id)->assertOk()->inertiaProps();
+        $profile = $this->actingAs($this->candidateInA->user)->get('/portal/profile?candidate_id='.$this->secondInA->id)->assertOk()->inertiaProps();
+        $this->assertSame($this->candidateInA->id, $profile['candidate']['id']);
+        $exams = $this->pageProps($this->candidateInA->user, '/portal/examinations?candidate_id='.$this->secondInA->id, 'portal/examinations/index');
+        $props = $this->pageProps($this->candidateInA->user, '/portal/grades?candidate_id='.$this->secondInA->id, 'portal/grades');
 
-        $this->assertSame($this->candidateInA->id, $props['candidate']['id']);
-        $result = $props['examinationResults']['data'][0];
+        $result = $exams['results']['data'][0];
         $this->assertSame('Awaiting review', $result['resultLabel']);
         $this->assertNull($result['score']);
         $this->assertNull($result['percentage']);
@@ -272,17 +295,18 @@ class CandidatePortalPagesTest extends TestCase
         }
 
         $user = $this->candidateInA->user;
-        $first = $this->actingAs($user)->get('/portal/profile')->assertOk()->inertiaProps();
-        $second = $this->actingAs($user)->get('/portal/profile?assessments_page=2')->assertOk()->inertiaProps();
+        $first = $this->pageProps($user, '/portal/grades', 'portal/grades');
+        $second = $this->pageProps($user, '/portal/grades?assessments_page=2', 'portal/grades');
 
         // 16 extra quizzes plus Quiz 1 and Subject 2 Examination of Batch A.
         $this->assertSame(18, $first['assessmentHistory']['total']);
-        $this->assertCount(15, $first['assessmentHistory']['data']);
-        $this->assertCount(3, $second['assessmentHistory']['data']);
+        $this->assertCount(10, $first['assessmentHistory']['data']);
+        $this->assertCount(8, $second['assessmentHistory']['data']);
         $this->assertSame('Extra Quiz 16', $first['assessmentHistory']['data'][0]['title']);
 
         foreach (['abc', '-1', '0', '500'] as $page) {
-            $this->actingAs($user)->get("/portal/profile?assessments_page={$page}&exams_page={$page}")->assertOk();
+            $this->actingAs($user)->get("/portal/grades?assessments_page={$page}")->assertOk();
+            $this->actingAs($user)->get("/portal/examinations?exams_page={$page}")->assertOk();
         }
     }
 
@@ -382,8 +406,16 @@ class CandidatePortalPagesTest extends TestCase
      */
     private function homeProps(User $user, array $query = []): array
     {
-        return $this->actingAs($user)->get('/portal'.($query === [] ? '' : '?'.http_build_query($query)))->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->component('portal/home'))
+        return $this->pageProps($user, '/portal'.($query === [] ? '' : '?'.http_build_query($query)), 'portal/home');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function pageProps(User $user, string $url, string $component): array
+    {
+        return $this->actingAs($user)->get($url)->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component($component))
             ->inertiaProps();
     }
 }

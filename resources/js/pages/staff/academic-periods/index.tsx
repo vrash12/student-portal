@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { CalendarRange, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { Button, ButtonLink } from '@/components/ui/button';
+import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
@@ -32,6 +33,7 @@ export default function AcademicPeriodsIndex({ periods, can }: AcademicPeriodsIn
     const [activating, setActivating] = useState<PeriodRow | null>(null);
     const [processing, setProcessing] = useState(false);
     const currentPeriod = periods.find((period) => period.isActive) ?? null;
+    const pagination = useClientPagination(periods);
 
     const createAction = (
         <ButtonLink href={routes.academicPeriods.create()} variant="primary" icon={<Plus className="size-4" aria-hidden="true" />}>
@@ -89,7 +91,7 @@ export default function AcademicPeriodsIndex({ periods, can }: AcademicPeriodsIn
                             </Th>
                         </TableHead>
                         <TableBody>
-                            {periods.map((period) => (
+                            {pagination.rows.map((period) => (
                                 <Tr key={period.id}>
                                     <Td className="font-medium text-ink">
                                         <Link href={routes.academicPeriods.show(period.id)} className="text-primary-700 underline">
@@ -144,6 +146,7 @@ export default function AcademicPeriodsIndex({ periods, can }: AcademicPeriodsIn
                         </TableBody>
                     </Table>
                 )}
+                <ClientPagination pagination={pagination} noun={{ one: 'period', other: 'periods' }} label="Academic period pages" />
             </div>
 
             <ConfirmDialog

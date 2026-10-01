@@ -9,12 +9,24 @@ export interface CandidateInformation {
     suffix: string | null;
     name: string;
     trainingGroup: string | null;
+    /** Free-text unit assignments; null when not assigned. */
+    company: string | null;
+    platoon: string | null;
     photoUrl: string | null;
     status: StatusValue;
     classBatch: { id: number; name: string; period: string; periodId: number } | null;
     account: { username: string; isActive: boolean; lastLoginAt: string | null } | null;
     createdAt: string | null;
     updatedAt: string | null;
+}
+
+/**
+ * Company and platoon names already in use (App\Support\CandidateGroups),
+ * naturally sorted. Used for list filters and as typing suggestions.
+ */
+export interface CandidateGroupOptions {
+    companyOptions: string[];
+    platoonOptions: string[];
 }
 
 export interface CandidateExaminationResult {

@@ -3,6 +3,7 @@ import { ClipboardList, Download, Upload } from 'lucide-react';
 import { useRef, type FormEvent } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink, buttonClasses } from '@/components/ui/button';
+import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FileInput, FormField, SelectInput } from '@/components/ui/form-field';
 import { FormActions, FormSection } from '@/components/ui/form-section';
@@ -70,6 +71,7 @@ export default function ImportQuestions({ subjects, selectedSubjectId, limits }:
     // Row errors are keyed "rows.{row}.{column}", which are not form fields.
     const errors = form.errors as Partial<Record<string, string>>;
     const problems = rowProblems(errors);
+    const problemPagination = useClientPagination(problems);
     const cancelHref = routes.questionBank.index(form.data.subject_id === '' ? {} : { subject: form.data.subject_id });
     const maxFileSize = limits.maxFileKilobytes >= 1024 ? `${limits.maxFileKilobytes / 1024} MB` : `${limits.maxFileKilobytes} KB`;
 
@@ -84,6 +86,7 @@ export default function ImportQuestions({ subjects, selectedSubjectId, limits }:
             preserveScroll: true,
             onError: (received) => {
                 const receivedErrors = received as Partial<Record<string, string>>;
+                problemPagination.setPage(1);
                 // The file has to be chosen again after it is fixed (a changed file cannot be re-sent).
                 form.setData('file', null);
                 if (fileInput.current !== null) {
@@ -190,7 +193,7 @@ export default function ImportQuestions({ subjects, selectedSubjectId, limits }:
                                             <Th>How to fix it</Th>
                                         </TableHead>
                                         <TableBody>
-                                            {problems.map((problem) => (
+                                            {problemPagination.rows.map((problem) => (
                                                 <tr key={`${problem.row}-${problem.column}`}>
                                                     <Td numeric>{problem.row}</Td>
                                                     <Td>{problem.column === 'row' ? 'Whole row' : <code className="text-sm">{problem.column}</code>}</Td>
@@ -199,6 +202,7 @@ export default function ImportQuestions({ subjects, selectedSubjectId, limits }:
                                             ))}
                                         </TableBody>
                                     </Table>
+                                    <ClientPagination pagination={problemPagination} noun={{ one: 'problem', other: 'problems' }} label="Problem pages" />
                                 </section>
                             )}
 

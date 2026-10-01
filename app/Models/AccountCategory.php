@@ -46,6 +46,14 @@ class AccountCategory extends Model
     }
 
     /**
+     * @return HasMany<AccountExpense, $this>
+     */
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(AccountExpense::class);
+    }
+
+    /**
      * @param  Builder<AccountCategory>  $query
      */
     #[Scope]

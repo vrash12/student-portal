@@ -10,6 +10,7 @@ use App\Models\QuestionTopic;
 use App\Models\Subject;
 use App\Services\QuestionBank\QuestionBankService;
 use App\Services\QuestionBank\QuestionPresenter;
+use App\Support\ListCharts;
 use App\Support\QueryFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -28,7 +29,7 @@ use Inertia\Response;
  */
 class QuestionBankController extends Controller
 {
-    private const PER_PAGE = 20;
+    private const PER_PAGE = 10;
 
     public function __construct(
         private readonly QuestionBankService $questions,
@@ -57,13 +58,23 @@ class QuestionBankController extends Controller
             'status' => QueryFilters::oneOf($request, 'status', ['active', 'inactive']),
         ];
 
-        $questions = Question::query()
+        $query = Question::query()
             ->with(QuestionPresenter::SUMMARY_RELATIONS)
             ->whereIn('subject_id', $subject === '' ? $taughtIds : [(int) $subject])
             ->when($topic !== '', fn (Builder $query) => $query->where('question_topic_id', (int) $topic))
             ->when($filters['type'] !== '', fn (Builder $query) => $query->where('type', $filters['type']))
             ->when($filters['status'] !== '', fn (Builder $query) => $query->where('is_active', $filters['status'] === 'active'))
-            ->when($filters['search'] !== '', fn (Builder $query) => $query->where('prompt', 'like', QueryFilters::likeTerm($filters['search'])))
+            ->when($filters['search'] !== '', fn (Builder $query) => $query->where('prompt', 'like', QueryFilters::likeTerm($filters['search'])));
+
+        $subjectNames = Subject::query()->whereIn('id', $taughtIds)->pluck('name', 'id');
+        $charts = [
+            ListCharts::bars('Questions by Type', 'Matching questions by question type.',
+                ListCharts::countBy($query, 'type', fn (mixed $value): string => QuestionType::tryFrom((string) $value)?->label() ?? (string) $value), 'question', 'questions'),
+            ListCharts::bars('Questions by Subject', 'Matching questions in each of your subjects.',
+                ListCharts::countBy($query, 'subject_id', fn (mixed $value): string => (string) ($subjectNames[$value] ?? 'Subject')), 'question', 'questions'),
+        ];
+
+        $questions = $query
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->paginate(self::PER_PAGE)
@@ -72,6 +83,7 @@ class QuestionBankController extends Controller
 
         return Inertia::render('staff/question-bank/index', [
             'questions' => $questions,
+            'charts' => $charts,
             'filters' => $filters,
             'subjects' => $this->subjectOptions($taughtIds),
             'topics' => $topics,

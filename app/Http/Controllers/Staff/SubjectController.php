@@ -17,7 +17,7 @@ use Inertia\Response;
 
 class SubjectController extends Controller
 {
-    private const PER_PAGE = 20;
+    private const PER_PAGE = 10;
 
     public function __construct(private readonly SubjectService $subjects) {}
 

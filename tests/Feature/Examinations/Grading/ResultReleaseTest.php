@@ -190,15 +190,15 @@ class ResultReleaseTest extends TestCase
             ->where('objectivePoints', null)->where('objectiveMaxPoints', null));
         $this->assertStringNotContainsString('87.5', json_encode($success->viewData('page')['props']));
 
-        $this->get('/portal')->assertInertia(fn (Assert $page) => $page->has('recentResults', 0));
+        $this->get('/portal/examinations')->assertInertia(fn (Assert $page) => $page->has('scoreTrend', 0));
 
-        $this->get('/portal/profile')->assertInertia(fn (Assert $page) => $page
-            ->has('examinationResults.data', 1)
-            ->where('examinationResults.data.0.resultLabel', 'Not released')
-            ->where('examinationResults.data.0.score', null)
-            ->where('examinationResults.data.0.maxScore', null)
-            ->where('examinationResults.data.0.percentage', null)
-            ->where('examinationResults.data.0.passed', null));
+        $this->get('/portal/examinations')->assertInertia(fn (Assert $page) => $page
+            ->has('results.data', 1)
+            ->where('results.data.0.resultLabel', 'Not released')
+            ->where('results.data.0.score', null)
+            ->where('results.data.0.maxScore', null)
+            ->where('results.data.0.percentage', null)
+            ->where('results.data.0.passed', null));
 
         $this->get('/portal/examinations/'.$this->exam->id)->assertInertia(fn (Assert $page) => $page
             ->where('examination.attempts.0.percentage', null));
@@ -223,16 +223,16 @@ class ResultReleaseTest extends TestCase
             ->where('percentage', '87.50')->where('passed', true)
             ->where('objectivePoints', '4.00')->where('objectiveMaxPoints', '4.00'));
 
-        $this->get('/portal')->assertInertia(fn (Assert $page) => $page
-            ->has('recentResults', 1)->where('recentResults.0.id', $attempt->id)
-            ->where('recentResults.0.percentage', 87.5)->where('recentResults.0.passed', true));
+        $this->get('/portal/examinations')->assertInertia(fn (Assert $page) => $page
+            ->has('scoreTrend', 1)->where('scoreTrend.0.id', $attempt->id)
+            ->where('scoreTrend.0.percentage', 87.5)->where('scoreTrend.0.passed', true));
 
-        $this->get('/portal/profile')->assertInertia(fn (Assert $page) => $page
-            ->where('examinationResults.data.0.resultLabel', 'Graded')
-            ->where('examinationResults.data.0.score', '10.50')
-            ->where('examinationResults.data.0.maxScore', '12.00')
-            ->where('examinationResults.data.0.percentage', 87.5)
-            ->where('examinationResults.data.0.passed', true));
+        $this->get('/portal/examinations')->assertInertia(fn (Assert $page) => $page
+            ->where('results.data.0.resultLabel', 'Graded')
+            ->where('results.data.0.score', '10.50')
+            ->where('results.data.0.maxScore', '12.00')
+            ->where('results.data.0.percentage', 87.5)
+            ->where('results.data.0.passed', true));
 
         $pdf = app(CandidatePdfService::class)->data($this->candidateInA->user, $this->candidateInA, 'academic');
         $this->assertSame('10.50', $pdf['examinations'][0]['score']);
@@ -249,11 +249,11 @@ class ResultReleaseTest extends TestCase
         $this->get('/portal/attempts/'.$attempt->id.'/success')->assertInertia(fn (Assert $page) => $page
             ->where('resultStatus', 'pending_review')->where('percentage', null)->where('passed', null)
             ->where('objectivePoints', '4.00'));
-        $this->get('/portal')->assertInertia(fn (Assert $page) => $page->has('recentResults', 0));
-        $this->get('/portal/profile')->assertInertia(fn (Assert $page) => $page
-            ->where('examinationResults.data.0.resultLabel', 'Awaiting review')
-            ->where('examinationResults.data.0.score', null)
-            ->where('examinationResults.data.0.percentage', null));
+        $this->get('/portal/examinations')->assertInertia(fn (Assert $page) => $page->has('scoreTrend', 0));
+        $this->get('/portal/examinations')->assertInertia(fn (Assert $page) => $page
+            ->where('results.data.0.resultLabel', 'Awaiting review')
+            ->where('results.data.0.score', null)
+            ->where('results.data.0.percentage', null));
     }
 
     public function test_withdrawing_release_hides_results_again(): void
@@ -264,8 +264,8 @@ class ResultReleaseTest extends TestCase
         $this->actingAs($this->candidateInA->user);
 
         $this->get('/portal/attempts/'.$attempt->id.'/success')->assertInertia(fn (Assert $page) => $page->where('percentage', null)->where('passed', null));
-        $this->get('/portal')->assertInertia(fn (Assert $page) => $page->has('recentResults', 0));
-        $this->get('/portal/profile')->assertInertia(fn (Assert $page) => $page->where('examinationResults.data.0.score', null));
+        $this->get('/portal/examinations')->assertInertia(fn (Assert $page) => $page->has('scoreTrend', 0));
+        $this->get('/portal/examinations')->assertInertia(fn (Assert $page) => $page->where('results.data.0.score', null));
     }
 
     public function test_instructor_feedback_never_reaches_candidate_pages(): void
@@ -274,7 +274,7 @@ class ResultReleaseTest extends TestCase
         $this->releaseResults();
         $this->actingAs($this->candidateInA->user);
 
-        foreach (['/portal/attempts/'.$attempt->id.'/success', '/portal', '/portal/profile', '/portal/examinations/'.$this->exam->id] as $url) {
+        foreach (['/portal/attempts/'.$attempt->id.'/success', '/portal', '/portal/examinations', '/portal/grades', '/portal/performance', '/portal/profile', '/portal/examinations/'.$this->exam->id] as $url) {
             $props = json_encode($this->get($url)->assertOk()->viewData('page')['props']);
             $this->assertStringNotContainsString('Private instructor feedback', $props, $url);
             $this->assertStringNotContainsString('correct_choice_id', $props, $url);
@@ -288,7 +288,7 @@ class ResultReleaseTest extends TestCase
 
         $this->actingAs($this->secondCandidateInA->user);
         $this->get('/portal/attempts/'.$attempt->id.'/success')->assertForbidden();
-        $this->get('/portal')->assertInertia(fn (Assert $page) => $page->has('recentResults', 0));
-        $this->get('/portal/profile')->assertInertia(fn (Assert $page) => $page->has('examinationResults.data', 0));
+        $this->get('/portal/examinations')->assertInertia(fn (Assert $page) => $page->has('scoreTrend', 0));
+        $this->get('/portal/examinations')->assertInertia(fn (Assert $page) => $page->has('results.data', 0));
     }
 }

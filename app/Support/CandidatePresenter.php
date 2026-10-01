@@ -19,6 +19,8 @@ final class CandidatePresenter
             'lastName' => $candidate->last_name,
             'suffix' => $candidate->suffix,
             'trainingGroup' => $candidate->training_group,
+            'company' => $candidate->company,
+            'platoon' => $candidate->platoon,
             'photoUrl' => $candidate->profile_photo_path === null ? null : ($portal
                 ? route('portal.profile.photo') : route('candidates.photo', $candidate)),
             'name' => $candidate->full_name,

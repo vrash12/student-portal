@@ -6,17 +6,22 @@ use App\Enums\Permission;
 use App\Models\AcademicPeriod;
 use App\Models\AccountCategory;
 use App\Models\AccountEntry;
+use App\Models\AccountExpense;
 use App\Models\Assessment;
 use App\Models\AssessmentCategory;
 use App\Models\AssessmentScore;
+use App\Models\AttendanceSession;
 use App\Models\Candidate;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
+use App\Models\ConductEntry;
+use App\Models\ConductType;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
 use App\Models\FitnessEvent;
 use App\Models\FitnessTest;
 use App\Models\InstructorAssignment;
+use App\Models\PerformanceArea;
 use App\Models\Question;
 use App\Models\Role;
 use App\Models\Subject;
@@ -107,6 +112,11 @@ class AppServiceProvider extends ServiceProvider
             'fitness_test' => FitnessTest::class,
             'account_entry' => AccountEntry::class,
             'account_category' => AccountCategory::class,
+            'account_expense' => AccountExpense::class,
+            'conduct_entry' => ConductEntry::class,
+            'conduct_type' => ConductType::class,
+            'attendance_session' => AttendanceSession::class,
+            'performance_area' => PerformanceArea::class,
         ]);
     }
 
