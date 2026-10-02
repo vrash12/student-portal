@@ -248,6 +248,7 @@ class ItemAnalysisTest extends TestCase
         $this->assertEquals(0, $summary['lowest']);
         $this->assertEquals(60, $summary['passingScore']);
         $this->assertSame(2, $summary['passed']);
+        $this->assertSame(2, $summary['failed']);
         $this->assertEquals(50, $summary['passRate']);
         // Score ranges, lowest first: 0 and 50 are below 60, both 100s are 90–100.
         $this->assertSame(['Below 60', '60–69.99', '70–79.99', '80–89.99', '90–100'], array_column($summary['scoreDistribution'], 'label'));

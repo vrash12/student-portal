@@ -449,6 +449,74 @@ class AttendanceTest extends TestCase
         ]);
     }
 
+    public function test_attendance_charts_cover_every_session_of_the_filtered_classes(): void
+    {
+        $this->recordChartSessions();
+
+        // Every class: 14 Sep present, late, absent (2 of 3); 15 Sep two present, one excused, one absent (2 of 3).
+        $trend = $this->actingAs($this->admin)->get('/attendance')->assertOk()->inertiaProps()['trend'];
+        $this->assertEquals([
+            ['date' => '2026-09-14', 'present' => 1, 'late' => 1, 'excused' => 0, 'absent' => 1, 'rate' => 66.67],
+            ['date' => '2026-09-15', 'present' => 2, 'late' => 0, 'excused' => 1, 'absent' => 1, 'rate' => 66.67],
+        ], $trend['days']);
+        $this->assertSame(['present' => 3, 'late' => 1, 'excused' => 1, 'absent' => 2], $trend['totals']);
+
+        // One class: only its sessions.
+        $classB = $this->actingAs($this->admin)->get('/attendance?class='.$this->classB->id)->assertOk()->inertiaProps()['trend'];
+        $this->assertEquals([['date' => '2026-09-15', 'present' => 0, 'late' => 0, 'excused' => 0, 'absent' => 1, 'rate' => 0]], $classB['days']);
+
+        // An instructor: only the class they teach, whatever the filter says.
+        $alpha = $this->actingAs($this->alpha)->get('/attendance?class='.$this->classB->id)->assertOk()->inertiaProps()['trend'];
+        $this->assertSame(['2026-09-14', '2026-09-15'], array_column($alpha['days'], 'date'));
+        $this->assertEquals([66.67, 100], array_column($alpha['days'], 'rate'));
+        $this->assertSame(['present' => 3, 'late' => 1, 'excused' => 1, 'absent' => 1], $alpha['totals']);
+    }
+
+    public function test_attendance_chart_days_are_the_latest_ones_oldest_first(): void
+    {
+        $sessions = [];
+        foreach (range(1, 3) as $day) {
+            $sessions[] = $this->createSession(title: "Drill {$day}", date: sprintf('2026-09-%02d', $day));
+        }
+        foreach ($sessions as $session) {
+            $this->record($session, [$this->first->id => 'present']);
+        }
+
+        $days = app(AttendanceLedger::class)->dailyRates([$this->classA->id], 2);
+
+        $this->assertSame(['2026-09-02', '2026-09-03'], array_column($days, 'date'));
+        $this->assertSame([], app(AttendanceLedger::class)->dailyRates([]));
+        $this->assertSame(['present' => 0, 'late' => 0, 'excused' => 0, 'absent' => 0], app(AttendanceLedger::class)->statusTotals([$this->classB->id]));
+    }
+
+    public function test_dashboard_attendance_follows_the_attendance_scope_and_appears_once_recorded(): void
+    {
+        $this->assertNull($this->actingAs($this->admin)->get('/dashboard')->assertOk()->inertiaProps()['attendanceTrend']);
+
+        $this->recordChartSessions();
+
+        $admin = $this->actingAs($this->admin)->get('/dashboard')->assertOk()->inertiaProps()['attendanceTrend'];
+        $this->assertSame('all', $admin['scope']);
+        $this->assertSame('Period Current', $admin['period']['name']);
+        $this->assertSame(['present' => 3, 'late' => 1, 'excused' => 1, 'absent' => 2], $admin['totals']);
+
+        $bravo = $this->actingAs($this->bravo)->get('/dashboard')->assertOk()->inertiaProps()['attendanceTrend'];
+        $this->assertSame('taught', $bravo['scope']);
+        $this->assertSame(['2026-09-15'], array_column($bravo['days'], 'date'));
+        $this->assertSame(['present' => 0, 'late' => 0, 'excused' => 0, 'absent' => 1], $bravo['totals']);
+    }
+
+    /**
+     * Class A: 14 Sep first present, second late, third absent; 15 Sep first
+     * and third present, second excused. Class B: 15 Sep the other absent.
+     */
+    private function recordChartSessions(): void
+    {
+        $this->record($this->createSession(title: 'Drill 14', date: '2026-09-14'), [$this->first->id => 'present', $this->second->id => 'late', $this->third->id => 'absent']);
+        $this->record($this->createSession(title: 'Drill 15', date: '2026-09-15'), [$this->first->id => 'present', $this->second->id => 'excused', $this->third->id => 'present']);
+        $this->record($this->createSession($this->classB, 'Class B Drill', date: '2026-09-15'), [$this->other->id => 'absent']);
+    }
+
     private function createSession(?ClassBatch $classBatch = null, string $title = 'Morning Formation', string $hours = '1.5', string $date = '2026-09-15'): AttendanceSession
     {
         $this->actingAs($this->admin)->post('/attendance/sessions', [

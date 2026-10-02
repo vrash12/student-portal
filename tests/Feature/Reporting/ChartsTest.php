@@ -3,6 +3,7 @@
 namespace Tests\Feature\Reporting;
 
 use App\Models\User;
+use App\Services\Grading\GradingThresholdService;
 use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -70,7 +71,9 @@ class ChartsTest extends TestCase
 
     public function test_charts_follow_the_search_and_the_viewers_scope(): void
     {
-        [$classChart] = $this->reportCharts($this->academicAdmin, ['type' => 'class', 'search' => 'batch b']);
+        [$total, $classChart] = $this->reportCharts($this->academicAdmin, ['type' => 'class', 'search' => 'batch b']);
+        // Batch B alone: B1 at risk.
+        $this->assertSame(['passing' => 0, 'atRisk' => 1, 'failing' => 0, 'incomplete' => 0, 'noStanding' => 0], $total['counts']);
         $this->assertSame(['Sample Batch B'], array_column($classChart['groups'], 'label'));
 
         // Instructor Alpha teaches only Subject 1 in Batch A.
@@ -78,14 +81,103 @@ class ChartsTest extends TestCase
         $this->assertSame(['Subject 1 · Sample Batch A'], array_column($averages['bars'], 'label'));
     }
 
-    public function test_single_standing_lists_empty_reports_and_unscored_attempts_have_no_chart(): void
+    public function test_empty_reports_and_unscored_attempts_have_no_chart(): void
     {
         $exam = $this->makeExamination($this->offeringA1, 'Essay Examination', ['access_code' => 'EXAM-ACCESS-2']);
         $this->makeAttempt($exam, $this->candidateInA, ['result_status' => 'pending_review', 'earned_points' => null, 'percentage' => null, 'passed' => null]);
 
         $this->assertSame([], $this->reportCharts($this->academicAdmin, ['type' => 'examination']));
-        $this->assertSame([], $this->reportCharts($this->academicAdmin, ['type' => 'failing']));
+        $this->assertSame([], $this->reportCharts($this->academicAdmin, ['type' => 'failing', 'search' => 'no such candidate']));
         $this->assertSame([], $this->reportCharts($this->academicAdmin, ['type' => 'candidate', 'search' => 'no such candidate']));
+    }
+
+    public function test_class_report_rings_the_overall_standing_of_every_listed_class(): void
+    {
+        [$total, $byClass] = $this->reportCharts($this->academicAdmin, ['type' => 'class']);
+
+        // The candidates of the candidate report: A1 and A2 failing, B1 at risk.
+        $this->assertSame('standingTotal', $total['kind']);
+        $this->assertSame(['passing' => 0, 'atRisk' => 1, 'failing' => 2, 'incomplete' => 0, 'noStanding' => 0], $total['counts']);
+        $this->assertSame('standing', $byClass['kind']);
+    }
+
+    public function test_at_risk_and_failing_lists_show_the_class_of_their_candidates(): void
+    {
+        // All in one class (A1 and A2 failing, B1 at risk): one full ring would add nothing.
+        $this->assertSame([], $this->reportCharts($this->academicAdmin, ['type' => 'failing']));
+        $this->assertSame([], $this->reportCharts($this->academicAdmin, ['type' => 'at_risk']));
+
+        // A passing grade of 78 makes B1 (77) fail too: the failing list spans both classes.
+        $this->app->make(GradingThresholdService::class)->save($this->activePeriod, '78', '85', 'Chart check');
+        [$failing] = $this->reportCharts($this->academicAdmin, ['type' => 'failing']);
+
+        $this->assertSame('pie', $failing['kind']);
+        $this->assertSame('Failing Candidates by Class', $failing['title']);
+        $this->assertSame([
+            ['label' => 'Sample Batch A', 'value' => 2, 'tone' => null],
+            ['label' => 'Sample Batch B', 'value' => 1, 'tone' => null],
+        ], $failing['slices']);
+    }
+
+    public function test_examination_report_charts_outcomes_and_results_in_the_order_taken(): void
+    {
+        // Created first, taken later: the line follows the first submission, not the creation order.
+        $later = $this->makeExamination($this->offeringA1, 'Second Examination', ['access_code' => 'EXAM-ACCESS-3']);
+        $earlier = $this->makeExamination($this->offeringA1, 'First Examination', ['access_code' => 'EXAM-ACCESS-4']);
+        $this->makeAttempt($earlier, $this->candidateInA, ['submitted_at' => now()->subDays(3), 'percentage' => 80, 'passed' => true]);
+        $this->makeAttempt($earlier, $this->secondInA, ['submitted_at' => now()->subDays(3), 'result_status' => 'pending_review', 'earned_points' => null, 'percentage' => null, 'passed' => null]);
+        $this->makeAttempt($later, $this->candidateInA, ['submitted_at' => now()->subDay(), 'earned_points' => 10, 'percentage' => 100, 'passed' => true]);
+        $this->makeAttempt($later, $this->secondInA, ['submitted_at' => now()->subDay(), 'earned_points' => 5, 'percentage' => 50, 'passed' => false]);
+
+        [$distribution, $outcomes, $results] = $this->reportCharts($this->academicAdmin, ['type' => 'examination']);
+
+        $this->assertSame('columns', $distribution['kind']);
+        $this->assertSame('pie', $outcomes['kind']);
+        $this->assertSame(['Passed', 'Failed', 'Awaiting essay grading', 'Scored, no passing score set', 'Not scored'], array_column($outcomes['slices'], 'label'));
+        $this->assertSame([2, 1, 1, 0, 0], array_column($outcomes['slices'], 'value'));
+
+        $this->assertSame('line', $results['kind']);
+        $this->assertTrue($results['wide']);
+        $this->assertSame('category', $results['data']['xType']);
+        $this->assertSame(['First Examination', 'Second Examination'], array_column($results['data']['categories'], 'label'));
+        $this->assertSame('Subject 1 · Sample Batch A · 1 scored', $results['data']['categories'][0]['detail']);
+        // Means of the scored attempts (80; 100 and 50) and pass rates of the decided ones (1 of 1; 1 of 2).
+        $this->assertSame(['Mean score', 'Pass rate'], array_column($results['data']['series'], 'label'));
+        $this->assertEquals([80, 75], $results['data']['series'][0]['values']);
+        $this->assertEquals([100, 50], $results['data']['series'][1]['values']);
+
+        // One examination left by the search: no line to draw.
+        $this->assertSame(['columns', 'pie'], array_column($this->reportCharts($this->academicAdmin, ['type' => 'examination', 'search' => 'Second']), 'kind'));
+    }
+
+    public function test_chart_only_row_data_is_neither_shown_nor_searched(): void
+    {
+        $exam = $this->makeExamination($this->offeringA1, 'Field Examination', ['access_code' => 'EXAM-ACCESS-5']);
+        $this->makeAttempt($exam, $this->candidateInA);
+
+        $props = $this->actingAs($this->academicAdmin)->get('/reports?type=examination&search=Field')->assertOk()->inertiaProps();
+
+        $this->assertSame(1, $props['rows']['total']);
+        $this->assertArrayNotHasKey('_chart', $props['rows']['data'][0]);
+        $this->assertSame(['Field Examination'], array_column($props['rows']['data'], 'examination'));
+    }
+
+    public function test_list_pages_draw_status_shares_as_pies_and_daily_activity_as_a_line(): void
+    {
+        $charts = $this->actingAs($this->academicAdmin)->get('/candidates')->assertOk()->inertiaProps()['charts'];
+        $this->assertSame('pie', $charts[0]['kind']);
+        $byStatus = collect($charts[0]['items'])->keyBy('label');
+        // Colored as the status badges: enrolled (success) and withdrawn (neutral).
+        $this->assertSame(['value' => 3, 'tone' => 'passing'], collect($byStatus['Enrolled'])->only('value', 'tone')->all());
+        $this->assertSame(['value' => 1, 'tone' => 'incomplete'], collect($byStatus['Withdrawn'])->only('value', 'tone')->all());
+
+        $audit = $this->actingAs($this->academicAdmin)->get('/audit-history')->assertOk()->inertiaProps()['charts'];
+        $this->assertSame('line', $audit[0]['kind']);
+        $this->assertSame('date', $audit[0]['data']['xType']);
+        $points = $audit[0]['data']['series'][0]['points'];
+        $this->assertCount(14, $points);
+        $this->assertSame('2026-08-28', $points[0]['date']);
+        $this->assertSame('2026-09-10', $points[13]['date']);
     }
 
     public function test_administrator_dashboard_has_grade_distribution_and_thresholds(): void

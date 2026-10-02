@@ -14,7 +14,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 /** Own-record presentation; authorization and staff offering scope come from the caller. */
 final class CandidateProfileRecord
 {
-    public function __construct(private readonly GradeCalculationService $grades) {}
+    public function __construct(private readonly GradeCalculationService $grades, private readonly CandidateAcademicRecord $academicRecord) {}
 
     public function academics(Candidate $candidate): array
     {
@@ -32,6 +32,24 @@ final class CandidateProfileRecord
                 'result' => $grades[$offering->id]->toArray(),
             ])->all(),
         ];
+    }
+
+    /**
+     * The candidate's own results on every finalized assessment of the
+     * current class, by subject, for the "results over time" chart. The same
+     * rule as the staff profile (CandidateAcademicRecord::assessmentResults).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function resultsBySubject(Candidate $candidate): array
+    {
+        if ($candidate->class_batch_id === null) {
+            return [];
+        }
+
+        $offerings = ClassSubject::query()->where('class_batch_id', $candidate->class_batch_id)->with('subject')->get()->sortBy('subject.name')->values();
+
+        return $this->academicRecord->assessmentResults($candidate, $offerings, $candidate->isGradableIn($candidate->class_batch_id));
     }
 
     /** Finalized current assessments and the candidate's recorded historical results. */

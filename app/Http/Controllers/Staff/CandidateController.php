@@ -72,8 +72,9 @@ class CandidateController extends Controller
 
         $classNames = ClassBatch::query()->pluck('name', 'id');
         $charts = [
-            ListCharts::bars('Candidates by Status', 'Enrollment status of the matching candidates.',
-                ListCharts::countBy($query, 'status', fn (mixed $value): string => CandidateStatus::tryFrom((string) $value)?->label() ?? (string) $value), 'candidate', 'candidates'),
+            ListCharts::pie('Candidates by Status', 'Enrollment status of the matching candidates.',
+                ListCharts::countBy($query, 'status', fn (mixed $value): string => CandidateStatus::tryFrom((string) $value)?->label() ?? (string) $value,
+                    tone: fn (mixed $value): ?string => ListCharts::toneOf(CandidateStatus::tryFrom((string) $value)?->tone() ?? '')), 'candidate', 'candidates'),
             ListCharts::bars('Candidates by Class', 'The ten largest classes among the matching candidates.',
                 ListCharts::countBy($query, 'class_batch_id', fn (mixed $value): string => $value === null ? 'No class' : (string) ($classNames[$value] ?? 'Unknown class')), 'candidate', 'candidates'),
         ];

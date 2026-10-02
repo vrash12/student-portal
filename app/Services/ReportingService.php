@@ -19,6 +19,13 @@ final class ReportingService
         'quiz' => 'Quiz results', 'distribution' => 'Grade distribution',
     ];
 
+    /**
+     * A row entry for the charts only (ReportCharts), e.g. which examination
+     * an attempt belongs to. Never displayed or searched; the controller
+     * removes it before the rows reach the page.
+     */
+    public const CHART_KEY = '_chart';
+
     public function __construct(private readonly AcademicMonitoring $monitoring, private readonly SubjectPerformance $performance) {}
 
     public function generate(User $user, array $filters): array
@@ -35,10 +42,11 @@ final class ReportingService
         $result = in_array($type, ['examination', 'quiz'], true)
             ? $this->examinations($offerings->modelKeys(), $type, $filters)
             : $this->academic($this->monitoring->evaluate($offerings), $type);
-        // Search narrows authorized output, including aggregated report rows.
+        // Search narrows authorized output, including aggregated report rows. It
+        // matches the displayed values only, never the chart-only `_chart` entry.
         if (($filters['search'] ?? '') !== '') {
             $term = mb_strtolower($filters['search']);
-            $result['rows'] = array_values(array_filter($result['rows'], fn ($row) => str_contains(mb_strtolower(implode(' ', $row)), $term)));
+            $result['rows'] = array_values(array_filter($result['rows'], fn ($row) => str_contains(mb_strtolower(implode(' ', array_diff_key($row, [self::CHART_KEY => true]))), $term)));
         }
 
         return $result + [
@@ -107,6 +115,7 @@ final class ReportingService
                 'score' => $attempt->result_status === 'graded' ? $attempt->earned_points.' / '.$attempt->total_points : null,
                 'percentage' => $attempt->result_status === 'graded' ? $attempt->percentage : null,
                 'result' => $attempt->passed === null ? 'Pending / not configured' : ($attempt->passed ? 'Passed' : 'Failed'),
+                self::CHART_KEY => ['examination' => $attempt->examination_id, 'passed' => $attempt->passed, 'resultStatus' => $attempt->result_status],
             ])->all()];
     }
 }

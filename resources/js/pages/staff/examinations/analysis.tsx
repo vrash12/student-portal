@@ -3,6 +3,7 @@ import { ChartColumn, CircleCheck, Printer } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ChartFigure } from '@/components/charts/chart-figure';
 import { ColumnChart } from '@/components/charts/column-chart';
+import { PieChart } from '@/components/charts/pie-chart';
 import { QuestionMediaList } from '@/components/question-bank/question-media';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink } from '@/components/ui/button';
@@ -187,14 +188,30 @@ function SummaryPanel({ analysis }: { analysis: ItemAnalysis }) {
                     />
                 )}
             </dl>
-            {summary.scoreDistribution.length > 0 && (
-                <ChartFigure
-                    title="Score Distribution"
-                    description={`Final percentages of the ${summary.scoredAttempts} scored ${summary.scoredAttempts === 1 ? 'attempt' : 'attempts'} by range.`}
-                    className="mt-6 border-t border-line pt-5"
-                >
-                    <ColumnChart columns={summary.scoreDistribution} noun={{ one: 'attempt', other: 'attempts' }} />
-                </ChartFigure>
+            {(summary.scoreDistribution.length > 0 || (summary.passed ?? 0) + (summary.failed ?? 0) > 0) && (
+                <div className="mt-6 grid gap-x-8 gap-y-6 border-t border-line pt-5 lg:grid-cols-2">
+                    {summary.scoreDistribution.length > 0 && (
+                        <ChartFigure
+                            title="Score Distribution"
+                            description={`Final percentages of the ${summary.scoredAttempts} scored ${summary.scoredAttempts === 1 ? 'attempt' : 'attempts'} by range.`}
+                        >
+                            <ColumnChart columns={summary.scoreDistribution} noun={{ one: 'attempt', other: 'attempts' }} />
+                        </ChartFigure>
+                    )}
+                    {/* Once an attempt passed or failed: until then the ring would hold one status only. */}
+                    {summary.passed !== null && summary.failed !== null && summary.passed + summary.failed > 0 && (
+                        <ChartFigure title="Outcomes" description={`Submitted attempts against the passing score of ${formatPercent(summary.passingScore)}.`}>
+                            <PieChart
+                                slices={[
+                                    { label: 'Passed', value: summary.passed, tone: 'passing' },
+                                    { label: 'Failed', value: summary.failed, tone: 'failing' },
+                                    { label: 'Awaiting essay grading', value: summary.awaitingGrading, tone: 'incomplete' },
+                                ]}
+                                noun={{ one: 'attempt', other: 'attempts' }}
+                            />
+                        </ChartFigure>
+                    )}
+                </div>
             )}
         </Panel>
     );

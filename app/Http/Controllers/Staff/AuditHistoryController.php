@@ -69,7 +69,7 @@ final class AuditHistoryController
                 }
             });
 
-        return ListCharts::columns('Activity in the Last 14 Days', 'Matching entries recorded each day.',
-            collect($days)->map(fn (int $count, string $day): array => ['label' => Carbon::parse($day)->format('M j'), 'value' => $count])->values()->all(), 'entry', 'entries');
+        return ListCharts::dailyLine('Activity in the Last 14 Days', 'Matching entries recorded each day.', 'Entries',
+            collect($days)->map(fn (int $count, string $day): array => ['date' => $day, 'value' => $count])->values()->all(), 'entry', 'entries');
     }
 }

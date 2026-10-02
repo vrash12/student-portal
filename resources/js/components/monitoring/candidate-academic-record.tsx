@@ -1,5 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { History } from 'lucide-react';
+import { ChartFigure } from '@/components/charts/chart-figure';
+import { LineChart } from '@/components/charts/line-chart';
 import { OverallStandingValue } from '@/components/grading/standing';
 import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -134,12 +136,60 @@ export function AssessmentResults({ subjects }: { subjects: SubjectResults[] }) 
     return (
         <Panel title="Assessment Results" description="Finalized assessments only, newest first." bodyClassName="p-0">
             <div className="divide-y divide-line">
+                <ResultsOverTime subjects={subjects} />
                 {subjects.map((subject) => (
                     <SubjectAssessmentResults key={subject.classSubjectId} subject={subject} />
                 ))}
             </div>
         </Panel>
     );
+}
+
+/** Whether there are two results to compare over time. */
+export function hasResultsOverTime(subjects: SubjectResults[]): boolean {
+    return resultSeries(subjects).reduce((count, line) => count + line.points.length, 0) >= 2;
+}
+
+function resultSeries(subjects: SubjectResults[]) {
+    return subjects
+        .map((subject) => ({
+            label: subject.subject.name,
+            points: subject.assessments.flatMap((result) =>
+                result.percentage === null || result.date === null
+                    ? []
+                    : [{ date: result.date, value: result.percentage, detail: `${result.assessment.title} · ${result.category}` }],
+            ),
+        }))
+        .filter((line) => line.points.length > 0);
+}
+
+/**
+ * The percentage of every finalized assessment by date, one line per
+ * subject (performance over time). Percentages are the server's; missing
+ * scores are not plotted. Nothing is shown until there are two results.
+ */
+export function ResultsOverTimeChart({ subjects, title = 'Results Over Time' }: { subjects: SubjectResults[]; title?: string }) {
+    const series = resultSeries(subjects);
+    if (!hasResultsOverTime(subjects)) {
+        return null;
+    }
+
+    return (
+        <ChartFigure
+            title={title}
+            description={`Percentage of each finalized assessment by its date${series.length > 1 ? ', one line per subject' : ''}. Missing scores are not plotted.`}
+        >
+            <LineChart data={{ xType: 'date', series }} format="percent" yMax={100} label={title} xLabel="Date" />
+        </ChartFigure>
+    );
+}
+
+function ResultsOverTime({ subjects }: { subjects: SubjectResults[] }) {
+    return hasResultsOverTime(subjects) ? (
+        <div className="px-5 py-4">
+            <ResultsOverTimeChart subjects={subjects} />
+        </div>
+    ) : null;
 }
 
 function SubjectAssessmentResults({ subject }: { subject: SubjectResults }) {

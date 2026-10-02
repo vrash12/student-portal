@@ -84,6 +84,13 @@
     --color-chart-none: #c9d1cd; /* no standing or no grade yet */
     --color-chart-bar: #1f6b4a;
     --color-chart-track: #e6ebe8;
+    /* Categories without a status meaning (roles, question types, subjects), in this order; each 3.9:1 or more. */
+    --color-chart-1: #1f6b4a; /* green */
+    --color-chart-2: #a87700; /* gold */
+    --color-chart-3: #2f5f9e; /* blue */
+    --color-chart-4: #7a3e7f; /* plum */
+    --color-chart-5: #b5532a; /* brick */
+    --color-chart-6: #5d6b78; /* slate */
 
     /* Typography: Inter is bundled locally (no font CDN). */
     --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;

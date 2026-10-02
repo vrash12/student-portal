@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
-import { BookOpen, ChartColumn, ClipboardClock, GraduationCap, History, Hourglass, UserRound } from 'lucide-react';
+import { BookOpen, ChartColumn, ClipboardClock, GraduationCap, History, Hourglass, TrendingUp, UserRound } from 'lucide-react';
 import { BarList } from '@/components/charts/bar-list';
+import { hasResultsOverTime, ResultsOverTimeChart, type SubjectResults } from '@/components/monitoring/candidate-academic-record';
 import { GradeStatusBadge, OverallStandingValue, StandingCell } from '@/components/grading/standing';
 import { PortalEmpty, PortalHeading, PortalSection, StatTile } from '@/components/portal/portal-ui';
 import { Pagination } from '@/components/ui/pagination';
@@ -20,10 +21,12 @@ interface GradesProps {
     thresholds: GradingThresholds | null;
     outstanding: Paginated<{ id: number; title: string; subject: string; category: string; date: string | null }>;
     assessmentHistory: Paginated<CandidateAssessmentResult>;
+    /** Every finalized result of the current class by subject, for the chart. */
+    resultsBySubject: SubjectResults[];
 }
 
 /** Candidate "My Grades": standing, current subject grades, missing scores and history. All grades come from the server. */
-export default function PortalGrades({ summary, academics, thresholds, outstanding, assessmentHistory }: GradesProps) {
+export default function PortalGrades({ summary, academics, thresholds, outstanding, assessmentHistory, resultsBySubject }: GradesProps) {
     const { subjects } = academics;
 
     return (
@@ -86,6 +89,12 @@ export default function PortalGrades({ summary, academics, thresholds, outstandi
                         </div>
                     )}
                 </PortalSection>
+
+                {hasResultsOverTime(resultsBySubject) && (
+                    <PortalSection icon={TrendingUp} title="My Results Over Time" description="How your assessment results have moved this period.">
+                        <ResultsOverTimeChart subjects={resultsBySubject} title="Assessment results by date" />
+                    </PortalSection>
+                )}
 
                 {outstanding.total > 0 && (
                     <PortalSection icon={ClipboardClock} title="Awaiting a Score" description="Finalized assessments with no score recorded for you. Work may be outstanding, or grading may still be pending." flush>

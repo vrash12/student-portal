@@ -109,6 +109,8 @@ final class CandidateHomeService
             'thresholds' => $period === null ? null : GradingThresholds::forPeriod($period)?->toArray(),
             'outstanding' => $this->outstanding($candidate),
             'assessmentHistory' => $this->records->assessmentHistory($candidate),
+            // Every finalized result of the current class by subject, for the chart (not paginated).
+            'resultsBySubject' => $this->records->resultsBySubject($candidate),
         ];
     }
 

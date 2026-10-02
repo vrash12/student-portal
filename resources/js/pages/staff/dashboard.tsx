@@ -1,5 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Award, BellRing, CalendarClock, ChartColumn, ClipboardList } from 'lucide-react';
+import { AttendanceTrendCharts } from '@/components/attendance/attendance-trend';
 import { BarList } from '@/components/charts/bar-list';
 import { ChartFigure } from '@/components/charts/chart-figure';
 import { ColumnChart } from '@/components/charts/column-chart';
@@ -19,6 +20,7 @@ import { RowAction } from '@/components/ui/table';
 import { formatCalendarDate, formatGrade, useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
+import type { AttendanceTrend } from '@/types/attendance';
 import type { QualificationOverviewData } from '@/types/candidate-performance';
 import type { ChartColumn as DistributionColumn } from '@/types/charts';
 import type { GradingThresholds, StatusValue } from '@/types/grading';
@@ -79,6 +81,8 @@ interface DashboardProps {
     canConfigurePerformance: boolean;
     /** Backup problems; only for whoever looks after backups (backups.manage). */
     backupWarnings: string[];
+    /** Attendance of the active period in the user's attendance scope; null when none is recorded or out of scope. */
+    attendanceTrend: (AttendanceTrend & { period: { id: number; name: string }; scope: 'all' | 'taught' }) | null;
 }
 
 interface AdministratorOverviewData {
@@ -106,6 +110,7 @@ export default function Dashboard({
     qualificationOverview,
     canConfigurePerformance,
     backupWarnings,
+    attendanceTrend,
 }: DashboardProps) {
     const { app, auth } = usePage().props;
     const userName = auth.user?.name ?? '';
@@ -143,6 +148,20 @@ export default function Dashboard({
                 )}
 
                 {showQualification && <QualificationOverview overview={qualificationOverview} canConfigure={canConfigurePerformance} />}
+
+                {attendanceTrend !== null && (
+                    <Panel
+                        title="Attendance"
+                        description={`${attendanceTrend.period.name} · ${attendanceTrend.scope === 'all' ? `every ${terms.classBatch.singular.toLowerCase()}` : `the ${terms.classBatch.plural.toLowerCase()} you teach`}`}
+                        actions={
+                            <ButtonLink href={routes.attendance.index()} variant="secondary">
+                                Open Attendance
+                            </ButtonLink>
+                        }
+                    >
+                        <AttendanceTrendCharts trend={attendanceTrend} />
+                    </Panel>
+                )}
 
                 {administratorOverview !== null && <AdministratorOverview overview={administratorOverview} />}
 

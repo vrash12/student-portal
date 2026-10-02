@@ -68,7 +68,7 @@ class QuestionBankController extends Controller
 
         $subjectNames = Subject::query()->whereIn('id', $taughtIds)->pluck('name', 'id');
         $charts = [
-            ListCharts::bars('Questions by Type', 'Matching questions by question type.',
+            ListCharts::pie('Questions by Type', 'Matching questions by question type.',
                 ListCharts::countBy($query, 'type', fn (mixed $value): string => QuestionType::tryFrom((string) $value)?->label() ?? (string) $value), 'question', 'questions'),
             ListCharts::bars('Questions by Subject', 'Matching questions in each of your subjects.',
                 ListCharts::countBy($query, 'subject_id', fn (mixed $value): string => (string) ($subjectNames[$value] ?? 'Subject')), 'question', 'questions'),

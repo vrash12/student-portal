@@ -51,8 +51,9 @@ class AttendanceSessionController extends Controller
             $filters['class'] = '';
         }
 
+        $classIds = $filters['class'] !== '' ? [(int) $filters['class']] : $classes->modelKeys();
         $sessions = AttendanceSession::query()
-            ->whereIn('class_batch_id', $filters['class'] !== '' ? [(int) $filters['class']] : $classes->modelKeys())
+            ->whereIn('class_batch_id', $classIds)
             ->with('classBatch:id,name')
             ->orderByDesc('held_on')
             ->orderByDesc('id')
@@ -73,6 +74,11 @@ class AttendanceSessionController extends Controller
                 'rosterCount' => $rosterSizes[$session->class_batch_id] ?? 0,
             ]),
             'filters' => $filters,
+            // Charts over every session of the filtered classes, not only this page.
+            'trend' => [
+                'days' => $this->ledger->dailyRates($classIds),
+                'totals' => $this->ledger->statusTotals($classIds),
+            ],
             'periods' => $periods,
             'classes' => $classes->map(fn (ClassBatch $class): array => ['id' => $class->id, 'name' => $class->name])->values()->all(),
             // "all": every class; "taught": only the classes the user teaches.

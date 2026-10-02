@@ -1,15 +1,16 @@
 import type { ReactNode } from 'react';
+import { PieChart } from '@/components/charts/pie-chart';
 import { cn } from '@/lib/cn';
 import { formatGrade } from '@/lib/format';
-import type { StandingGroup, StandingTally } from '@/types/charts';
+import type { ChartTone, StandingGroup, StandingTally } from '@/types/charts';
 
 /** Standings in the order shown, with their chart fills. Every bar is also described in text, never by color alone (§47). */
-const SERIES: ReadonlyArray<{ key: keyof StandingTally; label: string; fill: string }> = [
-    { key: 'passing', label: 'Passing', fill: 'bg-chart-passing' },
-    { key: 'atRisk', label: 'At Risk', fill: 'bg-chart-at-risk' },
-    { key: 'failing', label: 'Failing', fill: 'bg-chart-failing' },
-    { key: 'incomplete', label: 'Incomplete', fill: 'bg-chart-incomplete' },
-    { key: 'noStanding', label: 'No standing yet', fill: 'bg-chart-none' },
+const SERIES: ReadonlyArray<{ key: keyof StandingTally; label: string; fill: string; tone: ChartTone }> = [
+    { key: 'passing', label: 'Passing', fill: 'bg-chart-passing', tone: 'passing' },
+    { key: 'atRisk', label: 'At Risk', fill: 'bg-chart-at-risk', tone: 'atRisk' },
+    { key: 'failing', label: 'Failing', fill: 'bg-chart-failing', tone: 'failing' },
+    { key: 'incomplete', label: 'Incomplete', fill: 'bg-chart-incomplete', tone: 'incomplete' },
+    { key: 'noStanding', label: 'No standing yet', fill: 'bg-chart-none', tone: 'none' },
 ];
 
 function totalOf(counts: StandingTally): number {
@@ -68,13 +69,21 @@ export function StandingLegend({ counts, withNoStanding = false }: { counts?: St
     );
 }
 
-/** A single population split by standing: the bar, then each standing's count and share. */
-export function StandingDistribution({ counts }: { counts: StandingTally }) {
+/**
+ * A single population split by standing, as a ring with each standing's
+ * count and share beside it. "No standing yet" is listed only when it occurs.
+ */
+export function StandingDistribution({ counts, noun = { one: 'candidate', other: 'candidates' } }: { counts: StandingTally; noun?: { one: string; other: string } }) {
     return (
-        <div className="flex flex-col gap-3">
-            <StandingBar counts={counts} className="h-4" />
-            <StandingLegend counts={counts} />
-        </div>
+        <PieChart
+            slices={SERIES.filter((series) => series.key !== 'noStanding' || counts.noStanding > 0).map((series) => ({
+                label: series.label,
+                value: counts[series.key],
+                tone: series.tone,
+            }))}
+            noun={noun}
+            listEmpty
+        />
     );
 }
 

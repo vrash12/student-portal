@@ -261,6 +261,26 @@ class CandidatePortalPagesTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page->component('portal/examinations/index')->where('results.total', 0));
     }
 
+    public function test_results_over_time_are_the_own_results_of_the_current_class_by_subject(): void
+    {
+        $this->buildReportingFixtures();
+
+        $first = $this->pageProps($this->candidateInA->user, '/portal/grades', 'portal/grades')['resultsBySubject'];
+        $this->assertSame(['Subject 1', 'Subject 2'], array_column(array_column($first, 'subject'), 'name'));
+        $this->assertSame(['2026-08-20'], array_column($first[0]['assessments'], 'date'));
+        $this->assertEquals([90], array_column($first[0]['assessments'], 'percentage'));
+        $this->assertEquals(70, $first[1]['assessments'][0]['percentage']);
+        $this->assertStringNotContainsString('Batch B Quiz', json_encode($first));
+
+        // A missing score stays missing (never 0); another candidate's scores are not included.
+        $second = $this->pageProps($this->secondInA->user, '/portal/grades', 'portal/grades')['resultsBySubject'];
+        $this->assertEquals(60, $second[0]['assessments'][0]['percentage']);
+        $this->assertNull($second[1]['assessments'][0]['percentage']);
+        $this->assertNull($second[1]['assessments'][0]['score']);
+
+        $this->assertSame([], $this->pageProps($this->makeCandidate(null, '902')->user, '/portal/grades', 'portal/grades')['resultsBySubject']);
+    }
+
     public function test_grades_and_results_show_own_scores_only_and_pending_results_as_pending(): void
     {
         $this->buildReportingFixtures();

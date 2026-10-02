@@ -8,6 +8,8 @@ use App\Models\AcademicPeriod;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AdministratorDashboardService;
+use App\Services\Attendance\AttendanceLedger;
+use App\Services\Attendance\AttendanceScope;
 use App\Services\Backups\BackupManager;
 use App\Services\Grading\GradingThresholds;
 use App\Services\Monitoring\AcademicMonitoring;
@@ -36,7 +38,7 @@ class DashboardController extends Controller
         private readonly MonitoringPresenter $presenter,
     ) {}
 
-    public function __invoke(Request $request, TeachingOverview $teaching, AdministratorDashboardService $administratorDashboard, QualificationOverview $qualification): Response
+    public function __invoke(Request $request, TeachingOverview $teaching, AdministratorDashboardService $administratorDashboard, QualificationOverview $qualification, AttendanceLedger $attendance): Response
     {
         $user = $request->user();
         $canMonitor = $user->hasPermission(Permission::ViewAcademicMonitoring);
@@ -62,7 +64,40 @@ class DashboardController extends Controller
             // Qualification across the active period's classes (null: no active period).
             'qualificationOverview' => $showQualification ? $qualification->activePeriod() : null,
             'canConfigurePerformance' => $user->hasPermission(Permission::ConfigurePerformance),
+            // Attendance of the active period in the user's attendance scope (null: nothing recorded or no scope).
+            'attendanceTrend' => $this->attendanceTrend($user, $attendance),
         ]);
+    }
+
+    /**
+     * Attendance per training day of the active period's classes in the
+     * user's attendance scope (every class, or the classes they teach), with
+     * the records by status. Null without that scope, without an active
+     * period, or before anything is recorded.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function attendanceTrend(User $user, AttendanceLedger $attendance): ?array
+    {
+        $scope = AttendanceScope::for($user);
+        $period = $scope->isEmpty() ? null : AcademicPeriod::query()->active()->first();
+        if ($period === null) {
+            return null;
+        }
+
+        $classIds = $scope->classes()->where('academic_period_id', $period->id)->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
+        $days = $attendance->dailyRates($classIds);
+        if ($days === []) {
+            return null;
+        }
+
+        return [
+            'period' => ['id' => $period->id, 'name' => $period->name],
+            // "all": every class; "taught": only the classes the user teaches.
+            'scope' => $scope->allClasses ? 'all' : 'taught',
+            'days' => $days,
+            'totals' => $attendance->statusTotals($classIds),
+        ];
     }
 
     /**

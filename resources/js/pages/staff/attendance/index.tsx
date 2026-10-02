@@ -1,12 +1,14 @@
 import { Head } from '@inertiajs/react';
 import { CalendarCheck, Plus } from 'lucide-react';
 import { formatHours } from '@/components/attendance/attendance-status';
+import { AttendanceTrendCharts, hasAttendance } from '@/components/attendance/attendance-trend';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FilterBar } from '@/components/ui/filter-bar';
 import { FormField, SelectInput } from '@/components/ui/form-field';
 import { PageHeader } from '@/components/ui/page-header';
 import { Pagination } from '@/components/ui/pagination';
+import { Panel } from '@/components/ui/panel';
 import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
 import { formatCalendarDate } from '@/lib/format';
 import { routes } from '@/lib/routes';
@@ -14,10 +16,12 @@ import { terms } from '@/lib/terminology';
 import { withQuery } from '@/lib/url';
 import { useQueryFilters } from '@/lib/use-query-filters';
 import type { Paginated } from '@/types';
-import type { AttendanceSessionListItem } from '@/types/attendance';
+import type { AttendanceSessionListItem, AttendanceTrend } from '@/types/attendance';
 
 interface AttendanceIndexProps {
     sessions: Paginated<AttendanceSessionListItem>;
+    /** Every session of the filtered classes (not only this page), for the charts. */
+    trend: AttendanceTrend;
     filters: { period: string; class: string };
     /** Periods with classes the user keeps attendance for, active first. */
     periods: Array<{ id: number; name: string; isActive: boolean }>;
@@ -28,7 +32,7 @@ interface AttendanceIndexProps {
     can: { create: boolean };
 }
 
-export default function AttendanceIndex({ sessions, filters, periods, classes, scope, can }: AttendanceIndexProps) {
+export default function AttendanceIndex({ sessions, trend, filters, periods, classes, scope, can }: AttendanceIndexProps) {
     const { singular, plural } = terms.classBatch;
     const defaultPeriod = String(periods[0]?.id ?? '');
     const { values, update, updateMany } = useQueryFilters(routes.attendance.index(), { period: filters.period, class: filters.class });
@@ -55,6 +59,16 @@ export default function AttendanceIndex({ sessions, filters, periods, classes, s
                 }
                 actions={newSessionAction}
             />
+
+            {hasAttendance(trend) && (
+                <Panel
+                    title="At a Glance"
+                    description={`Attendance of ${filters.class === '' ? `every ${singular.toLowerCase()} listed` : `the selected ${singular.toLowerCase()}`} in the selected period, from all of its sessions (not only this page).`}
+                    className="mb-6"
+                >
+                    <AttendanceTrendCharts trend={trend} />
+                </Panel>
+            )}
 
             <section className="rounded-lg border border-line-box bg-surface" aria-label="Training sessions">
                 <FilterBar onReset={() => updateMany({ period: defaultPeriod, class: '' })} canReset={canReset}>

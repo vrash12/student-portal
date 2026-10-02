@@ -21,9 +21,10 @@ final class ListCharts
      * @param  Builder<Model>|QueryBuilder  $query
      * @param  string  $column  A column of the query's table (never user input).
      * @param  (callable(mixed): string)|null  $label  Turns a stored value into its label.
-     * @return list<array{label: string, value: int}>
+     * @param  (callable(mixed): ?string)|null  $tone  Turns a stored value into its chart color (toneOf), for pies.
+     * @return list<array{label: string, value: int, tone?: ?string}>
      */
-    public static function countBy(Builder|QueryBuilder $query, string $column, ?callable $label = null, int $limit = 10): array
+    public static function countBy(Builder|QueryBuilder $query, string $column, ?callable $label = null, int $limit = 10, ?callable $tone = null): array
     {
         $base = $query instanceof Builder ? (clone $query)->toBase() : clone $query;
         $base->orders = null;
@@ -40,6 +41,7 @@ final class ListCharts
             ->map(fn (object $row): array => [
                 'label' => $label !== null ? $label($row->chart_key) : (string) ($row->chart_key ?? 'None'),
                 'value' => (int) $row->chart_count,
+                ...($tone !== null ? ['tone' => $tone($row->chart_key)] : []),
             ])
             ->values()
             ->all();
@@ -54,6 +56,49 @@ final class ListCharts
     public static function bars(string $title, string $description, array $items, string $one, string $other, ?string $format = null): array
     {
         return ['kind' => 'bars', 'title' => $title, 'description' => $description, 'items' => $items, 'noun' => ['one' => $one, 'other' => $other], 'format' => $format];
+    }
+
+    /**
+     * A pie: the share of each of a few categories, e.g. records by status.
+     * Items without a tone take the category colors in order.
+     *
+     * @param  list<array{label: string, value: int, tone?: ?string}>  $items
+     * @return array<string, mixed>
+     */
+    public static function pie(string $title, string $description, array $items, string $one, string $other): array
+    {
+        return ['kind' => 'pie', 'title' => $title, 'description' => $description, 'items' => $items, 'noun' => ['one' => $one, 'other' => $other], 'format' => null];
+    }
+
+    /**
+     * A line of counts per calendar day, oldest first.
+     *
+     * @param  list<array{date: string, value: int}>  $points  dates as YYYY-MM-DD
+     * @return array<string, mixed>
+     */
+    public static function dailyLine(string $title, string $description, string $seriesLabel, array $points, string $one, string $other): array
+    {
+        return [
+            'kind' => 'line', 'title' => $title, 'description' => $description, 'items' => [], 'noun' => ['one' => $one, 'other' => $other], 'format' => null,
+            'xLabel' => 'Day',
+            'data' => ['xType' => 'date', 'series' => [['label' => $seriesLabel, 'tone' => 'c1', 'points' => $points]]],
+        ];
+    }
+
+    /**
+     * The chart color of a status badge tone (StatusBadge: success, warning,
+     * danger, neutral, info), so a pie colors statuses as their badges do.
+     */
+    public static function toneOf(string $badgeTone): ?string
+    {
+        return match ($badgeTone) {
+            'success' => 'passing',
+            'warning' => 'atRisk',
+            'danger' => 'failing',
+            'neutral' => 'incomplete',
+            'info' => 'c3',
+            default => null,
+        };
     }
 
     /**

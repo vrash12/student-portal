@@ -1,11 +1,14 @@
 import { CalendarCheck } from 'lucide-react';
 import { AttendanceStatusBadge, formatHours } from '@/components/attendance/attendance-status';
+import { ChartFigure } from '@/components/charts/chart-figure';
+import { PieChart } from '@/components/charts/pie-chart';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Panel } from '@/components/ui/panel';
 import { RowAction } from '@/components/ui/table';
 import { formatCalendarDate, formatPercent } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import type { AttendanceSummary, CandidateAttendanceSession } from '@/types/attendance';
+import type { PieSlice } from '@/types/charts';
 
 interface CandidateAttendanceProps {
     /** AttendanceLedger::summariesFor for the candidate's current class. */
@@ -28,12 +31,13 @@ export function CandidateAttendance({
     linkSessions = false,
     description = 'Training sessions of the current class. Excused and unrecorded sessions are left out of the rate.',
 }: CandidateAttendanceProps) {
-    const counts: Array<{ label: string; value: number }> = [
-        { label: 'Present', value: summary.present },
-        { label: 'Late', value: summary.late },
-        { label: 'Excused', value: summary.excused },
-        { label: 'Absent', value: summary.absent },
-        { label: 'Not recorded', value: summary.unrecorded },
+    // Every session of the class by the candidate's status, with "Not recorded" for the rest.
+    const slices: PieSlice[] = [
+        { label: 'Present', value: summary.present, tone: 'passing' },
+        { label: 'Late', value: summary.late, tone: 'atRisk' },
+        { label: 'Excused', value: summary.excused, tone: 'incomplete' },
+        { label: 'Absent', value: summary.absent, tone: 'failing' },
+        { label: 'Not recorded', value: summary.unrecorded, tone: 'none' },
     ];
 
     return (
@@ -55,17 +59,13 @@ export function CandidateAttendance({
                             <dt className="text-sm font-medium text-ink-muted">Sessions</dt>
                             <dd className="mt-1 text-2xl font-semibold text-ink tabular-nums">{summary.sessions}</dd>
                         </div>
-                        <div className="col-span-2 sm:col-span-3">
-                            <dt className="sr-only">Sessions by status</dt>
-                            <dd className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">
-                                {counts.map((count) => (
-                                    <span key={count.label}>
-                                        {count.label} <span className="font-semibold text-ink tabular-nums">{count.value}</span>
-                                    </span>
-                                ))}
-                            </dd>
-                        </div>
                     </dl>
+
+                    <div className="px-5 pb-5">
+                        <ChartFigure title="Sessions by Status" description="Every session of the class by the candidate's status.">
+                            <PieChart slices={slices} noun={{ one: 'session', other: 'sessions' }} listEmpty />
+                        </ChartFigure>
+                    </div>
 
                     {sessions.length > 0 && (
                         <div className="border-t border-line">

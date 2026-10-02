@@ -79,6 +79,8 @@ export interface ItemAnalysisSummary {
     lowest: number | null;
     passingScore: number | null;
     passed: number | null;
+    /** Scored attempts below the passing score; null without a passing score. */
+    failed: number | null;
     passRate: number | null;
     /** Final percentages by range, lowest first; empty when no attempt has a final score. */
     scoreDistribution: ChartColumn[];

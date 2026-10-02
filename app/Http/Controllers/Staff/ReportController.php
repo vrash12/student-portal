@@ -26,6 +26,7 @@ final class ReportController
         $rows = $report['rows'];
         // Charts summarize every row of the filtered report, not only the visible page.
         $report['charts'] = $charts->for($report['filters']['type'], $rows, (int) $report['filters']['period'] ?: null);
+        $rows = array_map(fn (array $row): array => array_diff_key($row, [ReportingService::CHART_KEY => true]), $rows);
         $page = $print ? 1 : (int) $request->input('page', 1);
         // Pages past the end are empty; the offset is never computed for them, so a huge page number cannot overflow it.
         $offset = $page > (int) ceil(count($rows) / $perPage) ? count($rows) : ($page - 1) * $perPage;

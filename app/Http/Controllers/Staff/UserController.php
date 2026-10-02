@@ -49,10 +49,11 @@ class UserController extends Controller
             ->when($filters['status'] !== '', fn (Builder $query) => $query->where('is_active', $filters['status'] === 'active'));
         $roleNames = $staffRoles->pluck('name', 'id');
         $charts = [
-            ListCharts::bars('Staff by Role', 'Matching staff accounts in each role.',
+            ListCharts::pie('Staff by Role', 'Matching staff accounts in each role.',
                 ListCharts::countBy($query, 'role_id', fn (mixed $value): string => (string) ($roleNames[$value] ?? 'Other role')), 'account', 'accounts'),
-            ListCharts::bars('Account Status', 'Active and inactive matching accounts.',
-                ListCharts::countBy($query, 'is_active', fn (mixed $value): string => (bool) $value ? 'Active' : 'Inactive'), 'account', 'accounts'),
+            ListCharts::pie('Account Status', 'Active and inactive matching accounts.',
+                ListCharts::countBy($query, 'is_active', fn (mixed $value): string => (bool) $value ? 'Active' : 'Inactive',
+                    tone: fn (mixed $value): string => (bool) $value ? 'passing' : 'none'), 'account', 'accounts'),
         ];
 
         $users = $query

@@ -358,6 +358,7 @@ final class ItemAnalysisService
             'lowest' => $count === 0 ? null : $this->round($percentages->first()),
             'passingScore' => $hasPassingScore ? $this->round((float) $examination->passing_score) : null,
             'passed' => $hasPassingScore ? $decided->where('passed', true)->count() : null,
+            'failed' => $hasPassingScore ? $decided->where('passed', false)->count() : null,
             'passRate' => $hasPassingScore && $decided->isNotEmpty() ? $this->round($decided->where('passed', true)->count() * 100 / $decided->count()) : null,
             // Final percentages by range, lowest first; empty when no attempt has a final score.
             'scoreDistribution' => $count === 0 ? [] : ScoreBands::columns(ScoreBands::count($percentages, withMissing: false)),

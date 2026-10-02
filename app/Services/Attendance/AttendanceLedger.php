@@ -9,6 +9,7 @@ use App\Models\AttendanceSession;
 use App\Models\Candidate;
 use App\Support\DecimalValue;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -22,6 +23,9 @@ use Illuminate\Support\Facades\DB;
  */
 final class AttendanceLedger
 {
+    /** Training days on attendance charts: the latest ones. */
+    public const CHART_DAYS = 30;
+
     /**
      * Attendance of candidates over the sessions of a class. Every requested
      * id is present in the result (zeros and a null rate when none).
@@ -235,6 +239,74 @@ final class AttendanceLedger
         }
 
         return $counts;
+    }
+
+    /**
+     * Attendance per training day over the sessions of the given classes, for
+     * charts: the records of each day by status and the day's rate (the same
+     * rule as a candidate's rate, over every record of the day). The latest
+     * `$days` days with records, oldest first.
+     *
+     * @param  list<int>  $classBatchIds
+     * @return list<array{date: string, present: int, late: int, excused: int, absent: int, rate: ?float}>
+     */
+    public function dailyRates(array $classBatchIds, int $days = self::CHART_DAYS): array
+    {
+        if ($classBatchIds === [] || $days < 1) {
+            return [];
+        }
+
+        return $this->countsByStatus($classBatchIds)
+            ->addSelect('attendance_sessions.held_on')
+            ->groupBy('attendance_sessions.held_on')
+            ->orderByDesc('attendance_sessions.held_on')
+            ->limit($days)
+            ->get()
+            ->reverse()
+            ->map(fn (object $row): array => [
+                'date' => substr((string) $row->held_on, 0, 10),
+                'present' => (int) $row->present,
+                'late' => (int) $row->late,
+                'excused' => (int) $row->excused,
+                'absent' => (int) $row->absent,
+                'rate' => self::rate((int) $row->present, (int) $row->late, (int) $row->absent),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Every record of the given classes' sessions by status, for charts.
+     *
+     * @param  list<int>  $classBatchIds
+     * @return array{present: int, late: int, excused: int, absent: int}
+     */
+    public function statusTotals(array $classBatchIds): array
+    {
+        $row = $classBatchIds === [] ? null : $this->countsByStatus($classBatchIds)->first();
+
+        return [
+            'present' => (int) ($row->present ?? 0),
+            'late' => (int) ($row->late ?? 0),
+            'excused' => (int) ($row->excused ?? 0),
+            'absent' => (int) ($row->absent ?? 0),
+        ];
+    }
+
+    /**
+     * Records of the given classes' sessions counted by status.
+     *
+     * @param  list<int>  $classBatchIds
+     */
+    private function countsByStatus(array $classBatchIds): QueryBuilder
+    {
+        return DB::table('attendance_records')
+            ->join('attendance_sessions', 'attendance_sessions.id', '=', 'attendance_records.attendance_session_id')
+            ->whereIn('attendance_sessions.class_batch_id', $classBatchIds)
+            ->selectRaw("sum(case when attendance_records.status = 'present' then 1 else 0 end) as present")
+            ->selectRaw("sum(case when attendance_records.status = 'late' then 1 else 0 end) as late")
+            ->selectRaw("sum(case when attendance_records.status = 'excused' then 1 else 0 end) as excused")
+            ->selectRaw("sum(case when attendance_records.status = 'absent' then 1 else 0 end) as absent");
     }
 
     /**

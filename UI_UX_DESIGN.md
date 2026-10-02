@@ -1535,6 +1535,14 @@ Useful examples:
 
 Avoid decorative donut charts for every metric.
 
+Owner request (2026-10-02): reports and statistics use pie and line charts where they fit. The chart kinds in `resources/js/components/charts/` (SVG or HTML, no chart library, offline, printed in color):
+
+- **Ring (donut) — `PieChart`:** the share of a whole: standings, qualification, attendance by status, outcomes of attempts, records by status, role or type. A fixed set of statuses always lists every status (zeros included); a pie of categories (status, role, type, class) is shown only with two categories or more, since a single full ring adds nothing to its label. The legend beside the ring gives each label, count and share in text.
+- **Line — `LineChart`:** values over time or over an ordered list: attendance rate by training day, results by examination or quiz in the order taken, assessment results over time (one line per subject), audit activity per day. Lines differ by color and marker shape; values are printed beside the points that fit (the latest, highest and lowest first), shown on hover, tap and arrow keys, and given to screen readers as a table.
+- **Bars and columns:** comparisons (mean grade by subject, per class) and distributions (grade and score ranges).
+
+Every figure comes from the server; the browser only works out the shares shown in a legend.
+
 ---
 
 # 62. Animation

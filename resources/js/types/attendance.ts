@@ -23,6 +23,20 @@ export interface AttendanceCounts {
     absent: number;
 }
 
+/** Attendance of one training day over the sessions charted (AttendanceLedger::dailyRates). */
+export interface AttendanceDay extends AttendanceCounts {
+    /** Y-m-d. */
+    date: string;
+    /** (present + late) ÷ (present + late + absent) × 100 from the server; null when only excused records. */
+    rate: number | null;
+}
+
+/** Charts of attendance: the latest training days, oldest first, and every record by status. */
+export interface AttendanceTrend {
+    days: AttendanceDay[];
+    totals: AttendanceCounts;
+}
+
 /** A row of the session list. */
 export interface AttendanceSessionListItem {
     id: number;

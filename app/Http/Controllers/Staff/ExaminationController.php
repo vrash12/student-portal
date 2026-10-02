@@ -25,9 +25,9 @@ final class ExaminationController
         $query = Examination::with('classSubject.subject', 'classSubject.classBatch')
             ->whereHas('classSubject.instructorAssignments', fn ($query) => $query->where('instructor_id', $request->user()->id));
         $charts = [
-            ListCharts::bars('By Status', 'Your quizzes and examinations by status.',
+            ListCharts::pie('By Status', 'Your quizzes and examinations by status.',
                 ListCharts::countBy($query, 'status', fn (mixed $value): string => ExaminationStatus::tryFrom((string) $value)?->label() ?? (string) $value), 'examination', 'examinations'),
-            ListCharts::bars('Quizzes and Examinations', 'How many of each kind you have created.',
+            ListCharts::pie('Quizzes and Examinations', 'How many of each kind you have created.',
                 ListCharts::countBy($query, 'kind', fn (mixed $value): string => ExaminationKind::tryFrom((string) $value)?->label() ?? (string) $value), 'item', 'items'),
         ];
         $exams = $query->latest()->paginate(10)->through(fn ($exam) => $exam->toArray() + ['lifecycle' => $exam->lifecycle()]);
