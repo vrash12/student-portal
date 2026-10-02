@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Enums\MedicalAccessStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Medical\MedicalRecordRequest;
 use App\Models\Candidate;
 use App\Models\CandidateMedicalRevision;
 use App\Models\ClassBatch;
+use App\Models\MedicalAccessRequest;
 use App\Models\MedicalField;
 use App\Services\Medical\MedicalRecordService;
 use App\Support\MedicalRecordPresenter;
@@ -60,6 +62,8 @@ class MedicalRecordController extends Controller
             'fieldCount' => count($activeFieldIds),
             'filters' => $filters,
             'classes' => ClassBatch::query()->orderBy('name')->get(['id', 'name'])->map(fn (ClassBatch $class): array => ['id' => $class->id, 'name' => $class->name])->all(),
+            // Instructors' requests to see a full record, waiting for a decision.
+            'pendingAccessRequests' => MedicalAccessRequest::query()->where('status', MedicalAccessStatus::Pending->value)->count(),
             'can' => [
                 'configure' => $request->user()->can('medical.configure'),
                 'manage' => $request->user()->can('medical.manage'),

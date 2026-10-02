@@ -22,6 +22,7 @@ use App\Services\Examinations\CandidateAttemptService;
 use App\Services\Fitness\FitnessStandardService;
 use App\Services\Fitness\FitnessTestService;
 use App\Services\Grading\GradeCorrectionService;
+use App\Services\Medical\MedicalAccessService;
 use App\Services\Medical\MedicalRecordService;
 use App\Services\Performance\PerformanceAreaService;
 use Illuminate\Routing\Route;
@@ -143,6 +144,9 @@ class RouteAccessMatrixTest extends TestCase
             'sort_order' => 1, 'visible_to_instructors' => false, 'visible_to_candidate' => true,
         ], $administrator);
 
+        // Bravo's request to see candidate B1's full medical record (Bravo cancels; medical staff decide).
+        $medicalAccess = app(MedicalAccessService::class)->request($this->candidateInB, 'Planning a field exercise for Batch B.', $this->bravo);
+
         $this->parameters = [
             'academicPeriod' => (string) $this->activePeriod->id,
             'accountCategory' => (string) $accountEntry->account_category_id,
@@ -162,6 +166,7 @@ class RouteAccessMatrixTest extends TestCase
             'gradeCorrectionRequest' => (string) $correction->id,
             'instructor' => (string) $this->bravo->id,
             'instructorAssignment' => (string) InstructorAssignment::query()->where('instructor_id', $this->bravo->id)->value('id'),
+            'medicalAccessRequest' => (string) $medicalAccess->id,
             'medicalField' => (string) $medicalField->id,
             'medium' => (string) $media->id,
             'performanceArea' => (string) $performanceArea->id,

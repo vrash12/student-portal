@@ -119,7 +119,7 @@ enum Permission: string
             self::ConfigurePerformance => 'Set the performance areas, their weights, passing grades and must-pass rules, which subjects belong to each area, the conduct rating rule, and the merit and demerit types.',
             self::ViewPerformance => 'See every candidate\'s area results, qualification status, and class rank.',
             self::ViewMedical => 'See every field of every candidate\'s medical record and its change history. Instructors without this permission see only the fields shared with instructors, for the candidates they teach.',
-            self::ManageMedical => 'Enter and change candidates\' medical record values. Every change is kept in the medical change history.',
+            self::ManageMedical => 'Enter and change candidates\' medical record values (every change is kept in the medical change history), and decide instructors\' requests to see a full record: approve for 1, 7 or 30 days, reject with a reason, or withdraw access.',
             self::ConfigureMedical => 'Define the medical record fields (name, type, choices), and whether instructors and candidates see each field.',
         };
     }

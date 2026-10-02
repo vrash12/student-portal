@@ -136,11 +136,15 @@ class MedicalRecordTest extends TestCase
         $this->actingAs($this->alpha)->get(route('medical.fields.index'))->assertForbidden();
         $this->assertSame('O+', $this->value($this->bloodType));
 
-        // No shared fields: no medical panel at all.
+        // No shared fields: the panel stays, empty, so the instructor can ask for the full record.
         $this->putField($this->bloodType, ['visible_to_instructors' => false]);
         $this->putField($this->allergies, ['visible_to_instructors' => false]);
         $this->actingAs($this->alpha)->get(route('candidates.show', $this->candidateInA))->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->where('medical', null));
+            ->assertInertia(fn (Assert $page) => $page->where('medical.scope', 'instructor')->has('medical.entries', 0)->where('medical.access.canRequest', true));
+
+        // Any instructor of a candidate's class gets the same view of that candidate.
+        $this->actingAs($this->bravo)->get(route('candidates.show', $this->candidateInB))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('medical.scope', 'instructor'));
     }
 
     public function test_candidates_see_their_own_shared_fields_only(): void

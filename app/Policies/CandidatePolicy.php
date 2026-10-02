@@ -57,4 +57,16 @@ class CandidatePolicy
     {
         return $actor->hasPermission(Permission::ManageMedical) && $actor->hasPermission(Permission::ViewMedical);
     }
+
+    /**
+     * Instructors of the candidate's class may ask the medical staff to see
+     * the full medical record (MedicalAccessService). Medical staff already see it.
+     */
+    public function requestMedicalAccess(User $actor, Candidate $candidate): bool
+    {
+        return ! $actor->hasPermission(Permission::ViewMedical)
+            && $candidate->class_batch_id !== null
+            && $actor->canTeach()
+            && $actor->teachesClass($candidate->class_batch_id);
+    }
 }

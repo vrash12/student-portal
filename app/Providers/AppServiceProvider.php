@@ -22,6 +22,7 @@ use App\Models\FitnessEvent;
 use App\Models\FitnessTest;
 use App\Models\GradeCorrectionRequest;
 use App\Models\InstructorAssignment;
+use App\Models\MedicalAccessRequest;
 use App\Models\MedicalField;
 use App\Models\PerformanceArea;
 use App\Models\Question;
@@ -108,6 +109,7 @@ class AppServiceProvider extends ServiceProvider
             'assessment_score' => AssessmentScore::class,
             'grade_correction_request' => GradeCorrectionRequest::class,
             'medical_field' => MedicalField::class,
+            'medical_access_request' => MedicalAccessRequest::class,
             'question' => Question::class,
             // Created by the examination builder (Milestone 8).
             'examination' => Examination::class,

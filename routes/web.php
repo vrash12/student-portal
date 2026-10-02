@@ -35,6 +35,7 @@ use App\Http\Controllers\Staff\GradingSchemeController;
 use App\Http\Controllers\Staff\GradingThresholdController;
 use App\Http\Controllers\Staff\InstructorAssignmentController;
 use App\Http\Controllers\Staff\InstructorController;
+use App\Http\Controllers\Staff\MedicalAccessController;
 use App\Http\Controllers\Staff\MedicalFieldController;
 use App\Http\Controllers\Staff\MedicalRecordController;
 use App\Http\Controllers\Staff\PerformanceAreaController;
@@ -158,6 +159,13 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('medical-records', [MedicalRecordController::class, 'index'])->name('medical.records.index')->can(Permission::ViewMedical->value);
         Route::get('medical-records/{candidate}/edit', [MedicalRecordController::class, 'edit'])->name('medical.records.edit')->whereNumber('candidate')->can('manageMedical', 'candidate');
         Route::put('medical-records/{candidate}', [MedicalRecordController::class, 'update'])->name('medical.records.update')->whereNumber('candidate')->can('manageMedical', 'candidate');
+        // Instructors' requests to see a full medical record (MedicalAccessController).
+        Route::get('medical-records/access-requests', [MedicalAccessController::class, 'index'])->name('medical.access.index')->can(Permission::ManageMedical->value);
+        Route::post('candidates/{candidate}/medical-access-requests', [MedicalAccessController::class, 'store'])->name('medical.access.store')->whereNumber('candidate')->can('requestMedicalAccess', 'candidate');
+        Route::post('medical-access-requests/{medicalAccessRequest}/cancel', [MedicalAccessController::class, 'cancel'])->name('medical.access.cancel')->whereNumber('medicalAccessRequest')->can('cancel', 'medicalAccessRequest');
+        Route::post('medical-access-requests/{medicalAccessRequest}/approve', [MedicalAccessController::class, 'approve'])->name('medical.access.approve')->whereNumber('medicalAccessRequest')->can('decide', 'medicalAccessRequest');
+        Route::post('medical-access-requests/{medicalAccessRequest}/reject', [MedicalAccessController::class, 'reject'])->name('medical.access.reject')->whereNumber('medicalAccessRequest')->can('decide', 'medicalAccessRequest');
+        Route::post('medical-access-requests/{medicalAccessRequest}/revoke', [MedicalAccessController::class, 'revoke'])->name('medical.access.revoke')->whereNumber('medicalAccessRequest')->can('revoke', 'medicalAccessRequest');
         Route::middleware('can:'.Permission::ConfigureMedical->value)->group(function (): void {
             Route::get('medical-records/fields', [MedicalFieldController::class, 'index'])->name('medical.fields.index');
             Route::get('medical-records/fields/create', [MedicalFieldController::class, 'create'])->name('medical.fields.create');

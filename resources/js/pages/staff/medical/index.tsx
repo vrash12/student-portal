@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { HeartPulse, Settings2 } from 'lucide-react';
+import { HeartPulse, LockKeyhole, Settings2 } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FilterBar } from '@/components/ui/filter-bar';
@@ -29,11 +29,13 @@ interface MedicalRecordsProps {
     fieldCount: number;
     filters: { search: string; class: string };
     classes: Array<{ id: number; name: string }>;
+    /** Instructors' requests to see a full record, waiting for a decision. */
+    pendingAccessRequests: number;
     can: { configure: boolean; manage: boolean };
 }
 
 /** Candidates and how much of their medical record is filled in. Medical staff only. */
-export default function MedicalRecords({ candidates, fieldCount, filters, classes, can }: MedicalRecordsProps) {
+export default function MedicalRecords({ candidates, fieldCount, filters, classes, pendingAccessRequests, can }: MedicalRecordsProps) {
     const formatDate = useDateFormatter();
     const { values, update, updateMany } = useQueryFilters(routes.medical.records.index(), filters);
     const configureAction = can.configure && (
@@ -49,7 +51,22 @@ export default function MedicalRecords({ candidates, fieldCount, filters, classe
             <PageHeader
                 title="Medical Records"
                 description="Confidential. Each candidate's medical record answers the fields set by the administrators. Every change is kept in the record's history."
-                actions={configureAction}
+                actions={
+                    <>
+                        {can.manage && (
+                            <ButtonLink href={routes.medical.access.index()} icon={<LockKeyhole className="size-4" aria-hidden="true" />}>
+                                Access Requests
+                                {pendingAccessRequests > 0 && (
+                                    <span className="ml-1 rounded-full bg-accent-300 px-2 text-xs font-bold text-primary-900 tabular-nums">
+                                        {pendingAccessRequests}
+                                        <span className="sr-only"> waiting</span>
+                                    </span>
+                                )}
+                            </ButtonLink>
+                        )}
+                        {configureAction}
+                    </>
+                }
             />
 
             <section className="rounded-lg border border-line bg-surface" aria-label="Candidate medical records">
