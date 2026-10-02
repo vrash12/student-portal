@@ -1,3 +1,6 @@
+# PDF.js worker (in-app medical document viewer): browsers run module workers only with a JavaScript type.
+AddType text/javascript .mjs
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
