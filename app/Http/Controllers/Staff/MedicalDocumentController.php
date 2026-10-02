@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Staff;
 use App\Enums\MedicalDocumentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\CandidateMedicalDocument;
-use App\Services\Medical\MedicalAccessService;
 use App\Services\Medical\MedicalDocumentService;
 use App\Support\MedicalRecordPresenter;
 use App\Support\QueryFilters;
@@ -76,7 +75,7 @@ class MedicalDocumentController extends Controller
     }
 
     /**
-     * The file for the protected viewer of an instructor with approved access.
+     * The file for the protected viewer of an instructor of the candidate's class.
      * Only the viewer's own request (with its header) gets it, so the address
      * does not open on its own in a tab with the browser's print and download
      * buttons. Every opening is audited.
@@ -85,9 +84,7 @@ class MedicalDocumentController extends Controller
     {
         abort_unless($request->header(self::VIEWER_HEADER) === '1', 404);
 
-        $grant = MedicalAccessService::activeGrant($request->user(), $medicalDocument->candidate);
-        abort_if($grant === null, 403);
-        $this->documents->recordView($medicalDocument, $grant->id, $request->user());
+        $this->documents->recordView($medicalDocument, $request->user());
 
         $path = $this->documents->absolutePath($medicalDocument);
         abort_if($path === null, 404);
@@ -105,9 +102,7 @@ class MedicalDocumentController extends Controller
     /** The protected viewer reports a Print Screen press; it is recorded, nothing else. */
     public function printScreen(Request $request, CandidateMedicalDocument $medicalDocument): Response204
     {
-        $grant = MedicalAccessService::activeGrant($request->user(), $medicalDocument->candidate);
-        abort_if($grant === null, 403);
-        $this->documents->recordPrintScreen($medicalDocument, $grant->id, $request->user());
+        $this->documents->recordPrintScreen($medicalDocument, $request->user());
 
         return response()->noContent();
     }

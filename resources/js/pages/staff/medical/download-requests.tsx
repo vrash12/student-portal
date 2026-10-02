@@ -35,7 +35,7 @@ const TABS: Array<{ value: Filter; label: string }> = [
 
 /**
  * Instructors' requests for a copy of an uploaded medical document (owner
- * request, 2026-10-02). Instructors with approved access view documents
+ * request, 2026-10-02). Instructors of the candidate's class view documents
  * only; a download needs the medical staff's approval.
  */
 export default function MedicalDownloadRequests({ requests, status, counts, days }: DownloadRequestsProps) {
@@ -86,7 +86,7 @@ export default function MedicalDownloadRequests({ requests, status, counts, days
                     <EmptyState
                         icon={FileDown}
                         title={status === 'pending' ? 'No requests waiting' : status === 'active' ? 'No approved downloads now' : 'No download requests yet'}
-                        description="Instructors with approved access request a download from the documents in a candidate's Medical Record panel."
+                        description="Instructors request a download from the documents in the Medical Record panel of a candidate in their class."
                     />
                 ) : (
                     <Table caption="Medical document download requests" className="min-w-[68rem]">

@@ -7,7 +7,6 @@ use App\Enums\SystemRole;
 use App\Models\AuditLog;
 use App\Models\Candidate;
 use App\Models\CandidateMedicalDocument;
-use App\Models\MedicalAccessRequest;
 use App\Models\User;
 use Database\Seeders\DemoMedicalDocumentSeeder;
 use Illuminate\Http\UploadedFile;
@@ -20,9 +19,9 @@ use Tests\TestCase;
 /**
  * Medical documents candidates upload (owner request, 2026-10-02):
  * certificates and check-up findings that the medical staff accept or return
- * with a reason; the candidate withdraws an upload only while it waits; an
- * instructor sees them only through an approved full-record request, in the
- * view-only viewer, and every view is recorded.
+ * with a reason; the candidate withdraws an upload only while it waits;
+ * instructors of the candidate's class see them in the view-only viewer
+ * (owner decision 2026-10-02: no request to view), and every view is recorded.
  */
 class MedicalDocumentTest extends TestCase
 {
@@ -189,24 +188,15 @@ class MedicalDocumentTest extends TestCase
         $this->assertSame(MedicalDocumentStatus::Submitted, $document->fresh()->status);
     }
 
-    public function test_instructors_view_documents_only_through_approved_access_and_never_download_them(): void
+    public function test_instructors_of_the_class_view_documents_but_never_download_them_directly(): void
     {
         $accepted = $this->uploaded('Check-up findings');
         $returned = $this->uploaded('Wrong file');
         $this->actingAs($this->admin)->post(route('medical.documents.accept', $accepted));
         $this->actingAs($this->admin)->post(route('medical.documents.return', $returned), ['reason' => 'This is not a medical document.']);
 
-        // Without approved access: nothing about the documents, and no file.
-        $before = $this->actingAs($this->alpha)->get(route('candidates.show', $this->candidateInA))->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->where('medical.scope', 'instructor')->has('medical.documents', 0));
-        $this->assertStringNotContainsString('Check-up findings', $before->getContent());
-        $this->viewProtected($this->alpha, $accepted)->assertForbidden();
-
-        $this->actingAs($this->alpha)->post(route('medical.access.store', $this->candidateInA), ['reason' => 'Planning the endurance march for the class.'])->assertSessionHasNoErrors();
-        $request = MedicalAccessRequest::query()->sole();
-        $this->actingAs($this->admin)->post(route('medical.access.approve', $request), ['days' => 1])->assertSessionHasNoErrors();
-
-        // With approved access: the documents, read-only, without review details and without returned ones.
+        // Owner decision (2026-10-02): no request to view. The documents, view only,
+        // without review details and without returned ones.
         $this->actingAs($this->alpha)->get(route('candidates.show', $this->candidateInA))->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('medical.scope', 'granted')
@@ -216,7 +206,8 @@ class MedicalDocumentTest extends TestCase
                 ->where('medical.documents.0.downloadUrl', null)
                 ->where('medical.documents.0.protectedUrl', route('medical.documents.protected', $accepted, false))
                 ->where('medical.documents.0.reviewedBy', null)
-                ->where('medical.documents.0.can.review', false));
+                ->where('medical.documents.0.can.review', false)
+                ->where('medical.documents.0.download.canRequest', true));
 
         // The file reaches the protected viewer only, never a tab or a download.
         $this->actingAs($this->alpha)->get(route('medical.documents.protected', $accepted))->assertNotFound();
@@ -229,20 +220,14 @@ class MedicalDocumentTest extends TestCase
         $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
         $this->assertStringContainsString('sandbox', (string) $response->headers->get('Content-Security-Policy'));
 
-        // Every view is recorded, with the request it relied on and no title.
+        // Every view is recorded, without the title.
         $view = AuditLog::query()->where('action', 'medical_document.viewed')->sole();
         $this->assertSame($this->alpha->id, (int) $view->actor_id);
-        $this->assertSame($request->id, $view->new_values['access_request']);
         $this->assertStringNotContainsString('Check-up', json_encode($view->getAttributes()) ?: '');
 
-        // Another instructor of the class without their own approval sees nothing.
-        $this->viewProtected($this->bravo, $accepted)->assertForbidden();
-
-        // Withdrawn access ends it at once.
-        $this->actingAs($this->admin)->post(route('medical.access.revoke', $request))->assertSessionHasNoErrors();
-        $this->viewProtected($this->alpha, $accepted)->assertForbidden();
-        $this->actingAs($this->alpha)->get(route('candidates.show', $this->candidateInA))->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->has('medical.documents', 0));
+        // Bravo teaches Class A too; an instructor outside the class sees nothing.
+        $this->viewProtected($this->bravo, $accepted)->assertOk();
+        $this->viewProtected($this->userWithRole(SystemRole::Instructor), $accepted)->assertForbidden();
     }
 
     public function test_staff_see_the_documents_on_the_candidate_profile(): void

@@ -17,7 +17,7 @@ use App\Services\CandidateService;
 use App\Services\Fitness\FitnessResults;
 use App\Services\Grading\GradeCalculationService;
 use App\Services\Grading\GradingThresholds;
-use App\Services\Medical\MedicalAccessService;
+use App\Services\Medical\MedicalRecordService;
 use App\Services\Monitoring\CandidateAcademicRecord;
 use App\Services\Monitoring\CandidateProfileRecord;
 use App\Services\Performance\CandidatePerformanceRecord;
@@ -211,7 +211,7 @@ class CandidateController extends Controller
             // Military fitness history (newest first), for staff who may view fitness records.
             'fitness' => $viewer->hasPermission(Permission::ViewFitness) ? $fitness->history($candidate, self::FITNESS_HISTORY) : null,
             ...$this->performanceSections($viewer, $candidate, $performanceRecord),
-            // Every field for medical staff; for those who teach the class, the shared fields or, with approved access, every field; null otherwise.
+            // Every field for medical staff and, view only, for those who teach the class; null otherwise.
             'medical' => $this->medical($candidate, $viewer),
             'canEdit' => $canManage,
             // Instructors return to the class they teach, not the full candidate list.
@@ -324,7 +324,7 @@ class CandidateController extends Controller
     {
         $medical = MedicalRecordPresenter::forStaff($candidate, $viewer);
         if ($medical !== null && $medical['scope'] === 'granted') {
-            app(MedicalAccessService::class)->recordView((int) $medical['access']['grant']['requestId'], $candidate, $viewer);
+            app(MedicalRecordService::class)->recordInstructorView($candidate, $viewer);
         }
 
         return $medical;

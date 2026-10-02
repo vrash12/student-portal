@@ -118,8 +118,8 @@ enum Permission: string
             self::ManageAttendance => 'Create training sessions and record attendance: for every class when the user can view all candidates, otherwise for the classes the user teaches.',
             self::ConfigurePerformance => 'Set the performance areas, their weights, passing grades and must-pass rules, which subjects belong to each area, the conduct rating rule, and the merit and demerit types.',
             self::ViewPerformance => 'See every candidate\'s area results, qualification status, and class rank.',
-            self::ViewMedical => 'See every candidate\'s full medical record, its change history and uploaded documents (open and download). Instructors without it see nothing medical unless the medical staff approve their request for a full record.',
-            self::ManageMedical => 'Record medical values (every change kept in the history), accept or return the documents candidates upload, and approve (1, 7 or 30 days), reject or withdraw instructors\' requests to see a full record.',
+            self::ViewMedical => 'See every candidate\'s full medical record, its change history and uploaded documents (open and download). Instructors without it see the records of the classes they teach, view only.',
+            self::ManageMedical => 'Record medical values (every change kept in the history), accept or return the documents candidates upload, and approve, reject or withdraw instructors\' requests to download a document.',
             self::ConfigureMedical => 'Define the medical record fields (name, type, choices), and whether instructors and candidates see each field.',
         };
     }

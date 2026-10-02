@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { FileDown, FileStack, HeartPulse, LockKeyhole, Settings2 } from 'lucide-react';
+import { FileDown, FileStack, HeartPulse, Settings2 } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FilterBar } from '@/components/ui/filter-bar';
@@ -33,8 +33,6 @@ interface MedicalRecordsProps {
     fieldCount: number;
     filters: { search: string; class: string };
     classes: Array<{ id: number; name: string }>;
-    /** Instructors' requests to see a full record, waiting for a decision. */
-    pendingAccessRequests: number;
     /** Uploaded documents waiting for review. */
     waitingDocuments: number;
     /** Instructors' download requests waiting for a decision. */
@@ -43,7 +41,7 @@ interface MedicalRecordsProps {
 }
 
 /** Candidates and how much of their medical record is filled in. Medical staff only. */
-export default function MedicalRecords({ candidates, fieldCount, filters, classes, pendingAccessRequests, waitingDocuments, pendingDownloadRequests, can }: MedicalRecordsProps) {
+export default function MedicalRecords({ candidates, fieldCount, filters, classes, waitingDocuments, pendingDownloadRequests, can }: MedicalRecordsProps) {
     const formatDate = useDateFormatter();
     const { values, update, updateMany } = useQueryFilters(routes.medical.records.index(), filters);
     const configureAction = can.configure && (
@@ -67,17 +65,6 @@ export default function MedicalRecords({ candidates, fieldCount, filters, classe
                                 {waitingDocuments > 0 && (
                                     <span className="ml-1 rounded-full bg-accent-300 px-2 text-xs font-bold text-primary-900 tabular-nums">
                                         {waitingDocuments}
-                                        <span className="sr-only"> waiting</span>
-                                    </span>
-                                )}
-                            </ButtonLink>
-                        )}
-                        {can.manage && (
-                            <ButtonLink href={routes.medical.access.index()} icon={<LockKeyhole className="size-4" aria-hidden="true" />}>
-                                Access Requests
-                                {pendingAccessRequests > 0 && (
-                                    <span className="ml-1 rounded-full bg-accent-300 px-2 text-xs font-bold text-primary-900 tabular-nums">
-                                        {pendingAccessRequests}
                                         <span className="sr-only"> waiting</span>
                                     </span>
                                 )}

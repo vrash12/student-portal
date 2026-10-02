@@ -49,9 +49,8 @@ class CandidatePolicy
     }
 
     /**
-     * Entering and changing the candidate's medical record. Instructors see
-     * it only through an approved access request (read-only) and never
-     * change it.
+     * Entering and changing the candidate's medical record. Instructors of the
+     * candidate's class see it (view only) and never change it.
      */
     public function manageMedical(User $actor, Candidate $candidate): bool
     {
@@ -59,10 +58,11 @@ class CandidatePolicy
     }
 
     /**
-     * Instructors of the candidate's class may ask the medical staff to see
-     * the full medical record (MedicalAccessService). Medical staff already see it.
+     * Instructors of the candidate's class see the medical record and its
+     * documents, view only (owner decision 2026-10-02: no request needed to
+     * view; a download needs approval). Medical staff see it through medical.view.
      */
-    public function requestMedicalAccess(User $actor, Candidate $candidate): bool
+    public function viewMedicalAsInstructor(User $actor, Candidate $candidate): bool
     {
         return ! $actor->hasPermission(Permission::ViewMedical)
             && $candidate->class_batch_id !== null

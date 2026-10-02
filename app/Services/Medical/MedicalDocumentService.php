@@ -156,27 +156,21 @@ final class MedicalDocumentService
     }
 
     /**
-     * Records that an instructor opened a document through approved access.
+     * Records that an instructor of the candidate's class opened a document.
      */
-    public function recordView(CandidateMedicalDocument $document, int $accessRequestId, User $viewer): void
+    public function recordView(CandidateMedicalDocument $document, User $viewer): void
     {
-        $this->audit->record(AuditAction::MedicalDocumentViewed, $document, newValues: [
-            ...$this->summary($document, $document->candidate),
-            'access_request' => $accessRequestId,
-        ], actor: $viewer);
+        $this->audit->record(AuditAction::MedicalDocumentViewed, $document, newValues: $this->summary($document, $document->candidate), actor: $viewer);
     }
 
     /**
-     * Records a Print Screen press reported by the protected viewer of an
-     * instructor with approved access (a browser cannot stop screenshots;
-     * this keeps a trace of the attempt).
+     * Records a Print Screen press reported by an instructor's protected
+     * viewer (a browser cannot stop screenshots; this keeps a trace of the
+     * attempt).
      */
-    public function recordPrintScreen(CandidateMedicalDocument $document, int $accessRequestId, User $viewer): void
+    public function recordPrintScreen(CandidateMedicalDocument $document, User $viewer): void
     {
-        $this->audit->record(AuditAction::MedicalDocumentPrintScreen, $document, newValues: [
-            ...$this->summary($document, $document->candidate),
-            'access_request' => $accessRequestId,
-        ], actor: $viewer);
+        $this->audit->record(AuditAction::MedicalDocumentPrintScreen, $document, newValues: $this->summary($document, $document->candidate), actor: $viewer);
     }
 
     /** Absolute path of the stored file, or null when it is missing. */

@@ -6,7 +6,6 @@ use App\Enums\MedicalDocumentStatus;
 use App\Enums\Permission;
 use App\Models\CandidateMedicalDocument;
 use App\Models\User;
-use App\Services\Medical\MedicalAccessService;
 
 /**
  * Who may open, review and withdraw uploaded medical documents:
@@ -15,9 +14,9 @@ use App\Services\Medical\MedicalAccessService;
  *   with medical.manage accept or return those waiting for review;
  * - the candidate opens and downloads their own documents, and withdraws
  *   one only while it waits for review;
- * - an instructor of the candidate's class, while the medical staff have
- *   approved their full-record request, views documents (not returned ones)
- *   in the protected viewer only: no download, no print.
+ * - an instructor of the candidate's class views documents (not returned
+ *   ones) in the protected viewer only: no print, and a download only with
+ *   an approved download request (owner decision 2026-10-02).
  */
 class CandidateMedicalDocumentPolicy
 {
@@ -36,17 +35,12 @@ class CandidateMedicalDocumentPolicy
         return $this->owns($user, $document) && $document->isWaiting();
     }
 
-    /** The protected, view-only display for instructors with approved access. */
+    /** The protected, view-only display for instructors of the candidate's class. */
     public function viewProtected(User $user, CandidateMedicalDocument $document): bool
     {
-        $candidate = $document->candidate;
-
         return ! $user->hasPermission(Permission::ViewMedical)
             && $document->status !== MedicalDocumentStatus::Returned
-            && $candidate->class_batch_id !== null
-            && $user->canTeach()
-            && $user->teachesClass($candidate->class_batch_id)
-            && MedicalAccessService::activeGrant($user, $candidate) !== null;
+            && $user->can('viewMedicalAsInstructor', $document->candidate);
     }
 
     /** Asking for a copy: whoever may view the document in the protected viewer. */

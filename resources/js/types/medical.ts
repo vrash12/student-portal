@@ -37,21 +37,11 @@ export interface MedicalEntry {
     value: string | null;
 }
 
-/** An instructor's access to the full record and their requests for it. */
-export interface MedicalAccessState {
-    /** Approved, unexpired access. */
-    grant: { requestId: number; expiresAt: string | null; grantedBy: string | null } | null;
-    pending: { requestId: number; requestedAt: string | null } | null;
-    /** The last answer: rejected, withdrawn, or ended access. */
-    lastDecision: { status: { value: string; label: string; tone: StatusTone }; note: string | null; at: string | null } | null;
-    canRequest: boolean;
-}
-
 export type MedicalDocumentStatusValue = 'submitted' | 'accepted' | 'returned';
 
 /**
  * A medical document a candidate uploaded (MedicalRecordPresenter::document).
- * Instructors with approved access get `protectedUrl` only (view in the
+ * Instructors of the candidate's class get `protectedUrl` only (view in the
  * protected viewer); medical staff and the candidate get `fileUrl`/`downloadUrl`.
  */
 export interface MedicalDocument {
@@ -120,36 +110,16 @@ export interface MedicalDocumentRow extends MedicalDocument {
 
 /** The medical panel of the staff candidate profile. */
 export interface ProfileMedical {
-    /**
-     * "full": every field (medical staff); "instructor": no field, only the state of the instructor's
-     * access requests; "granted": every field, read-only, through an instructor's approved request.
-     */
-    scope: 'full' | 'instructor' | 'granted';
+    /** "full": every field (medical staff); "granted": every field, view only (instructors of the candidate's class). */
+    scope: 'full' | 'granted';
     entries: MedicalEntry[];
     canEdit: boolean;
     updatedAt: string | null;
     /** Full scope only. */
     updatedBy: string | null;
-    /** Instructors only. */
-    access: MedicalAccessState | null;
-    /** Uploaded documents: every one for medical staff; not returned ones, view-only, with approved access; none otherwise. */
+    /** Uploaded documents: every one for medical staff; not returned ones, view only, for instructors of the class. */
     documents: MedicalDocument[];
     /** Medical staff only: documents waiting for review. */
     waitingDocuments: number;
 }
 
-/** A request on the medical staff's Access Requests page. */
-export interface MedicalAccessRow {
-    id: number;
-    candidate: { id: number; number: string; name: string; className: string | null };
-    requestedBy: string;
-    requestedAt: string | null;
-    reason: string;
-    status: { value: string; label: string; tone: StatusTone };
-    expiresAt: string | null;
-    decidedBy: string | null;
-    decidedAt: string | null;
-    decisionNote: string | null;
-    revokedBy: string | null;
-    can: { decide: boolean; revoke: boolean };
-}

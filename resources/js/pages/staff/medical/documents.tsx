@@ -69,7 +69,7 @@ export default function MedicalDocuments({ documents, filters, counts }: Medical
 
             <PageHeader
                 title="Uploaded Documents"
-                description="Medical certificates, check-up findings and other documents uploaded by candidates. Open each one, then accept it or return it with a reason the candidate will see. Instructors see accepted and waiting documents only through an approved access request, view only."
+                description="Medical certificates, check-up findings and other documents uploaded by candidates. Open each one, then accept it or return it with a reason the candidate will see. Instructors of the candidate's class see accepted and waiting documents, view only; a copy needs an approved download request."
                 breadcrumbs={[{ label: 'Medical Records', href: routes.medical.records.index() }, { label: 'Uploaded Documents' }]}
             />
 

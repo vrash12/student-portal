@@ -36,7 +36,6 @@ use App\Http\Controllers\Staff\GradingSchemeController;
 use App\Http\Controllers\Staff\GradingThresholdController;
 use App\Http\Controllers\Staff\InstructorAssignmentController;
 use App\Http\Controllers\Staff\InstructorController;
-use App\Http\Controllers\Staff\MedicalAccessController;
 use App\Http\Controllers\Staff\MedicalDocumentController;
 use App\Http\Controllers\Staff\MedicalDownloadController;
 use App\Http\Controllers\Staff\MedicalFieldController;
@@ -162,13 +161,6 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('medical-records', [MedicalRecordController::class, 'index'])->name('medical.records.index')->can(Permission::ViewMedical->value);
         Route::get('medical-records/{candidate}/edit', [MedicalRecordController::class, 'edit'])->name('medical.records.edit')->whereNumber('candidate')->can('manageMedical', 'candidate');
         Route::put('medical-records/{candidate}', [MedicalRecordController::class, 'update'])->name('medical.records.update')->whereNumber('candidate')->can('manageMedical', 'candidate');
-        // Instructors' requests to see a full medical record (MedicalAccessController).
-        Route::get('medical-records/access-requests', [MedicalAccessController::class, 'index'])->name('medical.access.index')->can(Permission::ManageMedical->value);
-        Route::post('candidates/{candidate}/medical-access-requests', [MedicalAccessController::class, 'store'])->name('medical.access.store')->whereNumber('candidate')->can('requestMedicalAccess', 'candidate');
-        Route::post('medical-access-requests/{medicalAccessRequest}/cancel', [MedicalAccessController::class, 'cancel'])->name('medical.access.cancel')->whereNumber('medicalAccessRequest')->can('cancel', 'medicalAccessRequest');
-        Route::post('medical-access-requests/{medicalAccessRequest}/approve', [MedicalAccessController::class, 'approve'])->name('medical.access.approve')->whereNumber('medicalAccessRequest')->can('decide', 'medicalAccessRequest');
-        Route::post('medical-access-requests/{medicalAccessRequest}/reject', [MedicalAccessController::class, 'reject'])->name('medical.access.reject')->whereNumber('medicalAccessRequest')->can('decide', 'medicalAccessRequest');
-        Route::post('medical-access-requests/{medicalAccessRequest}/revoke', [MedicalAccessController::class, 'revoke'])->name('medical.access.revoke')->whereNumber('medicalAccessRequest')->can('revoke', 'medicalAccessRequest');
         // Medical documents candidates upload (MedicalDocumentController): the review queue and
         // accept/return (medical.manage), files for medical staff (medical.view), and the
         // protected, view-only feed for instructors with approved access.

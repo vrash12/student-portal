@@ -62,14 +62,6 @@ export const routes = {
             edit: (candidateId: number) => `/medical-records/${candidateId}/edit`,
             update: (candidateId: number) => `/medical-records/${candidateId}`,
         },
-        access: {
-            index: (query?: Record<string, string>) => withQuery('/medical-records/access-requests', query),
-            store: (candidateId: number) => `/candidates/${candidateId}/medical-access-requests`,
-            cancel: (requestId: number) => `/medical-access-requests/${requestId}/cancel`,
-            approve: (requestId: number) => `/medical-access-requests/${requestId}/approve`,
-            reject: (requestId: number) => `/medical-access-requests/${requestId}/reject`,
-            revoke: (requestId: number) => `/medical-access-requests/${requestId}/revoke`,
-        },
         documents: {
             index: (query?: Record<string, string>) => withQuery('/medical-records/documents', query),
             accept: (documentId: number) => `/medical-documents/${documentId}/accept`,

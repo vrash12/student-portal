@@ -112,24 +112,27 @@ class MedicalRecordTest extends TestCase
         $this->assertSame('yes', $this->value($cleared));
     }
 
-    public function test_instructors_see_no_medical_information_without_approved_access(): void
+    public function test_instructors_of_the_class_see_the_record_view_only(): void
     {
         $this->saveRecord([$this->bloodType->id => 'O+', $this->allergies->id => 'Shellfish.', $this->remarks->id => 'Staff-only remark.']);
 
         $this->actingAs($this->admin)->get(route('candidates.show', $this->candidateInA))->assertOk()
             ->assertInertia(fn (Assert $page) => $page->where('medical.scope', 'full')->has('medical.entries', 3)->where('medical.canEdit', true));
 
-        // Owner decision (2026-10-02): no field at all, only the way to request access.
+        // Owner decision (2026-10-02): instructors of the class see every field without asking, view only.
         $response = $this->actingAs($this->alpha)->get(route('candidates.show', $this->candidateInA))->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->where('medical.scope', 'instructor')
-                ->has('medical.entries', 0)
+                ->where('medical.scope', 'granted')
+                ->has('medical.entries', 3)
                 ->where('medical.canEdit', false)
-                ->where('medical.updatedAt', null)
-                ->where('medical.access.canRequest', true));
-        foreach (['Shellfish.', 'Staff-only remark.', "Physician's Remarks", 'Blood Type', 'O+'] as $hidden) {
-            $this->assertStringNotContainsString($hidden, $response->getContent());
-        }
+                ->where('medical.updatedBy', null)
+                ->missing('medical.access'));
+        $this->assertStringContainsString('Staff-only remark.', $response->getContent());
+
+        // Each view is recorded, without values.
+        $view = AuditLog::query()->where('action', 'medical_record.viewed')->sole();
+        $this->assertSame($this->alpha->id, (int) $view->actor_id);
+        $this->assertStringNotContainsString('Shellfish', json_encode($view->getAttributes()) ?: '');
 
         // Nothing medical to manage or browse for instructors.
         $this->actingAs($this->alpha)->get(route('medical.records.index'))->assertForbidden();
@@ -138,9 +141,10 @@ class MedicalRecordTest extends TestCase
         $this->actingAs($this->alpha)->get(route('medical.fields.index'))->assertForbidden();
         $this->assertSame('O+', $this->value($this->bloodType));
 
-        // Any instructor of a candidate's class gets the same view of that candidate.
+        // Any instructor of a candidate's class gets the same view; one outside the class gets none.
         $this->actingAs($this->bravo)->get(route('candidates.show', $this->candidateInB))->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->where('medical.scope', 'instructor'));
+            ->assertInertia(fn (Assert $page) => $page->where('medical.scope', 'granted'));
+        $this->actingAs($this->alpha)->get(route('candidates.show', $this->candidateInB))->assertForbidden();
     }
 
     public function test_candidates_see_their_own_shared_fields_only(): void

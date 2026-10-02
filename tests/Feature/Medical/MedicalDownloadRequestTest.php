@@ -6,7 +6,7 @@ use App\Enums\MedicalDownloadStatus;
 use App\Enums\SystemRole;
 use App\Models\AuditLog;
 use App\Models\CandidateMedicalDocument;
-use App\Models\MedicalAccessRequest;
+use App\Models\InstructorAssignment;
 use App\Models\MedicalDownloadRequest;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -17,8 +17,8 @@ use Tests\Feature\Teaching\BuildsTeachingFixtures;
 use Tests\TestCase;
 
 /**
- * Instructors' downloads of uploaded medical documents (owner request,
- * 2026-10-02): with approved access an instructor views a document only; a
+ * Instructors' downloads of uploaded medical documents (owner requests,
+ * 2026-10-02): instructors of the candidate's class view a document only; a
  * copy needs a download request approved by the medical staff, valid for a
  * few days, every download recorded. Print Screen presses in the viewer are
  * recorded.
@@ -32,8 +32,6 @@ class MedicalDownloadRequestTest extends TestCase
     private User $admin;
 
     private CandidateMedicalDocument $document;
-
-    private MedicalAccessRequest $access;
 
     protected function setUp(): void
     {
@@ -51,15 +49,11 @@ class MedicalDownloadRequestTest extends TestCase
         ])->assertSessionHasNoErrors();
         $this->document = CandidateMedicalDocument::query()->sole();
         $this->actingAs($this->admin)->post(route('medical.documents.accept', $this->document))->assertSessionHasNoErrors();
-
-        $this->actingAs($this->alpha)->post(route('medical.access.store', $this->candidateInA), ['reason' => 'Planning the endurance march for the class.'])->assertSessionHasNoErrors();
-        $this->access = MedicalAccessRequest::query()->sole();
-        $this->actingAs($this->admin)->post(route('medical.access.approve', $this->access), ['days' => 7])->assertSessionHasNoErrors();
     }
 
     public function test_a_copy_needs_an_approved_download_request(): void
     {
-        // Viewing access alone gives no download.
+        // Viewing gives no download.
         $this->profileDocument($this->alpha)
             ->where('medical.documents.0.download.request', null)
             ->where('medical.documents.0.download.fileUrl', null)
@@ -146,7 +140,7 @@ class MedicalDownloadRequestTest extends TestCase
         $this->assertSame(MedicalDownloadStatus::Cancelled, $second->fresh()->status);
     }
 
-    public function test_withdrawing_access_or_the_approval_ends_the_download(): void
+    public function test_withdrawing_the_approval_or_leaving_the_class_ends_the_download(): void
     {
         $this->requestDownload()->assertSessionHasNoErrors();
         $download = MedicalDownloadRequest::query()->sole();
@@ -156,32 +150,32 @@ class MedicalDownloadRequestTest extends TestCase
         $this->assertSame(MedicalDownloadStatus::Revoked, $download->fresh()->status);
         $this->actingAs($this->alpha)->get(route('medical.downloads.file', $download))->assertForbidden();
 
-        // A new approval ends together with the full-record access.
+        // A new approval no longer works once the instructor stops teaching the class.
         $this->requestDownload()->assertSessionHasNoErrors();
         $again = MedicalDownloadRequest::query()->latest('id')->firstOrFail();
         $this->actingAs($this->admin)->post(route('medical.downloads.approve', $again))->assertSessionHasNoErrors();
-        $this->actingAs($this->admin)->post(route('medical.access.revoke', $this->access))->assertSessionHasNoErrors();
-        $this->assertSame(MedicalDownloadStatus::Revoked, $again->fresh()->status);
+        InstructorAssignment::query()->where('instructor_id', $this->alpha->id)->delete();
         $this->actingAs($this->alpha)->get(route('medical.downloads.file', $again))->assertForbidden();
+        $this->assertSame(0, $again->fresh()->download_count);
 
-        // Without access there is nothing to request.
+        // Nor can they ask again.
         $this->requestDownload()->assertForbidden();
     }
 
-    public function test_only_instructors_with_access_request_and_print_screen_is_recorded(): void
+    public function test_only_instructors_of_the_class_request_and_print_screen_is_recorded(): void
     {
-        // Bravo teaches the class but has no approved access.
-        $this->actingAs($this->bravo)->post(route('medical.downloads.store', $this->document), ['reason' => self::REASON])->assertForbidden();
-        $this->actingAs($this->candidateInA->user)->post(route('medical.downloads.store', $this->document), ['reason' => self::REASON])->assertForbidden();
-        $this->actingAs($this->admin)->post(route('medical.downloads.store', $this->document), ['reason' => self::REASON])->assertForbidden();
+        $outsider = $this->userWithRole(SystemRole::Instructor);
+        foreach ([$outsider, $this->candidateInA->user, $this->admin] as $user) {
+            $this->actingAs($user)->post(route('medical.downloads.store', $this->document), ['reason' => self::REASON])->assertForbidden();
+        }
         $this->assertSame(0, MedicalDownloadRequest::query()->count());
 
-        $this->actingAs($this->bravo)->post(route('medical.documents.print-screen', $this->document))->assertForbidden();
+        $this->actingAs($outsider)->post(route('medical.documents.print-screen', $this->document))->assertForbidden();
         $this->actingAs($this->alpha)->post(route('medical.documents.print-screen', $this->document))->assertNoContent();
 
         $audit = AuditLog::query()->where('action', 'medical_document.print_screen')->sole();
         $this->assertSame($this->alpha->id, (int) $audit->actor_id);
-        $this->assertSame($this->access->id, $audit->new_values['access_request']);
+        $this->assertStringNotContainsString('Check-up', json_encode($audit->getAttributes()) ?: '');
         $this->profileDocument($this->alpha)
             ->where('medical.documents.0.printScreenUrl', route('medical.documents.print-screen', $this->document, false));
     }

@@ -23,8 +23,8 @@ interface ProtectedDocumentViewerProps {
 }
 
 /**
- * View-only display of an uploaded medical document for instructors with
- * approved access (owner requests, 2026-10-02: "cannot print it", "can be
+ * View-only display of an uploaded medical document for instructors of the
+ * candidate's class (owner requests, 2026-10-02: "cannot print it", "can be
  * viewed but not downloadable, not screenshot"; a copy needs an approved
  * download request).
  *

@@ -17,12 +17,11 @@ use Illuminate\Validation\ValidationException;
  * 2026-10-02): "it can be viewed but not downloadable … it must be requested
  * to the admin for it to be downloaded".
  *
- * An instructor who can view a document (approved full-record access) asks,
- * with a reason, for a copy. Medical staff approve it, which lets that
- * instructor download that one document for DAYS days, or reject it with a
- * reason; they may withdraw an approval early, and withdrawing the
- * instructor's full-record access withdraws it too. The requester may cancel
- * a pending request. Nobody decides their own request. Every step and every
+ * An instructor who can view a document (they teach the candidate's class)
+ * asks, with a reason, for a copy. Medical staff approve it, which lets that
+ * instructor download that one document for DAYS days while they still teach
+ * the class, or reject it with a reason; they may withdraw an approval early.
+ * The requester may cancel a pending request. Nobody decides their own request. Every step and every
  * download is audited without document titles or contents.
  *
  * Delivery is in the app for now: the approved instructor downloads the file
@@ -166,23 +165,6 @@ class MedicalDownloadService
 
             $this->end($locked, $actor);
         });
-    }
-
-    /**
-     * Withdraws every active download approval of an instructor for a
-     * candidate's documents, when their full-record access is withdrawn.
-     * Runs inside the caller's transaction.
-     */
-    public function revokeAllFor(int $candidateId, int $instructorId, User $actor): void
-    {
-        MedicalDownloadRequest::query()
-            ->active()
-            ->where('candidate_id', $candidateId)
-            ->where('requested_by', $instructorId)
-            ->with(['document:id,category,candidate_id', 'candidate:id,candidate_number', 'requester:id,name'])
-            ->lockForUpdate()
-            ->get()
-            ->each(fn (MedicalDownloadRequest $download) => $this->end($download, $actor));
     }
 
     /**

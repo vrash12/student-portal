@@ -3,19 +3,18 @@
 namespace App\Models;
 
 use App\Enums\MedicalAccessStatus;
-use App\Policies\MedicalAccessRequestPolicy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
-use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * An instructor's request to see one candidate's full medical record. An
- * approval gives read-only access until `expires_at`. Requests are never
- * deleted; change them through MedicalAccessService.
+ * An instructor's request to see one candidate's full medical record, from
+ * the time such access had to be approved. Retired by the owner on
+ * 2026-10-02: instructors of the candidate's class now view the record
+ * without asking (view only). Kept read-only for the history and the audit
+ * entries of earlier requests; nothing creates or changes them any more.
  */
-#[UsePolicy(MedicalAccessRequestPolicy::class)]
 class MedicalAccessRequest extends Model
 {
     /**

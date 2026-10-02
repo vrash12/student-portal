@@ -27,7 +27,7 @@ export default function MedicalFields({ fields }: { fields: FieldRow[] }) {
 
             <PageHeader
                 title="Medical Record Fields"
-                description="The questions every candidate's medical record answers, in order. Choose for each field whether the candidate sees it. Instructors see the record only with approved access. Fields in use are deactivated, never deleted."
+                description="The questions every candidate's medical record answers, in order. Choose for each field whether the candidate sees it. Instructors of the candidate's class see the whole record, view only. Fields in use are deactivated, never deleted."
                 breadcrumbs={[{ label: 'Medical Records', href: routes.medical.records.index() }, { label: 'Fields' }]}
                 actions={addAction}
             />

@@ -24,7 +24,6 @@ use App\Services\Examinations\CandidateAttemptService;
 use App\Services\Fitness\FitnessStandardService;
 use App\Services\Fitness\FitnessTestService;
 use App\Services\Grading\GradeCorrectionService;
-use App\Services\Medical\MedicalAccessService;
 use App\Services\Medical\MedicalRecordService;
 use App\Services\Performance\PerformanceAreaService;
 use Illuminate\Routing\Route;
@@ -146,10 +145,7 @@ class RouteAccessMatrixTest extends TestCase
             'sort_order' => 1, 'visible_to_candidate' => true,
         ], $administrator);
 
-        // Bravo's request to see candidate B1's full medical record (Bravo cancels; medical staff decide).
-        $medicalAccess = app(MedicalAccessService::class)->request($this->candidateInB, 'Planning a field exercise for Batch B.', $this->bravo);
-
-        // A medical document candidate B1 uploaded (B1 and medical staff only; instructors through approved access).
+        // A medical document candidate B1 uploaded (B1 and medical staff; instructors of Batch B view only).
         $medicalDocument = new CandidateMedicalDocument;
         $medicalDocument->candidate_id = $this->candidateInB->id;
         $medicalDocument->category = 'medical_certificate';
@@ -190,7 +186,6 @@ class RouteAccessMatrixTest extends TestCase
             'gradeCorrectionRequest' => (string) $correction->id,
             'instructor' => (string) $this->bravo->id,
             'instructorAssignment' => (string) InstructorAssignment::query()->where('instructor_id', $this->bravo->id)->value('id'),
-            'medicalAccessRequest' => (string) $medicalAccess->id,
             'medicalDocument' => (string) $medicalDocument->id,
             'medicalDownloadRequest' => (string) $medicalDownload->id,
             'medicalField' => (string) $medicalField->id,

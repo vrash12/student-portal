@@ -133,6 +133,15 @@ class MedicalRecordService
      *
      * @throws ValidationException
      */
+    /**
+     * Records that an instructor of the candidate's class opened the record
+     * (view only). No values.
+     */
+    public function recordInstructorView(Candidate $candidate, User $viewer): void
+    {
+        $this->audit->record(AuditAction::MedicalRecordViewed, $candidate, newValues: ['candidate' => $candidate->candidate_number], actor: $viewer);
+    }
+
     public function saveRecord(Candidate $candidate, array $values, User $actor): int
     {
         return DB::transaction(function () use ($candidate, $values, $actor): int {
