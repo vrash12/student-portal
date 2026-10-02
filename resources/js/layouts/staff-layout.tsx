@@ -144,7 +144,7 @@ function SidebarContent({ inDrawer = false, collapsed = false, onToggle }: Sideb
                 )}
             </div>
 
-            <nav id={navId} aria-label="Main" className={cn('flex-1 overflow-y-auto py-4', collapsed ? 'px-2' : 'px-3')}>
+            <nav id={navId} aria-label="Main" className={cn('sidebar-scroll flex-1 overflow-y-auto py-4', collapsed ? 'px-0.5' : 'px-1.5')}>
                 {staffNavigation.map((section, sectionIndex) => {
                     const items = section.items.filter((item) => isVisibleItem(item, can));
                     if (items.length === 0) {
