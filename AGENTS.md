@@ -294,6 +294,8 @@ Administrators should be able to manage:
 - permissions
 - audit logs
 
+Owner decision (2026-10-03): the read-only Roles & Permissions page and its `roles.view` permission were removed. Roles are still assigned to accounts on the Users page; what each role may do is defined in code (`App\Enums\SystemRole`) and applied by `AccessControlSeeder`.
+
 Administration interfaces should prioritize clarity and efficiency.
 
 ---

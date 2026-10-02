@@ -4,8 +4,10 @@ namespace Tests\Feature\Auth;
 
 use App\Enums\SystemRole;
 use App\Models\Candidate;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -24,7 +26,6 @@ class AreaAccessTest extends TestCase
             'home' => ['/'],
             'dashboard' => ['/dashboard'],
             'users' => ['/users'],
-            'roles' => ['/roles'],
             'account password' => ['/account/password'],
             'my classes' => ['/my-classes'],
             'examination portal' => ['/portal'],
@@ -40,7 +41,6 @@ class AreaAccessTest extends TestCase
             'dashboard' => ['/dashboard'],
             'users' => ['/users'],
             'create user' => ['/users/create'],
-            'roles' => ['/roles'],
             'account password' => ['/account/password'],
         ];
     }
@@ -53,7 +53,6 @@ class AreaAccessTest extends TestCase
         return [
             'users' => ['/users'],
             'create user' => ['/users/create'],
-            'roles' => ['/roles'],
         ];
     }
 
@@ -119,13 +118,53 @@ class AreaAccessTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page->component('portal/home'));
     }
 
-    public function test_academic_administrators_can_manage_users_but_not_view_roles(): void
+    public function test_academic_administrators_can_manage_users(): void
     {
         $user = $this->userWithRole(SystemRole::AcademicAdministrator);
 
         $this->actingAs($user)->get('/users')->assertOk();
         $this->actingAs($user)->get('/users/create')->assertOk();
-        $this->actingAs($user)->get('/roles')->assertForbidden();
+    }
+
+    /**
+     * The read-only Roles & Permissions page was removed (owner request,
+     * 2026-10-03), together with the permission that guarded it.
+     */
+    public function test_the_roles_and_permissions_page_no_longer_exists(): void
+    {
+        $admin = $this->userWithRole(SystemRole::SuperAdministrator);
+
+        $this->actingAs($admin)->get('/roles')->assertNotFound();
+        $this->assertFalse(Permission::query()->where('code', 'roles.view')->exists());
+        $this->assertNotContains('roles.view', $admin->permissionCodes());
+    }
+
+    public function test_removing_the_roles_permission_also_removes_its_grants_from_existing_databases(): void
+    {
+        $permissionId = DB::table('permissions')->insertGetId([
+            'code' => 'roles.view',
+            'name' => 'View roles and permissions',
+            'description' => 'View roles and the permissions each role grants.',
+            'group' => 'Administration',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $adminRole = Role::query()->where('code', SystemRole::SuperAdministrator->value)->firstOrFail();
+        DB::table('permission_role')->insert(['role_id' => $adminRole->id, 'permission_id' => $permissionId]);
+        $grantsBefore = DB::table('permission_role')->where('role_id', $adminRole->id)->count();
+
+        $migration = require database_path('migrations/2026_10_03_000100_remove_roles_view_permission.php');
+        $migration->up();
+
+        $this->assertFalse(DB::table('permissions')->where('code', 'roles.view')->exists());
+        $this->assertFalse(DB::table('permission_role')->where('permission_id', $permissionId)->exists());
+        // Only that one grant goes; the Admin keeps every other permission.
+        $this->assertSame($grantsBefore - 1, DB::table('permission_role')->where('role_id', $adminRole->id)->count());
+
+        $migration->down();
+        $restored = DB::table('permissions')->where('code', 'roles.view')->value('id');
+        $this->assertNotNull($restored);
+        $this->assertTrue(DB::table('permission_role')->where(['role_id' => $adminRole->id, 'permission_id' => $restored])->exists());
     }
 
     public function test_super_administrators_can_open_every_staff_page(): void

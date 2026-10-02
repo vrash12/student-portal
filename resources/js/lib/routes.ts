@@ -28,9 +28,6 @@ export const routes = {
         edit: (userId: number) => `/users/${userId}/edit`,
         update: (userId: number) => `/users/${userId}`,
     },
-    roles: {
-        index: () => '/roles',
-    },
     account: {
         password: () => '/account/password',
     },

@@ -16,7 +16,6 @@ import {
     Library,
     Medal,
     School,
-    ShieldCheck,
     SlidersHorizontal,
     UserRoundCog,
     Users,
@@ -144,7 +143,6 @@ export const staffNavigation: NavigationSection[] = [
                 permission: Permission.ManageInstructorAssignments,
             },
             { label: 'Users', href: routes.users.index(), icon: Users, permission: Permission.ViewUsers },
-            { label: 'Roles & Permissions', href: routes.roles.index(), icon: ShieldCheck, permission: Permission.ViewRoles },
         ],
     },
 ];

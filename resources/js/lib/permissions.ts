@@ -12,7 +12,6 @@ export const Permission = {
     AccessExamPortal: 'exam_portal.access',
     ViewUsers: 'users.view',
     ManageUsers: 'users.manage',
-    ViewRoles: 'roles.view',
     ManageAcademicPeriods: 'academic_periods.manage',
     ManageSubjects: 'subjects.manage',
     ManageClassBatches: 'class_batches.manage',

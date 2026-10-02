@@ -833,17 +833,6 @@ class GradingThresholdConfigurationTest extends TestCase
 
         $this->assertStringContainsString('passing and warning grades', $description);
         $this->assertSame($description, Permission::query()->where('code', 'grading.configure')->value('description'));
-
-        $this->actingAs($this->userWithRole(SystemRole::SuperAdministrator))
-            ->get('/roles')
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->where('permissionGroups', function ($groups) use ($description): bool {
-                $described = collect($groups)
-                    ->flatMap(fn (array $group): array => $group['permissions'])
-                    ->firstWhere('code', 'grading.configure');
-
-                return $described !== null && $described['description'] === $description;
-            }));
     }
 
     // ------------------------------------------------------------------

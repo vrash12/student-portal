@@ -19,7 +19,6 @@ enum Permission: string
     case AccessExamPortal = 'exam_portal.access';
     case ViewUsers = 'users.view';
     case ManageUsers = 'users.manage';
-    case ViewRoles = 'roles.view';
     case ManageAcademicPeriods = 'academic_periods.manage';
     case ManageSubjects = 'subjects.manage';
     case ManageClassBatches = 'class_batches.manage';
@@ -56,7 +55,6 @@ enum Permission: string
             self::AccessExamPortal => 'Access examination portal',
             self::ViewUsers => 'View user accounts',
             self::ManageUsers => 'Manage user accounts',
-            self::ViewRoles => 'View roles and permissions',
             self::ManageAcademicPeriods => 'Manage academic periods',
             self::ManageSubjects => 'Manage subjects',
             self::ManageClassBatches => 'Manage classes',
@@ -95,7 +93,6 @@ enum Permission: string
             self::AccessExamPortal => 'Sign in to the candidate examination portal.',
             self::ViewUsers => 'View the list of staff user accounts.',
             self::ManageUsers => 'Create and update staff user accounts, including role assignment.',
-            self::ViewRoles => 'View roles and the permissions each role grants.',
             self::ManageAcademicPeriods => 'Create academic periods and choose the active period.',
             self::ManageSubjects => 'Create, edit, activate, and deactivate subjects.',
             self::ManageClassBatches => 'Create and edit classes and the subjects they take.',
@@ -131,7 +128,7 @@ enum Permission: string
     {
         return match ($this) {
             self::AccessStaffArea, self::AccessExamPortal => 'Access',
-            self::ViewUsers, self::ManageUsers, self::ViewRoles => 'Administration',
+            self::ViewUsers, self::ManageUsers => 'Administration',
             self::ManageAcademicPeriods, self::ManageSubjects, self::ManageClassBatches,
             self::ManageInstructorAssignments => 'Academic Structure',
             self::ViewAllCandidates, self::ManageCandidates => 'Candidates',

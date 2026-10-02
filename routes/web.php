@@ -47,7 +47,6 @@ use App\Http\Controllers\Staff\MedicalRecordController;
 use App\Http\Controllers\Staff\PerformanceAreaController;
 use App\Http\Controllers\Staff\QualificationController;
 use App\Http\Controllers\Staff\ReportController;
-use App\Http\Controllers\Staff\RoleController;
 use App\Http\Controllers\Staff\SubjectController;
 use App\Http\Controllers\Staff\TeachingClassController;
 use App\Http\Controllers\Staff\UserController;
@@ -216,8 +215,6 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::post('users', [UserController::class, 'store'])->name('users.store')->can('create', User::class);
         Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit')->can('update', 'user');
         Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->can('update', 'user');
-
-        Route::get('roles', [RoleController::class, 'index'])->name('roles.index')->can(Permission::ViewRoles->value);
 
         Route::get('account/password', [AccountPasswordController::class, 'edit'])->name('account.password.edit');
         Route::put('account/password', [AccountPasswordController::class, 'update'])->name('account.password.update')->middleware('throttle:password-change');
