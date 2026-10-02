@@ -177,7 +177,7 @@ export default function Login() {
                 <p className="mt-4 flex items-center justify-center gap-2 text-xs text-ink-muted">
                     <span>Powered by</span>
                     {poweredBy.logoUrl !== null ? (
-                        <img src={poweredBy.logoUrl} alt={poweredBy.name} width={48} height={34} className="h-8 w-auto" />
+                        <img src={poweredBy.logoUrl} alt={poweredBy.name} width={62} height={48} className="h-12 w-auto" />
                     ) : (
                         <span className="font-medium text-ink">{poweredBy.name}</span>
                     )}
