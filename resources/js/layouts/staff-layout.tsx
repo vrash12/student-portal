@@ -11,14 +11,43 @@ import { useFocusMainOnNavigate } from '@/lib/use-focus-main-on-navigate';
 
 const DESKTOP_QUERY = '(min-width: 1024px)';
 
+/** Remembers on this device whether the desktop sidebar shows icons only. */
+const COLLAPSED_KEY = 'staff-sidebar-collapsed';
+
+function readCollapsed(): boolean {
+    try {
+        return window.localStorage.getItem(COLLAPSED_KEY) === '1';
+    } catch {
+        return false;
+    }
+}
+
+function storeCollapsed(collapsed: boolean): void {
+    try {
+        window.localStorage.setItem(COLLAPSED_KEY, collapsed ? '1' : '0');
+    } catch {
+        // Storage may be blocked (private windows); the sidebar still toggles.
+    }
+}
+
 /**
  * Administrative and instructor shell (UI_UX_DESIGN.md §10–13): persistent
- * sidebar on desktop, drawer navigation on tablets and narrow screens.
+ * sidebar on desktop, drawer navigation on tablets and narrow screens. The
+ * desktop sidebar folds to icons only, and back, when the logo is selected.
  */
 export default function StaffLayout({ children }: { children: ReactNode }) {
     const { url } = usePage();
     useFocusMainOnNavigate();
     const [navigationOpen, setNavigationOpen] = useState(false);
+    const [collapsed, setCollapsed] = useState(readCollapsed);
+
+    const toggleCollapsed = () => {
+        setCollapsed((current) => {
+            storeCollapsed(!current);
+
+            return !current;
+        });
+    };
 
     useEffect(() => {
         setNavigationOpen(false);
@@ -33,13 +62,18 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
                 Skip to main content
             </a>
 
-            <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-primary-800 bg-primary-900 lg:block print:hidden">
-                <SidebarContent />
+            <aside
+                className={cn(
+                    'fixed inset-y-0 left-0 z-30 hidden border-r border-primary-800 bg-primary-900 transition-[width] duration-200 motion-reduce:transition-none lg:block print:hidden',
+                    collapsed ? 'w-20' : 'w-64',
+                )}
+            >
+                <SidebarContent collapsed={collapsed} onToggle={toggleCollapsed} />
             </aside>
 
             <NavigationDrawer open={navigationOpen} onClose={() => setNavigationOpen(false)} />
 
-            <div className="lg:pl-64 print:pl-0">
+            <div className={cn('transition-[padding] duration-200 motion-reduce:transition-none print:pl-0', collapsed ? 'lg:pl-20' : 'lg:pl-64')}>
                 <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b-2 border-accent-300 bg-surface px-4 sm:px-6 lg:px-8 print:hidden">
                     <button
                         type="button"
@@ -73,24 +107,44 @@ function OrganizationName() {
     );
 }
 
-function SidebarContent({ inDrawer = false }: { inDrawer?: boolean }) {
-    const { url, props } = usePage();
+interface SidebarContentProps {
+    inDrawer?: boolean;
+    /** Desktop only: icons without labels. */
+    collapsed?: boolean;
+    /** Desktop only: the logo folds and unfolds the sidebar. */
+    onToggle?: () => void;
+}
+
+function SidebarContent({ inDrawer = false, collapsed = false, onToggle }: SidebarContentProps) {
+    const { url } = usePage();
     const { can } = usePermissions();
+    const navId = useId();
     const visibleItems = staffNavigation.flatMap((section) => section.items).filter((item) => isVisibleItem(item, can));
     const activeHref = activeItemHref(url, visibleItems);
+    const toggleLabel = collapsed ? 'Expand navigation' : 'Collapse navigation to icons';
 
     return (
         <div className="brand-dark flex h-full flex-col bg-primary-900 text-white">
-            {/* In the drawer, space is reserved for the close button. */}
-            <div className={cn('flex h-16 shrink-0 items-center gap-3 border-b border-white/15 pl-5', inDrawer ? 'pr-14' : 'pr-5')}>
-                <BrandMark />
-                <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-white">{props.app.shortName}</p>
-                    <p className="truncate text-xs text-primary-200">{props.app.name}</p>
-                </div>
+            {/* The logo alone, centred; in the drawer, space is kept for the close button on both sides. */}
+            <div className={cn('flex h-16 shrink-0 items-center justify-center border-b border-white/15', inDrawer ? 'px-14' : 'px-3')}>
+                {onToggle === undefined ? (
+                    <BrandMark round className="size-12" />
+                ) : (
+                    <button
+                        type="button"
+                        onClick={onToggle}
+                        aria-label={toggleLabel}
+                        aria-expanded={!collapsed}
+                        aria-controls={navId}
+                        title={toggleLabel}
+                        className="flex items-center justify-center rounded-full p-0.5 transition-transform hover:scale-105 hover:ring-2 hover:ring-accent-300/70 motion-reduce:transition-none"
+                    >
+                        <BrandMark round className={collapsed ? 'size-11' : 'size-12'} />
+                    </button>
+                )}
             </div>
 
-            <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 py-4">
+            <nav id={navId} aria-label="Main" className={cn('flex-1 overflow-y-auto py-4', collapsed ? 'px-2' : 'px-3')}>
                 {staffNavigation.map((section, sectionIndex) => {
                     const items = section.items.filter((item) => isVisibleItem(item, can));
                     if (items.length === 0) {
@@ -99,11 +153,15 @@ function SidebarContent({ inDrawer = false }: { inDrawer?: boolean }) {
 
                     return (
                         <div key={section.label ?? `section-${sectionIndex}`} className="mb-6 last:mb-0">
-                            {section.label && (
-                                <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-primary-200">
-                                    {section.label}
-                                </p>
-                            )}
+                            {section.label &&
+                                (collapsed ? (
+                                    // Folded: a thin rule marks the section; its name stays available to screen readers.
+                                    <p className="mx-2 mb-3 border-t border-white/15">
+                                        <span className="sr-only">{section.label}</span>
+                                    </p>
+                                ) : (
+                                    <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-primary-200">{section.label}</p>
+                                ))}
                             <ul className="space-y-1">
                                 {items.map((item) => {
                                     const active = item.href === activeHref;
@@ -113,18 +171,20 @@ function SidebarContent({ inDrawer = false }: { inDrawer?: boolean }) {
                                             <Link
                                                 href={item.href}
                                                 aria-current={active ? 'page' : undefined}
+                                                title={collapsed ? item.label : undefined}
                                                 className={cn(
-                                                    'flex min-h-11 items-center gap-3 rounded-lg border-l-4 px-3 text-sm font-medium transition-colors pointer-coarse:h-11',
+                                                    'flex min-h-11 items-center rounded-lg border-l-4 text-sm font-medium transition-colors pointer-coarse:h-11',
+                                                    collapsed ? 'justify-center px-0' : 'gap-3 px-3',
                                                     active
                                                         ? 'border-accent-300 bg-white/10 text-accent-100'
                                                         : 'border-transparent text-primary-100 hover:bg-white/10 hover:text-white',
                                                 )}
                                             >
                                                 <item.icon
-                                                    className={cn('size-4.5 shrink-0', active ? 'text-accent-300' : 'text-primary-200')}
+                                                    className={cn('shrink-0', collapsed ? 'size-5' : 'size-4.5', active ? 'text-accent-300' : 'text-primary-200')}
                                                     aria-hidden="true"
                                                 />
-                                                {item.label}
+                                                <span className={collapsed ? 'sr-only' : undefined}>{item.label}</span>
                                             </Link>
                                         </li>
                                     );

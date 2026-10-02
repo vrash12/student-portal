@@ -31,6 +31,10 @@ Updated 2026-10-01 by Claude Code (earlier sections by Codex, 2026-09-30). Read 
 - **Open owner decisions** are under "Requirements still needing confirmation" at the end of this file, plus whether to deactivate the "Pay & Allowances" and "Deductions" account categories.
 - Extra test databases `academic_system_{r1,r2,r3,w1,w2,w3,v1…v12,login}_testing` exist from parallel runs and can be dropped.
 
+## Owner request — logo-only sidebar that folds to icons (2026-10-02, Claude Code)
+
+- Owner: remove the text at the top of the sidebar, keep the logo centred, and fold the navigation to icons when the logo is clicked (and back). `layouts/staff-layout.tsx`: the sidebar header is the round logo only (system name removed there; the organisation name stays in the top bar). On desktop the logo is a button (`aria-expanded`, label "Collapse navigation to icons" / "Expand navigation") that switches the sidebar between 256 px with names and 80 px with icons only (names kept for screen readers and as tooltips; section names become thin rules); the page content follows the width. The choice is remembered per device in `localStorage` (`staff-sidebar-collapsed`, wrapped in try/catch). The tablet/phone drawer always shows names, with the logo centred. Checked with headless Chrome at 1440 px (open, folded, folded after reload) and 390 px (drawer); `npm run types`, `npm run build`. Not deployed yet.
+
 ## Owner request — candidate medical records, configurable by administrators (2026-10-02, Claude Code)
 
 - **Request:** "put medical records for candidates. that as well configurable by admin." **Owner answers:** administrators see and record full records, instructors see a limited view; candidates see their own records in the portal; contents = **medical profile fields** defined by the administrators (no visit log, duty status or attachments); deploy together with grade corrections.
