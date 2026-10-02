@@ -25,7 +25,9 @@ class LoginTest extends TestCase
         config(['institution.powered_by_name' => 'ServLife Solutions', 'institution.powered_by_logo_url' => '/branding/powered-by-logo.png']);
 
         $this->get('/login')->assertInertia(fn (Assert $page) => $page
-            ->where('app.poweredBy', ['name' => 'ServLife Solutions', 'logoUrl' => '/branding/powered-by-logo.png']));
+            ->where('app.poweredBy.name', 'ServLife Solutions')
+            // A version tag makes browsers fetch a replaced logo at once.
+            ->where('app.poweredBy.logoUrl', fn (string $url) => str_starts_with($url, '/branding/powered-by-logo.png?v=')));
         $this->assertFileExists(public_path('branding/powered-by-logo.png'));
 
         config(['institution.powered_by_name' => '']);

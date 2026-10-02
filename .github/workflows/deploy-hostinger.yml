@@ -1,0 +1,99 @@
+# Deploys the system to the Hostinger trial site (testwebsitetrial.site) on
+# every push to main, or by hand ("Run workflow", optionally with an older
+# commit to roll back to). GitHub builds the frontend; the server backs up the
+# database, installs the release and runs migrations (deploy/hostinger/).
+#
+# Needs these repository secrets (set once with deploy/hostinger/set-github-secrets.sh):
+#   HOSTINGER_SSH_KEY      private deploy key; on the server it can only run the deploy script
+#   HOSTINGER_KNOWN_HOSTS  the server's SSH host key line
+#   HOSTINGER_HOST, HOSTINGER_PORT, HOSTINGER_USER
+# Without them the run only warns and deploys nothing.
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit, branch or tag to deploy (empty = main)
+        required: false
+        default: ''
+
+concurrency:
+  group: deploy-hostinger
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SITE_URL: https://testwebsitetrial.site
+    steps:
+      - name: Check that deployment is set up
+        id: setup
+        env:
+          SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+        run: |
+          if [ -z "$SSH_KEY" ]; then
+            echo "::warning::Deployment is not set up (secret HOSTINGER_SSH_KEY is missing). Nothing was deployed."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.setup.outputs.ready == 'true'
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - uses: actions/setup-node@v4
+        if: steps.setup.outputs.ready == 'true'
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Build the frontend
+        if: steps.setup.outputs.ready == 'true'
+        run: |
+          npm ci
+          npm run types
+          npm run build
+
+      - name: Package the release
+        id: package
+        if: steps.setup.outputs.ready == 'true'
+        run: |
+          mkdir release
+          git archive HEAD | tar -x -C release
+          rm -rf release/docs/proposal
+          cp -r public/build release/public/
+          tar -czf release.tar.gz -C release .
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy over SSH
+        if: steps.setup.outputs.ready == 'true'
+        env:
+          SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.HOSTINGER_KNOWN_HOSTS }}
+          SSH_HOST: ${{ secrets.HOSTINGER_HOST }}
+          SSH_PORT: ${{ secrets.HOSTINGER_PORT }}
+          SSH_USER: ${{ secrets.HOSTINGER_USER }}
+          COMMIT: ${{ steps.package.outputs.commit }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "$COMMIT" < release.tar.gz
+
+      - name: Check the live site
+        if: steps.setup.outputs.ready == 'true'
+        run: |
+          curl -fsS -o /dev/null "$SITE_URL/up"
+          curl -fsS -o /dev/null "$SITE_URL/login"
+          echo "The live site answers."

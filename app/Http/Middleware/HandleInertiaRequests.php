@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\User;
+use App\Support\PublicAsset;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -45,9 +46,10 @@ class HandleInertiaRequests extends Middleware
                 'name' => config('institution.system_name'),
                 'shortName' => config('institution.short_name'),
                 'organizationName' => config('institution.organization_name'),
-                'logoUrl' => config('institution.logo_url'),
-                'loginImageUrl' => config('institution.login_image_url'),
-                'loginCompactImageUrl' => config('institution.login_image_url') === null ? null : config('institution.login_compact_image_url'),
+                // Local images carry a version tag so a replaced file shows at once (PublicAsset).
+                'logoUrl' => PublicAsset::url(config('institution.logo_url')),
+                'loginImageUrl' => PublicAsset::url(config('institution.login_image_url')),
+                'loginCompactImageUrl' => config('institution.login_image_url') === null ? null : PublicAsset::url(config('institution.login_compact_image_url')),
                 'login' => [
                     'headerTitle' => config('institution.login.header_title') ?? config('institution.organization_name'),
                     'headerSubtitle' => config('institution.login.header_subtitle') ?? config('institution.short_name'),
@@ -58,7 +60,7 @@ class HandleInertiaRequests extends Middleware
                     'helpDesk' => config('institution.login.help_desk'),
                 ],
                 'poweredBy' => filled(config('institution.powered_by_name'))
-                    ? ['name' => config('institution.powered_by_name'), 'logoUrl' => config('institution.powered_by_logo_url') ?: null]
+                    ? ['name' => config('institution.powered_by_name'), 'logoUrl' => PublicAsset::url(config('institution.powered_by_logo_url') ?: null)]
                     : null,
                 // Candidate portal pages that the institution may turn off.
                 'portal' => [

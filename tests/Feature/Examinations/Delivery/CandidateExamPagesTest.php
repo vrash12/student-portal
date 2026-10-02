@@ -63,10 +63,10 @@ class CandidateExamPagesTest extends TestCase
     public function test_the_sign_in_page_uses_the_configured_background_image(): void
     {
         // Default: the local campus background (owner request, 2026-10-01).
-        $this->get('/login')->assertOk()->assertInertia(fn ($page) => $page->where('app.loginImageUrl', '/branding/login-campus.jpg'));
+        $this->get('/login')->assertOk()->assertInertia(fn ($page) => $page->where('app.loginImageUrl', fn (string $url) => str_starts_with($url, '/branding/login-campus.jpg?v=')));
         $this->assertFileExists(public_path('branding/login-campus.jpg'));
         // Smaller screens use the background without the supplied design's card area.
-        $this->get('/login')->assertInertia(fn ($page) => $page->where('app.loginCompactImageUrl', '/branding/login-background.png'));
+        $this->get('/login')->assertInertia(fn ($page) => $page->where('app.loginCompactImageUrl', fn (string $url) => str_starts_with($url, '/branding/login-background.png?v=')));
         $this->assertFileExists(public_path('branding/login-background.png'));
 
         // An explicitly empty value disables the photograph.

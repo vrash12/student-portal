@@ -11,7 +11,7 @@
 
         <title inertia>{{ config('institution.system_name') }}</title>
 
-        <link rel="icon" href="{{ config('institution.favicon_url') }}">
+        <link rel="icon" href="{{ \App\Support\PublicAsset::url(config('institution.favicon_url')) }}">
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])

@@ -1,6 +1,21 @@
 # PDF.js worker (in-app medical document viewer): browsers run module workers only with a JavaScript type.
 AddType text/javascript .mjs
 
+# Files that keep their name when replaced (logos, sign-in backgrounds, icons,
+# the portal's service worker and manifest): browsers check for a newer copy on
+# every visit, a quick "not modified" answer when nothing changed. Files under
+# build/ change name whenever they change, so their usual caching is kept.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(png|jpe?g|webp|gif|svg|ico|webmanifest|html)$">
+        Header set Cache-Control "no-cache"
+        Header unset Expires
+    </FilesMatch>
+    <Files "portal-sw.js">
+        Header set Cache-Control "no-cache"
+        Header unset Expires
+    </Files>
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

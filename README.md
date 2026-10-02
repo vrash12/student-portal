@@ -142,6 +142,25 @@ The test suite refuses to run against any database whose name does not end in `_
 - Never commit `.env` or credentials. Keep `.env.example` current.
 - Backups are built in: see **Backups** below. They cover the database together with `storage/app/private` (question images/audio/video, candidate photos and the medical documents candidates upload) and `storage/app/public`.
 
+## Hostinger trial site: automatic deploys
+
+Every push to `main` deploys to the Hostinger trial site (`.github/workflows/deploy-hostinger.yml`). GitHub builds the frontend and sends the release over SSH. On the server `deploy/hostinger/remote-deploy.sh` then:
+
+1. backs up the database (`~/backups/testwebsitetrial.site/db-before-deploy-*.sql.gz`, newest 15 kept);
+2. installs the PHP packages;
+3. switches to maintenance mode, copies the new code (the live `.env` and `storage/` are kept) and runs migrations;
+4. publishes `public/`;
+5. rebuilds the caches and comes back up.
+
+The run's page on GitHub (Actions tab) shows each step; a failed deploy makes the run fail, and GitHub emails whoever pushed.
+
+- **Set up once:** the deploy key's private half and the server details are repository secrets (`HOSTINGER_SSH_KEY`, `HOSTINGER_KNOWN_HOSTS`, `HOSTINGER_HOST`, `HOSTINGER_PORT`, `HOSTINGER_USER`), stored with `bash deploy/hostinger/set-github-secrets.sh HOST PORT USER` (GitHub CLI signed in). Until they exist, a run only warns.
+- **The deploy key can do nothing but deploy:** on the server its `authorized_keys` line forces `~/deploy/octms-receive.sh` (a copy of `deploy/hostinger/receive.sh`), which takes one release on standard input.
+- **Roll back:** Actions → Deploy to Hostinger → Run workflow, with the older commit id. Migrations are not undone; restore the matching database backup if needed.
+- **PHP 8.4:** the site's `.htaccess` is `~/domains/testwebsitetrial.site/htaccess-hostinger.conf` (selects PHP 8.4) followed by `public/.htaccess`. Keep that file on the server.
+- **Do not use hPanel's Deploy/Redeploy or Git deploy for this site:** it is still registered as a Node.js app linked to an old repository and could overwrite it.
+- **Caching:** files under `public/build` change name whenever they change. Logos, backgrounds and icons keep their names, so the app adds a version tag to their addresses (`App\Support\PublicAsset`) and `public/.htaccess` makes browsers check them for a newer copy on every visit. A replaced logo shows at once.
+
 ## Backups
 
 Every night (01:00, institution timezone) the system writes **one encrypted file with the whole database and every uploaded file** (`storage/app/private` and `storage/app/public`). Every Sunday at 03:00 the newest backup is **test-restored** into a scratch database and its files are checked. Old backups rotate: 14 daily, 8 weekly (Sundays), 12 monthly (the 1st), 10 manual and 5 safety copies taken before a restore. All values are in `config/backups.php` and `.env`.
