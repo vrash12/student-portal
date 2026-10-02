@@ -185,6 +185,8 @@ final class AttendanceLedger
                     'remarks' => $record->remarks,
                     'recordedBy' => $record->recorder?->name,
                     'recordedAt' => $record->updated_at?->toIso8601String(),
+                    // When the candidate's QR code was scanned for this session (null: roll call).
+                    'scannedAt' => $record->scanned_at?->toIso8601String(),
                 ],
             ];
         }

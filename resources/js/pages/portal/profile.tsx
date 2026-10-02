@@ -21,7 +21,7 @@ export default function CandidateProfile({ candidate }: { candidate: CandidateIn
                 actions={<RecordDownloads baseUrl="/portal/profile/documents" />}
             />
             <div className="flex flex-col gap-8">
-                <CandidateInformationPanels candidate={candidate} />
+                <CandidateInformationPanels candidate={candidate} audience="candidate" />
             </div>
         </>
     );

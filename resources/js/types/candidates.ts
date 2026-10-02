@@ -13,6 +13,8 @@ export interface CandidateInformation {
     company: string | null;
     platoon: string | null;
     photoUrl: string | null;
+    /** The candidate's QR code image (attendance and identification); always present. */
+    qrCodeUrl: string;
     status: StatusValue;
     classBatch: { id: number; name: string; period: string; periodId: number } | null;
     account: { username: string; isActive: boolean; lastLoginAt: string | null } | null;

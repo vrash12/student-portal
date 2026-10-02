@@ -67,6 +67,7 @@ enum AuditAction: string
     case MedicalDownloadRevoked = 'medical_download.revoked';
     case GradingThresholdsUpdated = 'grading_thresholds.updated';
     case BackupCreated = 'backup.created';
+    case CandidateQrReissued = 'candidate.qr_reissued';
     case BackupFailed = 'backup.failed';
     case BackupRequested = 'backup.requested';
     case BackupTested = 'backup.tested';
@@ -179,6 +180,7 @@ enum AuditAction: string
             self::MedicalDownloadRevoked => 'Withdrew a medical document download',
             self::GradingThresholdsUpdated => 'Updated passing and warning grades',
             self::BackupCreated => 'Created a backup',
+            self::CandidateQrReissued => 'Issued a new QR code to a candidate',
             self::BackupFailed => 'A backup failed',
             self::BackupRequested => 'Requested a backup operation',
             self::BackupTested => 'Test-restored a backup',

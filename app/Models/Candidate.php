@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CandidateStatus;
 use App\Policies\CandidatePolicy;
+use App\Support\CandidateQrCode;
 use App\Support\QueryFilters;
 use Database\Factories\CandidateFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -36,12 +37,31 @@ class Candidate extends Model
     ];
 
     /**
+     * The QR code token is shown only as the code itself (CandidateQrCode).
+     *
+     * @var list<string>
+     */
+    protected $hidden = ['qr_token'];
+
+    /** Every candidate gets a QR code for attendance (owner request, 2026-10-02). */
+    protected static function booted(): void
+    {
+        static::creating(function (Candidate $candidate): void {
+            if (blank($candidate->qr_token)) {
+                $candidate->qr_token = CandidateQrCode::newToken();
+                $candidate->qr_token_issued_at = now();
+            }
+        });
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
             'status' => CandidateStatus::class,
+            'qr_token_issued_at' => 'datetime',
         ];
     }
 

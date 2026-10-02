@@ -22,6 +22,7 @@ class AttendanceRecord extends Model
             'attendance_session_id' => 'integer',
             'candidate_id' => 'integer',
             'status' => AttendanceStatus::class,
+            'scanned_at' => 'datetime',
         ];
     }
 

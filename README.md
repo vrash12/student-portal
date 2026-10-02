@@ -142,6 +142,22 @@ The test suite refuses to run against any database whose name does not end in `_
 - Never commit `.env` or credentials. Keep `.env.example` current.
 - Backups are built in: see **Backups** below. They cover the database together with `storage/app/private` (question images/audio/video, candidate photos and the medical documents candidates upload) and `storage/app/public`.
 
+## Attendance by QR code
+
+Every candidate has a QR code: on the staff candidate profile (with **Open to Print**) and on the candidate's own **My Information** page in the portal. The code holds the address `/q/<token>`; the token is random and says nothing about the candidate.
+
+- **Scanning:** on an attendance session, **Scan QR Codes** opens the camera. Each code read marks the candidate **Present** (or **Late**, chosen in the scanner) with the time of the scan. The candidate's photo, name and number appear for a face check.
+  - A code already recorded changes nothing.
+  - Absent or excused becomes the scanned status.
+  - Codes of other classes, withdrawn candidates and replaced codes record nothing.
+  - The roll call shows "Scanned 8:02 AM" and stays available for corrections.
+- **The camera needs a secure connection:** `https://`, or `localhost` while developing. Over plain `http://` on the network the browser refuses the camera, and the scanner says so.
+- **Devices:** Chrome on Android, ChromeOS and macOS read codes with the browser's own reader. Windows, iPads, iPhones and Firefox use jsQR, bundled and loaded only there.
+- **Privacy:** frames are read on the device; only the decoded code is sent. Nothing is recorded or uploaded.
+- **Camera permission:** `Permissions-Policy` allows the camera on staff pages only; candidate pages, examinations included, never get it.
+- **Phone camera:** the address in the code opens the candidate's profile for signed-in staff allowed to see that candidate. Everyone else gets "not found".
+- **Lost or shared card:** **Issue New Code** on the staff profile (`candidates.manage`) replaces the token. The old code stops working, on printed cards too.
+
 ## Hostinger trial site: automatic deploys
 
 Every push to `main` deploys to the Hostinger trial site (`.github/workflows/deploy-hostinger.yml`). GitHub builds the frontend and sends the release over SSH. On the server `deploy/hostinger/remote-deploy.sh` then:

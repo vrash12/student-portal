@@ -53,6 +53,8 @@ export interface AttendanceRecordDetails {
     recordedBy: string | null;
     /** ISO timestamp of the last change. */
     recordedAt: string | null;
+    /** ISO timestamp of the QR code scan that recorded the candidate; null for the roll call. */
+    scannedAt: string | null;
 }
 
 /** One candidate on a session's roll call. */

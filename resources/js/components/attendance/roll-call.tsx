@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { CheckCheck, CircleAlert, PencilLine, Save, SearchX, Undo2 } from 'lucide-react';
+import { CheckCheck, CircleAlert, PencilLine, QrCode, Save, SearchX, Undo2 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { AttendanceStatusBadge, attendanceStatusIcons } from '@/components/attendance/attendance-status';
 import { Alert } from '@/components/ui/alert';
@@ -291,6 +291,12 @@ function RollCallItem({ row, edit, options, errors, linked, disabled, onChange }
                         <span className="text-xs text-ink-subtle">
                             by {record.recordedBy}
                             {record.recordedAt !== null && <>, {dateTime(record.recordedAt)}</>}
+                        </span>
+                    )}
+                    {!changed && record?.scannedAt != null && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-800">
+                            <QrCode className="size-3.5" aria-hidden="true" />
+                            Scanned {dateTime(record.scannedAt)}
                         </span>
                     )}
                 </div>

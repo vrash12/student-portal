@@ -216,6 +216,8 @@ class CandidateController extends Controller
             'canEdit' => $canManage,
             // Instructors return to the class they teach, not the full candidate list.
             'canBrowseCandidates' => $viewer->can('viewAny', Candidate::class),
+            // A new QR code for a lost or shared card (candidates.manage).
+            'qrReissueUrl' => $viewer->can('update', $candidate) ? route('candidates.qr.reissue', $candidate) : null,
         ]);
     }
 

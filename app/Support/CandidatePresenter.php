@@ -23,6 +23,8 @@ final class CandidatePresenter
             'platoon' => $candidate->platoon,
             'photoUrl' => $candidate->profile_photo_path === null ? null : ($portal
                 ? route('portal.profile.photo') : route('candidates.photo', $candidate)),
+            // The candidate's QR code for attendance (owner request, 2026-10-02).
+            'qrCodeUrl' => $portal ? route('portal.profile.qr') : route('candidates.qr', $candidate),
             'name' => $candidate->full_name,
             'status' => ['value' => $candidate->status->value, 'label' => $candidate->status->label(), 'tone' => $candidate->status->tone()],
             'classBatch' => $candidate->classBatch === null ? null : [

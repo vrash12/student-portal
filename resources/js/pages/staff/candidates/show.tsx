@@ -79,6 +79,8 @@ interface CandidateShowProps {
     canEdit: boolean;
     /** Administrators browse all candidates; instructors arrive from a class they teach. */
     canBrowseCandidates: boolean;
+    /** Where to issue a new QR code (candidates.manage); null for everyone else. */
+    qrReissueUrl: string | null;
 }
 
 export default function CandidateShow({
@@ -97,6 +99,7 @@ export default function CandidateShow({
     medical,
     canEdit,
     canBrowseCandidates,
+    qrReissueUrl,
 }: CandidateShowProps) {
 
     const classTerm = terms.classBatch.singular;
@@ -162,7 +165,7 @@ export default function CandidateShow({
 
                 {/* The long record starts closed; each section opens from its header. */}
                 <StartCollapsed.Provider value>
-                <CandidateInformationPanels candidate={candidate} />
+                <CandidateInformationPanels candidate={candidate} qrReissueUrl={qrReissueUrl} />
 
                 {medical !== null && <CandidateMedicalPanel medical={medical} candidateId={candidate.id} />}
 

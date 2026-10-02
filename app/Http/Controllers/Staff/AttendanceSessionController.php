@@ -130,6 +130,9 @@ class AttendanceSessionController extends Controller
                 'delete' => ! $hasRecords,
                 'viewAllCandidates' => $request->user()->hasPermission(Permission::ViewAllCandidates),
             ],
+            // The camera scanner of QR codes (owner request, 2026-10-02).
+            'scanUrl' => route('attendance.sessions.scan', $attendanceSession),
+            'today' => now()->timezone((string) config('institution.timezone'))->toDateString(),
         ]);
     }
 

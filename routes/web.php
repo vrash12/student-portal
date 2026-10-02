@@ -4,6 +4,7 @@ use App\Enums\Permission;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CandidatePdfController;
 use App\Http\Controllers\CandidatePhotoController;
+use App\Http\Controllers\CandidateQrController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Portal\CandidateProfileController;
 use App\Http\Controllers\Portal\ExaminationController as PortalExaminationController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Staff\AccountExpenseController;
 use App\Http\Controllers\Staff\AccountPasswordController;
 use App\Http\Controllers\Staff\AssessmentController;
 use App\Http\Controllers\Staff\AssessmentScoreController;
+use App\Http\Controllers\Staff\AttendanceScanController;
 use App\Http\Controllers\Staff\AttendanceSessionController;
 use App\Http\Controllers\Staff\AuditHistoryController;
 use App\Http\Controllers\Staff\BackupController;
@@ -62,6 +64,9 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::get('/', HomeController::class)->name('home');
+
+    // The address inside every candidate's QR code: the profile for staff who may see the candidate.
+    Route::get('q/{token}', [CandidateQrController::class, 'open'])->name('qr.open')->where('token', '[A-Za-z0-9]{1,64}');
 
     // Staff area: administrators and instructors.
     Route::middleware(['can:'.Permission::AccessStaffArea->value, 'password.current'])->group(function (): void {
@@ -153,6 +158,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::put('attendance/sessions/{attendanceSession}', [AttendanceSessionController::class, 'update'])->name('attendance.sessions.update')->whereNumber('attendanceSession');
             Route::delete('attendance/sessions/{attendanceSession}', [AttendanceSessionController::class, 'destroy'])->name('attendance.sessions.destroy')->whereNumber('attendanceSession');
             Route::put('attendance/sessions/{attendanceSession}/records', [AttendanceSessionController::class, 'recordAttendance'])->name('attendance.sessions.records')->whereNumber('attendanceSession');
+            Route::post('attendance/sessions/{attendanceSession}/scan', AttendanceScanController::class)->name('attendance.sessions.scan')->whereNumber('attendanceSession')->can('manage', 'attendanceSession')->middleware('throttle:attendance-scans');
         });
 
         // Grade correction requests: instructors file them, administrators approve or reject them (GradeCorrectionRequestPolicy).
@@ -317,6 +323,8 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('candidates/{candidate}', [CandidateController::class, 'show'])->name('candidates.show')->can('view', 'candidate');
         Route::get('candidates/{candidate}/edit', [CandidateController::class, 'edit'])->name('candidates.edit')->can('update', 'candidate');
         Route::get('candidates/{candidate}/photo', [CandidatePhotoController::class, 'show'])->name('candidates.photo')->can('view', 'candidate');
+        Route::get('candidates/{candidate}/qr', [CandidateQrController::class, 'show'])->name('candidates.qr')->can('view', 'candidate');
+        Route::post('candidates/{candidate}/qr', [CandidateQrController::class, 'reissue'])->name('candidates.qr.reissue')->can('update', 'candidate');
         Route::get('candidates/{candidate}/documents/{type}', [CandidatePdfController::class, 'show'])
             ->whereIn('type', ['registration', 'academic'])->name('candidates.documents')
             ->can('downloadRecord', 'candidate')->middleware('throttle:record-downloads');
@@ -334,6 +342,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::get('fitness', PortalFitnessController::class)->name('fitness');
             Route::get('profile', CandidateProfileController::class)->name('profile');
             Route::get('profile/photo', [CandidatePhotoController::class, 'own'])->name('profile.photo');
+            Route::get('profile/qr', [CandidateQrController::class, 'own'])->name('profile.qr');
             // The candidate's own medical documents (uploads, review, withdraw) and shared record fields.
             Route::get('medical', [PortalMedicalController::class, 'show'])->name('medical');
             Route::post('medical/documents', [PortalMedicalController::class, 'store'])->name('medical.documents.store')->middleware('throttle:medical-uploads');

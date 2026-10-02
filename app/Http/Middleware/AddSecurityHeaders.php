@@ -39,7 +39,10 @@ class AddSecurityHeaders
         $response->headers->set('X-Frame-Options', 'DENY');
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('Referrer-Policy', 'same-origin');
-        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+        // The camera is allowed for this site's own staff pages (QR attendance scanner, owner request
+        // 2026-10-02); never on candidate pages, examinations included.
+        $camera = $request->is('portal', 'portal/*') ? '()' : '(self)';
+        $response->headers->set('Permissions-Policy', "camera={$camera}, microphone=(), geolocation=(), payment=()");
         $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
 
         return $response;

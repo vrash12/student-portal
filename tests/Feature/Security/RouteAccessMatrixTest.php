@@ -177,6 +177,8 @@ class RouteAccessMatrixTest extends TestCase
             'attendanceSession' => (string) $attendanceSession->id,
             // A backup name (files, not records); only the Admin reaches backup routes.
             'backup' => '20261002-010000-daily',
+            // Candidate B1's QR code: only staff who may see B1 (and B1) reach anything with it.
+            'token' => (string) $this->candidateInB->qr_token,
             'candidate' => (string) $this->candidateInB->id,
             'classBatch' => (string) $this->batchB->id,
             'classSubject' => (string) $this->offeringB1->id,

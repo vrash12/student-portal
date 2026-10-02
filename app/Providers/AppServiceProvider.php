@@ -90,6 +90,8 @@ class AppServiceProvider extends ServiceProvider
         $perUser('medical-screen-events', 30);
         // Backups page requests (a restore checks the password).
         $perUser('backup-actions', 6);
+        // QR codes read by an instructor's attendance scanner (a class files past one by one).
+        $perUser('attendance-scans', 240);
         // Changing one's own password (the current password is checked).
         $perUser('password-change', 6);
 
