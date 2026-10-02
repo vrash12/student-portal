@@ -6,6 +6,8 @@ import { CandidateExaminationResults } from '@/components/candidates/examination
 import { CandidateAttendance } from '@/components/attendance/candidate-attendance';
 import { CandidateConductPanel, CandidateQualificationPanel } from '@/components/candidate-performance/profile-panels';
 import { CandidateFitness } from '@/components/fitness/candidate-fitness';
+import { CandidateMedicalPanel } from '@/components/medical/medical-record-panel';
+import type { ProfileMedical } from '@/types/medical';
 import type { ProfileAttendance, ProfileConduct, ProfileQualification } from '@/types/candidate-performance';
 import type { CandidateFitnessTest } from '@/types/fitness';
 import type { CandidateInformation, CandidateExaminationResult } from '@/types/candidates';
@@ -71,6 +73,8 @@ interface CandidateShowProps {
     conduct: ProfileConduct | null;
     /** Attendance of the current class; null when the class is outside the viewer's attendance scope. */
     attendance: ProfileAttendance | null;
+    /** Medical record: every field for medical staff, the fields shared with instructors for those who teach the class; null otherwise. */
+    medical: ProfileMedical | null;
     canEdit: boolean;
     /** Administrators browse all candidates; instructors arrive from a class they teach. */
     canBrowseCandidates: boolean;
@@ -89,6 +93,7 @@ export default function CandidateShow({
     qualification,
     conduct,
     attendance,
+    medical,
     canEdit,
     canBrowseCandidates,
 }: CandidateShowProps) {
@@ -155,6 +160,8 @@ export default function CandidateShow({
                 />
 
                 <CandidateInformationPanels candidate={candidate} />
+
+                {medical !== null && <CandidateMedicalPanel medical={medical} candidateId={candidate.id} />}
 
                 <Panel
                     title="Academic Performance"

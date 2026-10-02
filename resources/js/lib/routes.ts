@@ -56,6 +56,21 @@ export const routes = {
         removeSubject: (classId: number, classSubjectId: number) => `/classes/${classId}/subjects/${classSubjectId}`,
         grading: (classId: number, classSubjectId: number) => `/classes/${classId}/subjects/${classSubjectId}/grading`,
     },
+    medical: {
+        records: {
+            index: (query?: Record<string, string>) => withQuery('/medical-records', query),
+            edit: (candidateId: number) => `/medical-records/${candidateId}/edit`,
+            update: (candidateId: number) => `/medical-records/${candidateId}`,
+        },
+        fields: {
+            index: () => '/medical-records/fields',
+            create: () => '/medical-records/fields/create',
+            store: () => '/medical-records/fields',
+            edit: (fieldId: number) => `/medical-records/fields/${fieldId}/edit`,
+            update: (fieldId: number) => `/medical-records/fields/${fieldId}`,
+            destroy: (fieldId: number) => `/medical-records/fields/${fieldId}`,
+        },
+    },
     fitness: {
         index: () => '/fitness',
         standards: {

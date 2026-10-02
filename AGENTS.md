@@ -254,6 +254,7 @@ The platform should support the following major modules:
 - Audit logs
 - Military fitness testing (approved by the owner on 2026-10-01: configurable events and standards, tests per class, results scored by the server; it does not change subject grades or academic standing. Owner decision 2026-10-02: staff only — administrators, and instructors for the classes they teach; only administrators set the events and their points tables; candidates do not see fitness tests or the fitness performance area unless the institution turns them on with `PORTAL_SHOW_FITNESS`)
 - Merits & demerits, attendance, company/platoon, and performance areas with qualification and class rank (approved by the owner on 2026-10-01; see `docs/performance-and-qualification.md`: configurable areas, weights, passing grades and must-pass rules; fitness is a must-pass area; class rank is staff only)
+- Candidate medical records (approved by the owner on 2026-10-02): administrators define the fields (name, type, choices) and record the values; each field is marked as shared with instructors of the candidate's classes and/or with the candidate. Full records and their change history are for administrators only; medical values never go into the general audit log
 
 ---
 
@@ -329,7 +330,7 @@ The first implementation should primarily support candidate access for:
 - examinations
 - authorized assessments
 
-Owner decision (2026-10-01): candidates see their own grades, examination results, performance areas and qualification checklist, merits/demerits and attendance in the portal (each on its own page), always only their own records. Class rank and other candidates' data are never sent to the portal. Fitness tests are staff only since 2026-10-02 (owner decision); the portal's Physical Fitness page is off unless `PORTAL_SHOW_FITNESS=true`.
+Owner decision (2026-10-01): candidates see their own grades, examination results, performance areas and qualification checklist, merits/demerits and attendance in the portal (each on its own page), always only their own records. Class rank and other candidates' data are never sent to the portal. Fitness tests are staff only since 2026-10-02 (owner decision); the portal's Physical Fitness page is off unless `PORTAL_SHOW_FITNESS=true`. Candidates see their own medical record fields that the administrators share with candidates (owner decision 2026-10-02), read-only, under My Information.
 
 Do not automatically expose:
 

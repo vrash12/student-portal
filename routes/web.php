@@ -35,6 +35,8 @@ use App\Http\Controllers\Staff\GradingSchemeController;
 use App\Http\Controllers\Staff\GradingThresholdController;
 use App\Http\Controllers\Staff\InstructorAssignmentController;
 use App\Http\Controllers\Staff\InstructorController;
+use App\Http\Controllers\Staff\MedicalFieldController;
+use App\Http\Controllers\Staff\MedicalRecordController;
 use App\Http\Controllers\Staff\PerformanceAreaController;
 use App\Http\Controllers\Staff\QualificationController;
 use App\Http\Controllers\Staff\ReportController;
@@ -151,6 +153,20 @@ Route::middleware(['auth', 'active'])->group(function (): void {
 
         // Performance areas and qualification: ranking of every candidate
         // (performance.view); configuration (performance.configure).
+        // Candidate medical records (owner request, 2026-10-02): administrators define the
+        // fields (medical.configure), view (medical.view) and record (medical.manage) them.
+        Route::get('medical-records', [MedicalRecordController::class, 'index'])->name('medical.records.index')->can(Permission::ViewMedical->value);
+        Route::get('medical-records/{candidate}/edit', [MedicalRecordController::class, 'edit'])->name('medical.records.edit')->whereNumber('candidate')->can('manageMedical', 'candidate');
+        Route::put('medical-records/{candidate}', [MedicalRecordController::class, 'update'])->name('medical.records.update')->whereNumber('candidate')->can('manageMedical', 'candidate');
+        Route::middleware('can:'.Permission::ConfigureMedical->value)->group(function (): void {
+            Route::get('medical-records/fields', [MedicalFieldController::class, 'index'])->name('medical.fields.index');
+            Route::get('medical-records/fields/create', [MedicalFieldController::class, 'create'])->name('medical.fields.create');
+            Route::post('medical-records/fields', [MedicalFieldController::class, 'store'])->name('medical.fields.store');
+            Route::get('medical-records/fields/{medicalField}/edit', [MedicalFieldController::class, 'edit'])->name('medical.fields.edit')->whereNumber('medicalField');
+            Route::put('medical-records/fields/{medicalField}', [MedicalFieldController::class, 'update'])->name('medical.fields.update')->whereNumber('medicalField');
+            Route::delete('medical-records/fields/{medicalField}', [MedicalFieldController::class, 'destroy'])->name('medical.fields.destroy')->whereNumber('medicalField');
+        });
+
         Route::get('qualification', [QualificationController::class, 'index'])->name('qualification.index')->can(Permission::ViewPerformance->value);
         Route::middleware('can:'.Permission::ConfigurePerformance->value)->group(function (): void {
             Route::get('performance-areas', [PerformanceAreaController::class, 'index'])->name('performance-areas.index');

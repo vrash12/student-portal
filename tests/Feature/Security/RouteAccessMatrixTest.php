@@ -22,6 +22,7 @@ use App\Services\Examinations\CandidateAttemptService;
 use App\Services\Fitness\FitnessStandardService;
 use App\Services\Fitness\FitnessTestService;
 use App\Services\Grading\GradeCorrectionService;
+use App\Services\Medical\MedicalRecordService;
 use App\Services\Performance\PerformanceAreaService;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as Router;
@@ -136,6 +137,12 @@ class RouteAccessMatrixTest extends TestCase
             'base_rating' => null, 'merit_value' => null, 'demerit_value' => null, 'sort_order' => 1, 'is_active' => true,
         ]);
 
+        // A medical record field (administrators only).
+        $medicalField = app(MedicalRecordService::class)->createField([
+            'name' => 'Blood Type', 'field_type' => 'choice', 'options' => ['A+', 'O+'], 'help_text' => null,
+            'sort_order' => 1, 'visible_to_instructors' => false, 'visible_to_candidate' => true,
+        ], $administrator);
+
         $this->parameters = [
             'academicPeriod' => (string) $this->activePeriod->id,
             'accountCategory' => (string) $accountEntry->account_category_id,
@@ -155,6 +162,7 @@ class RouteAccessMatrixTest extends TestCase
             'gradeCorrectionRequest' => (string) $correction->id,
             'instructor' => (string) $this->bravo->id,
             'instructorAssignment' => (string) InstructorAssignment::query()->where('instructor_id', $this->bravo->id)->value('id'),
+            'medicalField' => (string) $medicalField->id,
             'medium' => (string) $media->id,
             'performanceArea' => (string) $performanceArea->id,
             'question' => (string) $question->id,

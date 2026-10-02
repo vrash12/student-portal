@@ -37,6 +37,9 @@ export const Permission = {
     ManageAttendance: 'attendance.manage',
     ConfigurePerformance: 'performance.configure',
     ViewPerformance: 'performance.view',
+    ViewMedical: 'medical.view',
+    ManageMedical: 'medical.manage',
+    ConfigureMedical: 'medical.configure',
 } as const;
 
 export type PermissionCode = (typeof Permission)[keyof typeof Permission];

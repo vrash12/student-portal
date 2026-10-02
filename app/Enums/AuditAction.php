@@ -43,6 +43,10 @@ enum AuditAction: string
     case GradeCorrectionApproved = 'grade_correction.approved';
     case GradeCorrectionRejected = 'grade_correction.rejected';
     case GradeCorrectionCancelled = 'grade_correction.cancelled';
+    case MedicalFieldCreated = 'medical_field.created';
+    case MedicalFieldUpdated = 'medical_field.updated';
+    case MedicalFieldDeleted = 'medical_field.deleted';
+    case MedicalRecordUpdated = 'medical_record.updated';
     case GradingThresholdsUpdated = 'grading_thresholds.updated';
     case QuestionCreated = 'question.created';
     case QuestionUpdated = 'question.updated';
@@ -127,6 +131,10 @@ enum AuditAction: string
             self::GradeCorrectionApproved => 'Approved grade correction',
             self::GradeCorrectionRejected => 'Rejected grade correction',
             self::GradeCorrectionCancelled => 'Cancelled grade correction request',
+            self::MedicalFieldCreated => 'Created medical record field',
+            self::MedicalFieldUpdated => 'Updated medical record field',
+            self::MedicalFieldDeleted => 'Deleted unused medical record field',
+            self::MedicalRecordUpdated => 'Updated candidate medical record',
             self::GradingThresholdsUpdated => 'Updated passing and warning grades',
             self::QuestionCreated => 'Created question',
             self::QuestionUpdated => 'Updated question',

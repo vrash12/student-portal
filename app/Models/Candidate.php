@@ -70,6 +70,16 @@ class Candidate extends Model
     }
 
     /**
+     * Medical record values, one per field (MedicalRecordService).
+     *
+     * @return HasMany<CandidateMedicalValue, $this>
+     */
+    public function medicalValues(): HasMany
+    {
+        return $this->hasMany(CandidateMedicalValue::class);
+    }
+
+    /**
      * Whether scores may be recorded for this candidate in the class. Withdrawn
      * candidates keep the scores already recorded but receive no new ones.
      */

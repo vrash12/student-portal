@@ -9,6 +9,7 @@ import {
     FileChartColumn,
     FilePenLine,
     GraduationCap,
+    HeartPulse,
     History,
     LayoutDashboard,
     Library,
@@ -109,6 +110,7 @@ export const staffNavigation: NavigationSection[] = [
             },
             { label: 'Grade Corrections', href: routes.gradeCorrections.index(), icon: FilePenLine, permission: Permission.ApproveGradeCorrections },
             { label: 'Military Fitness', href: routes.fitness.index(), icon: Dumbbell, permission: Permission.ViewFitness },
+            { label: 'Medical Records', href: routes.medical.records.index(), icon: HeartPulse, permission: Permission.ViewMedical },
             { label: 'Merits & Demerits', href: routes.conduct.index(), icon: Medal, permission: Permission.ManageConduct },
             { label: 'Attendance', href: routes.attendance.index(), icon: CalendarCheck, permission: Permission.ManageAttendance },
             {

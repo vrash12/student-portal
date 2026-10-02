@@ -112,6 +112,9 @@ class ClientDemoSeeder extends Seeder
 
         // Fictional Filipino names and illustrated profile pictures.
         $this->call(DemoPeopleSeeder::class);
+
+        // Placeholder medical record fields and fictional values.
+        $this->call(DemoMedicalSeeder::class);
     }
 
     private function staff(string $username, string $name, SystemRole $role): User

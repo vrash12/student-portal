@@ -47,4 +47,14 @@ class CandidatePolicy
     {
         return $actor->hasPermission(Permission::ManageCandidates);
     }
+
+    /**
+     * Entering and changing the candidate's medical record. Instructors see
+     * the fields shared with them on the profile (MedicalRecordPresenter) but
+     * never change them.
+     */
+    public function manageMedical(User $actor, Candidate $candidate): bool
+    {
+        return $actor->hasPermission(Permission::ManageMedical) && $actor->hasPermission(Permission::ViewMedical);
+    }
 }

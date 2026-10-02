@@ -44,6 +44,9 @@ enum Permission: string
     case ManageAttendance = 'attendance.manage';
     case ConfigurePerformance = 'performance.configure';
     case ViewPerformance = 'performance.view';
+    case ViewMedical = 'medical.view';
+    case ManageMedical = 'medical.manage';
+    case ConfigureMedical = 'medical.configure';
 
     public function label(): string
     {
@@ -77,6 +80,9 @@ enum Permission: string
             self::ManageAttendance => 'Record attendance',
             self::ConfigurePerformance => 'Configure performance areas and qualification',
             self::ViewPerformance => 'View qualification and class ranking',
+            self::ViewMedical => 'View candidate medical records',
+            self::ManageMedical => 'Record candidate medical records',
+            self::ConfigureMedical => 'Configure medical record fields',
         };
     }
 
@@ -112,6 +118,9 @@ enum Permission: string
             self::ManageAttendance => 'Create training sessions and record attendance: for every class when the user can view all candidates, otherwise for the classes the user teaches.',
             self::ConfigurePerformance => 'Set the performance areas, their weights, passing grades and must-pass rules, which subjects belong to each area, the conduct rating rule, and the merit and demerit types.',
             self::ViewPerformance => 'See every candidate\'s area results, qualification status, and class rank.',
+            self::ViewMedical => 'See every field of every candidate\'s medical record and its change history. Instructors without this permission see only the fields shared with instructors, for the candidates they teach.',
+            self::ManageMedical => 'Enter and change candidates\' medical record values. Every change is kept in the medical change history.',
+            self::ConfigureMedical => 'Define the medical record fields (name, type, choices), and whether instructors and candidates see each field.',
         };
     }
 
@@ -133,6 +142,7 @@ enum Permission: string
             self::ViewAccounts, self::ManageAccounts => 'Accounts',
             self::ManageConduct, self::ManageAttendance => 'Conduct & Attendance',
             self::ConfigurePerformance, self::ViewPerformance => 'Performance',
+            self::ViewMedical, self::ManageMedical, self::ConfigureMedical => 'Medical Records',
         };
     }
 }

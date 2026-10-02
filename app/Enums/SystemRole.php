@@ -77,6 +77,10 @@ enum SystemRole: string
             Permission::ManageAttendance,
             Permission::ConfigurePerformance,
             Permission::ViewPerformance,
+            // Candidate medical records (owner request, 2026-10-02): administrators only.
+            Permission::ViewMedical,
+            Permission::ManageMedical,
+            Permission::ConfigureMedical,
         ];
 
         return match ($this) {

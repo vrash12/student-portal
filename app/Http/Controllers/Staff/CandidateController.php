@@ -24,6 +24,7 @@ use App\Support\AcademicOptions;
 use App\Support\CandidateGroups;
 use App\Support\CandidatePresenter;
 use App\Support\ListCharts;
+use App\Support\MedicalRecordPresenter;
 use App\Support\QueryFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -209,6 +210,8 @@ class CandidateController extends Controller
             // Military fitness history (newest first), for staff who may view fitness records.
             'fitness' => $viewer->hasPermission(Permission::ViewFitness) ? $fitness->history($candidate, self::FITNESS_HISTORY) : null,
             ...$this->performanceSections($viewer, $candidate, $performanceRecord),
+            // Every field for medical staff; only the fields shared with instructors for those who teach the class; null otherwise.
+            'medical' => MedicalRecordPresenter::forStaff($candidate, $viewer),
             'canEdit' => $canManage,
             // Instructors return to the class they teach, not the full candidate list.
             'canBrowseCandidates' => $viewer->can('viewAny', Candidate::class),
