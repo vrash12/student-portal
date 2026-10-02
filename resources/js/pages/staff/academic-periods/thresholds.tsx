@@ -32,10 +32,12 @@ interface GradingThresholdsProps {
     suggestion: { fromPeriod: string; passingGrade: string; warningGrade: string } | null;
     /** The thresholds are in use by finalized grades, so a change needs a reason. */
     requiresReason: boolean;
+    /** "setup" when opened from Grading Setup: saving and Cancel go back there. */
+    returnTo: 'setup' | null;
     can: { managePeriods: boolean };
 }
 
-export default function GradingThresholds({ period, thresholds, suggestion, requiresReason, can }: GradingThresholdsProps) {
+export default function GradingThresholds({ period, thresholds, suggestion, requiresReason, returnTo, can }: GradingThresholdsProps) {
     const initial = thresholds ?? suggestion;
     const form = useForm<ThresholdsFormData>({
         passing_grade: initial?.passingGrade ?? '',
@@ -43,15 +45,22 @@ export default function GradingThresholds({ period, thresholds, suggestion, requ
         reason: '',
     });
 
-    const cancelHref = can.managePeriods ? routes.academicPeriods.index() : routes.dashboard();
+    const fromSetup = returnTo === 'setup';
+    const setupHref = routes.gradingSetup.index({ period: String(period.id) });
+    const cancelHref = fromSetup ? setupHref : can.managePeriods ? routes.academicPeriods.index() : routes.dashboard();
     const breadcrumbs: BreadcrumbItem[] = [
-        ...(can.managePeriods ? [{ label: 'Academic Periods', href: routes.academicPeriods.index() }] : []),
-        { label: `Grading Thresholds: ${period.name}` },
+        ...(fromSetup
+            ? [{ label: 'Grading Setup', href: setupHref }]
+            : can.managePeriods
+              ? [{ label: 'Academic Periods', href: routes.academicPeriods.index() }]
+              : []),
+        { label: `Passing and Warning Grades: ${period.name}` },
     ];
     const classNoun = period.classCount === 1 ? terms.classBatch.singular.toLowerCase() : terms.classBatch.plural.toLowerCase();
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        form.transform((data) => ({ ...data, return: returnTo ?? '' }));
         form.put(routes.academicPeriods.thresholds(period.id), {
             preserveScroll: true,
             // When the save returns to this page, the saved values become the
@@ -72,11 +81,11 @@ export default function GradingThresholds({ period, thresholds, suggestion, requ
 
     return (
         <>
-            <Head title={`Grading Thresholds · ${period.name}`} />
+            <Head title={`Passing and Warning Grades · ${period.name}`} />
 
             <div className="mx-auto max-w-3xl">
                 <PageHeader
-                    title="Grading Thresholds"
+                    title="Passing and Warning Grades"
                     description={
                         <>
                             {period.name} · {formatCalendarDate(period.startsOn)} – {formatCalendarDate(period.endsOn)}{' '}
@@ -104,7 +113,7 @@ export default function GradingThresholds({ period, thresholds, suggestion, requ
 
                     <FormSection
                         title="Passing and Warning Grades"
-                        description={`Decide the academic standing of every candidate in the ${period.classCount} ${classNoun} of this period, in every subject. Grades are on a scale of 0 to 100.`}
+                        description={`Decide the standing (Passing, At Risk, Failing) of every candidate in every subject of the ${period.classCount} ${classNoun} of this period. Grades are on a scale of 0 to 100. They do not change qualification: each performance area has its own passing grade.`}
                     >
                         <div className="grid gap-5 sm:grid-cols-2">
                             <FormField label="Passing Grade" required error={form.errors.passing_grade} hint="Grades below this are Failing.">
@@ -150,7 +159,7 @@ export default function GradingThresholds({ period, thresholds, suggestion, requ
                             Cancel
                         </ButtonLink>
                         <Button type="submit" loading={form.processing}>
-                            Save Thresholds
+                            Save Grades
                         </Button>
                     </FormActions>
                 </form>

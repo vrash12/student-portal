@@ -17,20 +17,22 @@ interface PanelProps {
     collapsible?: boolean;
     /** Start closed (true) or open (false); by default the page decides (see StartCollapsed). */
     defaultCollapsed?: boolean;
+    /** Anchor of the whole panel, so in-page links land on its heading. */
+    id?: string;
 }
 
 /**
  * Bordered surface for a meaningful group of content (UI_UX_DESIGN.md §46).
  * Selecting the header of a titled panel shows or hides its content.
  */
-export function Panel({ title, description, actions, children, className, bodyClassName, headingLevel: Heading = 'h2', collapsible = true, defaultCollapsed }: PanelProps) {
+export function Panel({ title, description, actions, children, className, bodyClassName, headingLevel: Heading = 'h2', collapsible = true, defaultCollapsed, id }: PanelProps) {
     const titleId = useId();
     const bodyId = useId();
     const canCollapse = collapsible && title !== undefined;
     const { collapsed, toggle } = useCollapsible(title ?? '', canCollapse, defaultCollapsed);
 
     return (
-        <section className={cn('institution-panel min-w-0 rounded-xl border border-line-box bg-surface', className)} aria-labelledby={title ? titleId : undefined}>
+        <section id={id} className={cn('institution-panel min-w-0 rounded-xl border border-line-box bg-surface', className)} aria-labelledby={title ? titleId : undefined}>
             {title && (
                 <header
                     className={cn(

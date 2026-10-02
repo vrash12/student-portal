@@ -29,10 +29,13 @@ class PerformanceAreaController extends Controller
             ->get();
 
         $active = $areas->where('is_active', true);
+        $activeTotal = (float) $active->sum(fn (PerformanceArea $area): float => (float) $area->weight);
 
         return Inertia::render('staff/performance-areas/index', [
             'areas' => $areas->map(fn (PerformanceArea $area): array => [
                 ...$this->present($area),
+                // The share of the overall score the area really gets (weights are relative); null when inactive.
+                'share' => $area->is_active && $activeTotal > 0 ? round((float) $area->weight / $activeTotal * 100, 1) : null,
                 'subjects' => $area->subjects->map(fn (Subject $subject): array => [
                     'id' => $subject->id,
                     'code' => $subject->code,

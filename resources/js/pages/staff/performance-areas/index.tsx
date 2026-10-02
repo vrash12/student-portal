@@ -19,7 +19,8 @@ interface AreaSubject {
 }
 
 interface PerformanceAreasProps {
-    areas: Array<PerformanceAreaRow & { subjects: AreaSubject[] }>;
+    /** share: the area's percentage of the overall score (weight ÷ total of the active weights); null when inactive. */
+    areas: Array<PerformanceAreaRow & { subjects: AreaSubject[]; share: number | null }>;
     /** Total weight of the active areas. */
     activeWeightTotal: number;
     hasActiveMustPass: boolean;
@@ -47,7 +48,7 @@ export default function PerformanceAreas({ areas, activeWeightTotal, hasActiveMu
 
             <PageHeader
                 title="Performance Areas"
-                description="The areas candidates are assessed in, their weight in the overall score, their passing grades and which must be passed to qualify. The values are placeholders until the institution confirms its official grading rules. Areas are deactivated, never deleted."
+                description="The areas candidates are assessed in, their weight in the overall score, their passing grades and which must be passed to qualify. These passing grades decide qualification only; Passing, At Risk and Failing in each subject use the period’s passing and warning grades (Grading Setup). The values are placeholders until the institution confirms its official grading rules. Areas are deactivated, never deleted."
                 breadcrumbs={[{ label: 'Qualification', href: routes.qualification.index() }, { label: 'Performance Areas' }]}
                 actions={addAction}
             />
@@ -111,6 +112,7 @@ export default function PerformanceAreas({ areas, activeWeightTotal, hasActiveMu
                                             </Td>
                                             <Td align="right" numeric className="text-ink">
                                                 {formatNumber(Number(area.weight))}
+                                                {area.share !== null && <span className="block text-xs text-ink-muted">{area.share}% of the score</span>}
                                             </Td>
                                             <Td align="right" numeric className="text-ink">
                                                 {formatNumber(Number(area.passingGrade))}

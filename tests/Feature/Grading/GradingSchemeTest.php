@@ -197,7 +197,7 @@ class GradingSchemeTest extends TestCase
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('classes.show', $this->batchA))
             ->assertInertiaFlash('toast.type', 'success')
-            ->assertInertiaFlash('toast.message', 'Grading setup for Subject 2 saved.');
+            ->assertInertiaFlash('toast.message', 'Weights for Subject 2 saved.');
 
         $this->assertSame(
             [['Quizzes', '20.00'], ['Examination', '30.50'], ['Practical', '49.50']],

@@ -36,6 +36,7 @@ use App\Http\Controllers\Staff\FitnessTestController;
 use App\Http\Controllers\Staff\GradebookController;
 use App\Http\Controllers\Staff\GradeCorrectionController;
 use App\Http\Controllers\Staff\GradingSchemeController;
+use App\Http\Controllers\Staff\GradingSetupController;
 use App\Http\Controllers\Staff\GradingThresholdController;
 use App\Http\Controllers\Staff\InstructorAssignmentController;
 use App\Http\Controllers\Staff\InstructorController;
@@ -260,8 +261,11 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::delete('instructor-assignments/{instructorAssignment}', [InstructorAssignmentController::class, 'destroy'])->name('instructor-assignments.destroy');
         });
 
-        // Passing and warning grades of an academic period (administrative).
+        // Passing and warning grades of an academic period, and the Grading
+        // Setup overview with "Copy Weights" (administrative).
         Route::middleware('can:'.Permission::ConfigureGrading->value)->group(function (): void {
+            Route::get('grading-setup', [GradingSetupController::class, 'index'])->name('grading-setup.index');
+            Route::post('grading-setup/copy-weights', [GradingSetupController::class, 'copy'])->name('grading-setup.copy');
             Route::get('academic-periods/{academicPeriod}/grading-thresholds', [GradingThresholdController::class, 'edit'])
                 ->name('academic-periods.thresholds.edit');
             Route::put('academic-periods/{academicPeriod}/grading-thresholds', [GradingThresholdController::class, 'update'])

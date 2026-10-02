@@ -38,7 +38,7 @@ export function AssessmentForm({ form, categories, submitLabel, cancelHref, high
 
                 <div className="grid gap-5 sm:grid-cols-2">
                     <FormField
-                        label="Grading Category"
+                        label="Grading Component"
                         required
                         error={form.errors.assessment_category_id}
                         hint="Decides which weight the scores count toward."
@@ -48,7 +48,7 @@ export function AssessmentForm({ form, categories, submitLabel, cancelHref, high
                             value={form.data.assessment_category_id}
                             onChange={(event) => form.setData('assessment_category_id', event.target.value)}
                         >
-                            <option value="">Select a category</option>
+                            <option value="">Select a component</option>
                             {categories.map((category) => (
                                 <option key={category.id} value={String(category.id)}>
                                     {category.name} ({category.weight}%)

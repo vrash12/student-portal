@@ -70,6 +70,8 @@ interface DashboardProps {
     academicAlerts: MonitoringSummary | null;
     /** The active period has no passing and warning grades; present only for users who can set them. */
     thresholdSetup: { periodId: number; periodName: string } | null;
+    /** Subjects of the active period without weights; present only for users who can set them. */
+    missingWeights: { count: number; periodId: number; periodName: string } | null;
     /** Present only for users allowed to view accounts. */
     accountSummary: RoleAccountCount[] | null;
     administratorOverview: AdministratorOverviewData | null;
@@ -104,6 +106,7 @@ export default function Dashboard({
     showAcademicAlerts,
     academicAlerts,
     thresholdSetup,
+    missingWeights,
     accountSummary,
     administratorOverview,
     showQualification,
@@ -133,6 +136,20 @@ export default function Dashboard({
                     </Alert>
                 )}
                 {teaching !== null && <TeachingSection teaching={teaching} alerts={showAcademicAlerts ? academicAlerts : undefined} />}
+
+                {missingWeights !== null && (
+                    <Alert tone="warning" title={`${missingWeights.count} ${missingWeights.count === 1 ? 'subject has' : 'subjects have'} no weights yet in ${missingWeights.periodName}`}>
+                        <p>Instructors cannot create assessments in a subject until its components and weights are set.</p>
+                        <p className="mt-2">
+                            <Link
+                                href={routes.gradingSetup.index({ period: String(missingWeights.periodId) })}
+                                className="font-semibold text-primary-700 underline underline-offset-2"
+                            >
+                                Open Grading Setup
+                            </Link>
+                        </p>
+                    </Alert>
+                )}
 
                 {showAcademicOverview ? (
                     <AcademicOverview summary={academicOverview} thresholdSetup={thresholdSetup} />

@@ -74,7 +74,7 @@ final class ExaminationGradebookService
             $issues[] = 'Complete grading for all submitted attempts of candidates in this class.';
         }
         if ($categories->isEmpty()) {
-            $issues[] = 'Configure grading categories for this subject first.';
+            $issues[] = 'Set the components and weights of this subject first.';
         }
         $ready = collect($rows)->whereNotNull('score');
         if ($ready->isEmpty()) {

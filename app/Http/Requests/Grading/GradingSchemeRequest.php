@@ -51,6 +51,8 @@ class GradingSchemeRequest extends FormRequest
             'categories.*.name' => ['required', 'string', 'max:100'],
             'categories.*.weight' => ['required', 'numeric', 'decimal:0,2', 'gt:0', 'max:100'],
             'reason' => ['nullable', 'string', 'max:500'],
+            // Where to go after saving: 'setup' returns to Grading Setup.
+            'return' => ['nullable', 'string', 'in:setup'],
         ];
     }
 
@@ -60,9 +62,9 @@ class GradingSchemeRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'categories.required' => 'Add at least one grading category.',
-            'categories.max' => 'A subject can have at most '.self::MAX_CATEGORIES.' grading categories.',
-            'categories.*.name.required' => 'Enter a category name.',
+            'categories.required' => 'Add at least one component, for example Quizzes.',
+            'categories.max' => 'A subject can have at most '.self::MAX_CATEGORIES.' components.',
+            'categories.*.name.required' => 'Enter a component name.',
             'categories.*.name.max' => 'Use at most 100 characters.',
             'categories.*.weight.required' => 'Enter a weight.',
             'categories.*.weight.numeric' => 'Enter the weight as a number, for example 20.',

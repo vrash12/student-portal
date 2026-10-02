@@ -20,6 +20,9 @@ use Inertia\Response;
  */
 class GradingThresholdController extends Controller
 {
+    /** `return` value of a page opened from Grading Setup, which a save goes back to. */
+    private const RETURN_TO_SETUP = 'setup';
+
     public function __construct(private readonly GradingThresholdService $thresholds) {}
 
     public function edit(Request $request, AcademicPeriod $academicPeriod): Response
@@ -54,6 +57,7 @@ class GradingThresholdController extends Controller
             ],
             // Changing thresholds that are in use changes official standings.
             'requiresReason' => $current !== null && $this->thresholds->hasFinalizedAssessments($academicPeriod),
+            'returnTo' => $request->query('return') === self::RETURN_TO_SETUP ? self::RETURN_TO_SETUP : null,
             'can' => [
                 'managePeriods' => $request->user()->hasPermission(Permission::ManageAcademicPeriods),
             ],
@@ -65,6 +69,10 @@ class GradingThresholdController extends Controller
         $this->thresholds->save($academicPeriod, $request->passingGrade(), $request->warningGrade(), $request->reason());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Passing and warning grades for {$academicPeriod->name} saved."]);
+
+        if ($request->validated('return') === self::RETURN_TO_SETUP) {
+            return redirect()->route('grading-setup.index', ['period' => $academicPeriod->id]);
+        }
 
         return $request->user()->hasPermission(Permission::ManageAcademicPeriods)
             ? redirect()->route('academic-periods.index')

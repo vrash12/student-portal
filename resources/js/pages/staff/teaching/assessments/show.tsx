@@ -157,7 +157,7 @@ export default function AssessmentShow({ offering, assessment, roster, history, 
                         <Detail label="Status">
                             <StatusBadge tone={assessment.status.tone}>{assessment.status.label}</StatusBadge>
                         </Detail>
-                        <Detail label="Grading Category">
+                        <Detail label="Grading Component">
                             {assessment.category.name} <span className="font-normal text-ink-muted">({assessment.category.weight}%)</span>
                         </Detail>
                         <Detail label="Maximum Score">

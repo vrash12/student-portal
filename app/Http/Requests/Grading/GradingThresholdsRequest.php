@@ -26,6 +26,8 @@ class GradingThresholdsRequest extends FormRequest
             'passing_grade' => ['required', 'numeric', 'decimal:0,2', 'gt:0', 'max:100'],
             'warning_grade' => ['required', 'numeric', 'decimal:0,2', 'gt:0', 'max:100'],
             'reason' => ['nullable', 'string', 'max:500'],
+            // Where to go after saving: only Grading Setup, never a free URL.
+            'return' => ['nullable', 'string', 'in:setup'],
         ];
     }
 

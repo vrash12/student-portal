@@ -79,7 +79,7 @@ export default function Gradebook({ offering, scheme, thresholds, assessments, g
                     </Panel>
                 ) : (
                     <Alert tone="warning" title="Grading is not set up for this subject">
-                        An academic administrator must set the grading categories and weights for {offering.subject.name} in{' '}
+                        An academic administrator must set the components and weights for {offering.subject.name} in{' '}
                         {offering.classBatch.name} before assessments can be created.
                     </Alert>
                 )}
@@ -111,7 +111,7 @@ export default function Gradebook({ offering, scheme, thresholds, assessments, g
                         <Table caption={`Assessments of ${offering.subject.name}`} className="min-w-[44rem]">
                             <TableHead>
                                 <Th>Title</Th>
-                                <Th>Category</Th>
+                                <Th>Component</Th>
                                 <Th>Date</Th>
                                 <Th align="right">Max Score</Th>
                                 <Th align="right">Scores Recorded</Th>

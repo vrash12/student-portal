@@ -1,18 +1,22 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { CircleAlert, CircleCheck, Plus, Trash2 } from 'lucide-react';
 import { useRef, type FormEvent } from 'react';
+import { PieChart } from '@/components/charts/pie-chart';
 import { OfferingDescription } from '@/components/grading/offering-context';
 import { ThresholdSummary } from '@/components/grading/standing';
+import { componentsText } from '@/components/grading-setup/copy-weights-dialog';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink } from '@/components/ui/button';
-import { FormField, TextArea, TextInput } from '@/components/ui/form-field';
+import { FormField, SelectInput, TextArea, TextInput } from '@/components/ui/form-field';
 import { FormActions, FormSection } from '@/components/ui/form-section';
 import { PageHeader, type BreadcrumbItem } from '@/components/ui/page-header';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
+import type { PieSlice } from '@/types/charts';
 import type { GradingCategory, GradingThresholds, OfferingContext } from '@/types/grading';
+import type { WeightsCopySource } from '@/types/grading-setup';
 
-interface CategoryRow {
+interface ComponentRow {
     /** Client-only list key; not sent to the server. */
     key: string;
     id: number | null;
@@ -20,62 +24,79 @@ interface CategoryRow {
     weight: string;
 }
 
-interface GradingSetupFormData {
-    categories: CategoryRow[];
+interface SubjectWeightsFormData {
+    categories: ComponentRow[];
     reason: string;
 }
 
-interface GradingSetupProps {
+interface SubjectWeightsProps {
     offering: OfferingContext;
+    /** The saved components (grading categories) and weights. */
     categories: GradingCategory[];
+    /** Other subjects' weights to start from; only offered while this subject has none. */
+    copySources: WeightsCopySource[];
+    /** "setup" when opened from Grading Setup: saving and cancelling return there. */
+    returnTo: 'setup' | null;
     /** Passing and warning grades of the class's academic period; null when not set up. */
     thresholds: GradingThresholds | null;
     periodId: number;
-    /** Changing the setup then changes official grades, so a reason is required. */
+    /** Changing the weights then changes official grades, so a reason is required. */
     hasFinalizedAssessments: boolean;
     totalWeight: number;
     maxCategories: number;
     can: { viewClass: boolean };
 }
 
-export default function GradingSetup({
+/**
+ * The components (for example Quizzes, Examinations) and weights of one
+ * subject in one class. The weights add up to 100%; the server checks it
+ * and every other rule when saving.
+ */
+export default function SubjectWeights({
     offering,
     categories,
+    copySources,
+    returnTo,
     thresholds,
     periodId,
     hasFinalizedAssessments,
     totalWeight,
     maxCategories,
     can,
-}: GradingSetupProps) {
+}: SubjectWeightsProps) {
     const nextKey = useRef(0);
-    const newRow = (): CategoryRow => {
+    const newRow = (name = '', weight = ''): ComponentRow => {
         nextKey.current += 1;
 
-        return { key: `new-${nextKey.current}`, id: null, name: '', weight: '' };
+        return { key: `new-${nextKey.current}`, id: null, name, weight };
     };
 
-    const rowsFrom = (saved: GradingCategory[]): CategoryRow[] =>
+    const rowsFrom = (saved: GradingCategory[]): ComponentRow[] =>
         saved.length > 0
             ? saved.map((category) => ({ key: `category-${category.id}`, id: category.id, name: category.name, weight: category.weight }))
             : [newRow()];
 
-    const form = useForm<GradingSetupFormData>({
+    const form = useForm<SubjectWeightsFormData>({
         categories: rowsFrom(categories),
         reason: '',
     });
     const errors = form.errors as Record<string, string | undefined>;
     const assessmentCounts = new Map(categories.map((category) => [category.id, category.assessmentCount]));
+    const subjectInClass = `${offering.subject.name} in ${offering.classBatch.name}`;
 
+    const fromSetup = returnTo === 'setup';
+    const setupHref = routes.gradingSetup.index({ period: String(periodId) });
     const classHref = routes.classes.show(offering.classBatch.id);
-    const cancelHref = can.viewClass ? classHref : routes.dashboard();
-    const breadcrumbs: BreadcrumbItem[] = can.viewClass
-        ? [
-              { label: terms.classBatch.plural, href: routes.classes.index() },
-              { label: offering.classBatch.name, href: classHref },
-              { label: `Grading: ${offering.subject.name}` },
-          ]
-        : [{ label: `Grading: ${offering.subject.name}` }];
+    const cancelHref = fromSetup ? setupHref : can.viewClass ? classHref : routes.dashboard();
+    const breadcrumbs: BreadcrumbItem[] = fromSetup
+        ? [{ label: 'Grading Setup', href: setupHref }, { label: `Weights: ${offering.subject.name} · ${offering.classBatch.name}` }]
+        : can.viewClass
+          ? [
+                { label: terms.classBatch.plural, href: routes.classes.index() },
+                { label: offering.classBatch.name, href: classHref },
+                { label: `Weights: ${offering.subject.name}` },
+            ]
+          : [{ label: `Weights: ${offering.subject.name}` }];
 
     // Preview only: the server checks the total when saving.
     const total = form.data.categories.reduce((sum, category) => {
@@ -84,8 +105,17 @@ export default function GradingSetup({
         return sum + (Number.isFinite(weight) ? Math.round(weight * 100) : 0);
     }, 0);
     const totalIsValid = total === totalWeight * 100;
+    // The ring always shows the whole subject grade: the part no component
+    // has yet is its own neutral slice, so 40% looks like 40%, not like all.
+    const unassigned = totalWeight * 100 - total;
+    const slices: PieSlice[] = [
+        ...form.data.categories
+            .map((category, index) => ({ label: category.name.trim() || `Component ${index + 1}`, value: Number(category.weight) }))
+            .filter((slice) => Number.isFinite(slice.value) && slice.value > 0),
+        ...(unassigned > 0 ? [{ label: 'Not assigned yet', value: unassigned / 100, tone: 'none' as const }] : []),
+    ];
 
-    const updateRow = (index: number, patch: Partial<CategoryRow>) => {
+    const updateRow = (index: number, patch: Partial<ComponentRow>) => {
         form.setData(
             'categories',
             form.data.categories.map((category, rowIndex) => (rowIndex === index ? { ...category, ...patch } : category)),
@@ -107,11 +137,25 @@ export default function GradingSetup({
         );
     };
 
+    // Fills the form only; nothing is saved until Save Weights.
+    const startFrom = (classSubjectId: string) => {
+        const source = copySources.find((option) => String(option.classSubjectId) === classSubjectId);
+        if (source === undefined) {
+            return;
+        }
+        form.clearErrors();
+        form.setData(
+            'categories',
+            source.components.map((component) => newRow(component.name, component.weight)),
+        );
+    };
+
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         form.transform((data) => ({
             ...data,
             categories: data.categories.map(({ id, name, weight }) => ({ id, name, weight })),
+            return: returnTo ?? '',
         }));
         form.put(routes.classes.grading(offering.classBatch.id, offering.id), {
             preserveScroll: true,
@@ -121,7 +165,7 @@ export default function GradingSetup({
                 if (page.component !== 'staff/classes/grading') {
                     return;
                 }
-                const saved = (page.props as unknown as GradingSetupProps).categories;
+                const saved = (page.props as unknown as SubjectWeightsProps).categories;
                 const next = { categories: rowsFrom(saved), reason: '' };
                 // Set both explicitly: reset() from this closure would restore
                 // the defaults of the render that submitted, not these.
@@ -133,11 +177,11 @@ export default function GradingSetup({
 
     return (
         <>
-            <Head title={`Grading Setup · ${offering.subject.name}`} />
+            <Head title={`Weights · ${offering.subject.name}`} />
 
             <div className="mx-auto max-w-3xl">
                 <PageHeader
-                    title="Grading Setup"
+                    title="Subject Weights"
                     description={
                         <>
                             {offering.subject.name} · <OfferingDescription offering={offering} />
@@ -146,32 +190,57 @@ export default function GradingSetup({
                     breadcrumbs={breadcrumbs}
                 />
 
-                {/* Outside the form, so following the link is not mistaken for part of saving. */}
-                <p className="mb-6 text-sm text-ink-muted">
-                    {thresholds === null ? (
-                        <>Academic standing is not shown yet: passing and warning grades have not been set for {offering.period.name}. </>
-                    ) : (
-                        <>
-                            Academic standing in this subject uses the <ThresholdSummary thresholds={thresholds} /> of {offering.period.name}.{' '}
-                        </>
-                    )}
-                    <Link href={routes.academicPeriods.thresholds(periodId)} className="font-medium text-primary-700 underline">
-                        {thresholds === null ? 'Set passing and warning grades' : 'Change passing and warning grades'}
-                    </Link>
-                    {form.isDirty && '. Save your changes first: leaving this page discards them.'}
-                </p>
+                {/* Outside the form, so following the links is not mistaken for part of saving. */}
+                <div className="mb-6 flex flex-col gap-2 text-sm text-ink-muted">
+                    <p>
+                        These weights apply only to {subjectInClass}. Every other class keeps its own weights, even for the same subject.{' '}
+                        <Link href={setupHref} className="font-medium text-primary-700 underline">
+                            See all subjects in Grading Setup
+                        </Link>
+                    </p>
+                    <p>
+                        {thresholds === null ? (
+                            <>Standing (Passing, At Risk, Failing) is not shown yet: passing and warning grades have not been set for {offering.period.name}. </>
+                        ) : (
+                            <>
+                                Standing in this subject uses the <ThresholdSummary thresholds={thresholds} /> of {offering.period.name}.{' '}
+                            </>
+                        )}
+                        <Link href={routes.academicPeriods.thresholds(periodId)} className="font-medium text-primary-700 underline">
+                            {thresholds === null ? 'Set passing and warning grades' : 'Change passing and warning grades'}
+                        </Link>
+                    </p>
+                    {form.isDirty && <p className="font-medium text-warning-fg">Save your changes first: leaving this page discards them.</p>}
+                </div>
 
                 <form onSubmit={submit} noValidate className="flex flex-col gap-6">
                     {hasFinalizedAssessments && (
                         <Alert tone="warning" title="This subject has finalized assessments">
-                            Changing categories or weights recalculates grades that already count. A reason is required and is kept in the audit
+                            Changing components or weights recalculates grades that already count. A reason is required and is kept in the audit
                             log.
                         </Alert>
                     )}
 
+                    {categories.length === 0 && copySources.length > 0 && (
+                        <FormSection title="Start From Another Subject" description="Fill the form with the weights of a subject that is set up, then adjust them if needed.">
+                            <FormField label="Use the weights of" hint="Nothing is saved until you select Save Weights.">
+                                <SelectInput defaultValue="" onChange={(event) => startFrom(event.target.value)}>
+                                    <option value="" disabled>
+                                        Choose a subject…
+                                    </option>
+                                    {copySources.map((option) => (
+                                        <option key={option.classSubjectId} value={String(option.classSubjectId)}>
+                                            {option.label}: {componentsText(option.components)}
+                                        </option>
+                                    ))}
+                                </SelectInput>
+                            </FormField>
+                        </FormSection>
+                    )}
+
                     <FormSection
-                        title="Grading Categories"
-                        description={`Each assessment belongs to one category. The weights must add up to exactly ${totalWeight}%.`}
+                        title="Components and Weights"
+                        description={`Each assessment belongs to one component, for example Quizzes. A component’s weight is its share of the subject grade; the weights must add up to exactly ${totalWeight}%.`}
                     >
                         {errors.categories && (
                             <p className="flex items-start gap-1.5 text-sm text-danger-fg" role="alert">
@@ -190,7 +259,7 @@ export default function GradingSetup({
                                         <FormField
                                             label={
                                                 <>
-                                                    Category Name<span className="sr-only"> {position}</span>
+                                                    Component<span className="sr-only"> {position}</span>
                                                 </>
                                             }
                                             required
@@ -208,7 +277,7 @@ export default function GradingSetup({
                                         <FormField
                                             label={
                                                 <>
-                                                    Weight (%)<span className="sr-only"> for category {position}</span>
+                                                    Weight (%)<span className="sr-only"> for component {position}</span>
                                                 </>
                                             }
                                             required
@@ -228,8 +297,8 @@ export default function GradingSetup({
                                                 icon={<Trash2 className="size-4" aria-hidden="true" />}
                                                 onClick={() => removeRow(index)}
                                                 disabled={assessmentCount > 0 || form.data.categories.length === 1}
-                                                aria-label={`Remove category ${category.name || position}`}
-                                                title={assessmentCount > 0 ? 'Categories with assessments cannot be removed.' : undefined}
+                                                aria-label={`Remove component ${category.name || position}`}
+                                                title={assessmentCount > 0 ? 'Components with assessments cannot be removed.' : undefined}
                                             >
                                                 <span className="sm:sr-only">Remove</span>
                                             </Button>
@@ -246,7 +315,7 @@ export default function GradingSetup({
                                 onClick={addRow}
                                 disabled={form.data.categories.length >= maxCategories}
                             >
-                                Add Category
+                                Add Component
                             </Button>
                             <p className="flex items-center gap-1.5 text-sm" role="status">
                                 {totalIsValid ? (
@@ -266,12 +335,34 @@ export default function GradingSetup({
                                 )}
                             </p>
                         </div>
-                        <p className="text-sm text-ink-muted">Categories that already have assessments can be renamed or reweighted, but not removed.</p>
+
+                        {/* One slice alone says nothing a ring can show better than the total. */}
+                        {(slices.length >= 2 || unassigned < 0) && (
+                            <section aria-labelledby="weights-preview-heading" className="flex flex-col gap-2 border-t border-line pt-4">
+                                <h3 id="weights-preview-heading" className="text-sm font-semibold text-ink">
+                                    Share of the Subject Grade (Preview)
+                                </h3>
+                                {unassigned < 0 ? (
+                                    <p className="text-sm text-ink-muted">
+                                        The weights add up to more than {totalWeight}%. Lower them to see each component’s share.
+                                    </p>
+                                ) : (
+                                    <PieChart
+                                        slices={slices}
+                                        noun={{ one: 'of the grade', other: 'of the grade' }}
+                                        formatValue={(value) => `${formatWeight(Math.round(value * 100))}%`}
+                                        showShare={false}
+                                    />
+                                )}
+                            </section>
+                        )}
+
+                        <p className="text-sm text-ink-muted">Components that already have assessments can be renamed or reweighted, but not removed.</p>
                     </FormSection>
 
                     {hasFinalizedAssessments && (
                         <FormSection title="Reason for Change">
-                            <FormField label="Reason" required error={errors.reason} hint="Kept in the audit log with the previous and new setup.">
+                            <FormField label="Reason" required error={errors.reason} hint="Kept in the audit log with the previous and new weights.">
                                 <TextArea value={form.data.reason} onChange={(event) => form.setData('reason', event.target.value)} maxLength={500} rows={3} />
                             </FormField>
                         </FormSection>
@@ -282,7 +373,7 @@ export default function GradingSetup({
                             Cancel
                         </ButtonLink>
                         <Button type="submit" loading={form.processing}>
-                            Save Grading Setup
+                            Save Weights
                         </Button>
                     </FormActions>
                 </form>

@@ -9,6 +9,7 @@ use App\Models\ClassBatch;
 use App\Models\ClassSubject;
 use App\Services\Grading\Gradebook;
 use App\Services\Grading\GradingSchemeService;
+use App\Services\Grading\GradingSetupOverview;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,16 +21,25 @@ use Inertia\Response;
  */
 class GradingSchemeController extends Controller
 {
+    private const RETURN_TO_SETUP = 'setup';
+
     public function __construct(
         private readonly GradingSchemeService $schemes,
         private readonly Gradebook $gradebook,
+        private readonly GradingSetupOverview $overview,
     ) {}
 
     public function edit(Request $request, ClassBatch $classBatch, ClassSubject $classSubject): Response
     {
+        $categories = $this->gradebook->scheme($classSubject);
+
         return Inertia::render('staff/classes/grading', [
             'offering' => $this->gradebook->offering($classSubject),
-            'categories' => $this->gradebook->scheme($classSubject),
+            'categories' => $categories,
+            // An empty setup can start from another subject's weights (prefill only).
+            'copySources' => $categories === [] ? $this->overview->copySources($classSubject->classBatch->academic_period_id, $classSubject->id) : [],
+            // Opened from Grading Setup: return there after saving or cancelling.
+            'returnTo' => $request->query('return') === self::RETURN_TO_SETUP ? self::RETURN_TO_SETUP : null,
             // Standing in this subject uses the period's passing and warning grades.
             'thresholds' => $this->gradebook->thresholds($classSubject),
             'periodId' => $classSubject->classBatch->academic_period_id,
@@ -47,7 +57,11 @@ class GradingSchemeController extends Controller
         $this->schemes->save($classSubject, $request->categories(), $request->reason());
 
         $classSubject->loadMissing('subject');
-        Inertia::flash('toast', ['type' => 'success', 'message' => "Grading setup for {$classSubject->subject->name} saved."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Weights for {$classSubject->subject->name} saved."]);
+
+        if ($request->input('return') === self::RETURN_TO_SETUP) {
+            return redirect()->route('grading-setup.index', ['period' => $classBatch->academic_period_id]);
+        }
 
         // Return to the class, where the other subjects are set up.
         return $request->user()->hasPermission(Permission::ManageClassBatches)

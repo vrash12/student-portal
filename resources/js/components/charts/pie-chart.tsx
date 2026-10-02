@@ -20,6 +20,8 @@ interface PieChartProps {
      * the standings; other slices without records are left out.
      */
     listEmpty?: boolean;
+    /** Shows each slice's share beside its value; off when the values already are shares (weights adding up to 100%). */
+    showShare?: boolean;
     className?: string;
 }
 
@@ -34,7 +36,7 @@ function percentOf(value: number, total: number): string {
  * library, works offline, prints in color. Values come from the server;
  * only the shares are worked out here, for display.
  */
-export function PieChart({ slices, noun, formatValue = (value) => String(value), listEmpty = false, className }: PieChartProps) {
+export function PieChart({ slices, noun, formatValue = (value) => String(value), listEmpty = false, showShare = true, className }: PieChartProps) {
     const [active, setActive] = useState<number | null>(null);
     const colored = slices.map((slice, index) => ({ ...slice, tone: toneAt(index, slice.tone), index }));
     const total = colored.reduce((sum, slice) => sum + Math.max(0, slice.value), 0);
@@ -109,8 +111,8 @@ export function PieChart({ slices, noun, formatValue = (value) => String(value),
                             <span aria-hidden="true" className={cn('size-3 shrink-0 rounded-sm', toneClasses(slice.tone).bg)} />
                             <span className="min-w-0 flex-1 break-words text-ink">{slice.label}</span>
                             <span className="shrink-0 text-right tabular-nums">
-                                <span className="font-semibold text-ink">{formatValue(slice.value)}</span>{' '}
-                                <span className="text-ink-muted">({percentOf(slice.value, total)})</span>
+                                <span className="font-semibold text-ink">{formatValue(slice.value)}</span>
+                                {showShare && <span className="text-ink-muted"> ({percentOf(slice.value, total)})</span>}
                             </span>
                         </li>
                     ))}

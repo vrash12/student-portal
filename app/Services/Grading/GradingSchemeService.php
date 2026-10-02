@@ -27,9 +27,79 @@ final class GradingSchemeService
 {
     public const TOTAL_WEIGHT = 100;
 
-    private const DUPLICATE_NAME_MESSAGE = 'Each category needs a different name. Capital letters and accents do not make names different.';
+    private const DUPLICATE_NAME_MESSAGE = 'Each component needs a different name. Capital letters and accents do not make names different.';
 
     public function __construct(private readonly AuditLogger $audit) {}
+
+    /**
+     * Gives subjects that have no weights yet the same categories and
+     * weights as the source subject (the Grading Setup page's "Copy
+     * Weights"). Only empty setups are filled, so nothing that already
+     * counts toward a grade changes, and no reason is needed; each copy is
+     * audited with its source. All or nothing: if one target already has
+     * weights, nothing is copied.
+     *
+     * @param  iterable<ClassSubject>  $targets
+     * @return int the number of subjects that received the weights
+     *
+     * @throws ValidationException
+     */
+    public function copy(ClassSubject $source, iterable $targets): int
+    {
+        $source->loadMissing(['classBatch.academicPeriod', 'subject']);
+        $categories = $source->assessmentCategories()
+            ->get()
+            ->map(fn (AssessmentCategory $category): array => [
+                'id' => null,
+                'name' => $category->name,
+                'weight' => DecimalValue::normalize($category->weight),
+            ])
+            ->values()
+            ->all();
+
+        if ($categories === []) {
+            throw ValidationException::withMessages(['source' => 'The chosen subject has no weights to copy. Choose one that is set up.']);
+        }
+
+        // Class names repeat across periods, so the note names the period too.
+        $note = "Copied from {$source->classBatch->name} · {$source->subject->name} ({$source->classBatch->academicPeriod->name})";
+        $ids = collect($targets)
+            ->map(fn (ClassSubject $target): int => (int) $target->getKey())
+            ->reject(fn (int $id): bool => $id === (int) $source->getKey())
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        if ($ids === []) {
+            return 0;
+        }
+
+        return DB::transaction(function () use ($ids, $categories, $note): int {
+            // Lock every target first, in id order (as every grading change
+            // does), before any plain read. InnoDB takes the transaction's
+            // read snapshot at its first plain read; taking it only once all
+            // locks are held means a save by someone else cannot be committed
+            // unseen and then overwritten by the copy.
+            $locked = ClassSubject::query()->whereKey($ids)->orderBy('id')->lockForUpdate()->get();
+
+            $filled = AssessmentCategory::query()->whereIn('class_subject_id', $ids)->orderBy('class_subject_id')->value('class_subject_id');
+            if ($filled !== null) {
+                $target = $locked->firstWhere('id', (int) $filled);
+                $target?->loadMissing(['classBatch', 'subject']);
+
+                throw ValidationException::withMessages([
+                    'targets' => "{$target?->classBatch->name} · {$target?->subject->name} already has weights. Change it on its own page instead. Nothing was copied.",
+                ]);
+            }
+
+            foreach ($locked as $target) {
+                $this->save($target, $categories, $note);
+            }
+
+            return $locked->count();
+        });
+    }
 
     /**
      * Replaces the categories of the class subject with the given list, in
@@ -101,7 +171,7 @@ final class GradingSchemeService
         $errors = [];
 
         if ($categories === []) {
-            return ['categories' => 'Add at least one grading category.'];
+            return ['categories' => 'Add at least one component, for example Quizzes.'];
         }
 
         $seenNames = [];
@@ -109,7 +179,7 @@ final class GradingSchemeService
         foreach ($categories as $index => $category) {
             if ($category['id'] !== null) {
                 if (! $existing->has($category['id'])) {
-                    $errors["categories.{$index}.name"] = 'This category no longer exists. Reload the page and try again.';
+                    $errors["categories.{$index}.name"] = 'This component no longer exists. Reload the page and try again.';
                 }
                 $keptIds[] = $category['id'];
             }

@@ -103,7 +103,7 @@ enum Permission: string
             self::ViewAllCandidates => 'View every candidate record, regardless of class assignment.',
             self::ManageCandidates => 'Create and update candidate records and their sign-in accounts.',
             self::TeachClasses => 'Can be assigned to teach subjects, and view the classes and candidates they teach.',
-            self::ConfigureGrading => 'Set the grading categories and weights used for each subject of a class, and the passing and warning grades that decide academic standing in each academic period.',
+            self::ConfigureGrading => 'Set the components and weights used for each subject of a class, and the passing and warning grades that decide academic standing in each academic period (Grading Setup).',
             self::RecordGrades => 'Create assessments, record and finalize scores, and request corrections of finalized scores (with an incident report) for the subjects they are assigned to teach.',
             self::ApproveGradeCorrections => 'Review grade correction requests and their incident reports, and approve them (the finalized score is then changed) or reject them with a reason. Nobody can approve their own request.',
             self::ViewAcademicMonitoring => 'See academic standings and the candidates who need attention: every candidate for users who can view all candidates, otherwise only the classes and subjects the user teaches. Candidate profiles follow their own permissions.',

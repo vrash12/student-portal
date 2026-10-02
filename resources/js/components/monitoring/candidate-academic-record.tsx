@@ -206,7 +206,7 @@ function SubjectAssessmentResults({ subject }: { subject: SubjectResults }) {
                 <Table caption={`Assessment results in ${subject.subject.name}`} className="min-w-[32rem]">
                     <TableHead>
                         <Th>Assessment</Th>
-                        <Th className="hidden md:table-cell">Category</Th>
+                        <Th className="hidden md:table-cell">Component</Th>
                         <Th>Date</Th>
                         <Th align="right">Score</Th>
                         <Th align="right">Percentage</Th>

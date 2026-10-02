@@ -234,9 +234,9 @@ function OfferingItem({ classBatch, offering, instructorOptions, canManageAssign
                             variant="ghost"
                             size="sm"
                             icon={<SlidersHorizontal className="size-4" aria-hidden="true" />}
-                            aria-label={`Grading setup for ${subject.name}`}
+                            aria-label={`${offering.grading.length === 0 ? 'Set Weights' : 'Edit Weights'} for ${subject.name}`}
                         >
-                            Grading Setup
+                            {offering.grading.length === 0 ? 'Set Weights' : 'Edit Weights'}
                         </ButtonLink>
                     )}
                     <ConfirmAction
@@ -254,7 +254,7 @@ function OfferingItem({ classBatch, offering, instructorOptions, canManageAssign
                                 {instructors.length > 0 && (
                                     <p>Its instructor assignments ({instructors.map((instructor) => instructor.name).join(', ')}) will also be removed.</p>
                                 )}
-                                {offering.grading.length > 0 && <p>Its grading setup will also be removed.</p>}
+                                {offering.grading.length > 0 && <p>Its weights will also be removed.</p>}
                             </>
                         }
                         confirmLabel="Remove Subject"
@@ -267,7 +267,7 @@ function OfferingItem({ classBatch, offering, instructorOptions, canManageAssign
             <div>
                 <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-subtle">Grading</p>
                 {offering.grading.length === 0 ? (
-                    <p className="text-sm text-ink-muted">Not set up yet. Instructors can create assessments once the categories and weights are set.</p>
+                    <p className="text-sm text-ink-muted">No weights yet. Instructors can create assessments once the subject’s components and weights are set.</p>
                 ) : (
                     <WeightSummary categories={offering.grading} />
                 )}

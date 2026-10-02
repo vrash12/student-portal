@@ -4,8 +4,8 @@ import {
     BookOpen,
     CalendarCheck,
     CalendarRange,
-    DatabaseBackup,
     ClipboardCheck,
+    DatabaseBackup,
     Dumbbell,
     FileChartColumn,
     FilePenLine,
@@ -17,6 +17,7 @@ import {
     Medal,
     School,
     ShieldCheck,
+    SlidersHorizontal,
     UserRoundCog,
     Users,
     UsersRound,
@@ -96,6 +97,14 @@ export const staffNavigation: NavigationSection[] = [
                 href: routes.academicPeriods.index(),
                 icon: CalendarRange,
                 permission: Permission.ManageAcademicPeriods,
+            },
+            {
+                // Every grading setting in one place; the class subject weights
+                // and period passing grades it links to stay under this item.
+                label: 'Grading Setup',
+                href: routes.gradingSetup.index(),
+                icon: SlidersHorizontal,
+                permission: Permission.ConfigureGrading,
             },
         ],
     },

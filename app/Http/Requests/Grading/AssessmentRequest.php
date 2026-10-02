@@ -59,8 +59,8 @@ class AssessmentRequest extends FormRequest
         return [
             'title.required' => 'Enter a title, for example Quiz 1.',
             'title.unique' => 'This subject already has an assessment with this title.',
-            'assessment_category_id.required' => 'Select a grading category.',
-            'assessment_category_id.exists' => 'Select a grading category of this subject.',
+            'assessment_category_id.required' => 'Select a grading component.',
+            'assessment_category_id.exists' => 'Select a grading component of this subject.',
             'max_score.required' => 'Enter the maximum score.',
             'max_score.numeric' => 'Enter the maximum score as a number, for example 50.',
             'max_score.decimal' => 'Use at most two decimal places.',
@@ -78,7 +78,7 @@ class AssessmentRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'assessment_category_id' => 'category',
+            'assessment_category_id' => 'component',
             'max_score' => 'maximum score',
             'assessed_on' => 'date',
         ];

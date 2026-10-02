@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicPeriod;
+use App\Models\ClassSubject;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AdministratorDashboardService;
@@ -56,6 +57,8 @@ class DashboardController extends Controller
             // Standings over the subjects the user teaches in the active period.
             'academicAlerts' => $showAcademicAlerts ? $this->monitoringSummary(MonitoringScope::teaching($user), $user, withSubjects: true) : null,
             'thresholdSetup' => $user->hasPermission(Permission::ConfigureGrading) ? $this->missingThresholds() : null,
+            // Subjects of the active period without weights: instructors cannot grade them yet.
+            'missingWeights' => $user->hasPermission(Permission::ConfigureGrading) ? $this->missingWeights() : null,
             'accountSummary' => $user->can('viewAny', User::class) ? $this->accountSummary() : null,
             'administratorOverview' => $showAcademicOverview ? $administratorDashboard->overview() : null,
             'showQualification' => $showQualification,
@@ -154,6 +157,28 @@ class DashboardController extends Controller
         return $period === null || GradingThresholds::forPeriod($period) !== null
             ? null
             : ['periodId' => $period->id, 'periodName' => $period->name];
+    }
+
+    /**
+     * How many subjects of the active period's classes have no weights yet
+     * (instructors cannot create assessments in them). Null when there is no
+     * active period or every subject has weights.
+     *
+     * @return array{count: int, periodId: int, periodName: string}|null
+     */
+    private function missingWeights(): ?array
+    {
+        $period = AcademicPeriod::query()->active()->first();
+        if ($period === null) {
+            return null;
+        }
+
+        $count = ClassSubject::query()
+            ->whereHas('classBatch', fn (Builder $classes) => $classes->where('academic_period_id', $period->id))
+            ->whereDoesntHave('assessmentCategories')
+            ->count();
+
+        return $count === 0 ? null : ['count' => $count, 'periodId' => $period->id, 'periodName' => $period->name];
     }
 
     /**

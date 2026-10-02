@@ -14,7 +14,7 @@ interface GradeBreakdownDialogProps {
 }
 
 /**
- * How a candidate's subject grade was calculated: each category's percentage
+ * How a candidate's subject grade was calculated: each component's percentage
  * and weighted score, and the resulting standing, all as calculated by the
  * server.
  */
@@ -71,11 +71,11 @@ function Breakdown({ result, thresholds }: { result: SubjectGrade; thresholds: G
 
             <div className="overflow-x-auto">
                 <table className="w-full min-w-[32rem] text-left text-sm">
-                    <caption className="sr-only">Grade by category</caption>
+                    <caption className="sr-only">Grade by component</caption>
                     <thead className="bg-surface-muted text-xs font-semibold uppercase tracking-wide text-ink-muted">
                         <tr>
                             <th scope="col" className="px-3 py-2">
-                                Category
+                                Component
                             </th>
                             <th scope="col" className="px-3 py-2 text-right">
                                 Weight
@@ -127,7 +127,7 @@ function Breakdown({ result, thresholds }: { result: SubjectGrade; thresholds: G
                 {result.isProvisional && (
                     <p>
                         The current grade is based on the {result.assessedWeight}% of the grading weight assessed so far. It becomes the final grade
-                        once every category has finalized assessments.
+                        once every component has finalized assessments.
                     </p>
                 )}
             </div>

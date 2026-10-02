@@ -47,7 +47,7 @@ function PostingForm({ review }: { review: Review }) {
     const formErrors = Object.entries(form.errors)
         .filter(([key, message]) => !FIELD_ERROR_KEYS.has(key) && message !== undefined)
         .map(([, message]) => message);
-    const categoryName = review.categories.find((category) => String(category.id) === form.data.assessment_category_id)?.name ?? 'the selected category';
+    const categoryName = review.categories.find((category) => String(category.id) === form.data.assessment_category_id)?.name ?? 'the selected component';
 
     return (
         <>
@@ -83,7 +83,7 @@ function PostingForm({ review }: { review: Review }) {
                 >
                     <Alert tone="info" title="Review before posting">
                         <p>
-                            This creates and finalizes one assessment in the selected category. Its raw scores count toward academic grades immediately and become
+                            This creates and finalizes one assessment in the selected component. Its raw scores count toward academic grades immediately and become
                             visible to candidates. Existing assessments are not overwritten.
                         </p>
                         <p className="mt-2">
@@ -114,9 +114,9 @@ function PostingForm({ review }: { review: Review }) {
                             <FormField label="Assessment Title" required error={form.errors.title}>
                                 <TextInput value={form.data.title} maxLength={150} onChange={(event) => form.setData('title', event.target.value)} />
                             </FormField>
-                            <FormField label="Grading Category" required error={form.errors.assessment_category_id}>
+                            <FormField label="Grading Component" required error={form.errors.assessment_category_id}>
                                 <SelectInput value={form.data.assessment_category_id} onChange={(event) => form.setData('assessment_category_id', event.target.value)}>
-                                    <option value="">Select a category</option>
+                                    <option value="">Select a component</option>
                                     {review.categories.map((category) => (
                                         <option key={category.id} value={category.id}>
                                             {category.name} ({category.weight}%)

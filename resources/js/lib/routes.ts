@@ -42,7 +42,7 @@ export const routes = {
         edit: (periodId: number) => `/academic-periods/${periodId}/edit`,
         update: (periodId: number) => `/academic-periods/${periodId}`,
         activate: (periodId: number) => `/academic-periods/${periodId}/activate`,
-        thresholds: (periodId: number) => `/academic-periods/${periodId}/grading-thresholds`,
+        thresholds: (periodId: number, query?: Record<string, string>) => withQuery(`/academic-periods/${periodId}/grading-thresholds`, query),
     },
     subjects: {
         index: () => '/subjects',
@@ -60,7 +60,8 @@ export const routes = {
         update: (classId: number) => `/classes/${classId}`,
         addSubject: (classId: number) => `/classes/${classId}/subjects`,
         removeSubject: (classId: number, classSubjectId: number) => `/classes/${classId}/subjects/${classSubjectId}`,
-        grading: (classId: number, classSubjectId: number) => `/classes/${classId}/subjects/${classSubjectId}/grading`,
+        grading: (classId: number, classSubjectId: number, query?: Record<string, string>) =>
+            withQuery(`/classes/${classId}/subjects/${classSubjectId}/grading`, query),
     },
     medical: {
         records: {
@@ -159,6 +160,10 @@ export const routes = {
     },
     qualification: {
         index: (query?: Record<string, string>) => withQuery('/qualification', query),
+    },
+    gradingSetup: {
+        index: (query?: Record<string, string>) => withQuery('/grading-setup', query),
+        copyWeights: () => '/grading-setup/copy-weights',
     },
     performanceAreas: {
         index: () => '/performance-areas',

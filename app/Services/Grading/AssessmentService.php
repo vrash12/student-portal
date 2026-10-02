@@ -213,7 +213,7 @@ final class AssessmentService
         $category = $offering->assessmentCategories()->whereKey($categoryId)->first();
 
         if ($category === null) {
-            throw ValidationException::withMessages(['assessment_category_id' => 'Select a grading category of this subject.']);
+            throw ValidationException::withMessages(['assessment_category_id' => 'Select a grading component of this subject.']);
         }
 
         return $category;

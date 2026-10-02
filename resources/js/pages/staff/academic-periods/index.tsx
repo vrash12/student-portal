@@ -84,7 +84,7 @@ export default function AcademicPeriodsIndex({ periods, can }: AcademicPeriodsIn
                             <Th>Period</Th>
                             <Th>Dates</Th>
                             <Th>Status</Th>
-                            <Th>Grading Thresholds</Th>
+                            <Th>Passing and Warning Grades</Th>
                             <Th align="right">{terms.classBatch.plural}</Th>
                             <Th align="right">
                                 <span className="sr-only">Actions</span>
@@ -132,8 +132,8 @@ export default function AcademicPeriodsIndex({ periods, can }: AcademicPeriodsIn
                                                 </Button>
                                             )}
                                             {can.configureGrading && (
-                                                <RowAction href={routes.academicPeriods.thresholds(period.id)} label={`Thresholds for ${period.name}`}>
-                                                    Thresholds
+                                                <RowAction href={routes.academicPeriods.thresholds(period.id)} label={`Passing Grades for ${period.name}`}>
+                                                    Passing Grades
                                                 </RowAction>
                                             )}
                                             <RowAction href={routes.academicPeriods.edit(period.id)} label={`Edit ${period.name}`}>
