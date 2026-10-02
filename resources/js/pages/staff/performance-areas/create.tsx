@@ -41,7 +41,6 @@ export default function CreatePerformanceArea({ sources, subjects, activeSingleS
             <div className="mx-auto max-w-3xl">
                 <PageHeader
                     title="Add Performance Area"
-                    description="An area candidates are assessed in, with its weight in the overall score and its passing grade."
                     breadcrumbs={[
                         { label: 'Qualification', href: routes.qualification.index() },
                         { label: 'Performance Areas', href: routes.performanceAreas.index() },

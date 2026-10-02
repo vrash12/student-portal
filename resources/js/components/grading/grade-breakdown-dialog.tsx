@@ -1,4 +1,4 @@
-import { ROUNDING_NOTE, StandingBadge, StandingRanges, ThresholdSummary } from '@/components/grading/standing';
+import { StandingBadge, StandingRanges, ThresholdSummary } from '@/components/grading/standing';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -64,9 +64,7 @@ function Breakdown({ result, thresholds }: { result: SubjectGrade; thresholds: G
             </dl>
 
             {thresholds === null && (
-                <p className="text-sm text-ink-muted">
-                    Standing is not available: passing and warning grades have not been set for this academic period.
-                </p>
+                <p className="text-sm text-ink-muted">No standing yet: Passing and Warning Grades are not set for this period.</p>
             )}
 
             <div className="overflow-x-auto">
@@ -120,25 +118,21 @@ function Breakdown({ result, thresholds }: { result: SubjectGrade; thresholds: G
             <div className="flex flex-col gap-1 text-sm text-ink-muted">
                 {result.missingScores > 0 && (
                     <p>
-                        <span className="font-medium text-warning-fg">Missing scores are not counted as zero.</span> The grade is based on the
-                        assessments that have a score until the missing {result.missingScores === 1 ? 'score is' : 'scores are'} recorded.
+                        <span className="font-medium text-warning-fg">Missing scores are left out, never counted as zero.</span>
                     </p>
                 )}
                 {result.isProvisional && (
-                    <p>
-                        The current grade is based on the {result.assessedWeight}% of the grading weight assessed so far. It becomes the final grade
-                        once every component has finalized assessments.
-                    </p>
+                    <p>Grade in progress: based on the {result.assessedWeight}% of weight assessed so far.</p>
                 )}
             </div>
 
             {thresholds !== null && (
                 <section aria-labelledby="standing-ranges-heading" className="flex flex-col gap-2 border-t border-line pt-4">
                     <h3 id="standing-ranges-heading" className="text-sm font-semibold text-ink">
-                        How Standing Is Decided
+                        Standing Ranges
                     </h3>
                     <p className="text-sm text-ink-muted">
-                        Standing uses the <ThresholdSummary thresholds={thresholds} /> of this academic period. {ROUNDING_NOTE}
+                        Standing uses <ThresholdSummary thresholds={thresholds} />.
                     </p>
                     <StandingRanges
                         passingHundredths={Math.round(thresholds.passingGrade * 100)}

@@ -85,7 +85,7 @@ export function PerformanceAreaForm({ form, areaId, sources, subjects, activeSin
                     />
                 </FormField>
 
-                <FormField label="Description" error={form.errors.description} hint="Optional. What the area covers. Up to 255 characters.">
+                <FormField label="Description" error={form.errors.description} hint="Optional.">
                     <TextInput
                         name="description"
                         value={form.data.description}
@@ -111,20 +111,19 @@ export function PerformanceAreaForm({ form, areaId, sources, subjects, activeSin
                 />
 
                 {conflictingArea !== null && (
-                    <Alert tone="warning" title={`${conflictingArea} is already the active area for this source`}>
-                        Only one area can use {sources.find((option) => option.value === source)?.label ?? 'this source'} at a time. Save this area as inactive, or
-                        deactivate {conflictingArea} first.
+                    <Alert tone="warning" title={`${conflictingArea} already uses this source`}>
+                        Only one can be active. Save this area as inactive, or deactivate {conflictingArea} first.
                     </Alert>
                 )}
             </FormSection>
 
-            <FormSection title="Grading" description="Placeholders until the institution confirms its official grading rules.">
+            <FormSection title="Grading">
                 <div className="grid gap-5 sm:grid-cols-2">
                     <FormField
                         label="Weight in the overall score"
                         required
                         error={form.errors.weight}
-                        hint="0 to 100. Weights are relative: the overall score is divided by the total weight of the areas with a grade. 0 leaves the area out."
+                        hint="0–100, relative to other areas. 0 leaves it out."
                     >
                         <TextInput
                             name="weight"
@@ -135,7 +134,7 @@ export function PerformanceAreaForm({ form, areaId, sources, subjects, activeSin
                             className="tabular-nums"
                         />
                     </FormField>
-                    <FormField label="Passing grade" required error={form.errors.passing_grade} hint="Greater than 0, up to 100. A grade equal to it passes.">
+                    <FormField label="Passing grade" required error={form.errors.passing_grade} hint="Above 0, up to 100. Grades at or above it pass.">
                         <TextInput
                             name="passing_grade"
                             value={form.data.passing_grade}
@@ -149,14 +148,14 @@ export function PerformanceAreaForm({ form, areaId, sources, subjects, activeSin
 
                 <CheckboxField
                     label="Must pass to qualify"
-                    description="Failing this area makes the candidate Not Qualified, whatever the other results."
+                    description="Failing it makes the candidate Not Qualified."
                     checked={form.data.must_pass}
                     onChange={(event) => form.setData('must_pass', event.target.checked)}
                     error={form.errors.must_pass}
                 />
 
                 <div className="grid gap-5 sm:grid-cols-2">
-                    <FormField label="Order" required error={form.errors.sort_order} hint="Position in lists and on result pages, 0 to 999.">
+                    <FormField label="Order" required error={form.errors.sort_order} hint="Position in lists, 0–999.">
                         <TextInput
                             name="sort_order"
                             value={form.data.sort_order}
@@ -172,8 +171,8 @@ export function PerformanceAreaForm({ form, areaId, sources, subjects, activeSin
                     label="Area is active"
                     description={
                         areaId === null
-                            ? 'Inactive areas are kept but not used for results. Save as inactive to prepare an area in advance.'
-                            : 'Inactive areas are kept but not used for results.'
+                            ? 'Inactive areas are not used. Turn off to prepare one in advance.'
+                            : 'Inactive areas are kept but not used.'
                     }
                     checked={form.data.is_active}
                     onChange={(event) => form.setData('is_active', event.target.checked)}
@@ -182,12 +181,9 @@ export function PerformanceAreaForm({ form, areaId, sources, subjects, activeSin
             </FormSection>
 
             {source === 'subjects' && (
-                <FormSection
-                    title="Subjects"
-                    description="The area grade is the mean of the current grades of these subjects in the candidate's class. A subject counts toward one area only."
-                >
+                <FormSection title="Subjects" description="Each subject counts toward one area only.">
                     {subjects.length === 0 ? (
-                        <p className="text-sm text-ink-muted">No subjects exist yet. Add subjects first, then map them here.</p>
+                        <p className="text-sm text-ink-muted">No subjects yet. Add subjects first.</p>
                     ) : (
                         <fieldset>
                             <legend className="sr-only">Subjects of this area</legend>
@@ -197,7 +193,7 @@ export function PerformanceAreaForm({ form, areaId, sources, subjects, activeSin
                                     const details = [
                                         subject.code,
                                         subject.isActive ? null : 'Inactive',
-                                        elsewhere === null ? null : `Now in ${elsewhere}; saving moves it here`,
+                                        elsewhere === null ? null : `In ${elsewhere}; saving moves it here`,
                                     ].filter((part): part is string => part !== null);
 
                                     return (
@@ -225,10 +221,10 @@ export function PerformanceAreaForm({ form, areaId, sources, subjects, activeSin
             {source === 'conduct' && (
                 <FormSection
                     title="Conduct Rating"
-                    description="Rating = base rating + merit points × value of a merit point − demerit points × value of a demerit point, limited to 0–100. Voided entries do not count."
+                    description="Rating = base + merit points × merit value − demerit points × demerit value, within 0–100. Voided entries don't count."
                 >
                     <div className="grid gap-5 sm:grid-cols-3">
-                        <FormField label="Base rating" required error={form.errors.base_rating} hint="0 to 100. The rating with no entries.">
+                        <FormField label="Base rating" required error={form.errors.base_rating} hint="0–100. Rating with no entries.">
                             <TextInput
                                 name="base_rating"
                                 value={form.data.base_rating}
@@ -238,7 +234,7 @@ export function PerformanceAreaForm({ form, areaId, sources, subjects, activeSin
                                 className="tabular-nums"
                             />
                         </FormField>
-                        <FormField label="Value of a merit point" required error={form.errors.merit_value} hint="0 to 100. 0 ignores merits.">
+                        <FormField label="Value of a merit point" required error={form.errors.merit_value} hint="0–100. 0 ignores merits.">
                             <TextInput
                                 name="merit_value"
                                 value={form.data.merit_value}
@@ -248,7 +244,7 @@ export function PerformanceAreaForm({ form, areaId, sources, subjects, activeSin
                                 className="tabular-nums"
                             />
                         </FormField>
-                        <FormField label="Value of a demerit point" required error={form.errors.demerit_value} hint="0 to 100.">
+                        <FormField label="Value of a demerit point" required error={form.errors.demerit_value} hint="0–100.">
                             <TextInput
                                 name="demerit_value"
                                 value={form.data.demerit_value}
@@ -263,17 +259,11 @@ export function PerformanceAreaForm({ form, areaId, sources, subjects, activeSin
             )}
 
             {source === 'fitness' && (
-                <Alert title="How the fitness grade is taken">
-                    Each candidate's result in the latest fitness test of their class that has results: the test's overall points. Failing any event fails the
-                    area; a candidate not tested in that test has no result yet.
-                </Alert>
+                <Alert title="Fitness grade">Points in the class's latest fitness test with results. Any failed event fails the area.</Alert>
             )}
 
             {source === 'attendance' && (
-                <Alert title="How the attendance grade is taken">
-                    The attendance rate over the sessions of the candidate's class: sessions attended (present or late) out of present, late and absent. Excused
-                    and unrecorded sessions are not counted.
-                </Alert>
+                <Alert title="Attendance grade">Rate = (present + late) ÷ (present + late + absent) × 100. Excused and unrecorded sessions don't count.</Alert>
             )}
 
             <FormActions>

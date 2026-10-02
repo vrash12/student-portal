@@ -40,8 +40,8 @@ export default function GradeCorrectionsIndex({ requests, status, counts, status
                 title="Grade Corrections"
                 description={
                     scope === 'all'
-                        ? 'Requests to change finalized scores. Read each incident report, then approve or reject it. A score changes only when approved.'
-                        : 'Your requests to change finalized scores. A score changes only after an administrator approves the request. To file one, open a finalized assessment and choose Request Correction.'
+                        ? 'Finalized scores change only through an approved correction request.'
+                        : 'Finalized scores change only through an approved correction request. File one from a finalized assessment.'
                 }
             />
 
@@ -74,8 +74,8 @@ export default function GradeCorrectionsIndex({ requests, status, counts, status
                         title={status === 'pending' ? 'No requests waiting for approval' : 'No correction requests'}
                         description={
                             scope === 'all'
-                                ? 'Instructors request corrections from finalized assessments. New requests appear here.'
-                                : 'Open a finalized assessment in My Classes and choose Request Correction next to the candidate.'
+                                ? 'New requests appear here.'
+                                : 'Use Request Correction on a finalized assessment in My Classes.'
                         }
                     />
                 ) : (

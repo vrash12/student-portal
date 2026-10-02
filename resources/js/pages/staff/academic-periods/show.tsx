@@ -70,7 +70,7 @@ export default function AcademicPeriodShow({ period, classes, totals, can }: Aca
                     <>
                         {can.configureGrading && (
                             <ButtonLink href={routes.gradingSetup.index({ period: String(period.id) })} icon={<SlidersHorizontal className="size-4" aria-hidden="true" />}>
-                                Grading Setup
+                                Open Grading Setup
                             </ButtonLink>
                         )}
                         <ButtonLink href={routes.academicPeriods.edit(period.id)} icon={<Pencil className="size-4" aria-hidden="true" />}>
@@ -89,7 +89,7 @@ export default function AcademicPeriodShow({ period, classes, totals, can }: Aca
                 </dl>
 
                 <p className="text-sm text-ink-muted">
-                    Passing and warning grades:{' '}
+                    Passing and Warning Grades:{' '}
                     {period.thresholds === null ? (
                         <StatusBadge tone="neutral">Not Set</StatusBadge>
                     ) : (

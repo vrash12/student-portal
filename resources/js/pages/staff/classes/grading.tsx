@@ -112,7 +112,7 @@ export default function SubjectWeights({
         ...form.data.categories
             .map((category, index) => ({ label: category.name.trim() || `Component ${index + 1}`, value: Number(category.weight) }))
             .filter((slice) => Number.isFinite(slice.value) && slice.value > 0),
-        ...(unassigned > 0 ? [{ label: 'Not assigned yet', value: unassigned / 100, tone: 'none' as const }] : []),
+        ...(unassigned > 0 ? [{ label: 'Unassigned', value: unassigned / 100, tone: 'none' as const }] : []),
     ];
 
     const updateRow = (index: number, patch: Partial<ComponentRow>) => {
@@ -193,37 +193,36 @@ export default function SubjectWeights({
                 {/* Outside the form, so following the links is not mistaken for part of saving. */}
                 <div className="mb-6 flex flex-col gap-2 text-sm text-ink-muted">
                     <p>
-                        These weights apply only to {subjectInClass}. Every other class keeps its own weights, even for the same subject.{' '}
+                        These weights apply only to {subjectInClass}.{' '}
                         <Link href={setupHref} className="font-medium text-primary-700 underline">
-                            See all subjects in Grading Setup
+                            Open Grading Setup
                         </Link>
                     </p>
                     <p>
                         {thresholds === null ? (
-                            <>Standing (Passing, At Risk, Failing) is not shown yet: passing and warning grades have not been set for {offering.period.name}. </>
+                            <>No standing yet: Passing and Warning Grades are not set for {offering.period.name}. </>
                         ) : (
                             <>
-                                Standing in this subject uses the <ThresholdSummary thresholds={thresholds} /> of {offering.period.name}.{' '}
+                                Standing uses <ThresholdSummary thresholds={thresholds} /> ({offering.period.name}).{' '}
                             </>
                         )}
                         <Link href={routes.academicPeriods.thresholds(periodId)} className="font-medium text-primary-700 underline">
-                            {thresholds === null ? 'Set passing and warning grades' : 'Change passing and warning grades'}
+                            {thresholds === null ? 'Set Passing and Warning Grades' : 'Change Passing and Warning Grades'}
                         </Link>
                     </p>
-                    {form.isDirty && <p className="font-medium text-warning-fg">Save your changes first: leaving this page discards them.</p>}
+                    {form.isDirty && <p className="font-medium text-warning-fg">Unsaved changes: leaving discards them.</p>}
                 </div>
 
                 <form onSubmit={submit} noValidate className="flex flex-col gap-6">
                     {hasFinalizedAssessments && (
-                        <Alert tone="warning" title="This subject has finalized assessments">
-                            Changing components or weights recalculates grades that already count. A reason is required and is kept in the audit
-                            log.
+                        <Alert tone="warning" title="These weights are in use">
+                            Changes recalculate grades and standings and need a reason.
                         </Alert>
                     )}
 
                     {categories.length === 0 && copySources.length > 0 && (
-                        <FormSection title="Start From Another Subject" description="Fill the form with the weights of a subject that is set up, then adjust them if needed.">
-                            <FormField label="Use the weights of" hint="Nothing is saved until you select Save Weights.">
+                        <FormSection title="Start From Another Subject">
+                            <FormField label="Copy Weights From">
                                 <SelectInput defaultValue="" onChange={(event) => startFrom(event.target.value)}>
                                     <option value="" disabled>
                                         Choose a subject…
@@ -240,7 +239,7 @@ export default function SubjectWeights({
 
                     <FormSection
                         title="Components and Weights"
-                        description={`Each assessment belongs to one component, for example Quizzes. A component’s weight is its share of the subject grade; the weights must add up to exactly ${totalWeight}%.`}
+                        description={`Weights must total ${totalWeight}%.`}
                     >
                         {errors.categories && (
                             <p className="flex items-start gap-1.5 text-sm text-danger-fg" role="alert">
@@ -271,7 +270,7 @@ export default function SubjectWeights({
                                                 onChange={(event) => updateRow(index, { name: event.target.value })}
                                                 maxLength={100}
                                                 autoComplete="off"
-                                                placeholder="For example Quizzes"
+                                                placeholder="e.g. Quizzes"
                                             />
                                         </FormField>
                                         <FormField
@@ -298,7 +297,7 @@ export default function SubjectWeights({
                                                 onClick={() => removeRow(index)}
                                                 disabled={assessmentCount > 0 || form.data.categories.length === 1}
                                                 aria-label={`Remove component ${category.name || position}`}
-                                                title={assessmentCount > 0 ? 'Components with assessments cannot be removed.' : undefined}
+                                                title={assessmentCount > 0 ? 'Has assessments: cannot be removed.' : undefined}
                                             >
                                                 <span className="sm:sr-only">Remove</span>
                                             </Button>
@@ -340,12 +339,10 @@ export default function SubjectWeights({
                         {(slices.length >= 2 || unassigned < 0) && (
                             <section aria-labelledby="weights-preview-heading" className="flex flex-col gap-2 border-t border-line pt-4">
                                 <h3 id="weights-preview-heading" className="text-sm font-semibold text-ink">
-                                    Share of the Subject Grade (Preview)
+                                    Share of Subject Grade
                                 </h3>
                                 {unassigned < 0 ? (
-                                    <p className="text-sm text-ink-muted">
-                                        The weights add up to more than {totalWeight}%. Lower them to see each component’s share.
-                                    </p>
+                                    <p className="text-sm text-ink-muted">Weights exceed {totalWeight}%.</p>
                                 ) : (
                                     <PieChart
                                         slices={slices}
@@ -357,12 +354,12 @@ export default function SubjectWeights({
                             </section>
                         )}
 
-                        <p className="text-sm text-ink-muted">Components that already have assessments can be renamed or reweighted, but not removed.</p>
+                        <p className="text-sm text-ink-muted">Components with assessments cannot be removed.</p>
                     </FormSection>
 
                     {hasFinalizedAssessments && (
                         <FormSection title="Reason for Change">
-                            <FormField label="Reason" required error={errors.reason} hint="Kept in the audit log with the previous and new weights.">
+                            <FormField label="Reason" required error={errors.reason} hint="Kept in the audit log.">
                                 <TextArea value={form.data.reason} onChange={(event) => form.setData('reason', event.target.value)} maxLength={500} rows={3} />
                             </FormField>
                         </FormSection>

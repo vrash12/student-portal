@@ -74,13 +74,12 @@ export default function Gradebook({ offering, scheme, thresholds, assessments, g
 
             <div className="flex flex-col gap-6">
                 {isConfigured ? (
-                    <Panel title="Grading Components" description="Set by academic administrators. The weights add up to 100%.">
+                    <Panel title="Components and Weights" description="Set by administrators. Weights total 100%.">
                         <WeightSummary categories={scheme} />
                     </Panel>
                 ) : (
-                    <Alert tone="warning" title="Grading is not set up for this subject">
-                        An academic administrator must set the components and weights for {offering.subject.name} in{' '}
-                        {offering.classBatch.name} before assessments can be created.
+                    <Alert tone="warning" title="This subject has no weights yet">
+                        Assessments can be created once an administrator sets the weights.
                     </Alert>
                 )}
 
@@ -96,8 +95,8 @@ export default function Gradebook({ offering, scheme, thresholds, assessments, g
                             title="No assessments yet"
                             description={
                                 canCreate
-                                    ? "Create an assessment for this subject when you're ready, then record the scores."
-                                    : 'Assessments for this subject will be listed here.'
+                                    ? 'Create one, then record the scores.'
+                                    : 'Assessments will be listed here.'
                             }
                             action={
                                 canCreate && (
@@ -158,13 +157,11 @@ export default function Gradebook({ offering, scheme, thresholds, assessments, g
                     title="Candidate Grades"
                     description={
                         <>
-                            Calculated from finalized assessments.{' '}
-                            <span className="tabular-nums">{gradableCount}</span> {gradableCount === 1 ? 'candidate' : 'candidates'} in this{' '}
-                            {classTerm}.
+                            From finalized assessments. <span className="tabular-nums">{gradableCount}</span> {gradableCount === 1 ? 'candidate' : 'candidates'}.
                             {thresholds !== null && (
                                 <>
                                     {' '}
-                                    Standing uses the <ThresholdSummary thresholds={thresholds} /> of {offering.period.name}.
+                                    Standing uses <ThresholdSummary thresholds={thresholds} /> ({offering.period.name}).
                                 </>
                             )}
                         </>
@@ -173,16 +170,13 @@ export default function Gradebook({ offering, scheme, thresholds, assessments, g
                 >
                     {thresholds === null && isConfigured && (
                         <div className="border-b border-line px-5 py-4">
-                            <Alert title="Academic standing is not available yet">
-                                Passing and warning grades have not been set for {offering.period.name}. An academic administrator sets them for
-                                each academic period. Grades are still calculated.
-                            </Alert>
+                            <Alert title="No standing yet">Passing and Warning Grades are not set for {offering.period.name}.</Alert>
                         </div>
                     )}
 
                     <FilterBar onReset={reset} canReset={isFiltered}>
                         <SearchField
-                            placeholder="Search candidates by number or name…"
+                            placeholder="Search by number or name…"
                             value={values.search}
                             onChange={(value) => update('search', value, { debounce: true })}
                         />
@@ -194,7 +188,7 @@ export default function Gradebook({ offering, scheme, thresholds, assessments, g
                                 icon={SearchX}
                                 headingLevel="h3"
                                 title="No candidates match this search"
-                                description="Try a different number or name, or reset the filters."
+                                description="Try a different number or name."
                                 action={
                                     <Button variant="secondary" onClick={reset}>
                                         Reset Filters
@@ -206,7 +200,7 @@ export default function Gradebook({ offering, scheme, thresholds, assessments, g
                                 icon={GraduationCap}
                                 headingLevel="h3"
                                 title={`No candidates in this ${classTerm} yet`}
-                                description={`Candidates appear here once an administrator assigns them to this ${classTerm}.`}
+                                description={`Shown once an administrator assigns them to this ${classTerm}.`}
                             />
                         )
                     ) : (

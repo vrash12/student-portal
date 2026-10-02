@@ -21,12 +21,12 @@ export function formatAreaGrade(grade: number | null): string {
     return formatGrade(grade);
 }
 
-/** "Weight 40 · pass 75" for an area heading; values as configured, without trailing zeros. */
+/** "Weight 40 · passing grade 75 · must-pass" for an area heading; values as configured, without trailing zeros. */
 export function areaRuleLabel(area: { weight: number; passingGrade: number; mustPass: boolean }): string {
     const weight = `Weight ${formatNumber(area.weight)}`;
-    const passing = `pass ${formatNumber(area.passingGrade)}`;
+    const passing = `passing grade ${formatNumber(area.passingGrade)}`;
 
-    return [weight, passing, area.mustPass ? 'must pass' : null].filter((part): part is string => part !== null).join(' · ');
+    return [weight, passing, area.mustPass ? 'must-pass' : null].filter((part): part is string => part !== null).join(' · ');
 }
 
 /** 40 → "40", 77.5 → "77.5", 33.33 → "33.33". */

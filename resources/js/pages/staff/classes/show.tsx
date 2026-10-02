@@ -267,14 +267,13 @@ function OfferingItem({ classBatch, offering, instructorOptions, canManageAssign
             <div>
                 <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-subtle">Grading</p>
                 {offering.grading.length === 0 ? (
-                    <p className="text-sm text-ink-muted">No weights yet. Instructors can create assessments once the subject’s components and weights are set.</p>
+                    <p className="text-sm text-ink-muted">No weights yet. Instructors can create assessments only in a subject with weights.</p>
                 ) : (
                     <WeightSummary categories={offering.grading} />
                 )}
                 {hasAssessments && (
                     <p className="mt-1.5 text-sm text-ink-muted">
-                        {offering.assessmentCount} {offering.assessmentCount === 1 ? 'assessment' : 'assessments'} recorded. This subject can no longer be
-                        removed from the {terms.classBatch.singular.toLowerCase()}.
+                        {offering.assessmentCount} {offering.assessmentCount === 1 ? 'assessment' : 'assessments'} recorded. The subject cannot be removed.
                     </p>
                 )}
             </div>

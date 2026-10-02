@@ -26,9 +26,7 @@ export function QualificationSummary({ areas, qualification, showRank = false }:
 
     if (areas.length === 0) {
         return (
-            <p className="text-sm text-ink-muted">
-                No performance areas are configured yet, so qualification cannot be decided. Administrators set the areas, their weights and passing grades.
-            </p>
+            <p className="text-sm text-ink-muted">No active performance areas, so qualification is Pending.</p>
         );
     }
 
@@ -45,7 +43,7 @@ export function QualificationSummary({ areas, qualification, showRank = false }:
                     <dt className="text-sm font-medium text-ink-muted">Overall Score</dt>
                     <dd className="mt-1 text-2xl font-semibold text-ink tabular-nums">{formatAreaGrade(overall.score)}</dd>
                     {overall.score !== null && !overall.complete && (
-                        <dd className="mt-0.5 text-xs text-ink-muted">Partial: some weighted areas have no grade yet.</dd>
+                        <dd className="mt-0.5 text-xs text-ink-muted">Partial: a weighted area has no grade yet.</dd>
                     )}
                     {overall.score === null && <dd className="mt-0.5 text-xs text-ink-muted">No weighted area has a grade yet.</dd>}
                 </div>
@@ -53,7 +51,7 @@ export function QualificationSummary({ areas, qualification, showRank = false }:
                     <div className="rounded-lg border border-line-box px-4 py-3">
                         <dt className="text-sm font-medium text-ink-muted">Class Rank</dt>
                         <dd className="mt-1 text-2xl font-semibold text-ink tabular-nums">{rank === null ? 'Unranked' : rank}</dd>
-                        {rank === null && <dd className="mt-0.5 text-xs text-ink-muted">Ranked once there is an overall score.</dd>}
+                        {rank === null && <dd className="mt-0.5 text-xs text-ink-muted">No overall score, or withdrawn.</dd>}
                     </div>
                 )}
             </dl>
@@ -121,7 +119,7 @@ export function QualificationChecklist({ areas, results }: { areas: PerformanceA
     const required = areas.filter((area) => area.mustPass);
 
     if (required.length === 0) {
-        return <p className="text-sm text-ink-muted">No area is marked as required to qualify.</p>;
+        return <p className="text-sm text-ink-muted">No must-pass areas.</p>;
     }
 
     return (

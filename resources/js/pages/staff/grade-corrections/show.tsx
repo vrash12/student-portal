@@ -69,13 +69,13 @@ export default function GradeCorrectionShow({ correction, can }: GradeCorrection
                     </Alert>
                 )}
                 {changedSinceFiling && (
-                    <Alert tone="warning" title="The score changed after this request was filed">
-                        It was {correction.currentScore ?? 'no score'} when the request was filed and is now {correction.scoreNow ?? 'no score'}. This request
-                        cannot be approved; reject it so the instructor can file a new one.
+                    <Alert tone="warning" title="The score changed after filing">
+                        It was {correction.currentScore ?? 'no score'} and is now {correction.scoreNow ?? 'no score'}. This request cannot be approved; reject
+                        it so a new one can be filed.
                     </Alert>
                 )}
                 {pending && can.ownRequest && !can.cancel && (
-                    <Alert tone="info">You filed this request, so another administrator must decide it.</Alert>
+                    <Alert tone="info">You filed this request; another administrator must decide it.</Alert>
                 )}
 
                 <Panel
@@ -149,7 +149,7 @@ export default function GradeCorrectionShow({ correction, can }: GradeCorrection
                                 variant="ghost"
                                 size="md"
                                 title={`Cancel request #${correction.id}?`}
-                                description={<p>The request is withdrawn and the score stays as it is. The cancelled request is kept in the history.</p>}
+                                description={<p>The score stays as it is.</p>}
                                 confirmLabel="Cancel Request"
                             >
                                 Cancel Request
@@ -215,11 +215,10 @@ function DecisionForm({ correction, decision, onProcessingChange, onClose }: Dec
         <form onSubmit={submit} noValidate className="flex flex-col gap-5">
             <p className="text-sm text-ink">
                 {rejecting ? (
-                    <>The score stays at {correction.currentScore ?? 'no score'}. The instructor sees your reason.</>
+                    <>The score stays at {correction.currentScore ?? 'no score'}.</>
                 ) : (
                     <>
-                        The score changes from <strong>{correction.currentScore ?? 'no score'}</strong> to <strong>{correction.proposedScore ?? 'no score'}</strong>{' '}
-                        now. The change, this request and your name are kept in the score history.
+                        The score changes from <strong>{correction.currentScore ?? 'no score'}</strong> to <strong>{correction.proposedScore ?? 'no score'}</strong>.
                     </>
                 )}
             </p>
@@ -227,7 +226,7 @@ function DecisionForm({ correction, decision, onProcessingChange, onClose }: Dec
                 label={rejecting ? 'Reason for Rejection' : 'Note'}
                 required={rejecting}
                 error={form.errors.note}
-                hint={rejecting ? 'Required. Kept with the request.' : 'Optional. Kept with the request.'}
+                hint={rejecting ? 'Shown to the instructor.' : 'Optional.'}
             >
                 <TextArea value={form.data.note} onChange={(event) => form.setData('note', event.target.value)} maxLength={NOTE_MAX} rows={3} />
             </FormField>

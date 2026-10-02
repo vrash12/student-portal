@@ -25,8 +25,8 @@ interface AssessmentFormProps {
 export function AssessmentForm({ form, categories, submitLabel, cancelHref, highestScore = null, onSubmit }: AssessmentFormProps) {
     return (
         <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
-            <FormSection title="Assessment Details" description="Scores are recorded after the assessment is created.">
-                <FormField label="Title" required error={form.errors.title} hint="For example Quiz 1 or Midterm Examination.">
+            <FormSection title="Assessment Details">
+                <FormField label="Title" required error={form.errors.title} hint="E.g. Quiz 1, Midterm Examination.">
                     <TextInput
                         name="title"
                         value={form.data.title}
@@ -37,12 +37,7 @@ export function AssessmentForm({ form, categories, submitLabel, cancelHref, high
                 </FormField>
 
                 <div className="grid gap-5 sm:grid-cols-2">
-                    <FormField
-                        label="Grading Component"
-                        required
-                        error={form.errors.assessment_category_id}
-                        hint="Decides which weight the scores count toward."
-                    >
+                    <FormField label="Component" required error={form.errors.assessment_category_id}>
                         <SelectInput
                             name="assessment_category_id"
                             value={form.data.assessment_category_id}
@@ -61,7 +56,7 @@ export function AssessmentForm({ form, categories, submitLabel, cancelHref, high
                         label="Maximum Score"
                         required
                         error={form.errors.max_score}
-                        hint={highestScore === null ? 'Highest possible raw score.' : `Highest possible raw score. At least ${highestScore}, the highest score recorded.`}
+                        hint={highestScore === null ? 'Highest possible raw score.' : `At least ${highestScore} (highest recorded).`}
                     >
                         <TextInput
                             name="max_score"
@@ -74,7 +69,7 @@ export function AssessmentForm({ form, categories, submitLabel, cancelHref, high
                     </FormField>
                 </div>
 
-                <FormField label="Date" error={form.errors.assessed_on} hint="Optional. Dated assessments appear under Upcoming Assessments." className="sm:w-1/2 sm:pr-2.5">
+                <FormField label="Date" error={form.errors.assessed_on} hint="Optional. Upcoming dates appear in Upcoming Assessments." className="sm:w-1/2 sm:pr-2.5">
                     <TextInput
                         type="date"
                         name="assessed_on"

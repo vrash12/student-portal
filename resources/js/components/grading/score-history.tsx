@@ -33,7 +33,7 @@ export function ScoreHistory({ entries, total }: ScoreHistoryProps) {
                 icon={History}
                 headingLevel="h3"
                 title="No changes yet"
-                description="Changes to recorded scores, and corrections after finalization, are listed here with who made them and when."
+                description="Edits and corrections of recorded scores appear here."
             />
         );
     }
@@ -75,7 +75,7 @@ export function ScoreHistory({ entries, total }: ScoreHistoryProps) {
             </ol>
             {total > entries.length && (
                 <p className="border-t border-line px-5 py-3 text-sm text-ink-muted">
-                    Showing the latest {entries.length} of {total} changes. The full history is kept in the database.
+                    Latest {entries.length} of {total} changes.
                 </p>
             )}
         </>

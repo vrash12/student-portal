@@ -1,6 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
-import { ROUNDING_NOTE, StandingRanges } from '@/components/grading/standing';
+import { StandingRanges } from '@/components/grading/standing';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { FormField, TextArea, TextInput } from '@/components/ui/form-field';
@@ -97,26 +97,25 @@ export default function GradingThresholds({ period, thresholds, suggestion, requ
 
                 <form onSubmit={submit} noValidate className="flex flex-col gap-6">
                     {requiresReason && (
-                        <Alert tone="warning" title="These thresholds are in use">
-                            This period has finalized assessments. Changing the passing or warning grade immediately changes the academic standing
-                            of candidates. A reason is required and is kept in the audit log.
+                        <Alert tone="warning" title="These grades are in use">
+                            Changes recalculate standings and need a reason.
                         </Alert>
                     )}
 
                     {thresholds === null && (
                         <Alert title="Not set yet">
                             {suggestion === null
-                                ? 'Academic standing is not shown for this period until passing and warning grades are saved. Once set, they can be changed but not removed.'
-                                : `The values below are from ${suggestion.fromPeriod}. Review them and save to use them for this period; nothing changes until you save. Once set, they can be changed but not removed.`}
+                                ? 'No standing is shown until these are saved.'
+                                : `Values from ${suggestion.fromPeriod}. Save to use them.`}
                         </Alert>
                     )}
 
                     <FormSection
                         title="Passing and Warning Grades"
-                        description={`Decide the standing (Passing, At Risk, Failing) of every candidate in every subject of the ${period.classCount} ${classNoun} of this period. Grades are on a scale of 0 to 100. They do not change qualification: each performance area has its own passing grade.`}
+                        description={`Decide subject standing in ${period.classCount} ${classNoun} (scale 0–100). Qualification uses each performance area’s own passing grade.`}
                     >
                         <div className="grid gap-5 sm:grid-cols-2">
-                            <FormField label="Passing Grade" required error={form.errors.passing_grade} hint="Grades below this are Failing.">
+                            <FormField label="Passing Grade" required error={form.errors.passing_grade} hint="Below this: Failing.">
                                 <TextInput
                                     name="passing_grade"
                                     value={form.data.passing_grade}
@@ -130,7 +129,7 @@ export default function GradingThresholds({ period, thresholds, suggestion, requ
                                 label="Warning Grade"
                                 required
                                 error={form.errors.warning_grade}
-                                hint="Grades from the passing grade up to, but not including, this grade are At Risk; this grade and above are Passing. Enter the passing grade again for no At Risk range."
+                                hint="Below this: At Risk. Same as passing grade: no At Risk."
                             >
                                 <TextInput
                                     name="warning_grade"
@@ -148,7 +147,7 @@ export default function GradingThresholds({ period, thresholds, suggestion, requ
 
                     {requiresReason && (
                         <FormSection title="Reason for Change">
-                            <FormField label="Reason" required error={form.errors.reason} hint="Kept in the audit log with the previous and new grades.">
+                            <FormField label="Reason" required error={form.errors.reason} hint="Kept in the audit log.">
                                 <TextArea value={form.data.reason} onChange={(event) => form.setData('reason', event.target.value)} maxLength={500} rows={3} />
                             </FormField>
                         </FormSection>
@@ -186,18 +185,11 @@ function StandingPreview({ passing, warning }: { passing: string; warning: strin
         // Static explanation next to the fields, not a live region: announcing
         // the whole preview on every keystroke would drown out the form.
         <div className="flex flex-col gap-2 rounded-lg border border-line-box bg-surface-muted px-4 py-3">
-            <p className="text-sm font-medium text-ink">Preview</p>
+            <p className="text-sm font-medium text-ink">Standing Ranges</p>
             {isValid ? (
-                <>
-                    <StandingRanges passingHundredths={passingHundredths} warningHundredths={warningHundredths} />
-                    <p className="text-sm text-ink-muted">
-                        {ROUNDING_NOTE} A standing based on a grade in progress is a current standing, not a final one.
-                    </p>
-                </>
+                <StandingRanges passingHundredths={passingHundredths} warningHundredths={warningHundredths} />
             ) : (
-                <p className="text-sm text-ink-muted">
-                    Enter a passing grade greater than 0 and a warning grade from the passing grade up to 100 to see the standing ranges.
-                </p>
+                <p className="text-sm text-ink-muted">Passing grade above 0; warning grade from the passing grade to 100.</p>
             )}
         </div>
     );

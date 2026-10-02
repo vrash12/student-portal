@@ -42,17 +42,17 @@ export default function GradingSetup(props: GradingSetupProps) {
         {
             href: '#example',
             title: 'Scores',
-            description: 'Instructors record scores and finalize each assessment. Only finalized assessments count.',
+            description: 'Only finalized assessments count.',
             status: null,
             icon: ClipboardPen,
         },
         {
             href: '#weights',
             title: 'Subject Grade',
-            description: 'Each subject’s components and weights turn the scores into one grade out of 100.',
+            description: 'Weighted components give a grade out of 100.',
             status:
                 subjectWeights.length === 0
-                    ? { ready: false, text: 'No subjects in this period yet' }
+                    ? { ready: false, text: 'No subjects yet' }
                     : missing.length === 0
                       ? { ready: true, text: `All ${subjectWeights.length} subjects have weights` }
                       : { ready: false, text: `${missing.length} of ${subjectWeights.length} subjects have no weights` },
@@ -61,17 +61,17 @@ export default function GradingSetup(props: GradingSetupProps) {
         {
             href: '#standing',
             title: 'Subject Standing',
-            description: 'The period’s passing and warning grades make each subject grade Passing, At Risk or Failing.',
+            description: 'Passing and Warning Grades give Passing, At Risk or Failing.',
             status:
                 thresholds === null
-                    ? { ready: false, text: 'Passing and warning grades not set' }
+                    ? { ready: false, text: 'Passing and Warning Grades not set' }
                     : { ready: true, text: `Passing ${formatGrade(thresholds.passingGrade)} · Warning ${formatGrade(thresholds.warningGrade)}` },
             icon: Gauge,
         },
         {
             href: '#areas',
             title: 'Performance Areas',
-            description: 'Subject grades, fitness, conduct and attendance are combined by weight into an overall score.',
+            description: 'Weighted areas give the overall score.',
             status:
                 areas.list.length === 0
                     ? { ready: false, text: 'No active areas' }
@@ -83,12 +83,12 @@ export default function GradingSetup(props: GradingSetupProps) {
         {
             href: '#qualification',
             title: 'Qualification & Rank',
-            description: 'Must-pass areas decide Qualified or Not Qualified; the overall score ranks each class.',
+            description: 'Must-pass areas decide qualification. Overall score sets class rank.',
             status:
                 areas.list.length === 0
                     ? null
                     : mustPass === 0
-                      ? { ready: false, text: 'No must-pass area: everyone counts as Qualified' }
+                      ? { ready: false, text: 'No must-pass area: all Qualified' }
                       : { ready: true, text: `${mustPass} must-pass ${mustPass === 1 ? 'area' : 'areas'}` },
             icon: Award,
         },
@@ -98,17 +98,14 @@ export default function GradingSetup(props: GradingSetupProps) {
         <>
             <Head title="Grading Setup" />
 
-            <PageHeader
-                title="Grading Setup"
-                description="Everything that decides a candidate’s grades, standing and qualification, in the order the system applies it. Each part is changed on its own page."
-            />
+            <PageHeader title="Grading Setup" description="How grades, standing and qualification are decided." />
 
             {period === null ? (
                 <div className="rounded-lg border border-line bg-surface">
                     <EmptyState
                         icon={Scale}
                         title="No academic periods yet"
-                        description="Create an academic period with classes and subjects first. Their grading is set up here."
+                        description={`Create a period with ${terms.classBatch.plural.toLowerCase()} and subjects first.`}
                         action={
                             can.managePeriods && (
                                 <ButtonLink href={routes.academicPeriods.create()} variant="primary">
@@ -135,7 +132,7 @@ export default function GradingSetup(props: GradingSetupProps) {
 
                     <section aria-labelledby="how-heading" className="flex flex-col gap-3">
                         <h2 id="how-heading" className="text-lg font-semibold text-ink">
-                            How a Candidate’s Result Is Decided
+                            How Results Are Decided
                         </h2>
                         <SetupFlow steps={steps} />
                     </section>
@@ -155,7 +152,7 @@ export default function GradingSetup(props: GradingSetupProps) {
                         className={ANCHOR}
                         collapsible={false}
                         title="Step 3 · Passing and Warning Grades"
-                        description={`Set once for ${period.name}. They apply to every subject of every class in the period and decide the subject standing shown in gradebooks, Academic Monitoring and profiles.`}
+                        description={`Set once for ${period.name}. They decide each subject’s standing.`}
                         actions={
                             <ButtonLink href={routes.academicPeriods.thresholds(period.id, { return: 'setup' })} variant="secondary">
                                 {thresholds === null ? 'Set Passing and Warning Grades' : 'Change Passing and Warning Grades'}
@@ -164,8 +161,7 @@ export default function GradingSetup(props: GradingSetupProps) {
                     >
                         {thresholds === null ? (
                             <Alert tone="warning" title="Not set yet">
-                                Without them, grades are still calculated, but no subject shows Passing, At Risk or Failing, and Academic Monitoring
-                                has nothing to report.
+                                Grades are calculated, but no standing is shown.
                             </Alert>
                         ) : (
                             <StandingRanges passingHundredths={Math.round(thresholds.passingGrade * 100)} warningHundredths={Math.round(thresholds.warningGrade * 100)} />
@@ -210,7 +206,7 @@ function SubjectWeights({
             className={ANCHOR}
             collapsible={false}
             title="Step 2 · Subject Weights"
-            description={`Each subject of each ${classTerm.toLowerCase()} has its own components (for example Quizzes, Examinations) whose weights add up to 100%. Instructors can create assessments only in a subject that has weights.`}
+            description="Weights must total 100%. Instructors can create assessments only in a subject with weights."
             bodyClassName="p-0"
             actions={
                 canCopy && (
@@ -223,9 +219,7 @@ function SubjectWeights({
             {missing.length > 0 && (
                 <div className="border-b border-line px-5 py-4">
                     <Alert tone="warning" title={`${missing.length} ${missing.length === 1 ? 'subject has' : 'subjects have'} no weights yet`}>
-                        {hasSources
-                            ? 'Use Copy Weights to give them the weights of a subject that is set up, or set each one with Set Weights.'
-                            : 'Set the weights of one subject with Set Weights first. Copy Weights can then give the same weights to the others.'}
+                        {hasSources ? 'Use Copy Weights or Set Weights.' : 'Set Weights on one subject, then Copy Weights to the rest.'}
                     </Alert>
                 </div>
             )}
@@ -234,7 +228,7 @@ function SubjectWeights({
                     icon={Scale}
                     headingLevel="h3"
                     title={`No subjects in ${period.name} yet`}
-                    description={`Add subjects to the ${terms.classBatch.plural.toLowerCase()} of this period first (${terms.classBatch.plural} → a ${classTerm.toLowerCase()} → Add Subject).`}
+                    description={`Add them in ${terms.classBatch.plural} → a ${classTerm.toLowerCase()} → Add Subject.`}
                 />
             ) : (
                 <Table caption={`Subject weights in ${period.name}`} className="min-w-[40rem]">
@@ -289,11 +283,7 @@ function Example({ example, hasThresholds }: { example: WorkedExample; hasThresh
             className={ANCHOR}
             collapsible={false}
             title="Steps 1–2 · How Scores Become a Subject Grade"
-            description={
-                example.source === null
-                    ? 'An example with sample results, calculated by the grade engine.'
-                    : `An example with the weights of ${example.source} and sample results, calculated by the grade engine.`
-            }
+            description={example.source === null ? 'Sample weights and results.' : `Sample results with the weights of ${example.source}.`}
         >
             <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
                 <div className="flex flex-col gap-4">
@@ -339,25 +329,19 @@ function Example({ example, hasThresholds }: { example: WorkedExample; hasThresh
                         </table>
                     </div>
                     <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm text-ink">
-                        <li>
-                            Points = result × weight ÷ 100. The subject grade is the sum of the points, worked out before rounding and then rounded to two
-                            decimals, so the rounded points shown can differ from it by 0.01.
-                        </li>
+                        <li>Points = result × weight ÷ 100. Subject grade = sum of points.</li>
                         {hasThresholds && example.standing !== null && (
                             <li>
-                                With this period’s passing and warning grades, {formatGrade(example.grade)} is <StandingBadge standing={example.standing} />.
+                                In this period, {formatGrade(example.grade)} is <StandingBadge standing={example.standing} />.
                             </li>
                         )}
                         {example.partial !== null && (
                             <li>
-                                While only {listText(example.partial.assessed)} {example.partial.assessed.length === 1 ? 'has' : 'have'} finalized
-                                assessments ({example.partial.assessedWeight}% of the weight), the grade is{' '}
-                                <strong className="tabular-nums">{formatGrade(example.partial.grade)}</strong>: it is worked out over the weight assessed
-                                so far, and becomes final once every component is assessed.
+                                With only {listText(example.partial.assessed)} assessed ({example.partial.assessedWeight}% of the weight), the grade in
+                                progress is <strong className="tabular-nums">{formatGrade(example.partial.grade)}</strong>.
                             </li>
                         )}
-                        <li>A missing score is never counted as zero: it is left out and reported, so the grade is never lowered silently.</li>
-                        <li>Within a component, larger assessments count more (all points earned ÷ all points possible).</li>
+                        <li>Missing scores are left out, never counted as zero.</li>
                     </ul>
                 </div>
                 {example.components.length > 1 && (
@@ -380,7 +364,7 @@ function Areas({ areas, canConfigure }: { areas: AreasOverview; canConfigure: bo
             className={ANCHOR}
             collapsible={false}
             title="Steps 4–5 · Performance Areas and Qualification"
-            description="Set once for every period and class. Each area takes its grade from subject grades, military fitness, conduct or attendance."
+            description={`Set once for all periods and ${terms.classBatch.plural.toLowerCase()}.`}
             bodyClassName={areas.list.length === 0 ? undefined : 'p-0'}
             actions={
                 canConfigure && (
@@ -392,7 +376,7 @@ function Areas({ areas, canConfigure }: { areas: AreasOverview; canConfigure: bo
         >
             {areas.list.length === 0 ? (
                 <Alert tone="warning" title="No active performance areas">
-                    Without areas there is no overall score, and every candidate stays Pending for qualification.
+                    No overall score; every candidate is Pending.
                 </Alert>
             ) : (
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
@@ -400,7 +384,7 @@ function Areas({ areas, canConfigure }: { areas: AreasOverview; canConfigure: bo
                         <Table caption="Active performance areas" className="min-w-[34rem]">
                             <TableHead>
                                 <Th>Area</Th>
-                                <Th>Grade From</Th>
+                                <Th>Grade Taken From</Th>
                                 <Th align="right">Share of Overall Score</Th>
                                 <Th align="right">Area Passing Grade</Th>
                                 <Th>Must Pass</Th>
@@ -414,8 +398,8 @@ function Areas({ areas, canConfigure }: { areas: AreasOverview; canConfigure: bo
                                             {area.subjects.length > 0 && <span className="block text-xs text-ink-muted">{area.subjects.join(', ')}</span>}
                                             {area.conductRule !== null && (
                                                 <span className="block text-xs text-ink-muted">
-                                                    Base {area.conductRule.base}, each merit point +{area.conductRule.merit}, each demerit point −
-                                                    {area.conductRule.demerit}
+                                                    Base {area.conductRule.base} · +{area.conductRule.merit} per merit point · −{area.conductRule.demerit} per
+                                                    demerit point
                                                 </span>
                                             )}
                                         </Td>
@@ -432,15 +416,14 @@ function Areas({ areas, canConfigure }: { areas: AreasOverview; canConfigure: bo
                         </Table>
                         <div id="qualification" className={`flex flex-col gap-1.5 px-5 py-4 text-sm text-ink ${ANCHOR}`}>
                             <p>
-                                <strong>Overall score</strong> = the area grades averaged by weight, over the areas that have a grade. While an area has no
-                                grade yet, the others count proportionally more and the score is marked Partial.
+                                <strong>Overall score</strong>: weighted average of the graded areas; Partial while a weighted area has no grade.
                             </p>
                             <p>
-                                <strong>Qualified</strong> when every must-pass area is passed; <strong>Not Qualified</strong> when one is failed;{' '}
-                                <strong>Pending</strong> while one has no result yet. Areas that are not must-pass only count toward the overall score.
+                                <strong>Qualified</strong>: all must-pass areas passed · <strong>Not Qualified</strong>: one failed · <strong>Pending</strong>:
+                                one is incomplete or has no results yet.
                             </p>
                             <p>
-                                <strong>Class rank</strong> orders each class by overall score (staff only; candidates never see it).
+                                <strong>Class rank</strong>: by overall score, staff only.
                             </p>
                         </div>
                     </div>
@@ -463,24 +446,13 @@ function Areas({ areas, canConfigure }: { areas: AreasOverview; canConfigure: bo
 function Checks({ areas }: { areas: AreasOverview }) {
     const notes: ReactNode[] = [];
     if (areas.unmappedSubjects.length > 0) {
-        notes.push(
-            <>
-                {listText(areas.unmappedSubjects)} {areas.unmappedSubjects.length === 1 ? 'counts' : 'count'} toward no area, so{' '}
-                {areas.unmappedSubjects.length === 1 ? 'its grades are' : 'their grades are'} left out of qualification. Tick{' '}
-                {areas.unmappedSubjects.length === 1 ? 'it' : 'them'} in a subject area.
-            </>,
-        );
+        notes.push(<>Subjects in no area (left out of qualification): {listText(areas.unmappedSubjects)}. Add them to a Subject Grades area.</>);
     }
     if (areas.emptySubjectAreas.length > 0) {
-        notes.push(
-            <>
-                {listText(areas.emptySubjectAreas)} {areas.emptySubjectAreas.length === 1 ? 'has' : 'have'} no subjects, so{' '}
-                {areas.emptySubjectAreas.length === 1 ? 'it never has' : 'they never have'} a result.
-            </>,
-        );
+        notes.push(<>Subject Grades areas without subjects (no grade): {listText(areas.emptySubjectAreas)}.</>);
     }
     if (!areas.hasMustPass) {
-        notes.push(<>No area is must-pass, so every candidate counts as Qualified.</>);
+        notes.push(<>No must-pass area: every candidate is Qualified.</>);
     }
 
     if (notes.length === 0) {
@@ -505,15 +477,11 @@ function Sources({ sources, areas, can }: { sources: GradingSetupProps['sources'
     const attendance = area('attendance');
 
     return (
-        <Panel
-            collapsible={false}
-            title="Where the Other Area Grades Come From"
-            description="Fitness, conduct and attendance are recorded on their own pages and become area grades by these rules."
-        >
+        <Panel collapsible={false} title="Where the Other Area Grades Come From">
             <div className="grid gap-4 md:grid-cols-3">
                 <SourceCard
                     title="Military Fitness"
-                    rule="The candidate’s points in the latest fitness test of their class that has results. Every event standard must also be met."
+                    rule="Points in the class’s latest fitness test with results. Any failed event fails the area."
                     detail={`${sources.fitnessEvents} active ${sources.fitnessEvents === 1 ? 'event' : 'events'}`}
                     area={fitness === null ? null : `${fitness.name}: passing grade ${fitness.passingGrade}`}
                     link={can.configureFitness ? { href: routes.fitness.standards.index(), label: 'Events and Points' } : null}
@@ -522,8 +490,8 @@ function Sources({ sources, areas, can }: { sources: GradingSetupProps['sources'
                     title="Merits & Demerits"
                     rule={
                         conduct?.conductRule
-                            ? `Rating = ${conduct.conductRule.base} + ${conduct.conductRule.merit} per merit point − ${conduct.conductRule.demerit} per demerit point (0 to 100).`
-                            : 'Rating = a base rating plus merit points minus demerit points, set on the conduct area.'
+                            ? `Rating = ${conduct.conductRule.base} + ${conduct.conductRule.merit} per merit point − ${conduct.conductRule.demerit} per demerit point (0–100).`
+                            : 'Rating = base + merit points × merit value − demerit points × demerit value (0–100).'
                     }
                     detail={`${sources.conductTypes} active ${sources.conductTypes === 1 ? 'type' : 'types'}`}
                     area={conduct === null ? null : `${conduct.name}: passing grade ${conduct.passingGrade}`}
@@ -531,8 +499,8 @@ function Sources({ sources, areas, can }: { sources: GradingSetupProps['sources'
                 />
                 <SourceCard
                     title="Attendance"
-                    rule="Rate = (present + late) ÷ (present + late + absent) × 100. Excused and unrecorded sessions are left out."
-                    detail="Recorded per session in each class"
+                    rule="Rate = (present + late) ÷ (present + late + absent) × 100. Excused and unrecorded sessions don’t count."
+                    detail="Recorded per session"
                     area={attendance === null ? null : `${attendance.name}: passing grade ${attendance.passingGrade}`}
                     link={can.manageAttendance ? { href: routes.attendance.index(), label: 'Attendance' } : null}
                 />
@@ -576,19 +544,19 @@ function SourceCard({
 function PassingGradesExplained() {
     const rows = [
         {
-            name: 'Passing and warning grades',
-            where: 'Step 3, once per academic period',
-            decides: 'Passing, At Risk or Failing in each subject (gradebooks, Academic Monitoring, profiles).',
+            name: 'Passing and Warning Grades',
+            where: 'Step 3, per academic period',
+            decides: 'Subject standing: Passing, At Risk or Failing.',
         },
         {
             name: 'Area passing grade',
-            where: 'Step 4, on each performance area',
-            decides: 'Whether the area is passed. Only must-pass areas decide Qualified or Not Qualified.',
+            where: 'Step 4, per performance area',
+            decides: 'Area passed or not. Must-pass areas decide qualification.',
         },
         {
             name: 'Examination passing score',
-            where: 'On each quiz or examination',
-            decides: 'Only that attempt’s Passed or Failed result.',
+            where: 'Each quiz or examination',
+            decides: 'That attempt’s Passed or Failed only.',
         },
     ];
 
@@ -596,7 +564,7 @@ function PassingGradesExplained() {
         <Panel
             collapsible={false}
             title="Which Passing Grade Does What"
-            description="Three different settings use the word “passing”. Changing one never changes the others."
+            description="Changing one never changes the others."
             bodyClassName="p-0"
         >
             <Table caption="The three passing settings" className="min-w-[36rem]">

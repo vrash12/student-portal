@@ -73,14 +73,14 @@ export function StandingRanges({ passingHundredths, warningHundredths }: { passi
                 <StatusBadge tone="success">Passing</StatusBadge>
             </dt>
             <dd className="text-ink">
-                <span className="tabular-nums">{formatHundredths(warningHundredths)}</span> and above, with no missing scores
+                <span className="tabular-nums">{formatHundredths(warningHundredths)}</span> and above, no missing scores
             </dd>
             <dt>
                 <StatusBadge tone="warning">At Risk</StatusBadge>
             </dt>
             <dd className="text-ink">
                 {passingHundredths === warningHundredths ? (
-                    'None: the warning grade equals the passing grade'
+                    'None: warning grade equals passing grade'
                 ) : (
                     <span className="tabular-nums">
                         {formatHundredths(passingHundredths)} to {formatHundredths(warningHundredths - 1)}
@@ -96,13 +96,10 @@ export function StandingRanges({ passingHundredths, warningHundredths }: { passi
             <dt>
                 <StatusBadge tone="neutral">Incomplete</StatusBadge>
             </dt>
-            <dd className="text-ink">Scores are missing and the scores recorded so far are not below the warning grade</dd>
+            <dd className="text-ink">Missing scores; grade so far not below the warning grade</dd>
         </dl>
     );
 }
-
-/** Grades are compared as shown: rounded to two decimals. */
-export const ROUNDING_NOTE = 'Grades are compared after rounding to two decimals, as they are shown.';
 
 /**
  * The overall standing and what it rests on, e.g. "Most serious subject

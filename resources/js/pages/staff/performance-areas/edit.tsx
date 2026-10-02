@@ -52,14 +52,10 @@ export default function EditPerformanceArea({ area, sources, subjects, activeSin
                         { label: area.name },
                     ]}
                 />
-                <Alert title="Results follow the configuration">
-                    Area results, qualification and ranks are calculated when they are viewed, so a change here applies to every candidate immediately. Every
-                    change is recorded in the audit history.
-                </Alert>
+                <Alert title="Changes apply immediately">Results, qualification and ranks update for every candidate.</Alert>
                 {leavesSubjects && (
-                    <Alert tone="warning" title="The subjects will be released">
-                        Only areas based on subject grades hold subjects. Saving with another source removes the {area.subjectIds.length}{' '}
-                        {area.subjectIds.length === 1 ? 'subject' : 'subjects'} of this area, so they count toward no area until mapped again.
+                    <Alert tone="warning" title="Subjects will be removed from this area">
+                        Its {area.subjectIds.length} {area.subjectIds.length === 1 ? 'subject' : 'subjects'} will count toward no area.
                     </Alert>
                 )}
                 <PerformanceAreaForm

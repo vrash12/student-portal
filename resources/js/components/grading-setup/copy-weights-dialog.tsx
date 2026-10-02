@@ -67,7 +67,7 @@ export function CopyWeightsDialog({ open, sources, targets, periodId, onClose }:
             size="lg"
             busy={form.processing}
             title="Copy Weights"
-            description="Give subjects without weights the same components and weights as a subject that is set up. Subjects that already have weights are changed on their own page."
+            description="Fills only subjects without weights."
             onClose={onClose}
             footer={
                 <>
@@ -81,7 +81,7 @@ export function CopyWeightsDialog({ open, sources, targets, periodId, onClose }:
             }
         >
             <form id="copy-weights-form" onSubmit={submit} noValidate className="flex flex-col gap-5">
-                <FormField label="Copy the weights of" required error={errors.source} hint={source === null ? undefined : componentsText(source.components)}>
+                <FormField label="Copy From" required error={errors.source} hint={source === null ? undefined : componentsText(source.components)}>
                     <SelectInput value={form.data.source} onChange={(event) => form.setData('source', event.target.value)}>
                         {sources.map((option) => (
                             <option key={option.classSubjectId} value={String(option.classSubjectId)}>
@@ -92,8 +92,8 @@ export function CopyWeightsDialog({ open, sources, targets, periodId, onClose }:
                 </FormField>
 
                 <fieldset className="flex flex-col gap-3">
-                    <legend className="mb-2 text-sm font-medium text-ink">To these subjects without weights</legend>
-                    {targets.length === 0 && <p className="text-sm text-ink-muted">Every subject of this period has weights now.</p>}
+                    <legend className="mb-2 text-sm font-medium text-ink">Copy To</legend>
+                    {targets.length === 0 && <p className="text-sm text-ink-muted">All subjects have weights.</p>}
                     {targets.map((row) => (
                         <CheckboxField
                             key={row.classSubjectId}
@@ -109,9 +109,7 @@ export function CopyWeightsDialog({ open, sources, targets, periodId, onClose }:
                     )}
                 </fieldset>
 
-                <p className="text-sm text-ink-muted">
-                    Each subject keeps its own copy: changing one later does not change the others. Every copy is kept in the audit history.
-                </p>
+                <p className="text-sm text-ink-muted">Each copy is separate and kept in the audit log.</p>
             </form>
         </Dialog>
     );

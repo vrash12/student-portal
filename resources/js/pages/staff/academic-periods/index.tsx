@@ -132,8 +132,8 @@ export default function AcademicPeriodsIndex({ periods, can }: AcademicPeriodsIn
                                                 </Button>
                                             )}
                                             {can.configureGrading && (
-                                                <RowAction href={routes.academicPeriods.thresholds(period.id)} label={`Passing Grades for ${period.name}`}>
-                                                    Passing Grades
+                                                <RowAction href={routes.academicPeriods.thresholds(period.id)} label={`Passing and Warning Grades for ${period.name}`}>
+                                                    Passing and Warning Grades
                                                 </RowAction>
                                             )}
                                             <RowAction href={routes.academicPeriods.edit(period.id)} label={`Edit ${period.name}`}>

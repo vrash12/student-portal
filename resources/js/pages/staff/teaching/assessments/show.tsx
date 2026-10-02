@@ -95,18 +95,16 @@ export default function AssessmentShow({ offering, assessment, roster, history, 
                                 description={
                                     <>
                                         <p>
-                                            Scores are recorded for <strong className="text-ink">{scored}</strong> of {gradable.length}{' '}
-                                            {gradable.length === 1 ? 'candidate' : 'candidates'}.
+                                            Scores recorded: <strong className="text-ink">{scored}</strong> of {gradable.length}.
                                         </p>
                                         {withoutScore > 0 && (
                                             <p>
-                                                {withoutScore === 1 ? '1 candidate has' : `${withoutScore} candidates have`} no score and will be shown as
-                                                missing until a score is added through an approved correction.
+                                                {withoutScore} {withoutScore === 1 ? 'candidate' : 'candidates'} without a score will show as Missing.
                                             </p>
                                         )}
                                         <p>
-                                            Finalized scores count toward grades. After this, a score can only be changed through a correction request that an
-                                            administrator approves. This cannot be undone.
+                                            Finalized scores count toward grades and change only through an approved correction request. This
+                                            cannot be undone.
                                         </p>
                                     </>
                                 }
@@ -134,30 +132,30 @@ export default function AssessmentShow({ offering, assessment, roster, history, 
 
                 {isDraft ? (
                     <Alert tone="info" title="Draft">
-                        These scores do not count toward grades until the assessment is finalized.
-                        {can.manage && unsavedCount > 0 && ' Save or discard your changes before finalizing.'}
+                        Scores do not count toward grades until finalized.
+                        {can.manage && unsavedCount > 0 && ' Save or discard changes before finalizing.'}
                         {can.manage && unsavedCount === 0 && scored === 0 && ' Record at least one score before finalizing.'}
                     </Alert>
                 ) : (
                     <Alert tone="success" title="Finalized">
-                        These scores count toward grades
+                        Scores count toward grades
                         {assessment.finalizedBy && (
                             <>
                                 {' '}
                                 since {formatDate.dateTime(assessment.finalizedAt)} ({assessment.finalizedBy})
                             </>
                         )}
-                        . To change a score, request a correction with an incident report; it applies only after an administrator approves it.
+                        . To change a score, use Request Correction; an administrator must approve it.
                     </Alert>
                 )}
 
-                {assessment.sourceExaminationId !== null && <Alert tone="info" title="Posted Examination Results">These scores were posted from examination #{assessment.sourceExaminationId} using the {assessment.examAttemptRule} submitted attempt. Later examination regrading does not change these recorded grades. Request a correction for any adjustment.</Alert>}
+                {assessment.sourceExaminationId !== null && <Alert tone="info" title="Posted Examination Results">From examination #{assessment.sourceExaminationId} ({assessment.examAttemptRule} submitted attempt). Regrading the examination later does not change these scores.</Alert>}
                 <Panel title="Details">
                     <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <Detail label="Status">
                             <StatusBadge tone={assessment.status.tone}>{assessment.status.label}</StatusBadge>
                         </Detail>
-                        <Detail label="Grading Component">
+                        <Detail label="Component">
                             {assessment.category.name} <span className="font-normal text-ink-muted">({assessment.category.weight}%)</span>
                         </Detail>
                         <Detail label="Maximum Score">
@@ -175,7 +173,7 @@ export default function AssessmentShow({ offering, assessment, roster, history, 
 
                 <Panel
                     title="Scores"
-                    description={isDraft ? 'Enter raw scores. Percentages are calculated when the scores are saved.' : 'Finalized scores. Percentages are of the maximum score.'}
+                    description={isDraft ? 'Enter raw scores.' : undefined}
                     bodyClassName="p-0"
                 >
                     {isDraft && can.manage ? (
@@ -192,12 +190,12 @@ export default function AssessmentShow({ offering, assessment, roster, history, 
                 </Panel>
 
                 {!isDraft && corrections.recent.length > 0 && (
-                    <Panel title="Correction Requests" description="The latest requests for this assessment." bodyClassName="p-0">
+                    <Panel title="Correction Requests" bodyClassName="p-0">
                         <CorrectionRequests requests={corrections.recent} />
                     </Panel>
                 )}
 
-                <Panel title="Change History" description="Changes after a score was first recorded, newest first." bodyClassName="p-0">
+                <Panel title="Change History" description="Newest first." bodyClassName="p-0">
                     <ScoreHistory entries={history.entries} total={history.total} />
                 </Panel>
 
@@ -213,16 +211,15 @@ export default function AssessmentShow({ offering, assessment, roster, history, 
                             description={
                                 <>
                                     <p>
-                                        {assessment.title} will be deleted
+                                        Deletes {assessment.title}
                                         {recordedTotal > 0 && (
                                             <>
                                                 {' '}
-                                                together with {recordedTotal === 1 ? 'its 1 recorded entry' : `its ${recordedTotal} recorded entries`}
+                                                and {recordedTotal === 1 ? 'its 1 recorded entry' : `its ${recordedTotal} recorded entries`}
                                             </>
                                         )}
-                                        .
+                                        . This cannot be undone.
                                     </p>
-                                    <p>The deletion, including any scores, is kept in the audit log. Only draft assessments can be deleted.</p>
                                 </>
                             }
                             confirmLabel="Delete Assessment"
@@ -260,7 +257,7 @@ function ScoreTable({ roster, maxScore, finalized, pending, onCorrect }: ScoreTa
     const pagination = useClientPagination(roster);
 
     if (roster.length === 0) {
-        return <p className="px-5 py-6 text-sm text-ink-muted">No candidates are assigned to this class.</p>;
+        return <p className="px-5 py-6 text-sm text-ink-muted">No candidates in this class.</p>;
     }
 
     return (
@@ -322,7 +319,7 @@ function Detail({ label, children }: { label: string; children: ReactNode }) {
 function CorrectionAction({ row, pendingId, onCorrect }: { row: RosterRow; pendingId: number | undefined; onCorrect: (row: RosterRow) => void }) {
     if (pendingId !== undefined) {
         return (
-            <RowAction href={routes.gradeCorrections.show(pendingId)} label={`Correction for ${row.candidate.name} is waiting for approval`}>
+            <RowAction href={routes.gradeCorrections.show(pendingId)} label={`Pending correction for ${row.candidate.name}`}>
                 <span className="inline-flex items-center gap-1.5">
                     <Hourglass className="size-4" aria-hidden="true" />
                     Pending
@@ -336,7 +333,7 @@ function CorrectionAction({ row, pendingId, onCorrect }: { row: RosterRow; pendi
             variant="ghost"
             size="sm"
             icon={<FilePenLine className="size-4" aria-hidden="true" />}
-            aria-label={`Request a correction of the score of ${row.candidate.name}`}
+            aria-label={`Request correction for ${row.candidate.name}`}
             onClick={() => onCorrect(row)}
         >
             Request Correction

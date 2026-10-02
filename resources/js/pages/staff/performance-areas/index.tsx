@@ -28,9 +28,9 @@ interface PerformanceAreasProps {
     unmappedSubjects: Array<{ id: number; code: string; name: string }>;
 }
 
-/** "Base 85 · merit point +1 · demerit point −1.5" */
+/** "Base 85 · +1 per merit point · −1.5 per demerit point" */
 function conductRuleLabel(area: PerformanceAreaRow): string {
-    return `Base ${formatNumber(Number(area.baseRating))} · merit point +${formatNumber(Number(area.meritValue))} · demerit point −${formatNumber(Number(area.demeritValue))}`;
+    return `Base ${formatNumber(Number(area.baseRating))} · +${formatNumber(Number(area.meritValue))} per merit point · −${formatNumber(Number(area.demeritValue))} per demerit point`;
 }
 
 export default function PerformanceAreas({ areas, activeWeightTotal, hasActiveMustPass, unmappedSubjects }: PerformanceAreasProps) {
@@ -48,7 +48,7 @@ export default function PerformanceAreas({ areas, activeWeightTotal, hasActiveMu
 
             <PageHeader
                 title="Performance Areas"
-                description="The areas candidates are assessed in, their weight in the overall score, their passing grades and which must be passed to qualify. These passing grades decide qualification only; Passing, At Risk and Failing in each subject use the period’s passing and warning grades (Grading Setup). The values are placeholders until the institution confirms its official grading rules. Areas are deactivated, never deleted."
+                description="Area passing grades decide qualification only. Subject standing uses Passing and Warning Grades (Grading Setup)."
                 breadcrumbs={[{ label: 'Qualification', href: routes.qualification.index() }, { label: 'Performance Areas' }]}
                 actions={addAction}
             />
@@ -56,13 +56,12 @@ export default function PerformanceAreas({ areas, activeWeightTotal, hasActiveMu
             <div className="flex flex-col gap-6">
                 {unmappedSubjects.length > 0 && (
                     <Alert tone="warning" title={`${unmappedSubjects.length} ${unmappedSubjects.length === 1 ? 'subject counts' : 'subjects count'} toward no area`}>
-                        Their grades are not part of any area or of qualification:{' '}
-                        {unmappedSubjects.map((subject) => `${subject.name} (${subject.code})`).join(', ')}. Add them to an area based on subject grades.
+                        {unmappedSubjects.map((subject) => `${subject.name} (${subject.code})`).join(', ')}. Add them to a Subject Grades area.
                     </Alert>
                 )}
                 {activeCount > 0 && !hasActiveMustPass && (
-                    <Alert tone="warning" title="No active area must be passed">
-                        Qualification only looks at must-pass areas, so every candidate is reported Qualified. Mark the required areas as must pass.
+                    <Alert tone="warning" title="No active must-pass area">
+                        Every candidate is Qualified. Mark the required areas as must-pass.
                     </Alert>
                 )}
 
@@ -71,7 +70,7 @@ export default function PerformanceAreas({ areas, activeWeightTotal, hasActiveMu
                         <EmptyState
                             icon={Award}
                             title="No performance areas yet"
-                            description="Add the areas candidates must be assessed in, such as academic subjects, military fitness, conduct and attendance. Until then, qualification cannot be decided."
+                            description="Add an area to decide qualification."
                             action={addAction}
                         />
                     ) : (
@@ -104,7 +103,7 @@ export default function PerformanceAreas({ areas, activeWeightTotal, hasActiveMu
                                                 {area.source.value === 'subjects' && (
                                                     <span className="block text-xs text-ink-muted">
                                                         {area.subjects.length === 0
-                                                            ? 'No subjects mapped yet'
+                                                            ? 'No subjects yet'
                                                             : area.subjects.map((subject) => `${subject.name}${subject.isActive ? '' : ' (inactive)'}`).join(', ')}
                                                     </span>
                                                 )}
@@ -112,7 +111,7 @@ export default function PerformanceAreas({ areas, activeWeightTotal, hasActiveMu
                                             </Td>
                                             <Td align="right" numeric className="text-ink">
                                                 {formatNumber(Number(area.weight))}
-                                                {area.share !== null && <span className="block text-xs text-ink-muted">{area.share}% of the score</span>}
+                                                {area.share !== null && <span className="block text-xs text-ink-muted">{area.share}% of overall score</span>}
                                             </Td>
                                             <Td align="right" numeric className="text-ink">
                                                 {formatNumber(Number(area.passingGrade))}
@@ -132,9 +131,8 @@ export default function PerformanceAreas({ areas, activeWeightTotal, hasActiveMu
                             </Table>
                             <ClientPagination pagination={pagination} noun={{ one: 'area', other: 'areas' }} label="Performance area pages" />
                             <p className="border-t border-line px-4 py-3 text-sm text-ink-muted">
-                                Total weight of the active areas: <span className="font-semibold text-ink tabular-nums">{formatNumber(activeWeightTotal)}</span>.
-                                Weights are relative: the overall score is the weighted mean of the area grades, divided by the total weight of the areas that
-                                have a grade.
+                                Total active weight: <span className="font-semibold text-ink tabular-nums">{formatNumber(activeWeightTotal)}</span>. Weights are
+                                relative: overall score = weighted average of the graded areas.
                             </p>
                         </>
                     )}

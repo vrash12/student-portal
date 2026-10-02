@@ -95,12 +95,11 @@ export default function Qualification({
             <div className="print:hidden">
                 <PageHeader
                     title="Qualification & Class Rank"
-                    description={`Each candidate's results in the performance areas, overall score, qualification and rank within the ${classTerm.toLowerCase()}. Calculated from current records every time the page is opened.`}
                     actions={
                         <>
                             {can.configure && (
                                 <ButtonLink href={routes.performanceAreas.index()} icon={<SlidersHorizontal className="size-4" aria-hidden="true" />}>
-                                    Performance Areas
+                                    Edit Performance Areas
                                 </ButtonLink>
                             )}
                             {classBatch !== null && (
@@ -118,7 +117,7 @@ export default function Qualification({
                     <EmptyState
                         icon={UsersRound}
                         title={`No ${terms.classBatch.plural.toLowerCase()} yet`}
-                        description={`Qualification is shown for one ${classTerm.toLowerCase()} at a time. Create a ${classTerm.toLowerCase()} and enrol candidates first.`}
+                        description={`Create a ${classTerm.toLowerCase()} and enrol candidates first.`}
                     />
                 </section>
             ) : (
@@ -198,7 +197,7 @@ export default function Qualification({
 
                     {areas.length === 0 && (
                         <Alert tone="warning" title="No active performance areas">
-                            Qualification cannot be decided until the performance areas are configured, so every candidate is shown as Pending.
+                            Every candidate is Pending.
                             {can.configure && (
                                 <span className="mt-2 block print:hidden">
                                     <ButtonLink href={routes.performanceAreas.create()} variant="secondary">
@@ -214,8 +213,8 @@ export default function Qualification({
                             title="Summary"
                             description={
                                 filters.company !== '' || filters.platoon !== ''
-                                    ? 'Of the company and platoon shown, whatever the qualification filter.'
-                                    : `Of the whole ${classTerm.toLowerCase()}, whatever the qualification filter.`
+                                    ? 'Company and platoon shown, all statuses.'
+                                    : `Whole ${classTerm.toLowerCase()}, all statuses.`
                             }
                             className="print:break-inside-avoid"
                         >
@@ -224,14 +223,14 @@ export default function Qualification({
                                     <MetricCard label="Candidates" value={counts.total} />
                                     <MetricCard label="Qualified" value={counts.qualified} />
                                     <MetricCard label="Pending" value={counts.pending} description="A must-pass area is incomplete or has no results yet." />
-                                    <MetricCard label="Not Qualified" value={counts.notQualified} description="A must-pass area is failed." />
+                                    <MetricCard label="Not Qualified" value={counts.notQualified} description="A must-pass area failed." />
                                 </dl>
                                 <div className="grid gap-6 lg:grid-cols-2">
-                                    <ChartFigure title="Qualification status" description="Share of the candidates in each status.">
+                                    <ChartFigure title="Qualification status">
                                         <QualificationDistribution counts={counts} />
                                     </ChartFigure>
                                     {areaCounts.length > 0 && (
-                                        <ChartFigure title="Candidates passing each area" description="Percentage of the candidates whose area status is Passed.">
+                                        <ChartFigure title="Candidates passing each area">
                                             <BarList
                                                 bars={areaCounts.map((area) => ({ label: area.name, value: area.passRate }))}
                                                 renderLabel={(bar, index) => {
@@ -263,13 +262,13 @@ export default function Qualification({
                             <EmptyState
                                 icon={Award}
                                 title={`No candidates in this ${classTerm.toLowerCase()}`}
-                                description={`Candidates assigned to the ${classTerm.toLowerCase()} who are not withdrawn appear here with their results.`}
+                                description="Withdrawn candidates are not listed."
                             />
                         ) : rows.length === 0 ? (
                             <EmptyState
                                 icon={SearchX}
                                 title="No candidates match these filters"
-                                description="Try another company, platoon or status, or reset the filters to see the whole class."
+                                description="Try other filters."
                                 action={
                                     <Button variant="secondary" onClick={resetFilters}>
                                         Reset Filters
@@ -312,9 +311,8 @@ export default function Qualification({
                     </section>
 
                     <p className="text-sm text-ink-muted">
-                        Rank compares overall scores within the whole {classTerm.toLowerCase()}; the company, platoon and status filters do not change it. Ties
-                        share a rank, and candidates without an overall score are unranked. The overall score is the weighted mean of the area grades that
-                        exist; it is marked Partial while a weighted area has no grade. Academic standing and subject grades are not changed by these results.
+                        Class rank covers the whole {classTerm.toLowerCase()}; filters don't change it. Partial: a weighted area has no grade yet. Subject standing is
+                        not affected.
                     </p>
                 </div>
             )}

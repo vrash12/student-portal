@@ -38,8 +38,7 @@ export interface ScoreEdit {
 
 export type ScoreEdits = Record<number, ScoreEdit>;
 
-const CONNECTION_ERROR =
-    'Scores were not saved because the connection was interrupted. Your entries are still on this page. Check the connection and save again.';
+const CONNECTION_ERROR = 'The connection was interrupted. Your entries are still here; save again.';
 
 /**
  * Canonical form of a typed score, used only to tell whether a row changed
@@ -225,7 +224,7 @@ export function ScoreSheet({ assessmentId, maxScore, roster, edits, onEditsChang
         <>
             {/* The search sits outside the form so Enter or the keyboard's Search key never saves. */}
             <div className="border-b border-line p-4">
-                <SearchField label="Find Candidate" placeholder="Search candidates by number or name…" value={filter} onChange={changeFilter} />
+                <SearchField label="Find Candidate" placeholder="Search by number or name…" value={filter} onChange={changeFilter} />
             </div>
 
             <form onSubmit={save} noValidate>
@@ -243,19 +242,17 @@ export function ScoreSheet({ assessmentId, maxScore, roster, edits, onEditsChang
                         )}
                         {rowErrorCount > 0 && (
                             <Alert tone="danger" title="Scores were not saved">
-                                {rowErrorCount === 1 ? '1 row needs' : `${rowErrorCount} rows need`} attention. Your entries are still on this page;
-                                correct the highlighted rows and save again.
+                                {rowErrorCount === 1 ? 'Fix the highlighted row' : `Fix the ${rowErrorCount} highlighted rows`} and save again.
                             </Alert>
                         )}
                         {stale.length > 0 && (
                             <Alert tone="warning" title="Another user changed some scores">
-                                {stale.length === 1 ? '1 row was' : `${stale.length} rows were`} changed by someone else after you started editing.
-                                For each highlighted row, keep your entry or use the saved value, then save.
+                                On each highlighted row, keep your entry or use the saved value, then save.
                             </Alert>
                         )}
                         {discarded.length > 0 && (
                             <Alert tone="warning" title="Some entries could not be kept">
-                                These candidates are no longer graded in this class, so their unsaved entries were removed: {discarded.join(', ')}.
+                                Removed unsaved entries of candidates no longer graded in this class: {discarded.join(', ')}.
                             </Alert>
                         )}
                     </div>
@@ -268,7 +265,7 @@ export function ScoreSheet({ assessmentId, maxScore, roster, edits, onEditsChang
                         title={roster.length === 0 ? 'No candidates to grade' : 'No candidates match this search'}
                         description={
                             roster.length === 0
-                                ? 'Candidates appear here once an administrator assigns them to this class.'
+                                ? 'Shown once an administrator assigns them to this class.'
                                 : 'Try a different number or name.'
                         }
                     />
@@ -306,11 +303,11 @@ export function ScoreSheet({ assessmentId, maxScore, roster, edits, onEditsChang
                 <div className="sticky bottom-0 z-10 flex flex-col gap-3 rounded-b-lg border-t border-line bg-surface px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm text-ink-muted" role="status">
                         {pending.length === 0 ? (
-                            'All changes are saved.'
+                            'All changes saved.'
                         ) : (
                             <span className="font-medium text-ink">
                                 {pending.length === 1 ? '1 unsaved change' : `${pending.length} unsaved changes`}
-                                {stale.length > 0 && ' · resolve the highlighted rows first'}
+                                {stale.length > 0 && ' · resolve highlighted rows first'}
                             </span>
                         )}
                     </p>
@@ -461,7 +458,7 @@ function useUnsavedChangesWarning(active: boolean) {
         window.addEventListener('beforeunload', onBeforeUnload);
 
         const removeGuard = router.on('before', (event) => {
-            if (event.detail.visit.method === 'get' && !window.confirm('You have unsaved scores. Leave this page and discard them?')) {
+            if (event.detail.visit.method === 'get' && !window.confirm('Leave and discard your unsaved scores?')) {
                 event.preventDefault();
             }
         });

@@ -112,7 +112,7 @@ function CorrectionForm({ assessmentId, maxScore, incidentTypes, row, onProcessi
             onFinish: () => onProcessingChange(false),
             onSuccess: () => onClose(),
             onNetworkError: () => {
-                setConnectionError('The request was not sent because the connection was interrupted. Check the connection and try again.');
+                setConnectionError('Not sent: the connection was interrupted. Try again.');
 
                 return false;
             },
@@ -121,7 +121,7 @@ function CorrectionForm({ assessmentId, maxScore, incidentTypes, row, onProcessi
 
     return (
         <form onSubmit={submit} noValidate className="flex flex-col gap-5">
-            <Alert tone="info">The score does not change yet. An administrator reviews your incident report and approves or rejects the correction.</Alert>
+            <Alert tone="info">The score changes only if an administrator approves this request.</Alert>
 
             <dl className="grid grid-cols-2 gap-4 rounded-lg border border-line-box bg-surface-muted px-4 py-3 text-sm">
                 <div>
@@ -137,8 +137,7 @@ function CorrectionForm({ assessmentId, maxScore, incidentTypes, row, onProcessi
             {changedMeanwhile && (
                 <Alert tone="warning" title="Another user changed this score">
                     <p>
-                        It was {base.score ?? 'no score'} when you opened this form and is now {row.score ?? 'no score'}. Review your request against
-                        the current value before sending it.
+                        It was {base.score ?? 'no score'} and is now {row.score ?? 'no score'}. Check your request against the new value.
                     </p>
                     <Button variant="secondary" size="sm" className="mt-2" onClick={() => setBase({ score: row.score, comment: row.comment })}>
                         Continue With Current Value
@@ -158,7 +157,7 @@ function CorrectionForm({ assessmentId, maxScore, incidentTypes, row, onProcessi
                         className="tabular-nums"
                     />
                 </FormField>
-                <FormField label="Comment" error={form.errors.comment} hint="Optional. Visible to instructors of this subject.">
+                <FormField label="Comment" error={form.errors.comment} hint="Optional. Seen by this subject’s instructors.">
                     <TextInput value={form.data.comment} onChange={(event) => form.setData('comment', event.target.value)} maxLength={500} autoComplete="off" />
                 </FormField>
             </div>
@@ -179,7 +178,7 @@ function CorrectionForm({ assessmentId, maxScore, incidentTypes, row, onProcessi
                     label="Details"
                     required
                     error={form.errors.incident_details}
-                    hint={`How the mistake happened, how it was found, and why this is the correct score. At least ${DETAILS_MIN} characters (${detailsLength} so far). Kept permanently.`}
+                    hint={`What happened and why the score must change. At least ${DETAILS_MIN} characters (${detailsLength} so far).`}
                 >
                     <TextArea
                         value={form.data.incident_details}

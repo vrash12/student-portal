@@ -139,7 +139,7 @@ export default function Dashboard({
 
                 {missingWeights !== null && (
                     <Alert tone="warning" title={`${missingWeights.count} ${missingWeights.count === 1 ? 'subject has' : 'subjects have'} no weights yet in ${missingWeights.periodName}`}>
-                        <p>Instructors cannot create assessments in a subject until its components and weights are set.</p>
+                        <p>Instructors can create assessments only in a subject with weights.</p>
                         <p className="mt-2">
                             <Link
                                 href={routes.gradingSetup.index({ period: String(missingWeights.periodId) })}
@@ -155,8 +155,8 @@ export default function Dashboard({
                     <AcademicOverview summary={academicOverview} thresholdSetup={thresholdSetup} />
                 ) : (
                     thresholdSetup !== null && (
-                        <Alert title={`Passing and warning grades are not set for ${thresholdSetup.periodName}`}>
-                            <p>Academic standing is not shown until they are set.</p>
+                        <Alert title="No standing yet">
+                            <p>Passing and Warning Grades are not set for {thresholdSetup.periodName}.</p>
                             <div className="mt-2">
                                 <ThresholdSetupLink setup={thresholdSetup} />
                             </div>
@@ -212,7 +212,7 @@ function QualificationOverview({ overview, canConfigure }: { overview: Qualifica
                     icon={CalendarClock}
                     headingLevel="h3"
                     title="No active academic period"
-                    description="Qualification of the active period appears here. Set an academic period as active to see it."
+                    description="Set an academic period as active to see qualification."
                 />
             </Panel>
         );
@@ -224,8 +224,8 @@ function QualificationOverview({ overview, canConfigure }: { overview: Qualifica
                 <EmptyState
                     icon={Award}
                     headingLevel="h3"
-                    title="No performance areas are configured"
-                    description="Qualification cannot be decided until the areas, their weights and passing grades are set."
+                    title="No active performance areas"
+                    description="Every candidate is Pending."
                     action={
                         canConfigure && (
                             <ButtonLink href={routes.performanceAreas.index()} variant="secondary">
@@ -256,16 +256,16 @@ function QualificationOverview({ overview, canConfigure }: { overview: Qualifica
                 <div className="flex flex-col gap-5">
                     <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <MetricCard label="Candidates" value={counts.total} />
-                        <MetricCard label="Qualified" value={counts.qualified} description="Passed every required area." />
-                        <MetricCard label="Not Qualified" value={counts.notQualified} description="Failed at least one required area." />
-                        <MetricCard label="Pending" value={counts.pending} description="Waiting for results in a required area." />
+                        <MetricCard label="Qualified" value={counts.qualified} description="All must-pass areas passed." />
+                        <MetricCard label="Not Qualified" value={counts.notQualified} description="A must-pass area failed." />
+                        <MetricCard label="Pending" value={counts.pending} description="A must-pass area is incomplete or has no results yet." />
                     </dl>
-                    <ChartFigure title="Qualification Status" description="Share of candidates in each qualification status.">
+                    <ChartFigure title="Qualification status">
                         <QualificationDistribution counts={counts} />
                     </ChartFigure>
                     <p className="text-sm text-ink">
                         {mostCommonUnmet === null ? (
-                            'No required area is failed by any candidate.'
+                            'No candidate failed a must-pass area.'
                         ) : (
                             <>
                                 Most common unmet requirement: <span className="font-semibold">{mostCommonUnmet.name}</span>, failed by{' '}
@@ -311,11 +311,11 @@ function AdministratorOverview({ overview }: { overview: AdministratorOverviewDa
             <div className="grid gap-6 lg:grid-cols-2">
                 <Panel
                     title="Subject Performance"
-                    description={`Mean current weighted grade of each subject per ${singular.toLowerCase()}, from the grade engine; includes provisional grades.`}
+                    description={`Mean current grade per subject and ${singular.toLowerCase()}, including grades in progress.`}
                     headingLevel="h3"
                 >
                     {overview.subjectPerformance.length === 0 ? (
-                        <p className="text-sm text-ink-muted">No finalized scores are available yet.</p>
+                        <p className="text-sm text-ink-muted">No finalized scores yet.</p>
                     ) : (
                         <ChartFigure title="Mean grade by subject">
                             <BarList
@@ -342,13 +342,13 @@ function AdministratorOverview({ overview }: { overview: AdministratorOverviewDa
                 </Panel>
                 <Panel
                     title="Grade Distribution"
-                    description="Current subject grades of every candidate by range. Ranges are descriptive; standing follows the passing and warning grades."
+                    description="Current subject grades by range. Standing follows the Passing and Warning Grades."
                     headingLevel="h3"
                 >
                     {overview.gradeDistribution.length === 0 ? (
-                        <p className="text-sm text-ink-muted">No subject grades are recorded for this period yet.</p>
+                        <p className="text-sm text-ink-muted">No subject grades yet.</p>
                     ) : (
-                        <ChartFigure title="Candidate-subject grades by range">
+                        <ChartFigure title="Subject grades by range">
                             <ColumnChart columns={overview.gradeDistribution} noun={{ one: 'grade', other: 'grades' }} />
                         </ChartFigure>
                     )}
@@ -375,7 +375,7 @@ function AdministratorOverview({ overview }: { overview: AdministratorOverviewDa
                 </Panel>
                 <Panel title="Recent Academic Activity" headingLevel="h3" bodyClassName={overview.recentActivity.length === 0 ? undefined : 'p-0'}>
                     {overview.recentActivity.length === 0 ? (
-                        <p className="text-sm text-ink-muted">No finalized assessments have been recorded for this period.</p>
+                        <p className="text-sm text-ink-muted">No finalized assessments yet.</p>
                     ) : (
                         <ul className="divide-y divide-line">
                             {overview.recentActivity.map((activity) => (
@@ -437,7 +437,7 @@ function AcademicOverview({
                     icon={CalendarClock}
                     headingLevel="h3"
                     title="No active academic period"
-                    description="Standings of the active period appear here. Set an academic period as active to see them."
+                    description="Set an academic period as active to see standings."
                 />
             </Panel>
         );
@@ -449,8 +449,8 @@ function AcademicOverview({
                 <EmptyState
                     icon={ChartColumn}
                     headingLevel="h3"
-                    title="Academic standing is not available yet"
-                    description={`Passing and warning grades have not been set for ${summary.period.name}. Standings, and the candidates requiring attention, appear here once they are set.`}
+                    title="No standing yet"
+                    description={`Passing and Warning Grades are not set for ${summary.period.name}.`}
                     action={thresholdSetup !== null && <ThresholdSetupLink setup={thresholdSetup} />}
                 />
             </Panel>
@@ -473,7 +473,7 @@ function AcademicOverview({
                 <p className="text-sm text-ink">
                     {counts.monitored === 0
                         ? `No candidates are assigned to the classes of ${summary.period.name} yet.`
-                        : `No standings yet for the ${counts.monitored} monitored ${counts.monitored === 1 ? 'candidate' : 'candidates'}: standings appear once assessments are finalized.`}
+                        : `No standings yet for the ${counts.monitored} monitored ${counts.monitored === 1 ? 'candidate' : 'candidates'}: only finalized assessments count.`}
                 </p>
             ) : (
                 <div className="flex flex-col gap-5">
@@ -527,8 +527,8 @@ function AcademicAlerts({ summary, period }: { summary: MonitoringSummary | null
                 <EmptyState
                     icon={BellRing}
                     headingLevel="h4"
-                    title="Academic standing is not available yet"
-                    description={`Passing and warning grades have not been set for ${period.name}. An academic administrator sets them for each period.`}
+                    title="No standing yet"
+                    description={`Ask an administrator to set Passing and Warning Grades for ${period.name}.`}
                 />
             ) : (
                 <AlertsBody summary={summary} />
@@ -548,7 +548,7 @@ function AlertsBody({ summary }: { summary: MonitoringSummary }) {
             <p className="px-5 py-4 text-sm text-ink">
                 {counts.monitored === 0
                     ? 'No candidates are assigned to the classes you teach yet.'
-                    : 'No standings yet in your subjects: standings appear once assessments are finalized.'}
+                    : 'No standings yet in your subjects: only finalized assessments count.'}
             </p>
         );
     }
@@ -704,7 +704,7 @@ function SubjectStandings({ subjects }: { subjects: SubjectStandingSummary[] }) 
     return (
         <Panel
             title="Standing by Subject"
-            description="Candidates of each subject you teach by their standing in that subject, with the mean current grade. Subjects with the most failing candidates come first."
+            description="Standing and mean current grade per subject. Most failing first."
             headingLevel="h3"
         >
             <StandingBreakdown
@@ -739,7 +739,7 @@ function UpcomingAssessments({ assessments }: { assessments: UpcomingAssessment[
                     icon={CalendarClock}
                     headingLevel="h4"
                     title="No upcoming assessments"
-                    description="Assessments with a date from today onward appear here. Set a date when you create an assessment."
+                    description="Assessments need a date to appear here."
                 />
             ) : (
                 <ul className="divide-y divide-line">
