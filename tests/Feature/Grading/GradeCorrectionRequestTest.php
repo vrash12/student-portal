@@ -286,4 +286,24 @@ class GradeCorrectionRequestTest extends TestCase
 
         return User::factory()->create(['role_id' => $role->id, 'name' => 'Teaching Approver']);
     }
+
+    public function test_the_incident_report_is_saved_as_a_pdf_by_those_who_may_see_the_request(): void
+    {
+        $this->file();
+        $request = GradeCorrectionRequest::query()->sole();
+
+        foreach ([$this->academicAdmin, $this->alpha] as $user) {
+            $pdf = $this->actingAs($user)->get(route('grade-corrections.pdf', $request))->assertOk()
+                ->assertHeader('Content-Type', 'application/pdf')->assertHeader('Cache-Control', 'no-store, private');
+            $this->assertStringStartsWith('%PDF-', (string) $pdf->getContent());
+            $this->assertStringContainsString('incident-report-'.$request->id.'.pdf', (string) $pdf->headers->get('Content-Disposition'));
+        }
+
+        // After the decision the report also carries the decision.
+        $this->actingAs($this->academicAdmin)->post(route('grade-corrections.reject', $request), ['note' => 'Score was correct.'])->assertSessionHasNoErrors();
+        $this->actingAs($this->academicAdmin)->get(route('grade-corrections.pdf', $request))->assertOk();
+
+        $this->actingAs($this->bravo)->get(route('grade-corrections.pdf', $request))->assertForbidden();
+        $this->actingAs($this->candidateInA->user)->get(route('grade-corrections.pdf', $request))->assertForbidden();
+    }
 }

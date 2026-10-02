@@ -1,8 +1,8 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { Check, Printer, X } from 'lucide-react';
+import { Check, Download, X } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Alert } from '@/components/ui/alert';
-import { Button, ButtonLink } from '@/components/ui/button';
+import { Button, ButtonLink, buttonClasses } from '@/components/ui/button';
 import { ConfirmAction } from '@/components/ui/confirm-action';
 import { Dialog } from '@/components/ui/dialog';
 import { FormField, TextArea } from '@/components/ui/form-field';
@@ -54,9 +54,10 @@ export default function GradeCorrectionShow({ correction, can }: GradeCorrection
                 breadcrumbs={[{ label: 'Grade Corrections', href: routes.gradeCorrections.index() }, { label: `Request #${correction.id}` }]}
                 actions={
                     <>
-                        <Button variant="secondary" icon={<Printer className="size-4" aria-hidden="true" />} onClick={() => window.print()}>
-                            Print Incident Report
-                        </Button>
+                        <a href={routes.gradeCorrections.pdf(correction.id)} className={buttonClasses('secondary')}>
+                            <Download className="size-4" aria-hidden="true" />
+                            Save Incident Report as PDF
+                        </a>
                         {can.openAssessment && <ButtonLink href={routes.assessments.show(correction.assessment.id)}>Open Assessment</ButtonLink>}
                     </>
                 }

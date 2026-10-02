@@ -13,9 +13,11 @@ use App\Models\User;
 use App\Services\Grading\GradeCorrectionService;
 use App\Support\DecimalValue;
 use App\Support\GradeCorrectionPresenter;
+use App\Support\PdfReport;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -93,6 +95,53 @@ class GradeCorrectionController extends Controller
                 'ownRequest' => (int) $gradeCorrectionRequest->requested_by === (int) $user->getKey(),
             ],
         ]);
+    }
+
+    /** The incident report of a correction request as a PDF file (Save as PDF). */
+    public function pdf(Request $request, GradeCorrectionRequest $gradeCorrectionRequest): HttpResponse
+    {
+        $gradeCorrectionRequest->load(self::RELATIONS);
+        $correction = GradeCorrectionPresenter::details($gradeCorrectionRequest);
+        $max = $correction['assessment']['maxScore'];
+        $score = fn (?string $value): string => $value === null ? 'No score' : "{$value} / {$max}";
+        $status = $correction['status']['value'];
+
+        $sections = [
+            ['type' => 'fields', 'heading' => 'Requested Change', 'fields' => [
+                ['Candidate', $correction['candidate']['name']."\n".$correction['candidate']['number']],
+                ['Assessment', $correction['assessment']['title']."\n".$correction['assessment']['subject'].' · '.$correction['assessment']['className']],
+                ['Requested By', $correction['requestedBy']."\n".PdfReport::dateTime($correction['requestedAt'])],
+                ['Maximum Score', $max],
+                ['Score When Filed', $score($correction['currentScore'])],
+                ['Requested Score', $score($correction['proposedScore'])],
+                ['Comment When Filed', PdfReport::value($correction['currentComment'])],
+                ['Requested Comment', PdfReport::value($correction['proposedComment'])],
+            ]],
+            ['type' => 'fields', 'heading' => 'Incident Report', 'perRow' => 1, 'fields' => [
+                ['What Happened', $correction['incidentType']['label']],
+                ['Details', $correction['incidentDetails']],
+            ]],
+        ];
+        if ($status !== GradeCorrectionStatus::Pending->value) {
+            $decision = [
+                [$status === GradeCorrectionStatus::Cancelled->value ? 'Cancelled By' : 'Decided By', PdfReport::value($correction['decidedBy'])."\n".PdfReport::dateTime($correction['decidedAt'])],
+                ['Result', $correction['status']['label']],
+            ];
+            if ($correction['decisionNote'] !== null) {
+                $decision[] = [$status === GradeCorrectionStatus::Rejected->value ? 'Reason for Rejection' : 'Note', $correction['decisionNote']];
+            }
+            $sections[] = ['type' => 'fields', 'heading' => 'Decision', 'fields' => $decision];
+        }
+
+        return PdfReport::download(
+            $request->user(),
+            'Grade Correction Incident Report',
+            "Correction Request #{$correction['id']}",
+            [['Status', $correction['status']['label']]],
+            $sections,
+            "incident-report-{$correction['id']}",
+            reference: 'GCR-'.$correction['id'],
+        );
     }
 
     public function store(StoreGradeCorrectionRequest $request, Assessment $assessment): RedirectResponse

@@ -72,6 +72,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::middleware(['can:'.Permission::AccessStaffArea->value, 'password.current'])->group(function (): void {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
         Route::get('reports', ReportController::class)->name('reports.index')->can(Permission::ViewReports->value);
+        Route::get('reports/pdf', [ReportController::class, 'pdf'])->name('reports.pdf')->can(Permission::ViewReports->value)->middleware('throttle:pdf-downloads');
         Route::get('audit-history', AuditHistoryController::class)->name('audit-history.index')->can(Permission::ViewAuditHistory->value);
         // Encrypted backups of the whole system (BackupController; Admin only).
         Route::middleware('can:'.Permission::ManageBackups->value)->group(function () {
@@ -164,6 +165,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         // Grade correction requests: instructors file them, administrators approve or reject them (GradeCorrectionRequestPolicy).
         Route::get('grade-corrections', [GradeCorrectionController::class, 'index'])->name('grade-corrections.index')->can('viewAny', GradeCorrectionRequest::class);
         Route::get('grade-corrections/{gradeCorrectionRequest}', [GradeCorrectionController::class, 'show'])->name('grade-corrections.show')->whereNumber('gradeCorrectionRequest')->can('view', 'gradeCorrectionRequest');
+        Route::get('grade-corrections/{gradeCorrectionRequest}/pdf', [GradeCorrectionController::class, 'pdf'])->name('grade-corrections.pdf')->whereNumber('gradeCorrectionRequest')->can('view', 'gradeCorrectionRequest')->middleware('throttle:pdf-downloads');
         Route::post('grade-corrections/{gradeCorrectionRequest}/approve', [GradeCorrectionController::class, 'approve'])->name('grade-corrections.approve')->whereNumber('gradeCorrectionRequest')->can('decide', 'gradeCorrectionRequest');
         Route::post('grade-corrections/{gradeCorrectionRequest}/reject', [GradeCorrectionController::class, 'reject'])->name('grade-corrections.reject')->whereNumber('gradeCorrectionRequest')->can('decide', 'gradeCorrectionRequest');
         Route::post('grade-corrections/{gradeCorrectionRequest}/cancel', [GradeCorrectionController::class, 'cancel'])->name('grade-corrections.cancel')->whereNumber('gradeCorrectionRequest')->can('cancel', 'gradeCorrectionRequest');
@@ -202,6 +204,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         });
 
         Route::get('qualification', [QualificationController::class, 'index'])->name('qualification.index')->can(Permission::ViewPerformance->value);
+        Route::get('qualification/pdf', [QualificationController::class, 'pdf'])->name('qualification.pdf')->can(Permission::ViewPerformance->value)->middleware('throttle:pdf-downloads');
         Route::middleware('can:'.Permission::ConfigurePerformance->value)->group(function (): void {
             Route::get('performance-areas', [PerformanceAreaController::class, 'index'])->name('performance-areas.index');
             Route::get('performance-areas/create', [PerformanceAreaController::class, 'create'])->name('performance-areas.create');
@@ -325,6 +328,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('candidates/{candidate}/edit', [CandidateController::class, 'edit'])->name('candidates.edit')->can('update', 'candidate');
         Route::get('candidates/{candidate}/photo', [CandidatePhotoController::class, 'show'])->name('candidates.photo')->can('view', 'candidate');
         Route::get('candidates/{candidate}/qr', [CandidateQrController::class, 'show'])->name('candidates.qr')->can('view', 'candidate');
+        Route::get('candidates/{candidate}/qr/pdf', [CandidateQrController::class, 'pdf'])->name('candidates.qr.pdf')->can('view', 'candidate')->middleware('throttle:pdf-downloads');
         Route::post('candidates/{candidate}/qr', [CandidateQrController::class, 'reissue'])->name('candidates.qr.reissue')->can('update', 'candidate');
         Route::get('candidates/{candidate}/documents/{type}', [CandidatePdfController::class, 'show'])
             ->whereIn('type', ['registration', 'academic'])->name('candidates.documents')
@@ -344,6 +348,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::get('profile', CandidateProfileController::class)->name('profile');
             Route::get('profile/photo', [CandidatePhotoController::class, 'own'])->name('profile.photo');
             Route::get('profile/qr', [CandidateQrController::class, 'own'])->name('profile.qr');
+            Route::get('profile/qr/pdf', [CandidateQrController::class, 'ownPdf'])->name('profile.qr.pdf')->middleware('throttle:pdf-downloads');
             // The candidate's own medical documents (uploads, review, withdraw) and shared record fields.
             Route::get('medical', [PortalMedicalController::class, 'show'])->name('medical');
             Route::post('medical/documents', [PortalMedicalController::class, 'store'])->name('medical.documents.store')->middleware('throttle:medical-uploads');

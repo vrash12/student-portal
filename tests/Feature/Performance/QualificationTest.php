@@ -471,4 +471,16 @@ class QualificationTest extends TestCase
             $this->actingAs($user)->get("/qualification?class={$this->classA->id}")->assertForbidden();
         }
     }
+
+    public function test_the_class_is_saved_as_a_pdf_with_the_same_filters(): void
+    {
+        $pdf = $this->actingAs($this->admin)->get("/qualification/pdf?class={$this->classA->id}&status=qualified")->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf')->assertHeader('Cache-Control', 'no-store, private');
+        $this->assertStringStartsWith('%PDF-', (string) $pdf->getContent());
+        $this->assertStringStartsWith('attachment; filename="qualification-', (string) $pdf->headers->get('Content-Disposition'));
+
+        foreach ([$this->userWithRole(SystemRole::Instructor), $this->alpha->user] as $user) {
+            $this->actingAs($user)->get('/qualification/pdf')->assertForbidden();
+        }
+    }
 }

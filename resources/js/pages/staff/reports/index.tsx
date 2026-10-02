@@ -1,8 +1,8 @@
 import { Head, usePage } from '@inertiajs/react';
-import { FileChartColumn, Printer, SearchX } from 'lucide-react';
+import { Download, FileChartColumn, SearchX } from 'lucide-react';
 import { ReportCharts } from '@/components/reports/report-charts';
 import { ReportTable } from '@/components/reports/report-table';
-import { Button, ButtonLink } from '@/components/ui/button';
+import { Button, buttonClasses } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FilterBar, SearchField } from '@/components/ui/filter-bar';
 import { FormField, SelectInput, TextInput } from '@/components/ui/form-field';
@@ -52,7 +52,6 @@ interface Props {
     types: Record<string, string>;
     scope: string;
     generatedAt: string;
-    printMode: boolean;
 }
 
 const REPORTS_URL = '/reports';
@@ -96,7 +95,6 @@ export default function Reports({
     types,
     scope,
     generatedAt,
-    printMode,
 }: Props) {
     const { app } = usePage().props;
     const errors = usePage().props.errors as Record<string, string | undefined>;
@@ -138,30 +136,15 @@ export default function Reports({
                     title="Reports"
                     description="Academic standing and assessment results within your authorized subjects."
                     actions={
-                        printMode ? (
-                            <>
-                                <ButtonLink href={`${REPORTS_URL}?${queryString(filters)}`} variant="secondary">
-                                    Back to Report
-                                </ButtonLink>
-                                <Button onClick={() => window.print()} icon={<Printer className="size-4" aria-hidden="true" />}>
-                                    Print / Save PDF
-                                </Button>
-                            </>
-                        ) : (
-                            <ButtonLink
-                                href={`${REPORTS_URL}?${queryString(filters, { print: '1' })}`}
-                                variant="secondary"
-                                icon={<Printer className="size-4" aria-hidden="true" />}
-                            >
-                                Printable Report
-                            </ButtonLink>
-                        )
+                        <a href={`${REPORTS_URL}/pdf?${queryString(filters)}`} className={buttonClasses('secondary')}>
+                            <Download className="size-4" aria-hidden="true" />
+                            Save as PDF
+                        </a>
                     }
                 />
             </div>
 
             <section className="rounded-lg border border-line-box bg-surface print:border-0" aria-labelledby="report-title">
-                {!printMode && (
                     <FilterBar onReset={resetFilters} canReset={canReset}>
                         <FormField label="Report" className="sm:w-60">
                             <SelectInput value={values.type} onChange={(event) => update('type', event.target.value)}>
@@ -235,7 +218,6 @@ export default function Reports({
                             </p>
                         )}
                     </FilterBar>
-                )}
 
                 <div className="border-b border-line p-5 print:px-0">
                     <h2 id="report-title" className="text-lg font-semibold text-primary-900">
@@ -255,17 +237,12 @@ export default function Reports({
                             : 'Current weighted grades from finalized assessments. Provisional grades are included; configured period thresholds determine standing. This is a current snapshot, not a historical as-of report.'}{' '}
                         {scope === 'taught' && 'Standing covers only the subjects you teach.'}
                     </p>
-                    {printMode && rows.total > rows.data.length && (
-                        <p role="alert" className="mt-2 font-medium text-danger-fg">
-                            This printout is limited to {rows.data.length} rows. Narrow the filters for a complete report.
-                        </p>
-                    )}
                 </div>
 
                 {rows.total > 0 && <ReportCharts charts={charts} />}
 
                 {rows.total === 0 ? (
-                    canReset && !printMode ? (
+                    canReset ? (
                         <EmptyState
                             icon={SearchX}
                             title="No records match these filters"
@@ -291,7 +268,7 @@ export default function Reports({
                     <ReportTable caption={types[filters.type] ?? 'Report'} columns={displayColumns} numericColumns={numericColumns} rows={rows.data} />
                 )}
 
-                {!printMode && <Pagination page={rows} noun={{ one: 'record', other: 'records' }} />}
+                <Pagination page={rows} noun={{ one: 'record', other: 'records' }} />
             </section>
         </>
     );

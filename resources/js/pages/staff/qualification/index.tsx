@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Award, Printer, SearchX, SlidersHorizontal, UsersRound } from 'lucide-react';
+import { Award, Download, SearchX, SlidersHorizontal, UsersRound } from 'lucide-react';
 import type { ClassOptionGroup } from '@/components/candidates/candidate-form';
 import { CandidateUnit } from '@/components/candidates/candidate-unit';
 import { BarList } from '@/components/charts/bar-list';
@@ -7,7 +7,7 @@ import { ChartFigure } from '@/components/charts/chart-figure';
 import { AreaStatusBadge, QualificationBadge, areaRuleLabel, formatAreaGrade } from '@/components/performance/area-status';
 import { QualificationDistribution } from '@/components/performance/qualification-distribution';
 import { Alert } from '@/components/ui/alert';
-import { Button, ButtonLink } from '@/components/ui/button';
+import { Button, ButtonLink, buttonClasses } from '@/components/ui/button';
 import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FilterBar } from '@/components/ui/filter-bar';
@@ -103,9 +103,10 @@ export default function Qualification({
                                 </ButtonLink>
                             )}
                             {classBatch !== null && (
-                                <Button variant="secondary" onClick={() => window.print()} icon={<Printer className="size-4" aria-hidden="true" />}>
-                                    Print
-                                </Button>
+                                <a href={routes.qualification.pdf(filters)} className={buttonClasses('secondary')}>
+                                    <Download className="size-4" aria-hidden="true" />
+                                    Save as PDF
+                                </a>
                             )}
                         </>
                     }

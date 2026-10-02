@@ -7,6 +7,7 @@ use App\Enums\Permission;
 use App\Models\Candidate;
 use App\Services\AuditLogger;
 use App\Support\CandidateQrCode;
+use App\Support\PdfDocument;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -54,6 +55,18 @@ class CandidateQrController extends Controller
         return $this->image($request->user()->candidate()->firstOrFail());
     }
 
+    /** The candidate's QR card as a PDF file (Save as PDF), for staff who may see the candidate. */
+    public function pdf(Candidate $candidate): Response
+    {
+        return $this->card($candidate);
+    }
+
+    /** The signed-in candidate's own QR card as a PDF file. */
+    public function ownPdf(Request $request): Response
+    {
+        return $this->card($request->user()->candidate()->firstOrFail());
+    }
+
     /** A new code for a lost or shared card; the old code stops working at once. */
     public function reissue(Request $request, Candidate $candidate, AuditLogger $audit): RedirectResponse
     {
@@ -65,6 +78,23 @@ class CandidateQrController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'New QR code issued. The old code no longer works.']);
 
         return back();
+    }
+
+    private function card(Candidate $candidate): Response
+    {
+        $candidate->loadMissing('classBatch');
+        $html = view('pdf.qr-card', [
+            'qr' => 'data:image/svg+xml;base64,'.base64_encode(CandidateQrCode::svg($candidate, 600)),
+            'name' => $candidate->full_name,
+            'candidateNumber' => $candidate->candidate_number,
+            'className' => $candidate->classBatch?->name,
+            'organization' => config('institution.organization_name'),
+            'systemName' => config('institution.system_name'),
+            'generatedAt' => now()->timezone(config('institution.timezone'))->format('d M Y, h:i A T'),
+            'logo' => PdfDocument::logo(),
+        ])->render();
+
+        return PdfDocument::download($html, 'portrait', 'qr-code-'.$candidate->candidate_number);
     }
 
     private function image(Candidate $candidate): Response

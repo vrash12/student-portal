@@ -24,6 +24,7 @@ Route::middleware('can:examinations.manage')->group(function () {
     Route::post('examinations/{examination}/archive', [ExaminationController::class, 'archive'])->name('examinations.archive')->can('view', 'examination');
     Route::get('examinations/{examination}/grading', [ExaminationGradingController::class, 'index'])->name('examinations.grading')->can('view', 'examination');
     Route::get('examinations/{examination}/analysis', [ExaminationItemAnalysisController::class, 'show'])->name('examinations.analysis')->can('view', 'examination');
+    Route::get('examinations/{examination}/analysis/pdf', [ExaminationItemAnalysisController::class, 'pdf'])->name('examinations.analysis.pdf')->can('view', 'examination')->middleware('throttle:pdf-downloads');
     Route::get('examination-attempts/{attempt}/grading', [ExaminationGradingController::class, 'show'])->name('examination-attempts.grading')->can('grade', 'attempt');
     Route::put('examination-attempts/{attempt}/essay-grade', [ExaminationGradingController::class, 'update'])->name('examination-attempts.essay-grade')->can('grade', 'attempt');
 });

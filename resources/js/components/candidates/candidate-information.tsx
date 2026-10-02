@@ -1,4 +1,4 @@
-import { ExternalLink, QrCode, UserRound } from 'lucide-react';
+import { Download, QrCode, UserRound } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { buttonClasses } from '@/components/ui/button';
 import { ConfirmAction } from '@/components/ui/confirm-action';
@@ -72,9 +72,9 @@ function QrCodePanel({ candidate, reissueUrl, audience }: { candidate: Candidate
                 </figcaption>
             </figure>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
-                <a href={candidate.qrCodeUrl} target="_blank" rel="noopener" className={buttonClasses('secondary', 'sm')}>
-                    <ExternalLink className="size-4" aria-hidden="true" />
-                    Open to Print
+                <a href={candidate.qrCardUrl} className={buttonClasses('secondary', 'sm')}>
+                    <Download className="size-4" aria-hidden="true" />
+                    Save as PDF
                 </a>
                 {reissueUrl !== null && (
                     <ConfirmAction

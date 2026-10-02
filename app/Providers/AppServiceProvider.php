@@ -82,6 +82,8 @@ class AppServiceProvider extends ServiceProvider
         $perUser('exam-focus', 120);
         // Candidate and staff record PDFs.
         $perUser('record-downloads', 10);
+        // Staff report PDFs (Save as PDF) and QR code cards.
+        $perUser('pdf-downloads', 20);
         // Question media uploads and question imports.
         $perUser('staff-uploads', 30);
         // Candidates' medical document uploads.

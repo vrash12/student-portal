@@ -11,22 +11,107 @@ use App\Services\Performance\CandidateQualification;
 use App\Services\Performance\QualificationEngine;
 use App\Support\AcademicOptions;
 use App\Support\CandidateGroups;
+use App\Support\PdfReport;
 use App\Support\QueryFilters;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
  * Qualification and class rank of every candidate of a class (route
  * middleware: performance.view). All results come from QualificationEngine.
- * One class at a time, every candidate on one page, so the list can be
- * printed from the browser.
+ * One class at a time; Save as PDF lists every candidate of the class shown.
  */
 class QualificationController extends Controller
 {
     public function __construct(private readonly QualificationEngine $engine) {}
 
     public function index(Request $request): Response
+    {
+        $data = $this->build($request);
+        $class = $data['class'];
+        $areas = $data['areas'];
+
+        return Inertia::render('staff/qualification/index', [
+            'classOptions' => $data['classOptions'],
+            'filters' => $data['filters'],
+            'companyOptions' => $data['companyOptions'],
+            'platoonOptions' => $data['platoonOptions'],
+            'classBatch' => $class === null ? null : [
+                'id' => $class->id,
+                'name' => $class->name,
+                'period' => $class->academicPeriod->name,
+                'isActivePeriod' => $class->academicPeriod->is_active,
+            ],
+            'areas' => array_map(fn (AreaDefinition $area): array => $area->toArray(), $areas),
+            'rows' => array_map(fn (CandidateQualification $qualification): array => $qualification->toArray(withRank: true), $data['shown']),
+            // Summaries of the company/platoon shown, before the status filter.
+            'counts' => $this->engine->counts($data['inUnit']),
+            'areaCounts' => $this->engine->areaCounts($data['inUnit'], $areas),
+            'classSize' => $data['classSize'],
+            'generatedAt' => now()->toIso8601String(),
+            'can' => [
+                'configure' => $request->user()->hasPermission(Permission::ConfigurePerformance),
+                'viewCandidates' => $request->user()->hasPermission(Permission::ViewAllCandidates),
+            ],
+        ]);
+    }
+
+    /** The class shown, with the same filters, as a PDF file (Save as PDF): every candidate, ranked. */
+    public function pdf(Request $request): HttpResponse
+    {
+        $data = $this->build($request);
+        $class = $data['class'];
+        abort_if($class === null, 404);
+        $areas = $data['areas'];
+        $filters = $data['filters'];
+        $counts = $this->engine->counts($data['inUnit']);
+
+        $meta = [
+            ['Academic period', $class->academicPeriod->name.($class->academicPeriod->is_active ? ' (active)' : '')],
+            ['Ranked together', $data['classSize'].' '.($data['classSize'] === 1 ? 'candidate' : 'candidates')],
+        ];
+        foreach (['company' => 'Company', 'platoon' => 'Platoon'] as $key => $label) {
+            if ($filters[$key] !== '') {
+                $meta[] = [$label, $filters[$key]];
+            }
+        }
+        if ($filters['status'] !== '') {
+            $meta[] = ['Qualification', QualificationStatus::from($filters['status'])->label()];
+        }
+
+        $sections = [
+            ['type' => 'fields', 'heading' => 'Summary', 'perRow' => 4, 'fields' => [
+                ['Candidates', (string) $counts['total']],
+                ['Qualified', (string) $counts['qualified']],
+                ['Pending', (string) $counts['pending']],
+                ['Not Qualified', (string) $counts['notQualified']],
+            ]],
+        ];
+        if ($areas === []) {
+            $sections[] = ['type' => 'alert', 'text' => 'No active performance areas. Every candidate is Pending.'];
+        }
+        $sections[] = [
+            'type' => 'table',
+            'heading' => 'Candidates',
+            'columns' => self::pdfColumns($areas),
+            'rows' => array_map(fn (CandidateQualification $qualification): array => self::pdfRow($qualification, $areas), $data['shown']),
+            'empty' => $data['classSize'] === 0 ? 'No candidates in this class.' : 'No candidates match these filters.',
+            'note' => "Class rank covers the whole class; filters don't change it. Partial: a weighted area has no grade yet. Subject standing is not affected.",
+        ];
+
+        return PdfReport::download($request->user(), 'Qualification & Class Rank', $class->name, $meta, $sections, 'qualification-'.$class->name.'-'.now()->format('Ymd'), 'landscape');
+    }
+
+    /**
+     * The class chosen in the request (or the default), the validated
+     * filters, every ranked candidate, those in the company/platoon shown,
+     * and those also matching the status filter.
+     *
+     * @return array{classOptions: array, class: ?ClassBatch, filters: array<string, string>, companyOptions: array, platoonOptions: array, areas: list<AreaDefinition>, inUnit: list<CandidateQualification>, shown: list<CandidateQualification>, classSize: int}
+     */
+    private function build(Request $request): array
     {
         $classOptions = AcademicOptions::classBatchesByPeriod();
         $classIds = [];
@@ -60,29 +145,85 @@ class QualificationController extends Controller
             fn (CandidateQualification $qualification): bool => $qualification->qualification->status->value === $filters['status'],
         ));
 
-        return Inertia::render('staff/qualification/index', [
+        return [
             'classOptions' => $classOptions,
+            'class' => $class,
             'filters' => $filters,
             'companyOptions' => $companyOptions,
             'platoonOptions' => $platoonOptions,
-            'classBatch' => $class === null ? null : [
-                'id' => $class->id,
-                'name' => $class->name,
-                'period' => $class->academicPeriod->name,
-                'isActivePeriod' => $class->academicPeriod->is_active,
-            ],
-            'areas' => array_map(fn (AreaDefinition $area): array => $area->toArray(), $areas),
-            'rows' => array_map(fn (CandidateQualification $qualification): array => $qualification->toArray(withRank: true), $shown),
-            // Summaries of the company/platoon shown, before the status filter.
-            'counts' => $this->engine->counts($inUnit),
-            'areaCounts' => $this->engine->areaCounts($inUnit, $areas),
+            'areas' => $areas,
+            'inUnit' => $inUnit,
+            'shown' => $shown,
             'classSize' => count($ranked),
-            'generatedAt' => now()->toIso8601String(),
-            'can' => [
-                'configure' => $request->user()->hasPermission(Permission::ConfigurePerformance),
-                'viewCandidates' => $request->user()->hasPermission(Permission::ViewAllCandidates),
-            ],
-        ]);
+        ];
+    }
+
+    /**
+     * @param  list<AreaDefinition>  $areas
+     * @return list<array<string, mixed>>
+     */
+    private static function pdfColumns(array $areas): array
+    {
+        $areaWidth = $areas === [] ? 0 : min(11, intdiv(52, count($areas)));
+        $configured = fn (float $value): string => rtrim(rtrim(number_format($value, 2), '0'), '.');
+
+        return [
+            ['label' => 'Rank', 'width' => '5%', 'numeric' => true],
+            ['label' => 'Candidate', 'width' => '15%'],
+            ['label' => 'Company / Platoon', 'width' => '10%'],
+            ...array_map(fn (AreaDefinition $area): array => [
+                'label' => $area->name,
+                'width' => $areaWidth.'%',
+                'rule' => implode(' · ', array_filter([
+                    'Weight '.$configured((float) $area->weight),
+                    'passing '.$configured((float) $area->passingGrade),
+                    $area->mustPass ? 'must-pass' : null,
+                ])),
+            ], $areas),
+            ['label' => 'Overall', 'width' => '7%', 'numeric' => true],
+            ['label' => 'Qualification'],
+        ];
+    }
+
+    /**
+     * One candidate's cells, in the order of pdfColumns().
+     *
+     * @param  list<AreaDefinition>  $areas
+     * @return list<string>
+     */
+    private static function pdfRow(CandidateQualification $qualification, array $areas): array
+    {
+        $row = $qualification->toArray(withRank: true);
+        $candidate = $row['candidate'];
+        $results = collect($row['areas'])->keyBy('areaId');
+        $decision = $row['qualification'];
+        $grade = fn (?float $value): string => PdfReport::number($value);
+
+        $areaCells = array_map(function (AreaDefinition $area) use ($results, $grade): string {
+            $result = $results->get($area->id);
+            if ($result === null) {
+                return '—';
+            }
+
+            return implode("\n", array_filter([
+                $grade($result['grade']),
+                $result['status']['label'],
+                $result['status']['value'] !== 'passed' ? $result['note'] : null,
+            ]));
+        }, $areas);
+
+        return [
+            (string) ($row['rank'] ?? '—'),
+            $candidate['name']."\n".$candidate['candidateNumber'].($candidate['status']['value'] !== 'enrolled' ? ' · '.$candidate['status']['label'] : ''),
+            implode(' · ', array_filter([$candidate['company'], $candidate['platoon']])) ?: '—',
+            ...$areaCells,
+            $grade($row['overall']['score']).($row['overall']['score'] !== null && ! $row['overall']['complete'] ? "\nPartial" : ''),
+            implode("\n", array_filter([
+                $decision['status']['label'],
+                ...$decision['reasons'],
+                $decision['pending'] === [] ? null : 'Waiting for: '.implode(', ', $decision['pending']),
+            ])),
+        ];
     }
 
     /**

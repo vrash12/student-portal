@@ -576,4 +576,31 @@ class ItemAnalysisTest extends TestCase
         $this->assertGreaterThan(0, $few);
         $this->assertSame($few, $many);
     }
+
+    public function test_the_analysis_is_saved_as_a_pdf_by_the_assigned_instructor_only(): void
+    {
+        $exam = $this->makeExamination(['passing_score' => '60.00']);
+        $mcq = $this->addItem($exam, $this->mcq(2));
+        [$a, $b] = $this->candidates(2);
+        [$optionA, $optionB] = $this->choices($mcq);
+        $this->submitWith($a, $exam, [$mcq->id => $optionB]);
+        $this->submitWith($b, $exam, [$mcq->id => $optionA]);
+
+        $pdf = $this->actingAs($this->alpha)->get(route('examinations.analysis.pdf', ['examination' => $exam, 'scope' => 'all', 'sort' => 'order']))->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF-', (string) $pdf->getContent());
+
+        $this->actingAs($this->bravo)->get(route('examinations.analysis.pdf', $exam))->assertForbidden();
+        $this->actingAs($this->userWithRole(SystemRole::SuperAdministrator))->get(route('examinations.analysis.pdf', $exam))->assertForbidden();
+        $this->actingAs($a->user)->get(route('examinations.analysis.pdf', $exam))->assertForbidden();
+        $this->actingAs($this->alpha)->get(route('examinations.analysis.pdf', ['examination' => $exam, 'sort' => 'random']))->assertSessionHasErrors('sort');
+    }
+
+    public function test_no_pdf_before_anything_is_submitted(): void
+    {
+        $exam = $this->makeExamination();
+        $this->addItem($exam, $this->mcq());
+
+        $this->actingAs($this->alpha)->get(route('examinations.analysis.pdf', $exam))->assertNotFound();
+    }
 }

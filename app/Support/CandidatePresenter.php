@@ -25,6 +25,7 @@ final class CandidatePresenter
                 ? route('portal.profile.photo') : route('candidates.photo', $candidate)),
             // The candidate's QR code for attendance (owner request, 2026-10-02).
             'qrCodeUrl' => $portal ? route('portal.profile.qr') : route('candidates.qr', $candidate),
+            'qrCardUrl' => $portal ? route('portal.profile.qr.pdf') : route('candidates.qr.pdf', $candidate),
             'name' => $candidate->full_name,
             'status' => ['value' => $candidate->status->value, 'label' => $candidate->status->label(), 'tone' => $candidate->status->tone()],
             'classBatch' => $candidate->classBatch === null ? null : [

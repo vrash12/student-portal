@@ -1,12 +1,12 @@
 import { Head, Link } from '@inertiajs/react';
-import { ChartColumn, CircleCheck, Printer } from 'lucide-react';
+import { ChartColumn, CircleCheck, Download } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ChartFigure } from '@/components/charts/chart-figure';
 import { ColumnChart } from '@/components/charts/column-chart';
 import { PieChart } from '@/components/charts/pie-chart';
 import { QuestionMediaList } from '@/components/question-bank/question-media';
 import { Alert } from '@/components/ui/alert';
-import { Button, ButtonLink } from '@/components/ui/button';
+import { ButtonLink, buttonClasses } from '@/components/ui/button';
 import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
@@ -78,9 +78,10 @@ export default function ExaminationItemAnalysis({ examination, analysis, generat
                     <div className="flex flex-wrap gap-2 print:hidden">
                         <ButtonLink href={examinationRoutes.show(examination.id)}>Back to examination</ButtonLink>
                         {hasSubmissions && (
-                            <Button variant="secondary" icon={<Printer className="size-4" aria-hidden="true" />} onClick={() => window.print()}>
-                                Print
-                            </Button>
+                            <a href={examinationRoutes.analysisPdf(examination.id, { scope: analysis.scope, sort: analysis.sort })} className={buttonClasses('secondary')}>
+                                <Download className="size-4" aria-hidden="true" />
+                                Save as PDF
+                            </a>
                         )}
                     </div>
                 }

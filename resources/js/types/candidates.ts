@@ -15,6 +15,8 @@ export interface CandidateInformation {
     photoUrl: string | null;
     /** The candidate's QR code image (attendance and identification); always present. */
     qrCodeUrl: string;
+    /** The QR code card as a PDF file (Save as PDF). */
+    qrCardUrl: string;
     status: StatusValue;
     classBatch: { id: number; name: string; period: string; periodId: number } | null;
     account: { username: string; isActive: boolean; lastLoginAt: string | null } | null;

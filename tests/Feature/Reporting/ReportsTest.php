@@ -9,7 +9,6 @@ use App\Services\Monitoring\AcademicMonitoring;
 use App\Services\Monitoring\MonitoringScope;
 use App\Services\ReportingService;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -17,7 +16,7 @@ use Tests\TestCase;
 
 /**
  * Milestone 15 reports (/reports, ReportingService): eight report types,
- * scoped by MonitoringScope, paginated (25) or printed (up to 5000 rows).
+ * scoped by MonitoringScope, paginated (10) or saved as PDF (up to 5000 rows).
  */
 class ReportsTest extends TestCase
 {
@@ -46,10 +45,11 @@ class ReportsTest extends TestCase
     public function test_candidates_guests_deactivated_users_and_staff_without_permission_are_denied(): void
     {
         $this->actingAs($this->candidateInA->user)->get('/reports')->assertForbidden();
-        $this->actingAs($this->candidateInA->user)->get('/reports?type=examination&print=1')->assertForbidden();
+        $this->actingAs($this->candidateInA->user)->get('/reports/pdf?type=examination')->assertForbidden();
 
         $noReports = $this->staffWithPermissions('monitoring_only', [PermissionCode::ViewAcademicMonitoring, PermissionCode::ViewAllCandidates]);
         $this->actingAs($noReports)->get('/reports')->assertForbidden();
+        $this->actingAs($noReports)->get('/reports/pdf')->assertForbidden();
 
         $inactive = User::factory()->withRole(SystemRole::AcademicAdministrator)->create(['is_active' => false]);
         $this->actingAs($inactive)->get('/reports')->assertRedirect('/login');
@@ -309,7 +309,7 @@ class ReportsTest extends TestCase
     }
 
     // ------------------------------------------------------------------
-    // Pagination and print mode
+    // Pagination and PDF
     // ------------------------------------------------------------------
 
     public function test_reports_are_paginated_by_ten(): void
@@ -333,38 +333,27 @@ class ReportsTest extends TestCase
         $this->assertStringContainsString('page=2', $first['next_page_url']);
     }
 
-    public function test_print_mode_returns_every_row_on_one_page(): void
+    public function test_save_as_pdf_downloads_the_filtered_report_as_a_watermarked_pdf(): void
     {
         for ($index = 1; $index <= 30; $index++) {
             $this->makeCandidate($this->batchB, sprintf('%03d', $index));
         }
 
-        $props = $this->reportProps($this->academicAdmin, ['print' => 1, 'page' => 2]);
+        config(['institution.logo_url' => '/branding/logo.jpg']);
+        $response = $this->actingAs($this->academicAdmin)->get('/reports/pdf?type=candidate&page=2')->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertHeader('Cache-Control', 'no-store, private');
 
-        $this->assertTrue($props['printMode']);
-        $this->assertSame(1, $props['rows']['current_page']);
-        $this->assertCount(33, $props['rows']['data']);
-        $this->assertSame(33, $props['rows']['total']);
+        $this->assertStringStartsWith('attachment; filename="report-candidate-academic-standing', (string) $response->headers->get('Content-Disposition'));
+        $this->assertStringStartsWith('%PDF-', (string) $response->getContent());
+        // The school logo is on every page at 20% opacity.
+        $this->assertStringContainsString('/CA 0.2', (string) $response->getContent());
     }
 
-    public function test_print_mode_is_capped_at_five_thousand_rows_and_reports_the_true_total(): void
+    public function test_save_as_pdf_keeps_the_instructors_scope_and_validates_filters(): void
     {
-        $exam = $this->makeExamination($this->offeringA1, 'Large Exam', ['attempt_limit' => 6000]);
-        $now = now()->toDateTimeString();
-        foreach (array_chunk(range(1, 5001), 1000) as $numbers) {
-            DB::table('examination_attempts')->insert(array_map(fn (int $number): array => [
-                'examination_id' => $exam->id, 'candidate_id' => $this->candidateInA->id, 'attempt_number' => $number,
-                'status' => 'submitted', 'started_at' => $now, 'submitted_at' => $now, 'result_status' => 'graded',
-                'earned_points' => 1, 'total_points' => 1, 'percentage' => 100, 'passed' => true,
-                'created_at' => $now, 'updated_at' => $now,
-            ], $numbers));
-        }
-
-        $props = $this->reportProps($this->academicAdmin, ['type' => 'examination', 'print' => 1]);
-
-        $this->assertCount(5000, $props['rows']['data']);
-        // The page shows the truncation warning when the total exceeds the rows shown.
-        $this->assertSame(5001, $props['rows']['total']);
+        $this->actingAs($this->alpha)->get('/reports/pdf?type=examination')->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->actingAs($this->alpha)->from('/reports')->get('/reports/pdf?type=grades_export')->assertRedirect('/reports')->assertSessionHasErrors('type');
     }
 
     // ------------------------------------------------------------------
@@ -400,7 +389,6 @@ class ReportsTest extends TestCase
             'to before from' => [['from' => '2026-09-10', 'to' => '2026-09-01'], 'to'],
             'zero page' => [['page' => 0], 'page'],
             'text page' => [['page' => 'last'], 'page'],
-            'print not boolean' => [['print' => 'yes-please'], 'print'],
         ];
     }
 

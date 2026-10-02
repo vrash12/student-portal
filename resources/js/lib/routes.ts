@@ -157,6 +157,7 @@ export const routes = {
     },
     qualification: {
         index: (query?: Record<string, string>) => withQuery('/qualification', query),
+        pdf: (query?: Record<string, string>) => withQuery('/qualification/pdf', query),
     },
     gradingSetup: {
         index: (query?: Record<string, string>) => withQuery('/grading-setup', query),
@@ -201,6 +202,7 @@ export const routes = {
     gradeCorrections: {
         index: (query?: Record<string, string>) => withQuery('/grade-corrections', query),
         show: (requestId: number) => `/grade-corrections/${requestId}`,
+        pdf: (requestId: number) => `/grade-corrections/${requestId}/pdf`,
         approve: (requestId: number) => `/grade-corrections/${requestId}/approve`,
         reject: (requestId: number) => `/grade-corrections/${requestId}/reject`,
         cancel: (requestId: number) => `/grade-corrections/${requestId}/cancel`,

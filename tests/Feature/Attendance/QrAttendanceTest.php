@@ -212,4 +212,20 @@ class QrAttendanceTest extends TestCase
     {
         return $this->actingAs($user)->postJson(route('attendance.sessions.scan', $this->session), ['code' => $code, 'status' => $status]);
     }
+
+    public function test_the_qr_card_is_saved_as_a_pdf_for_allowed_staff_and_the_candidate_only(): void
+    {
+        $this->actingAs($this->alpha)->get(route('candidates.show', $this->first))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('candidate.qrCardUrl', route('candidates.qr.pdf', $this->first)));
+        $card = $this->actingAs($this->alpha)->get(route('candidates.qr.pdf', $this->first))->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf')->assertHeader('Cache-Control', 'no-store, private');
+        $this->assertStringStartsWith('%PDF-', (string) $card->getContent());
+        $this->assertStringContainsString('attachment;', (string) $card->headers->get('Content-Disposition'));
+        $this->actingAs($this->bravo)->get(route('candidates.qr.pdf', $this->first))->assertForbidden();
+
+        $this->actingAs($this->first->user)->get(route('portal.profile'))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('candidate.qrCardUrl', route('portal.profile.qr.pdf')));
+        $this->actingAs($this->first->user)->get(route('portal.profile.qr.pdf'))->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->actingAs($this->first->user)->get(route('candidates.qr.pdf', $this->second))->assertForbidden();
+    }
 }
