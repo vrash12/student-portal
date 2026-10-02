@@ -166,6 +166,19 @@ final class MedicalDocumentService
         ], actor: $viewer);
     }
 
+    /**
+     * Records a Print Screen press reported by the protected viewer of an
+     * instructor with approved access (a browser cannot stop screenshots;
+     * this keeps a trace of the attempt).
+     */
+    public function recordPrintScreen(CandidateMedicalDocument $document, int $accessRequestId, User $viewer): void
+    {
+        $this->audit->record(AuditAction::MedicalDocumentPrintScreen, $document, newValues: [
+            ...$this->summary($document, $document->candidate),
+            'access_request' => $accessRequestId,
+        ], actor: $viewer);
+    }
+
     /** Absolute path of the stored file, or null when it is missing. */
     public function absolutePath(CandidateMedicalDocument $document): ?string
     {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Enums\MedicalAccessStatus;
+use App\Enums\MedicalDownloadStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Medical\MedicalRecordRequest;
 use App\Models\Candidate;
@@ -10,6 +11,7 @@ use App\Models\CandidateMedicalDocument;
 use App\Models\CandidateMedicalRevision;
 use App\Models\ClassBatch;
 use App\Models\MedicalAccessRequest;
+use App\Models\MedicalDownloadRequest;
 use App\Models\MedicalField;
 use App\Services\Medical\MedicalRecordService;
 use App\Support\MedicalRecordPresenter;
@@ -70,6 +72,8 @@ class MedicalRecordController extends Controller
             'pendingAccessRequests' => MedicalAccessRequest::query()->where('status', MedicalAccessStatus::Pending->value)->count(),
             // Uploaded documents waiting for review.
             'waitingDocuments' => CandidateMedicalDocument::query()->waiting()->count(),
+            // Instructors' download requests waiting for a decision.
+            'pendingDownloadRequests' => MedicalDownloadRequest::query()->where('status', MedicalDownloadStatus::Pending->value)->count(),
             'can' => [
                 'configure' => $request->user()->can('medical.configure'),
                 'manage' => $request->user()->can('medical.manage'),

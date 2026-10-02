@@ -24,6 +24,7 @@ use App\Models\FitnessTest;
 use App\Models\GradeCorrectionRequest;
 use App\Models\InstructorAssignment;
 use App\Models\MedicalAccessRequest;
+use App\Models\MedicalDownloadRequest;
 use App\Models\MedicalField;
 use App\Models\PerformanceArea;
 use App\Models\Question;
@@ -82,6 +83,8 @@ class AppServiceProvider extends ServiceProvider
         $perUser('staff-uploads', 30);
         // Candidates' medical document uploads.
         $perUser('medical-uploads', 20);
+        // Print Screen presses reported by the protected medical document viewer.
+        $perUser('medical-screen-events', 30);
         // Changing one's own password (the current password is checked).
         $perUser('password-change', 6);
 
@@ -114,6 +117,7 @@ class AppServiceProvider extends ServiceProvider
             'medical_field' => MedicalField::class,
             'medical_access_request' => MedicalAccessRequest::class,
             'candidate_medical_document' => CandidateMedicalDocument::class,
+            'medical_download_request' => MedicalDownloadRequest::class,
             'question' => Question::class,
             // Created by the examination builder (Milestone 8).
             'examination' => Examination::class,

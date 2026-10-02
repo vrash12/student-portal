@@ -155,7 +155,7 @@ export function CandidateMedicalPanel({ medical, candidateId }: { medical: Profi
                             )}
                         </div>
                         {!full && (
-                            <p className="text-sm text-ink-muted">View only. Printing and downloading are disabled, and each document you open is recorded.</p>
+                            <p className="text-sm text-ink-muted">View only. Printing and screenshots are not allowed. To keep a copy, request a download; the medical staff decide. Each document you open is recorded.</p>
                         )}
                         <MedicalDocumentList
                             documents={medical.documents}
@@ -241,7 +241,7 @@ function RequestAccessDialog({ open, candidateId, onClose }: { open: boolean; ca
     return (
         <Dialog open={open} title="Request the Full Medical Record" busy={form.processing} onClose={onClose}>
             <form onSubmit={submit} noValidate className="flex flex-col gap-5">
-                <Alert tone="info">The medical staff decide, and choose how long you may see the record (up to 30 days). It is view only: uploaded documents cannot be printed or downloaded, and each time you open the record or a document is recorded.</Alert>
+                <Alert tone="info">The medical staff decide, and choose how long you may see the record (up to 30 days). It is view only: uploaded documents cannot be printed, a copy needs a separate download approval, and each time you open the record or a document is recorded.</Alert>
                 <FormField
                     label="Why do you need it?"
                     required

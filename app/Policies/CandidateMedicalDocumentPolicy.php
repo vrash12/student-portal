@@ -49,6 +49,12 @@ class CandidateMedicalDocumentPolicy
             && MedicalAccessService::activeGrant($user, $candidate) !== null;
     }
 
+    /** Asking for a copy: whoever may view the document in the protected viewer. */
+    public function requestDownload(User $user, CandidateMedicalDocument $document): bool
+    {
+        return $this->viewProtected($user, $document);
+    }
+
     private function owns(User $user, CandidateMedicalDocument $document): bool
     {
         return $user->hasPermission(Permission::AccessExamPortal)

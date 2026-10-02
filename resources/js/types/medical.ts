@@ -71,7 +71,46 @@ export interface MedicalDocument {
     fileUrl: string | null;
     downloadUrl: string | null;
     protectedUrl: string | null;
+    /** Instructors: where the protected viewer reports a Print Screen press. */
+    printScreenUrl: string | null;
+    /** Instructors: their download request for this document; null for everyone else. */
+    download: MedicalDownloadState | null;
     can: { review: boolean; withdraw: boolean };
+}
+
+/** An instructor's request for a copy of one document (MedicalRecordPresenter::downloadState). */
+export interface MedicalDownloadState {
+    /** The latest request, if any. */
+    request: {
+        id: number;
+        status: { value: string; label: string; tone: StatusTone };
+        expiresAt: string | null;
+        decidedBy: string | null;
+        decisionNote: string | null;
+        downloadCount: number;
+    } | null;
+    /** Set while an approval is active. */
+    fileUrl: string | null;
+    canRequest: boolean;
+    canCancel: boolean;
+}
+
+/** A download request on the medical staff's page. */
+export interface MedicalDownloadRow {
+    id: number;
+    candidate: { id: number; number: string; name: string; className: string | null };
+    document: { id: number; title: string; category: string; fileUrl: string };
+    requestedBy: string;
+    requestedAt: string | null;
+    reason: string;
+    status: { value: string; label: string; tone: StatusTone };
+    expiresAt: string | null;
+    decidedBy: string | null;
+    decisionNote: string | null;
+    revokedBy: string | null;
+    downloadCount: number;
+    lastDownloadedAt: string | null;
+    can: { decide: boolean; revoke: boolean };
 }
 
 /** A document on the medical staff's review page. */

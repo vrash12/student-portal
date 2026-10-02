@@ -13,6 +13,7 @@ use App\Models\Examination;
 use App\Models\ExaminationAttempt;
 use App\Models\ExaminationQuestion;
 use App\Models\InstructorAssignment;
+use App\Models\MedicalDownloadRequest;
 use App\Models\Question;
 use App\Models\QuestionMedia;
 use App\Models\Subject;
@@ -161,6 +162,15 @@ class RouteAccessMatrixTest extends TestCase
         $medicalDocument->uploaded_by = $this->candidateInB->user_id;
         $medicalDocument->save();
 
+        // Bravo's request to download that document (Bravo cancels and downloads; medical staff decide).
+        $medicalDownload = new MedicalDownloadRequest;
+        $medicalDownload->candidate_medical_document_id = $medicalDocument->id;
+        $medicalDownload->candidate_id = $this->candidateInB->id;
+        $medicalDownload->requested_by = $this->bravo->id;
+        $medicalDownload->reason = 'Needed for the medical clearance file of Batch B.';
+        $medicalDownload->status = 'pending';
+        $medicalDownload->save();
+
         $this->parameters = [
             'academicPeriod' => (string) $this->activePeriod->id,
             'accountCategory' => (string) $accountEntry->account_category_id,
@@ -182,6 +192,7 @@ class RouteAccessMatrixTest extends TestCase
             'instructorAssignment' => (string) InstructorAssignment::query()->where('instructor_id', $this->bravo->id)->value('id'),
             'medicalAccessRequest' => (string) $medicalAccess->id,
             'medicalDocument' => (string) $medicalDocument->id,
+            'medicalDownloadRequest' => (string) $medicalDownload->id,
             'medicalField' => (string) $medicalField->id,
             'medium' => (string) $media->id,
             'performanceArea' => (string) $performanceArea->id,

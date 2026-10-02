@@ -9,6 +9,7 @@ use App\Models\Candidate;
 use App\Models\CandidateMedicalDocument;
 use App\Models\CandidateMedicalValue;
 use App\Models\MedicalAccessRequest;
+use App\Models\MedicalDownloadRequest;
 use App\Models\MedicalField;
 use App\Models\User;
 use App\Services\Medical\MedicalAccessService;
@@ -154,6 +155,8 @@ final class MedicalRecordPresenter
             ->where('candidate_id', $candidate->id)
             ->when($audience === 'granted', fn ($query) => $query->notReturned())
             ->with(['reviewer:id,name', 'candidate:id,class_batch_id'])
+            // Instructors see the state of their own download requests (newest first).
+            ->when($audience === 'granted', fn ($query) => $query->with(['downloadRequests' => fn ($requests) => $requests->where('requested_by', $viewer->id)->with('decider:id,name')->latest('id')]))
             ->latest('id')
             ->get()
             ->map(fn (CandidateMedicalDocument $document): array => self::document($document, $audience, $viewer))
@@ -189,12 +192,41 @@ final class MedicalRecordPresenter
             // Opens in a new tab (medical staff and the candidate); null for instructors.
             'fileUrl' => $fileUrl,
             'downloadUrl' => $fileUrl === null ? null : $fileUrl.'?download=1',
-            // Instructors: the protected viewer fetches the file from here.
+            // Instructors: the protected viewer fetches the file from here and reports Print Screen presses there.
             'protectedUrl' => $protected ? route('medical.documents.protected', $document, false) : null,
+            'printScreenUrl' => $protected ? route('medical.documents.print-screen', $document, false) : null,
+            // Instructors: a copy only through an approved download request.
+            'download' => $protected ? self::downloadState($document, $viewer) : null,
             'can' => [
                 'review' => $audience === 'staff' && $document->status === MedicalDocumentStatus::Submitted && $viewer->can('review', $document),
                 'withdraw' => $audience === 'candidate' && $viewer->can('withdraw', $document),
             ],
+        ];
+    }
+
+    /**
+     * The viewer's latest download request for a document, and what they may do next.
+     *
+     * @return array<string, mixed>
+     */
+    private static function downloadState(CandidateMedicalDocument $document, User $viewer): array
+    {
+        /** @var MedicalDownloadRequest|null $latest */
+        $latest = $document->relationLoaded('downloadRequests') ? $document->downloadRequests->first() : null;
+        $active = $latest !== null && $latest->isActive();
+
+        return [
+            'request' => $latest === null ? null : [
+                'id' => $latest->id,
+                'status' => $latest->displayStatus(),
+                'expiresAt' => $latest->expires_at?->toIso8601String(),
+                'decidedBy' => $latest->decider?->name,
+                'decisionNote' => $latest->decision_note,
+                'downloadCount' => $latest->download_count,
+            ],
+            'fileUrl' => $active && $viewer->can('download', $latest) ? route('medical.downloads.file', $latest, false) : null,
+            'canRequest' => ($latest === null || (! $latest->isPending() && ! $active)) && $viewer->can('requestDownload', $document),
+            'canCancel' => $latest !== null && $latest->isPending(),
         ];
     }
 

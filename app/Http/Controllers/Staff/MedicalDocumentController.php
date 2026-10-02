@@ -12,6 +12,7 @@ use App\Support\QueryFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as Response204;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -99,6 +100,16 @@ class MedicalDocumentController extends Controller
             'Vary' => self::VIEWER_HEADER,
             'Content-Security-Policy' => "default-src 'none'; sandbox",
         ]);
+    }
+
+    /** The protected viewer reports a Print Screen press; it is recorded, nothing else. */
+    public function printScreen(Request $request, CandidateMedicalDocument $medicalDocument): Response204
+    {
+        $grant = MedicalAccessService::activeGrant($request->user(), $medicalDocument->candidate);
+        abort_if($grant === null, 403);
+        $this->documents->recordPrintScreen($medicalDocument, $grant->id, $request->user());
+
+        return response()->noContent();
     }
 
     public function accept(Request $request, CandidateMedicalDocument $medicalDocument): RedirectResponse

@@ -58,6 +58,13 @@ enum AuditAction: string
     case MedicalDocumentAccepted = 'medical_document.accepted';
     case MedicalDocumentReturned = 'medical_document.returned';
     case MedicalDocumentViewed = 'medical_document.viewed';
+    case MedicalDocumentDownloaded = 'medical_document.downloaded';
+    case MedicalDocumentPrintScreen = 'medical_document.print_screen';
+    case MedicalDownloadRequested = 'medical_download.requested';
+    case MedicalDownloadApproved = 'medical_download.approved';
+    case MedicalDownloadRejected = 'medical_download.rejected';
+    case MedicalDownloadCancelled = 'medical_download.cancelled';
+    case MedicalDownloadRevoked = 'medical_download.revoked';
     case GradingThresholdsUpdated = 'grading_thresholds.updated';
     case QuestionCreated = 'question.created';
     case QuestionUpdated = 'question.updated';
@@ -157,6 +164,13 @@ enum AuditAction: string
             self::MedicalDocumentAccepted => 'Accepted a medical document',
             self::MedicalDocumentReturned => 'Returned a medical document',
             self::MedicalDocumentViewed => 'Viewed a medical document through approved access',
+            self::MedicalDocumentDownloaded => 'Downloaded a medical document with approval',
+            self::MedicalDocumentPrintScreen => 'Pressed Print Screen while viewing a medical document',
+            self::MedicalDownloadRequested => 'Requested to download a medical document',
+            self::MedicalDownloadApproved => 'Approved a medical document download',
+            self::MedicalDownloadRejected => 'Rejected a medical document download',
+            self::MedicalDownloadCancelled => 'Cancelled a medical document download request',
+            self::MedicalDownloadRevoked => 'Withdrew a medical document download',
             self::GradingThresholdsUpdated => 'Updated passing and warning grades',
             self::QuestionCreated => 'Created question',
             self::QuestionUpdated => 'Updated question',

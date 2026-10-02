@@ -1,5 +1,5 @@
 import { router, useForm, usePage } from '@inertiajs/react';
-import { Check, Download, ExternalLink, Eye, FileImage, FileText, Undo2 } from 'lucide-react';
+import { Check, Download, ExternalLink, Eye, FileDown, FileImage, FileText, Undo2 } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { ProtectedDocumentViewer } from '@/components/medical/protected-document-viewer';
 import { Alert } from '@/components/ui/alert';
@@ -39,9 +39,11 @@ export function MedicalDocumentList({ documents, audience, emptyText, renderCont
     const pagination = useClientPagination(documents);
     const [viewing, setViewing] = useState<MedicalDocument | null>(null);
     const [returning, setReturning] = useState<MedicalDocument | null>(null);
+    const [requesting, setRequesting] = useState<MedicalDocument | null>(null);
     const page = usePage();
     const viewerName = page.props.auth.user?.name ?? 'Signed-in user';
-    const documentError = (page.props.errors as Record<string, string | undefined>).document;
+    const errors = page.props.errors as Record<string, string | undefined>;
+    const documentError = errors.document ?? errors.download;
 
     if (documents.length === 0) {
         return <p className="text-sm text-ink-muted">{emptyText}</p>;
@@ -63,12 +65,14 @@ export function MedicalDocumentList({ documents, audience, emptyText, renderCont
                         context={renderContext?.(document)}
                         onView={() => setViewing(document)}
                         onReturn={() => setReturning(document)}
+                        onRequestDownload={() => setRequesting(document)}
                     />
                 ))}
             </ul>
             <ClientPagination pagination={pagination} noun={{ one: 'document', other: 'documents' }} label="Medical document pages" />
             {audience === 'granted' && <ProtectedDocumentViewer document={viewing} viewerName={viewerName} onClose={() => setViewing(null)} />}
             {audience === 'staff' && <ReturnDialog document={returning} onClose={() => setReturning(null)} />}
+            {audience === 'granted' && <RequestDownloadDialog document={requesting} onClose={() => setRequesting(null)} />}
         </div>
     );
 }
@@ -79,9 +83,10 @@ interface DocumentItemProps {
     context?: ReactNode;
     onView: () => void;
     onReturn: () => void;
+    onRequestDownload: () => void;
 }
 
-function DocumentItem({ document, audience, context, onView, onReturn }: DocumentItemProps) {
+function DocumentItem({ document, audience, context, onView, onReturn, onRequestDownload }: DocumentItemProps) {
     const formatDate = useDateFormatter();
     const Icon = document.fileType === 'pdf' ? FileText : FileImage;
     const returned = document.status.value === 'returned';
@@ -117,12 +122,39 @@ function DocumentItem({ document, audience, context, onView, onReturn }: Documen
                         {document.reviewNote !== null && ` · “${document.reviewNote}”`}
                     </p>
                 )}
+                {document.download !== null && <DownloadStatus download={document.download} />}
             </div>
             <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
                 {audience === 'granted' ? (
-                    <Button variant="secondary" size="sm" onClick={onView} icon={<Eye className="size-4" aria-hidden="true" />}>
-                        View
-                    </Button>
+                    <>
+                        <Button variant="secondary" size="sm" onClick={onView} icon={<Eye className="size-4" aria-hidden="true" />}>
+                            View
+                        </Button>
+                        {document.download?.fileUrl && (
+                            <a href={document.download.fileUrl} className={buttonClasses('primary', 'sm')}>
+                                <FileDown className="size-4" aria-hidden="true" />
+                                Download<span className="sr-only"> {document.title}</span>
+                            </a>
+                        )}
+                        {document.download?.canRequest && (
+                            <Button variant="ghost" size="sm" onClick={onRequestDownload} icon={<FileDown className="size-4" aria-hidden="true" />}>
+                                Request Download
+                            </Button>
+                        )}
+                        {document.download?.canCancel && document.download.request !== null && (
+                            <ConfirmAction
+                                href={routes.medical.downloads.cancel(document.download.request.id)}
+                                method="post"
+                                variant="ghost"
+                                size="sm"
+                                title="Cancel the download request?"
+                                description={<p>The medical staff will no longer see it. You can request a download again later.</p>}
+                                confirmLabel="Cancel Request"
+                            >
+                                Cancel Request
+                            </ConfirmAction>
+                        )}
+                    </>
                 ) : (
                     <>
                         {document.fileUrl !== null && (
@@ -167,6 +199,70 @@ function DocumentItem({ document, audience, context, onView, onReturn }: Documen
                 )}
             </div>
         </li>
+    );
+}
+
+/** The instructor's latest download request for a document, in one line. */
+function DownloadStatus({ download }: { download: NonNullable<MedicalDocument['download']> }) {
+    const formatDate = useDateFormatter();
+    const request = download.request;
+    if (request === null || request.status.value === 'cancelled') {
+        return null;
+    }
+
+    const text = {
+        pending: 'Download requested · waiting for the medical staff',
+        approved: `Download approved${request.expiresAt !== null ? ` until ${formatDate.dateTime(request.expiresAt)}` : ''}${request.decidedBy ? ` by ${request.decidedBy}` : ''}`,
+        rejected: `Download request rejected${request.decidedBy ? ` by ${request.decidedBy}` : ''}${request.decisionNote ? `: “${request.decisionNote}”` : ''}`,
+        expired: 'Your approved download has ended',
+        revoked: 'Your approved download was withdrawn',
+    }[request.status.value];
+
+    return text === undefined ? null : (
+        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink">
+            <StatusBadge tone={request.status.tone}>{request.status.label}</StatusBadge>
+            <span className="text-ink-muted">{text}</span>
+        </p>
+    );
+}
+
+/** An instructor asks the medical staff for a copy of a document, with a reason. */
+function RequestDownloadDialog({ document, onClose }: { document: MedicalDocument | null; onClose: () => void }) {
+    const form = useForm({ reason: '' });
+
+    const close = () => {
+        form.reset();
+        form.clearErrors();
+        onClose();
+    };
+
+    const submit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        if (document === null) {
+            return;
+        }
+        form.post(routes.medical.downloads.store(document.id), { preserveScroll: true, onSuccess: close });
+    };
+
+    return (
+        <Dialog open={document !== null} title="Request a Download" description={document?.title} busy={form.processing} onClose={close}>
+            <form onSubmit={submit} noValidate className="flex flex-col gap-5">
+                <Alert tone="info">
+                    The medical staff decide. If they approve, you can download this document for a few days from this list. Every download is recorded.
+                </Alert>
+                <FormField label="Why do you need a copy?" required error={form.errors.reason} hint="At least 20 characters. The medical staff read this.">
+                    <TextArea value={form.data.reason} onChange={(event) => form.setData('reason', event.target.value)} maxLength={1000} rows={4} />
+                </FormField>
+                <div className="flex flex-col-reverse gap-2 border-t border-line pt-4 sm:flex-row sm:justify-end">
+                    <Button variant="secondary" onClick={close} disabled={form.processing}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" loading={form.processing}>
+                        Send Request
+                    </Button>
+                </div>
+            </form>
+        </Dialog>
     );
 }
 

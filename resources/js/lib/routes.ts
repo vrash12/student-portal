@@ -75,6 +75,14 @@ export const routes = {
             accept: (documentId: number) => `/medical-documents/${documentId}/accept`,
             return: (documentId: number) => `/medical-documents/${documentId}/return`,
         },
+        downloads: {
+            index: (query?: Record<string, string>) => withQuery('/medical-records/download-requests', query),
+            store: (documentId: number) => `/medical-documents/${documentId}/download-requests`,
+            cancel: (requestId: number) => `/medical-download-requests/${requestId}/cancel`,
+            approve: (requestId: number) => `/medical-download-requests/${requestId}/approve`,
+            reject: (requestId: number) => `/medical-download-requests/${requestId}/reject`,
+            revoke: (requestId: number) => `/medical-download-requests/${requestId}/revoke`,
+        },
         fields: {
             index: () => '/medical-records/fields',
             create: () => '/medical-records/fields/create',

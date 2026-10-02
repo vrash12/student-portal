@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * A medical document a candidate uploaded (certificate, check-up findings,
@@ -67,6 +68,16 @@ class CandidateMedicalDocument extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
+     * Instructors' requests to download this document.
+     *
+     * @return HasMany<MedicalDownloadRequest, $this>
+     */
+    public function downloadRequests(): HasMany
+    {
+        return $this->hasMany(MedicalDownloadRequest::class);
     }
 
     /**

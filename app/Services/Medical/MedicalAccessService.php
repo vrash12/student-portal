@@ -33,7 +33,10 @@ class MedicalAccessService
 
     public const REASON_MAX = 1000;
 
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly MedicalDownloadService $downloads,
+    ) {}
 
     /**
      * The approved, unexpired access of this viewer to this candidate, if any.
@@ -165,6 +168,9 @@ class MedicalAccessService
             $locked->save();
 
             $this->audit->record(AuditAction::MedicalAccessRevoked, $locked, newValues: ['candidate' => $locked->candidate->candidate_number, 'instructor' => $locked->requester->name], actor: $actor);
+
+            // Approved downloads of this candidate's documents end with the access.
+            $this->downloads->revokeAllFor((int) $locked->candidate_id, (int) $locked->requested_by, $actor);
         });
     }
 

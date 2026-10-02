@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { FileStack, HeartPulse, LockKeyhole, Settings2 } from 'lucide-react';
+import { FileDown, FileStack, HeartPulse, LockKeyhole, Settings2 } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FilterBar } from '@/components/ui/filter-bar';
@@ -37,11 +37,13 @@ interface MedicalRecordsProps {
     pendingAccessRequests: number;
     /** Uploaded documents waiting for review. */
     waitingDocuments: number;
+    /** Instructors' download requests waiting for a decision. */
+    pendingDownloadRequests: number;
     can: { configure: boolean; manage: boolean };
 }
 
 /** Candidates and how much of their medical record is filled in. Medical staff only. */
-export default function MedicalRecords({ candidates, fieldCount, filters, classes, pendingAccessRequests, waitingDocuments, can }: MedicalRecordsProps) {
+export default function MedicalRecords({ candidates, fieldCount, filters, classes, pendingAccessRequests, waitingDocuments, pendingDownloadRequests, can }: MedicalRecordsProps) {
     const formatDate = useDateFormatter();
     const { values, update, updateMany } = useQueryFilters(routes.medical.records.index(), filters);
     const configureAction = can.configure && (
@@ -76,6 +78,17 @@ export default function MedicalRecords({ candidates, fieldCount, filters, classe
                                 {pendingAccessRequests > 0 && (
                                     <span className="ml-1 rounded-full bg-accent-300 px-2 text-xs font-bold text-primary-900 tabular-nums">
                                         {pendingAccessRequests}
+                                        <span className="sr-only"> waiting</span>
+                                    </span>
+                                )}
+                            </ButtonLink>
+                        )}
+                        {can.manage && (
+                            <ButtonLink href={routes.medical.downloads.index()} icon={<FileDown className="size-4" aria-hidden="true" />}>
+                                Download Requests
+                                {pendingDownloadRequests > 0 && (
+                                    <span className="ml-1 rounded-full bg-accent-300 px-2 text-xs font-bold text-primary-900 tabular-nums">
+                                        {pendingDownloadRequests}
                                         <span className="sr-only"> waiting</span>
                                     </span>
                                 )}

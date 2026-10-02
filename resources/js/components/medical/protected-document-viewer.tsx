@@ -1,6 +1,7 @@
 import { EyeOff, LoaderCircle, ShieldAlert, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/cn';
 import { formatCalendarDate } from '@/lib/format';
 import type { MedicalDocument } from '@/types/medical';
 
@@ -23,23 +24,34 @@ interface ProtectedDocumentViewerProps {
 
 /**
  * View-only display of an uploaded medical document for instructors with
- * approved access (owner request, 2026-10-02: "cannot print it").
+ * approved access (owner requests, 2026-10-02: "cannot print it", "can be
+ * viewed but not downloadable, not screenshot"; a copy needs an approved
+ * download request).
  *
  * The file is fetched with the viewer's header (the address does not open on
  * its own) and drawn into canvases with PDF.js, bundled locally, or as an
  * image, never in the browser's own viewer with its print and download
  * buttons. Every page carries a watermark with the viewer's name and the time.
  * While open, printing shows a blank notice and Ctrl/⌘+P, Ctrl/⌘+S and the
- * context menu are blocked. A browser cannot stop screenshots or a camera,
- * so the watermark and the audit log (every opening is recorded) remain the
- * real deterrents.
+ * context menu are blocked.
+ *
+ * Screenshots: a web page cannot block them, and nothing stops a camera. The
+ * viewer makes them harder and traceable: the document is hidden whenever
+ * the window is not the active one (a snipping tool, another app, a screen
+ * picker), and a Print Screen press (reported by browsers on Windows) blanks
+ * it, replaces the clipboard with a notice and is recorded in the audit log.
+ * The watermark names the viewer on every capture that still gets through.
  */
 export function ProtectedDocumentViewer({ document: medicalDocument, viewerName, onClose }: ProtectedDocumentViewerProps) {
     const dialogRef = useRef<HTMLDialogElement>(null);
     const pagesRef = useRef<HTMLDivElement>(null);
     const [state, setState] = useState<{ status: 'loading' | 'ready' | 'error'; message?: string; pages?: number }>({ status: 'loading' });
     const [blockedNotice, setBlockedNotice] = useState(false);
+    // Hidden while the window is not the active one, or after Print Screen until the viewer resumes.
+    const [inactive, setInactive] = useState(false);
+    const [printScreen, setPrintScreen] = useState(false);
     const open = medicalDocument !== null;
+    const printScreenUrl = medicalDocument?.printScreenUrl ?? null;
 
     useEffect(() => {
         const dialog = dialogRef.current;
@@ -75,6 +87,59 @@ export function ProtectedDocumentViewer({ document: medicalDocument, viewerName,
         };
     }, [open]);
 
+    // Hide the document whenever the window is not the active one.
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+        const hide = () => setInactive(true);
+        const show = () => {
+            if (window.document.visibilityState === 'visible' && window.document.hasFocus()) {
+                setInactive(false);
+            }
+        };
+        const onVisibility = () => (window.document.visibilityState === 'visible' ? show() : hide());
+        setInactive(!window.document.hasFocus());
+        window.addEventListener('blur', hide);
+        window.addEventListener('focus', show);
+        window.document.addEventListener('visibilitychange', onVisibility);
+
+        return () => {
+            window.removeEventListener('blur', hide);
+            window.removeEventListener('focus', show);
+            window.document.removeEventListener('visibilitychange', onVisibility);
+        };
+    }, [open]);
+
+    // Print Screen: blank the document, replace the clipboard and record the attempt.
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+        const onPrintScreen = (event: KeyboardEvent) => {
+            if (event.key !== 'PrintScreen') {
+                return;
+            }
+            setPrintScreen(true);
+            void navigator.clipboard?.writeText('Screenshots of medical documents are not allowed.').catch(() => undefined);
+            if (event.type === 'keyup' && printScreenUrl !== null) {
+                const token = window.document.cookie.split('; ').find((part) => part.startsWith('XSRF-TOKEN='))?.split('=').slice(1).join('=');
+                void fetch(printScreenUrl, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': decodeURIComponent(token ?? '') },
+                }).catch(() => undefined);
+            }
+        };
+        window.addEventListener('keydown', onPrintScreen, true);
+        window.addEventListener('keyup', onPrintScreen, true);
+
+        return () => {
+            window.removeEventListener('keydown', onPrintScreen, true);
+            window.removeEventListener('keyup', onPrintScreen, true);
+        };
+    }, [open, printScreenUrl]);
+
     // Fetch and draw the document.
     useEffect(() => {
         const container = pagesRef.current;
@@ -87,6 +152,7 @@ export function ProtectedDocumentViewer({ document: medicalDocument, viewerName,
         container.replaceChildren();
         setState({ status: 'loading' });
         setBlockedNotice(false);
+        setPrintScreen(false);
 
         const stamp = `${viewerName} · ${new Date().toLocaleString()} · Confidential · View only`;
         const width = Math.min(MAX_PAGE_WIDTH, Math.max(320, container.clientWidth - 32));
@@ -182,7 +248,7 @@ export function ProtectedDocumentViewer({ document: medicalDocument, viewerName,
                         <div className="flex items-center gap-3">
                             <span className="hidden items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-accent-200 sm:inline-flex">
                                 <EyeOff className="size-3.5" aria-hidden="true" />
-                                View only · printing and downloading are disabled
+                                View only · no printing, downloading or screenshots
                             </span>
                             <Button variant="secondary" size="sm" onClick={onClose} icon={<X className="size-4" aria-hidden="true" />}>
                                 Close
@@ -197,19 +263,47 @@ export function ProtectedDocumentViewer({ document: medicalDocument, viewerName,
                         </p>
                     )}
 
-                    <div className="flex-1 overflow-auto px-4 py-6 select-none" onDragStart={(event) => event.preventDefault()}>
-                        {state.status === 'loading' && (
-                            <p className="flex items-center justify-center gap-2 py-16 text-primary-100" role="status">
-                                <LoaderCircle className="size-5 animate-spin" aria-hidden="true" />
-                                Opening the document…
-                            </p>
+                    {printScreen && (
+                        <p role="alert" className="flex items-center gap-2 bg-danger-bg px-4 py-2 text-sm font-medium text-danger-fg sm:px-6">
+                            <ShieldAlert className="size-4" aria-hidden="true" />
+                            Screenshots of medical documents are not allowed. This attempt was recorded.
+                        </p>
+                    )}
+
+                    <div className="relative min-h-0 flex-1">
+                        <div className="absolute inset-0 overflow-auto px-4 py-6 select-none" onDragStart={(event) => event.preventDefault()}>
+                            {state.status === 'loading' && (
+                                <p className="flex items-center justify-center gap-2 py-16 text-primary-100" role="status">
+                                    <LoaderCircle className="size-5 animate-spin" aria-hidden="true" />
+                                    Opening the document…
+                                </p>
+                            )}
+                            {state.status === 'error' && (
+                                <p className="mx-auto max-w-lg rounded-lg bg-danger-bg px-4 py-3 text-center text-danger-fg" role="alert">
+                                    {state.message}
+                                </p>
+                            )}
+                            <div
+                                ref={pagesRef}
+                                className={cn('mx-auto flex flex-col items-center gap-6', (inactive || printScreen) && 'invisible')}
+                            />
+                        </div>
+                        {(inactive || printScreen) && state.status === 'ready' && (
+                            <div className="absolute inset-0 z-10 flex items-center justify-center bg-ink/95 p-6">
+                                <div className="max-w-sm text-center">
+                                    <EyeOff className="mx-auto size-8 text-accent-200" aria-hidden="true" />
+                                    <p className="mt-3 font-semibold">{printScreen ? 'The document is hidden.' : 'Hidden while this window is not active.'}</p>
+                                    <p className="mt-1 text-sm text-primary-100">
+                                        {printScreen ? 'Screenshots are not allowed. Continue only to read the document.' : 'Return to this window to keep reading.'}
+                                    </p>
+                                    {printScreen && (
+                                        <Button className="mt-4" variant="secondary" size="sm" onClick={() => setPrintScreen(false)}>
+                                            Continue Reading
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
                         )}
-                        {state.status === 'error' && (
-                            <p className="mx-auto max-w-lg rounded-lg bg-danger-bg px-4 py-3 text-center text-danger-fg" role="alert">
-                                {state.message}
-                            </p>
-                        )}
-                        <div ref={pagesRef} className="mx-auto flex flex-col items-center gap-6" />
                     </div>
                 </div>
             )}

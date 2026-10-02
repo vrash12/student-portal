@@ -38,6 +38,7 @@ use App\Http\Controllers\Staff\InstructorAssignmentController;
 use App\Http\Controllers\Staff\InstructorController;
 use App\Http\Controllers\Staff\MedicalAccessController;
 use App\Http\Controllers\Staff\MedicalDocumentController;
+use App\Http\Controllers\Staff\MedicalDownloadController;
 use App\Http\Controllers\Staff\MedicalFieldController;
 use App\Http\Controllers\Staff\MedicalRecordController;
 use App\Http\Controllers\Staff\PerformanceAreaController;
@@ -175,6 +176,15 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('medical-documents/{medicalDocument}/file', [MedicalDocumentController::class, 'file'])->name('medical.documents.file')->whereNumber('medicalDocument')->can('view', 'medicalDocument');
         Route::get('medical-documents/{medicalDocument}/protected', [MedicalDocumentController::class, 'protected'])->name('medical.documents.protected')->whereNumber('medicalDocument')->can('viewProtected', 'medicalDocument');
         Route::post('medical-documents/{medicalDocument}/accept', [MedicalDocumentController::class, 'accept'])->name('medical.documents.accept')->whereNumber('medicalDocument')->can('review', 'medicalDocument');
+        Route::post('medical-documents/{medicalDocument}/print-screen', [MedicalDocumentController::class, 'printScreen'])->name('medical.documents.print-screen')->whereNumber('medicalDocument')->can('viewProtected', 'medicalDocument')->middleware('throttle:medical-screen-events');
+        // Instructors' requests to download a document they may view (MedicalDownloadController).
+        Route::get('medical-records/download-requests', [MedicalDownloadController::class, 'index'])->name('medical.downloads.index')->can(Permission::ManageMedical->value);
+        Route::post('medical-documents/{medicalDocument}/download-requests', [MedicalDownloadController::class, 'store'])->name('medical.downloads.store')->whereNumber('medicalDocument')->can('requestDownload', 'medicalDocument');
+        Route::post('medical-download-requests/{medicalDownloadRequest}/cancel', [MedicalDownloadController::class, 'cancel'])->name('medical.downloads.cancel')->whereNumber('medicalDownloadRequest')->can('cancel', 'medicalDownloadRequest');
+        Route::post('medical-download-requests/{medicalDownloadRequest}/approve', [MedicalDownloadController::class, 'approve'])->name('medical.downloads.approve')->whereNumber('medicalDownloadRequest')->can('decide', 'medicalDownloadRequest');
+        Route::post('medical-download-requests/{medicalDownloadRequest}/reject', [MedicalDownloadController::class, 'reject'])->name('medical.downloads.reject')->whereNumber('medicalDownloadRequest')->can('decide', 'medicalDownloadRequest');
+        Route::post('medical-download-requests/{medicalDownloadRequest}/revoke', [MedicalDownloadController::class, 'revoke'])->name('medical.downloads.revoke')->whereNumber('medicalDownloadRequest')->can('revoke', 'medicalDownloadRequest');
+        Route::get('medical-download-requests/{medicalDownloadRequest}/file', [MedicalDownloadController::class, 'file'])->name('medical.downloads.file')->whereNumber('medicalDownloadRequest')->can('download', 'medicalDownloadRequest')->middleware('throttle:record-downloads');
         Route::post('medical-documents/{medicalDocument}/return', [MedicalDocumentController::class, 'return'])->name('medical.documents.return')->whereNumber('medicalDocument')->can('review', 'medicalDocument');
         Route::middleware('can:'.Permission::ConfigureMedical->value)->group(function (): void {
             Route::get('medical-records/fields', [MedicalFieldController::class, 'index'])->name('medical.fields.index');
