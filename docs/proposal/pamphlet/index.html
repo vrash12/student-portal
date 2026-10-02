@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: ten letter-size sheets (8.5 x 11 in) stacked on a desk; every measure inside a sheet is in cqi (1% of the sheet width) so a sheet scales as one piece and prints at true size. */
+/* Layout: nine letter-size sheets (8.5 x 11 in) stacked on a desk; every measure inside a sheet is in cqi (1% of the sheet width) so a sheet scales as one piece and prints at true size. */
 :root {
     color-scheme: light;
     --forest: #0f3a29;
@@ -102,8 +102,6 @@ body { margin: 0; background: var(--desk); color: var(--text); font-family: var(
 .section-label { margin: 4.4cqi 0 2.2cqi; }
 .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.8cqi; }
 .tile { position: relative; display: flex; flex-direction: column; gap: 1.1cqi; padding: 2.2cqi 2.1cqi 2.3cqi; border-radius: 2cqi; background: var(--mist); }
-.tile--new { background: #f6efd7; box-shadow: inset 0 0 0 0.22cqi #e6cf86; }
-.tile .new { position: absolute; top: 2.4cqi; right: 2cqi; }
 .badge-icon { display: grid; place-items: center; width: 4.8cqi; height: 4.8cqi; border-radius: 1.3cqi; background: var(--forest); color: var(--gold); font-size: 2.6cqi; }
 .tile h3 { margin: 0.6cqi 0 0; font: 800 max(13px, 2.45cqi)/1 var(--display); text-transform: uppercase; color: var(--ink); }
 .tile p { margin: 0; font: 400 max(11px, 1.7cqi)/1.45 var(--body); color: var(--text); }
@@ -185,25 +183,7 @@ body { margin: 0; background: var(--desk); color: var(--text); font-family: var(
 .verdict--p { background: var(--gold); color: var(--forest); }
 .footnote { margin: 2.6cqi 0 0; font: 400 max(11px, 1.75cqi)/1.5 var(--body); color: var(--text); }
 
-/* ---------- 08 Medical records ---------- */
-.medical { background: var(--forest); }
-.med-grid { display: grid; grid-template-columns: 31fr 61fr; gap: 3cqi; margin-top: 3.4cqi; align-items: start; }
-.med-col { display: flex; flex-direction: column; gap: 2.2cqi; }
-.med-step { display: flex; align-items: center; gap: 1.3cqi; margin-bottom: 1.3cqi; }
-.med-step b { display: grid; place-items: center; width: 3.4cqi; height: 3.4cqi; border-radius: 50%; background: var(--gold); color: var(--forest); font: 800 max(10px, 1.8cqi)/1 var(--display); flex: none; }
-.med-step h3 { margin: 0; font: 800 max(12px, 2.3cqi)/1 var(--display); text-transform: uppercase; color: var(--on-dark); }
-.med-step p { margin: 0.5cqi 0 0; font: 400 max(10px, 1.55cqi)/1.35 var(--body); color: var(--on-dark-soft); }
-.medical .tablet { padding: 1.4cqi; border-radius: 3.6cqi; background: #07170f; }
-.medical .tablet img { --ratio: 820 / 1130; border-radius: 2cqi; }
-.medical .frame { padding: 0.7cqi; border-radius: 1.8cqi; }
-.medical .frame img { border-radius: 1.1cqi; }
-.guards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.4cqi; margin-top: 3cqi; }
-.guard { display: flex; flex-direction: column; gap: 0.9cqi; padding: 1.8cqi 1.8cqi; border-radius: 1.8cqi; background: var(--forest-raised); box-shadow: inset 0 0 0 0.18cqi var(--forest-line); }
-.guard .icon { font-size: 2.6cqi; color: var(--gold); }
-.guard h3 { margin: 0; font: 800 max(12px, 2.15cqi)/1 var(--display); text-transform: uppercase; color: var(--on-dark); }
-.guard p { margin: 0; font: 400 max(10px, 1.5cqi)/1.4 var(--body); color: var(--on-dark-soft); }
-
-/* ---------- 09 Roles ---------- */
+/* ---------- 08 Roles ---------- */
 .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6cqi; margin-top: 3.4cqi; }
 .role { padding: 2.4cqi 2.8cqi 2.6cqi; border-radius: 2.2cqi; background: var(--paper); }
 .role--wide { grid-column: 1 / -1; }
@@ -227,7 +207,7 @@ body { margin: 0; background: var(--desk); color: var(--text); font-family: var(
 .stand h3 { margin: 0; font: 800 max(14px, 3cqi)/1.02 var(--display); text-transform: uppercase; color: var(--ink); }
 .stand p { margin: 1.6cqi 0 0; font: 400 max(11px, 1.85cqi)/1.5 var(--body); color: var(--text); }
 
-/* ---------- 10 Back cover ---------- */
+/* ---------- 09 Back cover ---------- */
 .back { background: var(--forest); }
 .back .title { font-size: 11cqi; max-width: none; }
 .back .title .gold { color: var(--gold); }
@@ -250,12 +230,12 @@ body { margin: 0; background: var(--desk); color: var(--text); font-family: var(
 
 /* ---------- Narrow screens: the sheet becomes a column ---------- */
 @container (max-width: 560px) {
-    .tiles, .features, .guards { grid-template-columns: 1fr 1fr; }
+    .tiles, .features { grid-template-columns: 1fr 1fr; }
     .states { grid-template-columns: 1fr 1fr; }
     .checks, .points, .steps, .verdicts, .safe, .role--wide ul { grid-template-columns: 1fr; }
     .steps::before, .areas::before { display: none; }
     .areas { grid-template-columns: repeat(3, 1fr); row-gap: 3cqi; }
-    .med-grid, .roles, .stand, .back-bottom, .contact { grid-template-columns: 1fr; }
+    .roles, .stand, .back-bottom, .contact { grid-template-columns: 1fr; }
     .cover-devices { position: relative; bottom: auto; height: 92cqi; margin-top: 4cqi; }
     .cover-foot { position: static; margin: 0 0 4cqi 7.8cqi; }
     .tablets { padding-right: 0; flex-wrap: wrap; }
@@ -374,8 +354,8 @@ body { margin: 0; background: var(--desk); color: var(--text); font-family: var(
                 <article class="tile"><span class="badge-icon"><svg class="icon"><use href="#i-library"/></svg></span><h3>Question Bank</h3><p>Reusable questions for every subject.</p></article>
                 <article class="tile"><span class="badge-icon"><svg class="icon"><use href="#i-award"/></svg></span><h3>Qualification</h3><p>Every required area, checked in one view.</p></article>
                 <article class="tile"><span class="badge-icon"><svg class="icon"><use href="#i-calendar"/></svg></span><h3>Training Records</h3><p>Merits, demerits, attendance and fitness.</p></article>
-                <article class="tile tile--new"><span class="new">New</span><span class="badge-icon"><svg class="icon"><use href="#i-filepen"/></svg></span><h3>Grade Corrections</h3><p>Finalized scores change only with approval.</p></article>
-                <article class="tile tile--new"><span class="new">New</span><span class="badge-icon"><svg class="icon"><use href="#i-heart"/></svg></span><h3>Medical Records</h3><p>Certificates and check-up findings, kept private.</p></article>
+                <article class="tile"><span class="badge-icon"><svg class="icon"><use href="#i-filepen"/></svg></span><h3>Grade Corrections</h3><p>Finalized scores change only with approval.</p></article>
+                <article class="tile"><span class="badge-icon"><svg class="icon"><use href="#i-heart"/></svg></span><h3>Medical Records</h3><p>Certificates and check-up findings, kept private.</p></article>
             </div>
             <footer class="page-foot"><span>Officer Candidate Training Management System</span><span>02</span></footer>
         </div>
@@ -523,47 +503,10 @@ body { margin: 0; background: var(--desk); color: var(--text); font-family: var(
         </div>
     </section>
 
-    <!-- 08 · Medical records (new) -->
-    <section class="page page--dark medical" aria-label="Medical records">
-        <div class="blob" style="right: -26cqi; top: -30cqi; width: 70cqi; height: 70cqi; background: #134430" aria-hidden="true"></div>
-        <div class="slash" aria-hidden="true"></div>
-        <span class="num" aria-hidden="true">08</span>
-        <div class="sheet">
-            <p class="eyebrow">Medical records <span class="new">New</span></p>
-            <h2 class="title">Health records, handled with care</h2>
-            <p class="lede" style="max-width: 78cqi">Candidates upload their own certificates and check-up findings. The medical staff review every file. Instructors see nothing without an approved request.</p>
-            <div class="med-grid">
-                <div class="med-col">
-                    <div>
-                        <div class="med-step"><b>1</b><div><h3>Upload</h3><p>A PDF or a photo of the paper, from the tablet.</p></div></div>
-                        <div class="tablet"><img src="assets/student-medical-list.jpg" alt="Candidate's uploaded documents: one waiting for review, one accepted, and the medical profile below"></div>
-                    </div>
-                </div>
-                <div class="med-col">
-                    <div>
-                        <div class="med-step"><b>2</b><div><h3>Review</h3><p>Accept it, or return it with a reason the candidate sees.</p></div></div>
-                        <div class="frame"><img src="assets/admin-medical-docs.jpg" style="--ratio: 1440 / 640" alt="Medical staff's list of uploaded documents with Accept and Return actions"></div>
-                    </div>
-                    <div>
-                        <div class="med-step"><b>3</b><div><h3>View by request</h3><p>Approved for 1, 7 or 30 days. The document opens view only.</p></div></div>
-                        <div class="frame"><img src="assets/instructor-medical-viewer.jpg" style="--ratio: 1440 / 560" alt="Instructor's view-only document viewer with the instructor's name and time stamped across the page"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="guards">
-                <div class="guard"><svg class="icon"><use href="#i-ban"/></svg><h3>No printing</h3><p>Downloads only with the medical staff's approval.</p></div>
-                <div class="guard"><svg class="icon"><use href="#i-stamp"/></svg><h3>Watermarked</h3><p>The viewer's name and time on every page.</p></div>
-                <div class="guard"><svg class="icon"><use href="#i-eye"/></svg><h3>Views recorded</h3><p>Who opened which file, and when.</p></div>
-                <div class="guard"><svg class="icon"><use href="#i-keyhole"/></svg><h3>Time-limited</h3><p>Access ends on its own, or earlier.</p></div>
-            </div>
-            <footer class="page-foot"><span>Officer Candidate Training Management System</span><span>08</span></footer>
-        </div>
-    </section>
-
-    <!-- 09 · Roles -->
+    <!-- 08 · Roles -->
     <section class="page page--mist" aria-label="Roles">
         <div class="slash" aria-hidden="true"></div>
-        <span class="num" aria-hidden="true">09</span>
+        <span class="num" aria-hidden="true">08</span>
         <div class="sheet">
             <p class="eyebrow">For every role</p>
             <h2 class="title">The right view for everyone</h2>
@@ -609,11 +552,11 @@ body { margin: 0; background: var(--desk); color: var(--text); font-family: var(
                     <p>Grades, exam results, merits and demerits, attendance, medical documents and a qualification checklist. Their own, any time.</p>
                 </div>
             </div>
-            <footer class="page-foot"><span>Officer Candidate Training Management System</span><span>09</span></footer>
+            <footer class="page-foot"><span>Officer Candidate Training Management System</span><span>08</span></footer>
         </div>
     </section>
 
-    <!-- 10 · Back cover -->
+    <!-- 09 · Back cover -->
     <section class="page page--dark back" aria-label="Back cover">
         <div class="blob" style="right: -20cqi; top: -36cqi; width: 76cqi; height: 76cqi; background: #164734" aria-hidden="true"></div>
         <div class="sheet">
