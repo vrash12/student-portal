@@ -77,6 +77,8 @@ interface DashboardProps {
     qualificationOverview: QualificationOverviewData | null;
     /** The user may configure the performance areas (performance.configure). */
     canConfigurePerformance: boolean;
+    /** Backup problems; only for whoever looks after backups (backups.manage). */
+    backupWarnings: string[];
 }
 
 interface AdministratorOverviewData {
@@ -103,6 +105,7 @@ export default function Dashboard({
     showQualification,
     qualificationOverview,
     canConfigurePerformance,
+    backupWarnings,
 }: DashboardProps) {
     const { app, auth } = usePage().props;
     const userName = auth.user?.name ?? '';
@@ -114,6 +117,16 @@ export default function Dashboard({
             <PageHeader title="Dashboard" description={`${greeting(app.timezone)}, ${userName}.`} />
 
             <div className="flex flex-col gap-6">
+                {backupWarnings.length > 0 && (
+                    <Alert tone="warning" title="Backups need attention">
+                        <p>{backupWarnings[0]}</p>
+                        <p className="mt-2">
+                            <Link href={routes.backups.index()} className="font-semibold text-primary-700 underline underline-offset-2">
+                                Open Backups{backupWarnings.length > 1 ? ` (${backupWarnings.length} problems)` : ''}
+                            </Link>
+                        </p>
+                    </Alert>
+                )}
                 {teaching !== null && <TeachingSection teaching={teaching} alerts={showAcademicAlerts ? academicAlerts : undefined} />}
 
                 {showAcademicOverview ? (

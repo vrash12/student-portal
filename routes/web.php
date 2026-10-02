@@ -22,6 +22,7 @@ use App\Http\Controllers\Staff\AssessmentController;
 use App\Http\Controllers\Staff\AssessmentScoreController;
 use App\Http\Controllers\Staff\AttendanceSessionController;
 use App\Http\Controllers\Staff\AuditHistoryController;
+use App\Http\Controllers\Staff\BackupController;
 use App\Http\Controllers\Staff\CandidateController;
 use App\Http\Controllers\Staff\ClassBatchController;
 use App\Http\Controllers\Staff\ClassSubjectController;
@@ -67,6 +68,13 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
         Route::get('reports', ReportController::class)->name('reports.index')->can(Permission::ViewReports->value);
         Route::get('audit-history', AuditHistoryController::class)->name('audit-history.index')->can(Permission::ViewAuditHistory->value);
+        // Encrypted backups of the whole system (BackupController; Admin only).
+        Route::middleware('can:'.Permission::ManageBackups->value)->group(function () {
+            Route::get('backups', [BackupController::class, 'index'])->name('backups.index');
+            Route::post('backups', [BackupController::class, 'store'])->name('backups.store')->middleware('throttle:backup-actions');
+            Route::post('backups/verify', [BackupController::class, 'verify'])->name('backups.verify')->middleware('throttle:backup-actions');
+            Route::post('backups/{backup}/restore', [BackupController::class, 'restore'])->name('backups.restore')->where('backup', '[0-9]{8}-[0-9]{6}-[a-z0-9-]+')->middleware('throttle:backup-actions');
+        });
 
         // Academic monitoring, scoped by MonitoringScope (all candidates, or the subjects taught).
         Route::get('monitoring', AcademicMonitoringController::class)

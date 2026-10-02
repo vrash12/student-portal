@@ -175,6 +175,8 @@ class RouteAccessMatrixTest extends TestCase
             'assessment' => (string) $assessment->id,
             'attempt' => (string) $this->attemptOfB1->id,
             'attendanceSession' => (string) $attendanceSession->id,
+            // A backup name (files, not records); only the Admin reaches backup routes.
+            'backup' => '20261002-010000-daily',
             'candidate' => (string) $this->candidateInB->id,
             'classBatch' => (string) $this->batchB->id,
             'classSubject' => (string) $this->offeringB1->id,

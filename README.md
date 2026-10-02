@@ -140,7 +140,26 @@ The test suite refuses to run against any database whose name does not end in `_
 - The application sends a Content-Security-Policy and, on HTTPS requests, `Strict-Transport-Security`. Do not add a second, conflicting policy in the web server.
 - Staff accounts created or reset by an administrator must choose their own password at the next sign-in.
 - Never commit `.env` or credentials. Keep `.env.example` current.
-- Back up the database together with `storage/app/private` (question images/audio/video, candidate photos and the medical documents candidates upload). See `docs/examination-operations.md`.
+- Backups are built in: see **Backups** below. They cover the database together with `storage/app/private` (question images/audio/video, candidate photos and the medical documents candidates upload) and `storage/app/public`.
+
+## Backups
+
+Every night (01:00, institution timezone) the system writes **one encrypted file with the whole database and every uploaded file** (`storage/app/private` and `storage/app/public`). Every Sunday at 03:00 the newest backup is **test-restored** into a scratch database and its files are checked. Old backups rotate: 14 daily, 8 weekly (Sundays), 12 monthly (the 1st), 10 manual and 5 safety copies taken before a restore. All values are in `config/backups.php` and `.env`.
+
+**Set up once per server**
+
+1. Choose a long passphrase and set `BACKUP_PASSPHRASE` in `.env`. **Every backup is encrypted with it (AES-256-GCM); without it no backup can be restored.** Keep a written copy in a sealed envelope or safe, away from the server. Backups are refused while it is empty, and changing it later does not re-encrypt older backups (keep the old one while they are kept).
+2. Optional: `BACKUP_PATH` (default `storage/backups`; prefer another disk) and `BACKUP_COPY_PATH` (a second folder, e.g. a network share, that receives a copy of every backup).
+3. If `mysqldump` and `mysql` are not on the PATH, set `BACKUP_MYSQLDUMP_PATH` and `BACKUP_MYSQL_PATH` (XAMPP: `C:\xampp\mysql\bin\mysqldump.exe` and `...\mysql.exe`). For the weekly restore test the database user needs CREATE and DROP on a scratch database (`BACKUP_VERIFY_DATABASE`, default `<database>_restore_check`).
+4. **Run the scheduler every minute.** Nightly backups, the weekly test and the requests from the Backups page are all started by it: a cron entry `* * * * * cd /path/to/app && php artisan schedule:run >> /dev/null 2>&1` on Linux, a Task Scheduler task running `php artisan schedule:run` every minute on Windows, or `php artisan schedule:work` while developing.
+
+**Backups page** (Administration → Backups, Admin role only; permission `backups.manage`): the last backup, the next one, the last restore test, free disk space and warnings (no recent backup, a failed backup or restore test, scheduler not running, passphrase missing, no copy in the second folder, disk almost full); **Back Up Now** and **Test Restore Now**; the list of backups; and the history of every backup, test and restore. The dashboard shows the same warnings to the Admin. Backups cannot be downloaded from the browser: IT copies the files from the server.
+
+**Restore** (replaces the whole system with a backup): on the Backups page choose **Restore**, re-enter your password and type `RESTORE`. Within a minute the scheduler takes a **safety backup**, shows a maintenance page, replaces the database and the uploaded files, runs migrations (so an older backup fits the current version) and brings the system back; everyone is signed out. If anything fails it puts the safety backup back. From the server: `php artisan backups:list`, then `php artisan backups:restore <backup id>`.
+
+**Commands:** `backups:run` (back up now), `backups:verify [id]` (test-restore), `backups:list`, `backups:restore <id>`, `backups:process` (requests from the page; run by the scheduler). Backups, their descriptions, the history (`history.jsonl`) and pending requests live as files in the backup folder, never in the database, so they survive a restore. Every operation is also written to the audit history.
+
+**Restore drill:** a backup that has never been restored is not proven. Besides the weekly automatic test, restore a recent backup on a spare machine a few times a year, with the passphrase from the safe.
 
 ## Candidate examination PWA (Milestone 9)
 

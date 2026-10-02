@@ -8,6 +8,7 @@ use App\Models\AcademicPeriod;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AdministratorDashboardService;
+use App\Services\Backups\BackupManager;
 use App\Services\Grading\GradingThresholds;
 use App\Services\Monitoring\AcademicMonitoring;
 use App\Services\Monitoring\MonitoredCandidate;
@@ -56,6 +57,8 @@ class DashboardController extends Controller
             'accountSummary' => $user->can('viewAny', User::class) ? $this->accountSummary() : null,
             'administratorOverview' => $showAcademicOverview ? $administratorDashboard->overview() : null,
             'showQualification' => $showQualification,
+            // Backup problems, for whoever looks after backups (the Admin).
+            'backupWarnings' => $user->hasPermission(Permission::ManageBackups) ? app(BackupManager::class)->status()['warnings'] : [],
             // Qualification across the active period's classes (null: no active period).
             'qualificationOverview' => $showQualification ? $qualification->activePeriod() : null,
             'canConfigurePerformance' => $user->hasPermission(Permission::ConfigurePerformance),

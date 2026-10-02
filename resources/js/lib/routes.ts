@@ -10,6 +10,12 @@ export const routes = {
     login: () => '/login',
     logout: () => '/logout',
     dashboard: () => '/dashboard',
+    backups: {
+        index: () => '/backups',
+        store: () => '/backups',
+        verify: () => '/backups/verify',
+        restore: (backupId: string) => `/backups/${backupId}/restore`,
+    },
     monitoring: {
         index: (query?: Record<string, string>) => withQuery('/monitoring', query),
     },

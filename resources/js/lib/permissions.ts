@@ -40,6 +40,7 @@ export const Permission = {
     ViewMedical: 'medical.view',
     ManageMedical: 'medical.manage',
     ConfigureMedical: 'medical.configure',
+    ManageBackups: 'backups.manage',
 } as const;
 
 export type PermissionCode = (typeof Permission)[keyof typeof Permission];

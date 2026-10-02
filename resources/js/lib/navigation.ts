@@ -4,6 +4,7 @@ import {
     BookOpen,
     CalendarCheck,
     CalendarRange,
+    DatabaseBackup,
     ClipboardCheck,
     Dumbbell,
     FileChartColumn,
@@ -126,6 +127,7 @@ export const staffNavigation: NavigationSection[] = [
         label: 'Administration',
         items: [
             { label: 'Audit History', href: '/audit-history', icon: History, permission: Permission.ViewAuditHistory },
+            { label: 'Backups', href: routes.backups.index(), icon: DatabaseBackup, permission: Permission.ManageBackups },
             {
                 label: 'Instructors',
                 href: routes.instructors.index(),

@@ -86,7 +86,8 @@ enum SystemRole: string
         return match ($this) {
             // Expenses: the Admin charges candidates (there is
             // no finance role; owner decision 2026-10-01).
-            self::SuperAdministrator => [...$academicAdministration, Permission::ViewRoles, Permission::ViewAccounts, Permission::ManageAccounts],
+            // Backups and restores: the Admin only (owner request, 2026-10-02).
+            self::SuperAdministrator => [...$academicAdministration, Permission::ViewRoles, Permission::ViewAccounts, Permission::ManageAccounts, Permission::ManageBackups],
             self::AcademicAdministrator => [...$academicAdministration, Permission::ViewAccounts],
             self::Instructor => [
                 Permission::AccessStaffArea,

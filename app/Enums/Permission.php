@@ -47,6 +47,7 @@ enum Permission: string
     case ViewMedical = 'medical.view';
     case ManageMedical = 'medical.manage';
     case ConfigureMedical = 'medical.configure';
+    case ManageBackups = 'backups.manage';
 
     public function label(): string
     {
@@ -83,6 +84,7 @@ enum Permission: string
             self::ViewMedical => 'View candidate medical records',
             self::ManageMedical => 'Record candidate medical records',
             self::ConfigureMedical => 'Configure medical record fields',
+            self::ManageBackups => 'Manage backups',
         };
     }
 
@@ -121,6 +123,7 @@ enum Permission: string
             self::ViewMedical => 'See every candidate\'s full medical record, its change history and uploaded documents (open and download). Instructors without it see the records of the classes they teach, view only.',
             self::ManageMedical => 'Record medical values (every change kept in the history), accept or return the documents candidates upload, and approve, reject or withdraw instructors\' requests to download a document.',
             self::ConfigureMedical => 'Define the medical record fields (name, type, choices), and whether instructors and candidates see each field.',
+            self::ManageBackups => 'See the encrypted backups of the whole system, start a backup or a restore test, and restore the system from a backup (password and typed confirmation required).',
         };
     }
 
@@ -136,7 +139,7 @@ enum Permission: string
             self::ConfigureGrading, self::RecordGrades, self::ApproveGradeCorrections => 'Grading',
             self::ViewAcademicMonitoring => 'Monitoring',
             self::ViewReports => 'Monitoring',
-            self::ViewAuditHistory => 'Administration',
+            self::ViewAuditHistory, self::ManageBackups => 'Administration',
             self::ManageQuestionBank, self::ManageExaminations => 'Assessments',
             self::ViewFitness, self::ManageFitness, self::ConfigureFitness => 'Military Fitness',
             self::ViewAccounts, self::ManageAccounts => 'Accounts',

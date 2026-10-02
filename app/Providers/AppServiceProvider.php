@@ -31,6 +31,8 @@ use App\Models\Question;
 use App\Models\Role;
 use App\Models\Subject;
 use App\Models\User;
+use App\Services\Backups\DatabaseTools;
+use App\Services\Backups\MysqlDatabaseTools;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -48,7 +50,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Backups use the mysqldump and mysql programs (tests bind a fake).
+        $this->app->bind(DatabaseTools::class, MysqlDatabaseTools::class);
     }
 
     /**
@@ -85,6 +88,8 @@ class AppServiceProvider extends ServiceProvider
         $perUser('medical-uploads', 20);
         // Print Screen presses reported by the protected medical document viewer.
         $perUser('medical-screen-events', 30);
+        // Backups page requests (a restore checks the password).
+        $perUser('backup-actions', 6);
         // Changing one's own password (the current password is checked).
         $perUser('password-change', 6);
 
