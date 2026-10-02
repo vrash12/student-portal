@@ -37,17 +37,18 @@ class MedicalAccessRequestTest extends TestCase
         $this->admin = $this->userWithRole(SystemRole::SuperAdministrator, ['name' => 'Medical Admin']);
 
         $service = app(MedicalRecordService::class);
-        $shared = $service->createField(['name' => 'Allergies', 'field_type' => 'long_text', 'options' => null, 'help_text' => null, 'sort_order' => 1, 'visible_to_instructors' => true, 'visible_to_candidate' => true], $this->admin);
-        $private = $service->createField(['name' => 'Existing Conditions', 'field_type' => 'long_text', 'options' => null, 'help_text' => null, 'sort_order' => 2, 'visible_to_instructors' => false, 'visible_to_candidate' => true], $this->admin);
+        $shared = $service->createField(['name' => 'Allergies', 'field_type' => 'long_text', 'options' => null, 'help_text' => null, 'sort_order' => 1, 'visible_to_candidate' => true], $this->admin);
+        $private = $service->createField(['name' => 'Existing Conditions', 'field_type' => 'long_text', 'options' => null, 'help_text' => null, 'sort_order' => 2, 'visible_to_candidate' => true], $this->admin);
         $service->saveRecord($this->candidateInA, [$shared->id => 'Shellfish.', $private->id => 'Mild asthma, controlled.'], $this->admin);
     }
 
     public function test_an_approved_request_shows_the_full_record_until_it_ends(): void
     {
-        $this->profile($this->alpha)->assertInertia(fn (Assert $page) => $page
+        $before = $this->profile($this->alpha)->assertInertia(fn (Assert $page) => $page
             ->where('medical.scope', 'instructor')
-            ->has('medical.entries', 1)
+            ->has('medical.entries', 0)
             ->where('medical.access.canRequest', true));
+        $this->assertStringNotContainsString('Shellfish.', $before->getContent());
 
         $this->file()->assertSessionHasNoErrors()->assertRedirect(route('candidates.show', $this->candidateInA));
         $request = MedicalAccessRequest::query()->sole();
@@ -81,7 +82,7 @@ class MedicalAccessRequestTest extends TestCase
         $this->travel(8)->days();
         $response = $this->profile($this->alpha)->assertInertia(fn (Assert $page) => $page
             ->where('medical.scope', 'instructor')
-            ->has('medical.entries', 1)
+            ->has('medical.entries', 0)
             ->where('medical.access.lastDecision.status.value', 'expired')
             ->where('medical.access.canRequest', true));
         $this->assertStringNotContainsString('Mild asthma, controlled.', $response->getContent());

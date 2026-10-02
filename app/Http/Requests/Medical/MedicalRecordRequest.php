@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Medical;
 
+use App\Enums\MedicalFieldType;
 use App\Models\MedicalField;
 use App\Services\Medical\MedicalRecordService;
 use Illuminate\Database\Eloquent\Collection;
@@ -40,9 +41,12 @@ class MedicalRecordRequest extends FormRequest
         $messages = [];
         foreach ($this->activeFields() as $field) {
             $key = "values.{$field->id}";
-            $messages["{$key}.max"] = 'This answer is too long (:max characters at most).';
             $messages["{$key}.in"] = 'Choose one of the listed answers.';
             $messages["{$key}.date_format"] = 'Enter a valid date.';
+            $messages["{$key}.numeric"] = 'Enter a number.';
+            $messages["{$key}.decimal"] = 'Use at most two decimal places.';
+            $messages["{$key}.min"] = 'Enter a number from 0 to 99,999.';
+            $messages["{$key}.max"] = $field->field_type === MedicalFieldType::Number ? 'Enter a number from 0 to 99,999.' : 'This answer is too long (:max characters at most).';
         }
 
         return $messages;

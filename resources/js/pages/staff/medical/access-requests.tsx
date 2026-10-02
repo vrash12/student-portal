@@ -84,7 +84,7 @@ export default function MedicalAccessRequests({ requests, status, counts, durati
                     <EmptyState
                         icon={LockKeyhole}
                         title={status === 'pending' ? 'No requests waiting' : status === 'active' ? 'No instructor has access now' : 'No requests yet'}
-                        description="Instructors request a full record from the Medical Notes panel of a candidate's profile."
+                        description="Instructors request a full record from the Medical Record panel of a candidate's profile."
                     />
                 ) : (
                     <Table caption="Medical record access requests" className="min-w-[64rem]">

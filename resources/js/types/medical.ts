@@ -1,6 +1,6 @@
 import type { StatusTone } from '@/components/ui/status-badge';
 
-export type MedicalFieldTypeValue = 'text' | 'long_text' | 'choice' | 'date' | 'yes_no';
+export type MedicalFieldTypeValue = 'text' | 'long_text' | 'number' | 'choice' | 'date' | 'yes_no';
 
 export interface MedicalFieldTypeOption {
     value: MedicalFieldTypeValue;
@@ -12,12 +12,15 @@ export interface MedicalFieldTypeOption {
 export interface MedicalFieldDefinition {
     id: number;
     name: string;
+    /** Heading the field is listed under; null = no section. */
+    section: string | null;
     type: { value: MedicalFieldTypeValue; label: string };
     /** Choice fields only. */
     options: string[];
+    /** Number fields only, e.g. "cm". */
+    unit: string | null;
     helpText: string | null;
     sortOrder: number;
-    visibleToInstructors: boolean;
     visibleToCandidate: boolean;
     isActive: boolean;
 }
@@ -26,9 +29,10 @@ export interface MedicalFieldDefinition {
 export interface MedicalEntry {
     fieldId: number;
     name: string;
+    section: string | null;
     type: MedicalFieldTypeValue;
+    unit: string | null;
     helpText: string | null;
-    visibleToInstructors: boolean;
     visibleToCandidate: boolean;
     value: string | null;
 }
@@ -46,8 +50,8 @@ export interface MedicalAccessState {
 /** The medical panel of the staff candidate profile. */
 export interface ProfileMedical {
     /**
-     * "full": every field (medical staff); "instructor": only the fields shared with instructors;
-     * "granted": every field, read-only, through an instructor's approved request.
+     * "full": every field (medical staff); "instructor": no field, only the state of the instructor's
+     * access requests; "granted": every field, read-only, through an instructor's approved request.
      */
     scope: 'full' | 'instructor' | 'granted';
     entries: MedicalEntry[];

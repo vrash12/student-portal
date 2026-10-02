@@ -141,7 +141,7 @@ class RouteAccessMatrixTest extends TestCase
         // A medical record field (administrators only).
         $medicalField = app(MedicalRecordService::class)->createField([
             'name' => 'Blood Type', 'field_type' => 'choice', 'options' => ['A+', 'O+'], 'help_text' => null,
-            'sort_order' => 1, 'visible_to_instructors' => false, 'visible_to_candidate' => true,
+            'sort_order' => 1, 'visible_to_candidate' => true,
         ], $administrator);
 
         // Bravo's request to see candidate B1's full medical record (Bravo cancels; medical staff decide).

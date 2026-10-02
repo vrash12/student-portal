@@ -11,16 +11,18 @@ import type { MedicalFieldDefinition, MedicalFieldTypeOption } from '@/types/med
 interface EditMedicalFieldProps {
     field: MedicalFieldDefinition & { valueCount: number };
     types: MedicalFieldTypeOption[];
+    sections: string[];
 }
 
-export default function EditMedicalField({ field, types }: EditMedicalFieldProps) {
+export default function EditMedicalField({ field, types, sections }: EditMedicalFieldProps) {
     const form = useForm<MedicalFieldFormData>({
         name: field.name,
+        section: field.section ?? '',
         field_type: field.type.value,
         options: field.options.join('\n'),
+        unit: field.unit ?? '',
         help_text: field.helpText ?? '',
         sort_order: String(field.sortOrder),
-        visible_to_instructors: field.visibleToInstructors,
         visible_to_candidate: field.visibleToCandidate,
         is_active: field.isActive,
     });
@@ -67,7 +69,7 @@ export default function EditMedicalField({ field, types }: EditMedicalFieldProps
                         recorded {field.valueCount === 1 ? 'value is' : 'values are'} kept.
                     </Alert>
                 )}
-                <MedicalFieldForm form={form} mode="edit" types={types} typeLocked={inUse} submitLabel="Save Changes" onSubmit={submit} />
+                <MedicalFieldForm form={form} mode="edit" types={types} sections={sections} typeLocked={inUse} submitLabel="Save Changes" onSubmit={submit} />
             </div>
         </>
     );

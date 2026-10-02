@@ -943,7 +943,7 @@ Implemented at the owner's request (details and decisions in `SESSION_HANDOFF.md
 - OCS performance: merits and demerits, attendance, company/platoon, performance areas with qualification and class rank (staff only)
 - Candidate portal split into Home, Examinations, My Grades, My Performance, Physical Fitness and My Information pages, with icons and charts (own records only, no rank)
 - Authorized grade corrections: instructors request changes to finalized scores with an incident report; administrators approve or reject them (2026-10-02)
-- Candidate medical records with administrator-defined fields and per-field sharing with instructors and candidates (2026-10-02)
+- Candidate medical records with administrator-defined fields in sections (shown to the candidate or staff only); instructors see a record only through an approved, time-limited access request (2026-10-02)
 
 The next planned milestone remains **Milestone 17 — Security Hardening**.
 

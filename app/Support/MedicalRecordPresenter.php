@@ -16,9 +16,9 @@ use Illuminate\Database\Eloquent\Collection;
  * Who sees what of a candidate's medical record:
  *
  * - staff with medical.view: every active field ("full");
- * - instructors who teach the candidate's class: only the fields shared with
- *   instructors ("instructor"), or every active field, read-only, while the
- *   medical staff have approved their request for the full record ("granted");
+ * - instructors who teach the candidate's class: nothing ("instructor": only
+ *   the state of their access requests), or every active field, read-only,
+ *   while the medical staff have approved their request ("granted");
  * - the candidate in the portal: only the fields shared with the candidate.
  *
  * Fields that are not shown are never sent to the browser.
@@ -33,11 +33,12 @@ final class MedicalRecordPresenter
         return [
             'id' => $field->id,
             'name' => $field->name,
+            'section' => $field->section,
             'type' => $field->field_type->toArray(),
             'options' => $field->choiceOptions(),
+            'unit' => $field->unit,
             'helpText' => $field->help_text,
             'sortOrder' => $field->sort_order,
-            'visibleToInstructors' => $field->visible_to_instructors,
             'visibleToCandidate' => $field->visible_to_candidate,
             'isActive' => $field->is_active,
         ];
@@ -56,12 +57,10 @@ final class MedicalRecordPresenter
             $scope = 'full';
             $fields = MedicalField::query()->active()->ordered()->get();
         } elseif ($candidate->class_batch_id !== null && $viewer->canTeach() && $viewer->teachesClass($candidate->class_batch_id)) {
+            // Owner decision (2026-10-02): no medical information without approved access.
             $grant = MedicalAccessService::activeGrant($viewer, $candidate);
             $scope = $grant === null ? 'instructor' : 'granted';
-            $fields = MedicalField::query()->active()
-                ->when($grant === null, fn ($shared) => $shared->where('visible_to_instructors', true))
-                ->ordered()
-                ->get();
+            $fields = $grant === null ? new Collection : MedicalField::query()->active()->ordered()->get();
         } else {
             return null;
         }
@@ -152,9 +151,10 @@ final class MedicalRecordPresenter
             ->map(fn (MedicalField $field): array => [
                 'fieldId' => $field->id,
                 'name' => $field->name,
+                'section' => $field->section,
                 'type' => $field->field_type->value,
+                'unit' => $field->unit,
                 'helpText' => $field->help_text,
-                'visibleToInstructors' => $field->visible_to_instructors,
                 'visibleToCandidate' => $field->visible_to_candidate,
                 'value' => $values->get($field->id)?->value,
             ])

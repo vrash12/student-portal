@@ -9,12 +9,14 @@ import type { MedicalFieldTypeOption } from '@/types/medical';
 
 export interface MedicalFieldFormData {
     name: string;
+    section: string;
     field_type: string;
     /** Choices, one per line (choice fields only). */
     options: string;
+    /** Number fields only. */
+    unit: string;
     help_text: string;
     sort_order: string;
-    visible_to_instructors: boolean;
     visible_to_candidate: boolean;
     is_active: boolean;
 }
@@ -23,6 +25,8 @@ interface MedicalFieldFormProps {
     form: InertiaForm<MedicalFieldFormData>;
     mode: 'create' | 'edit';
     types: MedicalFieldTypeOption[];
+    /** Sections already in use, offered while typing. */
+    sections: string[];
     /** Values are recorded: the type can no longer change. */
     typeLocked: boolean;
     submitLabel: string;
@@ -30,7 +34,7 @@ interface MedicalFieldFormProps {
 }
 
 /** Name, kind of answer, choices and audience of a medical record field. */
-export function MedicalFieldForm({ form, mode, types, typeLocked, submitLabel, onSubmit }: MedicalFieldFormProps) {
+export function MedicalFieldForm({ form, mode, types, sections, typeLocked, submitLabel, onSubmit }: MedicalFieldFormProps) {
     return (
         <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
             <FormSection title="Field">
@@ -45,6 +49,22 @@ export function MedicalFieldForm({ form, mode, types, typeLocked, submitLabel, o
                     />
                 </FormField>
 
+                <FormField label="Section" error={form.errors.section} hint="Optional. The heading the field is listed under, e.g. Medical History. Choose an existing one or type a new one.">
+                    <TextInput
+                        name="section"
+                        value={form.data.section}
+                        onChange={(event) => form.setData('section', event.target.value)}
+                        maxLength={60}
+                        autoComplete="off"
+                        list="medical-sections"
+                    />
+                </FormField>
+                <datalist id="medical-sections">
+                    {sections.map((section) => (
+                        <option key={section} value={section} />
+                    ))}
+                </datalist>
+
                 <RadioCards
                     legend="Kind of answer"
                     name="field_type"
@@ -56,6 +76,12 @@ export function MedicalFieldForm({ form, mode, types, typeLocked, submitLabel, o
                     disabled={typeLocked}
                 />
                 {typeLocked && <p className="-mt-3 text-sm text-ink-muted">The kind of answer cannot change because values are recorded.</p>}
+
+                {form.data.field_type === 'number' && (
+                    <FormField label="Unit" error={form.errors.unit} hint="Optional. Shown after the number, e.g. cm, kg, bpm.">
+                        <TextInput name="unit" value={form.data.unit} onChange={(event) => form.setData('unit', event.target.value)} maxLength={20} autoComplete="off" className="w-40" />
+                    </FormField>
+                )}
 
                 {form.data.field_type === 'choice' && (
                     <FormField
@@ -97,14 +123,10 @@ export function MedicalFieldForm({ form, mode, types, typeLocked, submitLabel, o
                 </div>
             </FormSection>
 
-            <FormSection title="Who Sees This Field" description="Administrators with the medical permissions always see every field.">
-                <CheckboxField
-                    label="Instructors of the candidate's classes"
-                    description="Only for safety information instructors need in training, such as allergies or emergency notes."
-                    checked={form.data.visible_to_instructors}
-                    onChange={(event) => form.setData('visible_to_instructors', event.target.checked)}
-                    error={form.errors.visible_to_instructors}
-                />
+            <FormSection
+                title="Who Sees This Field"
+                description="Medical staff always see every field. Instructors see the medical record only after the medical staff approve their request."
+            >
                 <CheckboxField
                     label="The candidate (own record, in the portal)"
                     description="The candidate sees their own value under My Information, read-only."

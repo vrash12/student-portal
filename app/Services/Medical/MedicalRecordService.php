@@ -42,6 +42,7 @@ class MedicalRecordService
         return match ($field->field_type) {
             MedicalFieldType::Text => ['nullable', 'string', 'max:'.MedicalFieldType::TEXT_MAX],
             MedicalFieldType::LongText => ['nullable', 'string', 'max:'.MedicalFieldType::LONG_TEXT_MAX],
+            MedicalFieldType::Number => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:99999'],
             MedicalFieldType::Choice => ['nullable', 'string', Rule::in($field->choiceOptions())],
             MedicalFieldType::Date => ['nullable', 'date_format:Y-m-d'],
             MedicalFieldType::YesNo => ['nullable', 'in:yes,no'],
@@ -49,7 +50,7 @@ class MedicalRecordService
     }
 
     /**
-     * @param  array{name: string, field_type: string, options: list<string>|null, help_text: ?string, sort_order: int, visible_to_instructors: bool, visible_to_candidate: bool}  $data
+     * @param  array{name: string, section?: ?string, field_type: string, options: list<string>|null, unit?: ?string, help_text: ?string, sort_order: int, visible_to_candidate: bool}  $data
      */
     public function createField(array $data, User $actor): MedicalField
     {
@@ -66,7 +67,7 @@ class MedicalRecordService
     }
 
     /**
-     * @param  array{name: string, field_type: string, options: list<string>|null, help_text: ?string, sort_order: int, visible_to_instructors: bool, visible_to_candidate: bool, is_active: bool}  $data
+     * @param  array{name: string, field_type: string, options: list<string>|null, help_text: ?string, sort_order: int, visible_to_candidate: bool, is_active: bool}  $data
      *
      * @throws ValidationException
      */
@@ -188,6 +189,13 @@ class MedicalRecordService
         });
     }
 
+    private function clean(mixed $text): ?string
+    {
+        $text = $text === null ? null : trim((string) $text);
+
+        return $text === '' ? null : $text;
+    }
+
     private function normalize(MedicalField $field, mixed $value): ?string
     {
         if ($value === null) {
@@ -204,7 +212,7 @@ class MedicalRecordService
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array{name: string, field_type: string, options: list<string>|null, help_text: ?string, sort_order: int, visible_to_instructors: bool, visible_to_candidate: bool}
+     * @return array{name: string, field_type: string, options: list<string>|null, help_text: ?string, sort_order: int, visible_to_candidate: bool}
      */
     private function fieldAttributes(array $data): array
     {
@@ -212,12 +220,13 @@ class MedicalRecordService
 
         return [
             'name' => (string) $data['name'],
+            'section' => $this->clean($data['section'] ?? null),
             'field_type' => $type,
-            // Only choice fields keep a list of answers.
+            // Only choice fields keep a list of answers, and only number fields a unit.
             'options' => $type === MedicalFieldType::Choice->value ? array_values($data['options'] ?? []) : null,
+            'unit' => $type === MedicalFieldType::Number->value ? $this->clean($data['unit'] ?? null) : null,
             'help_text' => $data['help_text'] ?? null,
             'sort_order' => (int) $data['sort_order'],
-            'visible_to_instructors' => (bool) $data['visible_to_instructors'],
             'visible_to_candidate' => (bool) $data['visible_to_candidate'],
         ];
     }
@@ -228,10 +237,9 @@ class MedicalRecordService
     private function fieldSnapshot(MedicalField $field): array
     {
         return [
-            ...Arr::only($field->getAttributes(), ['name', 'help_text', 'sort_order']),
+            ...Arr::only($field->getAttributes(), ['name', 'section', 'unit', 'help_text', 'sort_order']),
             'field_type' => $field->field_type->value,
             'options' => $field->field_type === MedicalFieldType::Choice ? implode(', ', $field->choiceOptions()) : null,
-            'visible_to_instructors' => $field->visible_to_instructors,
             'visible_to_candidate' => $field->visible_to_candidate,
             'is_active' => $field->is_active,
         ];

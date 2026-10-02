@@ -1,5 +1,5 @@
 import { useForm } from '@inertiajs/react';
-import { GraduationCap, HeartPulse, Hourglass, LockKeyhole, Pencil, UserRound } from 'lucide-react';
+import { HeartPulse, Hourglass, LockKeyhole, Pencil } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink } from '@/components/ui/button';
@@ -18,9 +18,12 @@ const REASON_MIN = 20;
 const REASON_MAX = 1000;
 
 /** A recorded value as people read it; null when not recorded. */
-export function formatMedicalValue(type: MedicalFieldTypeValue, value: string | null): string | null {
+export function formatMedicalValue(type: MedicalFieldTypeValue, value: string | null, unit: string | null = null): string | null {
     if (value === null || value === '') {
         return null;
+    }
+    if (type === 'number') {
+        return unit ? `${value} ${unit}` : value;
     }
     if (type === 'yes_no') {
         return value === 'yes' ? 'Yes' : 'No';
@@ -32,18 +35,51 @@ export function formatMedicalValue(type: MedicalFieldTypeValue, value: string | 
     return value;
 }
 
-/** Fields and values of a medical record, two columns on wide screens. */
+/**
+ * Consecutive items of the same section, in the order given (fields are
+ * ordered by the administrators); items without a section form a group of their own.
+ */
+export function groupBySection<T extends { section: string | null }>(items: T[]): Array<{ section: string | null; items: T[] }> {
+    const groups: Array<{ section: string | null; items: T[] }> = [];
+    for (const item of items) {
+        const last = groups[groups.length - 1];
+        if (last !== undefined && last.section === item.section) {
+            last.items.push(item);
+        } else {
+            groups.push({ section: item.section, items: [item] });
+        }
+    }
+
+    return groups;
+}
+
+/** Fields and values of a medical record, by section, two columns on wide screens. */
 export function MedicalEntries({ entries, showAudience = false }: { entries: MedicalEntry[]; showAudience?: boolean }) {
     return (
-        <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+        <div className="flex flex-col gap-6">
+            {groupBySection(entries).map((group, index) => (
+                <section key={`${group.section ?? 'general'}-${index}`} aria-label={group.section ?? 'Medical record'} className="flex flex-col gap-3">
+                    {group.section !== null && (
+                        <h3 className="border-b border-line pb-1.5 text-xs font-semibold uppercase tracking-wider text-primary-800">{group.section}</h3>
+                    )}
+                    <EntryList entries={group.items} showAudience={showAudience} />
+                </section>
+            ))}
+        </div>
+    );
+}
+
+function EntryList({ entries, showAudience }: { entries: MedicalEntry[]; showAudience: boolean }) {
+    return (
+        <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
             {entries.map((entry) => {
-                const shown = formatMedicalValue(entry.type, entry.value);
+                const shown = formatMedicalValue(entry.type, entry.value, entry.unit);
 
                 return (
-                    <div key={entry.fieldId} className={entry.type === 'long_text' ? 'sm:col-span-2' : undefined}>
+                    <div key={entry.fieldId} className={entry.type === 'long_text' ? 'sm:col-span-2 lg:col-span-3' : undefined}>
                         <dt className="flex flex-wrap items-center gap-2 text-sm text-ink-muted">
                             {entry.name}
-                            {showAudience && <Audience instructors={entry.visibleToInstructors} candidate={entry.visibleToCandidate} />}
+                            {showAudience && <Audience candidate={entry.visibleToCandidate} />}
                         </dt>
                         <dd className={shown === null ? 'mt-0.5 text-ink-muted italic' : 'mt-0.5 whitespace-pre-line font-medium text-ink'}>
                             {shown ?? 'Not recorded'}
@@ -55,23 +91,17 @@ export function MedicalEntries({ entries, showAudience = false }: { entries: Med
     );
 }
 
-/** Small marks telling medical staff who else sees a field. Always text, never colour alone. */
-export function Audience({ instructors, candidate }: { instructors: boolean; candidate: boolean }) {
+/** Marks, for medical staff, a field the candidate does not see. Always text, never colour alone. */
+export function Audience({ candidate }: { candidate: boolean }) {
+    if (candidate) {
+        return null;
+    }
+
     return (
-        <>
-            {instructors && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2 text-xs font-medium text-primary-800">
-                    <GraduationCap className="size-3" aria-hidden="true" />
-                    Instructors
-                </span>
-            )}
-            {candidate && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2 text-xs font-medium text-ink">
-                    <UserRound className="size-3" aria-hidden="true" />
-                    Candidate
-                </span>
-            )}
-        </>
+        <span className="inline-flex items-center gap-1 rounded-full bg-warning-bg px-2 text-xs font-medium text-warning-fg">
+            <LockKeyhole className="size-3" aria-hidden="true" />
+            Staff only
+        </span>
     );
 }
 
@@ -83,13 +113,13 @@ export function CandidateMedicalPanel({ medical, candidateId }: { medical: Profi
 
     return (
         <Panel
-            title={medical.scope === 'instructor' ? 'Medical Notes' : 'Medical Record'}
+            title="Medical Record"
             description={
                 full
-                    ? `Confidential. Marks show who else sees a field.${medical.updatedAt ? ` Last updated ${formatDate.dateTime(medical.updatedAt)}${medical.updatedBy ? ` by ${medical.updatedBy}` : ''}.` : ''}`
+                    ? `Confidential. Fields marked Staff only are hidden from the candidate.${medical.updatedAt ? ` Last updated ${formatDate.dateTime(medical.updatedAt)}${medical.updatedBy ? ` by ${medical.updatedBy}` : ''}.` : ''}`
                     : grant !== null
-                      ? `Full record shared with you${grant.grantedBy ? ` by ${grant.grantedBy}` : ''} until ${formatDate.dateTime(grant.expiresAt)}. Confidential: each time you open it is recorded.`
-                      : 'Shared with the instructors of this candidate by the administrators. Confidential.'
+                      ? `Shared with you${grant.grantedBy ? ` by ${grant.grantedBy}` : ''} until ${formatDate.dateTime(grant.expiresAt)}. Confidential: each time you open it is recorded.`
+                      : 'Confidential. Instructors see it only after the medical staff approve a request.'
             }
             actions={
                 full && medical.canEdit ? (
@@ -101,9 +131,7 @@ export function CandidateMedicalPanel({ medical, candidateId }: { medical: Profi
         >
             <div className="flex flex-col gap-6">
                 {medical.entries.length === 0 ? (
-                    medical.scope === 'instructor' ? (
-                        <p className="text-sm text-ink-muted">No medical record fields are shared with instructors.</p>
-                    ) : (
+                    medical.scope === 'instructor' ? null : (
                         <EmptyState
                             icon={HeartPulse}
                             headingLevel="h3"

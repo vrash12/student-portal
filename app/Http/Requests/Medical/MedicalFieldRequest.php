@@ -28,6 +28,8 @@ class MedicalFieldRequest extends FormRequest
         $this->merge([
             'name' => $this->trimmedInput('name'),
             'help_text' => $this->optionalInput('help_text'),
+            'section' => $this->optionalInput('section'),
+            'unit' => $this->optionalInput('unit'),
             'sort_order' => $this->trimmedInput('sort_order'),
             'options' => $this->choiceList(),
         ]);
@@ -48,8 +50,9 @@ class MedicalFieldRequest extends FormRequest
             'options' => $choice ? ['required', 'array', 'min:2', 'max:'.MedicalRecordService::OPTIONS_MAX] : ['nullable', 'array'],
             'options.*' => ['string', 'max:100', 'distinct:ignore_case'],
             'help_text' => ['nullable', 'string', 'max:255'],
+            'section' => ['nullable', 'string', 'max:60'],
+            'unit' => ['nullable', 'string', 'max:20'],
             'sort_order' => ['required', 'integer', 'min:0', 'max:999'],
-            'visible_to_instructors' => ['required', 'boolean'],
             'visible_to_candidate' => ['required', 'boolean'],
             'is_active' => [$fieldId === null ? 'prohibited' : 'required', 'boolean'],
         ];
@@ -71,6 +74,8 @@ class MedicalFieldRequest extends FormRequest
             'options.*.max' => 'Keep each choice to 100 characters.',
             'options.*.distinct' => 'Each choice must appear once.',
             'help_text.max' => 'Use at most 255 characters.',
+            'section.max' => 'Use at most 60 characters.',
+            'unit.max' => 'Use at most 20 characters.',
             'sort_order.required' => 'Enter the position in the record.',
             'sort_order.integer' => 'Enter the position as a whole number from 0 to 999.',
             'sort_order.min' => 'Enter the position as a whole number from 0 to 999.',
@@ -95,7 +100,7 @@ class MedicalFieldRequest extends FormRequest
     }
 
     /**
-     * @return array{name: string, field_type: string, options: list<string>|null, help_text: ?string, sort_order: int, visible_to_instructors: bool, visible_to_candidate: bool, is_active: bool}
+     * @return array{name: string, section: ?string, field_type: string, options: list<string>|null, unit: ?string, help_text: ?string, sort_order: int, visible_to_candidate: bool, is_active: bool}
      */
     public function fieldData(): array
     {
@@ -106,8 +111,9 @@ class MedicalFieldRequest extends FormRequest
             'field_type' => (string) $this->validated('field_type'),
             'options' => is_array($options) ? array_values(array_map('strval', $options)) : null,
             'help_text' => $this->validated('help_text'),
+            'section' => $this->validated('section'),
+            'unit' => $this->validated('unit'),
             'sort_order' => (int) $this->validated('sort_order'),
-            'visible_to_instructors' => $this->boolean('visible_to_instructors'),
             'visible_to_candidate' => $this->boolean('visible_to_candidate'),
             'is_active' => $this->boolean('is_active', true),
         ];

@@ -38,6 +38,7 @@ class MedicalFieldController extends Controller
     {
         return Inertia::render('staff/medical/fields/create', [
             'types' => MedicalFieldType::options(),
+            'sections' => $this->sections(),
             'nextSortOrder' => min(999, (int) MedicalField::query()->max('sort_order') + 1),
         ]);
     }
@@ -58,6 +59,7 @@ class MedicalFieldController extends Controller
         return Inertia::render('staff/medical/fields/edit', [
             'field' => [...MedicalRecordPresenter::field($medicalField), 'valueCount' => $medicalField->values()->count()],
             'types' => MedicalFieldType::options(),
+            'sections' => $this->sections(),
         ]);
     }
 
@@ -78,5 +80,15 @@ class MedicalFieldController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => "Field {$name} deleted."]);
 
         return redirect()->route('medical.fields.index');
+    }
+
+    /**
+     * Sections already in use, offered as suggestions.
+     *
+     * @return list<string>
+     */
+    private function sections(): array
+    {
+        return MedicalField::query()->whereNotNull('section')->ordered()->pluck('section')->unique()->values()->all();
     }
 }

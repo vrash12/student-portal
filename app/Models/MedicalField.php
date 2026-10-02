@@ -17,11 +17,12 @@ class MedicalField extends Model
 {
     protected $fillable = [
         'name',
+        'section',
         'field_type',
         'options',
+        'unit',
         'help_text',
         'sort_order',
-        'visible_to_instructors',
         'visible_to_candidate',
         'is_active',
     ];
@@ -35,7 +36,6 @@ class MedicalField extends Model
             'field_type' => MedicalFieldType::class,
             'options' => 'array',
             'sort_order' => 'integer',
-            'visible_to_instructors' => 'boolean',
             'visible_to_candidate' => 'boolean',
             'is_active' => 'boolean',
         ];

@@ -1,7 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { Audience, formatMedicalValue } from '@/components/medical/medical-record-panel';
+import { Audience, formatMedicalValue, groupBySection } from '@/components/medical/medical-record-panel';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { FormField, SelectInput, TextArea, TextInput } from '@/components/ui/form-field';
@@ -21,6 +21,7 @@ interface MedicalHistoryEntry {
     id: number;
     field: string;
     type: MedicalFieldTypeValue;
+    unit: string | null;
     previousValue: string | null;
     newValue: string | null;
     changedBy: string;
@@ -64,20 +65,31 @@ export default function EditMedicalRecord({ candidate, fields, history }: EditMe
 
             <div className="flex flex-col gap-6">
                 <form onSubmit={submit} noValidate>
-                    <Panel title="Record" description="Leave a field empty when it is not known. Marks show who else sees a field.">
+                    <Panel title="Record" description="Leave a field empty when it is not known. Fields marked Staff only are hidden from the candidate; the others appear under the candidate's My Information.">
                         {fields.length === 0 ? (
                             <p className="text-sm text-ink-muted">The medical record has no active fields. An administrator adds them under Configure Fields.</p>
                         ) : (
-                            <div className="grid gap-5 sm:grid-cols-2">
-                                {fields.map((field) => (
-                                    <div key={field.id} className={field.type.value === 'long_text' ? 'sm:col-span-2' : undefined}>
-                                        <FormField label={field.name} error={errorFor(field.id)} hint={field.helpText ?? undefined}>
-                                            <ValueInput field={field} value={form.data.values[String(field.id)] ?? ''} onChange={(value) => setValue(field.id, value)} />
-                                        </FormField>
-                                        <div className="mt-1.5 flex flex-wrap gap-1.5">
-                                            <Audience instructors={field.visibleToInstructors} candidate={field.visibleToCandidate} />
+                            <div className="flex flex-col gap-8">
+                                {groupBySection(fields).map((group, index) => (
+                                    <fieldset key={`${group.section ?? 'general'}-${index}`} className="flex flex-col gap-4">
+                                        {group.section !== null && (
+                                            <legend className="mb-4 w-full border-b border-line pb-1.5 text-xs font-semibold uppercase tracking-wider text-primary-800">
+                                                {group.section}
+                                            </legend>
+                                        )}
+                                        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                                            {group.items.map((field) => (
+                                                <div key={field.id} className={field.type.value === 'long_text' ? 'sm:col-span-2 lg:col-span-3' : undefined}>
+                                                    <FormField label={field.unit ? `${field.name} (${field.unit})` : field.name} error={errorFor(field.id)} hint={field.helpText ?? undefined}>
+                                                        <ValueInput field={field} value={form.data.values[String(field.id)] ?? ''} onChange={(value) => setValue(field.id, value)} />
+                                                    </FormField>
+                                                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                                        <Audience candidate={field.visibleToCandidate} />
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    </div>
+                                    </fieldset>
                                 ))}
                             </div>
                         )}
@@ -114,9 +126,9 @@ export default function EditMedicalRecord({ candidate, fields, history }: EditMe
                                             <Td className="text-ink">{entry.field}</Td>
                                             <Td className="text-ink">
                                                 <span className="inline-flex flex-wrap items-center gap-1.5">
-                                                    <span className="text-ink-muted">{formatMedicalValue(entry.type, entry.previousValue) ?? 'Empty'}</span>
+                                                    <span className="text-ink-muted">{formatMedicalValue(entry.type, entry.previousValue, entry.unit) ?? 'Empty'}</span>
                                                     <ArrowRight className="size-3.5 text-ink-muted" aria-label="changed to" />
-                                                    <span className="font-medium">{formatMedicalValue(entry.type, entry.newValue) ?? 'Empty'}</span>
+                                                    <span className="font-medium">{formatMedicalValue(entry.type, entry.newValue, entry.unit) ?? 'Empty'}</span>
                                                 </span>
                                             </Td>
                                             <Td className="text-ink">{entry.changedBy}</Td>
@@ -151,6 +163,8 @@ function ValueInput({ field, value, onChange }: { field: MedicalFieldDefinition;
             );
         case 'date':
             return <TextInput type="date" value={value} onChange={(event) => onChange(event.target.value)} />;
+        case 'number':
+            return <TextInput value={value} onChange={(event) => onChange(event.target.value)} inputMode="decimal" autoComplete="off" className="tabular-nums" />;
         case 'yes_no':
             return (
                 <SelectInput value={value} onChange={(event) => onChange(event.target.value)}>

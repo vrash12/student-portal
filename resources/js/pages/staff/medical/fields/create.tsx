@@ -7,17 +7,19 @@ import type { MedicalFieldTypeOption } from '@/types/medical';
 
 interface CreateMedicalFieldProps {
     types: MedicalFieldTypeOption[];
+    sections: string[];
     nextSortOrder: number;
 }
 
-export default function CreateMedicalField({ types, nextSortOrder }: CreateMedicalFieldProps) {
+export default function CreateMedicalField({ types, sections, nextSortOrder }: CreateMedicalFieldProps) {
     const form = useForm<MedicalFieldFormData>({
         name: '',
+        section: '',
         field_type: 'text',
         options: '',
+        unit: '',
         help_text: '',
         sort_order: String(nextSortOrder),
-        visible_to_instructors: false,
         visible_to_candidate: true,
         is_active: true,
     });
@@ -43,7 +45,7 @@ export default function CreateMedicalField({ types, nextSortOrder }: CreateMedic
                         { label: 'Add Field' },
                     ]}
                 />
-                <MedicalFieldForm form={form} mode="create" types={types} typeLocked={false} submitLabel="Add Field" onSubmit={submit} />
+                <MedicalFieldForm form={form} mode="create" types={types} sections={sections} typeLocked={false} submitLabel="Add Field" onSubmit={submit} />
             </div>
         </>
     );

@@ -50,8 +50,8 @@ class CandidatePolicy
 
     /**
      * Entering and changing the candidate's medical record. Instructors see
-     * the fields shared with them on the profile (MedicalRecordPresenter) but
-     * never change them.
+     * it only through an approved access request (read-only) and never
+     * change it.
      */
     public function manageMedical(User $actor, Candidate $candidate): bool
     {

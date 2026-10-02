@@ -97,7 +97,7 @@ php artisan db:seed --class=DemoActivitySeeder
 php artisan db:seed --class=DemoPeopleSeeder
 ```
 
-Last, `DemoMedicalSeeder` adds eight placeholder medical record fields (Records → Medical Records → Configure Fields) and **fictional** medical values for `student01`–`student20`; it never runs in production and is safe to run again:
+Last, `DemoMedicalSeeder` adds 39 placeholder medical record fields in seven sections (General Information, Medical History, Immunizations, Examinations and Tests, Fitness for Training, Emergency, Medical Staff Notes; see Records → Medical Records → Configure Fields) and **fictional** medical values for `student01`–`student20`; it never runs in production, is safe to run again, and only fills empty values:
 
 ```bash
 php artisan db:seed --class=DemoMedicalSeeder

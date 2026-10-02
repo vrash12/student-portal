@@ -11,6 +11,7 @@ enum MedicalFieldType: string
 {
     case Text = 'text';
     case LongText = 'long_text';
+    case Number = 'number';
     case Choice = 'choice';
     case Date = 'date';
     case YesNo = 'yes_no';
@@ -24,6 +25,7 @@ enum MedicalFieldType: string
         return match ($this) {
             self::Text => 'Short text',
             self::LongText => 'Long text',
+            self::Number => 'Number',
             self::Choice => 'Choice from a list',
             self::Date => 'Date',
             self::YesNo => 'Yes or no',
@@ -35,6 +37,7 @@ enum MedicalFieldType: string
         return match ($this) {
             self::Text => 'One line, up to '.self::TEXT_MAX.' characters. For example, a physician\'s name.',
             self::LongText => 'Several lines, up to '.number_format(self::LONG_TEXT_MAX).' characters. For example, allergies or conditions.',
+            self::Number => 'A measurement, with up to two decimals and an optional unit. For example, height in cm.',
             self::Choice => 'One answer from a list you set. For example, a blood type.',
             self::Date => 'A calendar date. For example, the last physical examination.',
             self::YesNo => 'Yes or no. For example, cleared for strenuous training.',

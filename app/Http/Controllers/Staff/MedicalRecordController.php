@@ -79,7 +79,7 @@ class MedicalRecordController extends Controller
 
         $history = CandidateMedicalRevision::query()
             ->where('candidate_id', $candidate->id)
-            ->with(['field:id,name,field_type', 'changer:id,name'])
+            ->with(['field:id,name,field_type,unit', 'changer:id,name'])
             ->latest('id')
             ->limit(self::HISTORY_LIMIT)
             ->get();
@@ -99,6 +99,7 @@ class MedicalRecordController extends Controller
                 'id' => $revision->id,
                 'field' => $revision->field->name,
                 'type' => $revision->field->field_type->value,
+                'unit' => $revision->field->unit,
                 'previousValue' => $revision->previous_value,
                 'newValue' => $revision->new_value,
                 'changedBy' => $revision->changer->name,

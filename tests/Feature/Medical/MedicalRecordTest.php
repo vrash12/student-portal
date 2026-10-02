@@ -40,15 +40,15 @@ class MedicalRecordTest extends TestCase
         $this->buildTeachingFixtures();
         $this->admin = $this->userWithRole(SystemRole::SuperAdministrator, ['name' => 'Medical Admin']);
 
-        $this->bloodType = $this->createField(['name' => 'Blood Type', 'field_type' => 'choice', 'options' => "A+\nB+\nO+", 'visible_to_instructors' => true]);
-        $this->allergies = $this->createField(['name' => 'Allergies', 'field_type' => 'long_text', 'visible_to_instructors' => true]);
+        $this->bloodType = $this->createField(['name' => 'Blood Type', 'field_type' => 'choice', 'options' => "A+\nB+\nO+", 'section' => 'General Information']);
+        $this->allergies = $this->createField(['name' => 'Allergies', 'field_type' => 'long_text', 'section' => 'Medical History']);
         $this->remarks = $this->createField(['name' => "Physician's Remarks", 'field_type' => 'long_text', 'visible_to_candidate' => false]);
     }
 
     public function test_administrators_configure_the_fields(): void
     {
         $this->assertSame(['A+', 'B+', 'O+'], $this->bloodType->choiceOptions());
-        $this->assertTrue($this->bloodType->visible_to_instructors);
+        $this->assertSame('General Information', $this->bloodType->section);
         $this->assertFalse($this->remarks->visible_to_candidate);
         $this->assertSame(3, AuditLog::query()->where('action', 'medical_field.created')->count());
 
@@ -112,22 +112,24 @@ class MedicalRecordTest extends TestCase
         $this->assertSame('yes', $this->value($cleared));
     }
 
-    public function test_instructors_see_only_the_shared_fields_of_their_own_candidates(): void
+    public function test_instructors_see_no_medical_information_without_approved_access(): void
     {
         $this->saveRecord([$this->bloodType->id => 'O+', $this->allergies->id => 'Shellfish.', $this->remarks->id => 'Staff-only remark.']);
 
         $this->actingAs($this->admin)->get(route('candidates.show', $this->candidateInA))->assertOk()
             ->assertInertia(fn (Assert $page) => $page->where('medical.scope', 'full')->has('medical.entries', 3)->where('medical.canEdit', true));
 
+        // Owner decision (2026-10-02): no field at all, only the way to request access.
         $response = $this->actingAs($this->alpha)->get(route('candidates.show', $this->candidateInA))->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('medical.scope', 'instructor')
-                ->has('medical.entries', 2)
-                ->where('medical.entries.1.value', 'Shellfish.')
+                ->has('medical.entries', 0)
                 ->where('medical.canEdit', false)
-                ->where('medical.updatedBy', null));
-        $this->assertStringNotContainsString('Staff-only remark.', $response->getContent());
-        $this->assertStringNotContainsString("Physician's Remarks", $response->getContent());
+                ->where('medical.updatedAt', null)
+                ->where('medical.access.canRequest', true));
+        foreach (['Shellfish.', 'Staff-only remark.', "Physician's Remarks", 'Blood Type', 'O+'] as $hidden) {
+            $this->assertStringNotContainsString($hidden, $response->getContent());
+        }
 
         // Nothing medical to manage or browse for instructors.
         $this->actingAs($this->alpha)->get(route('medical.records.index'))->assertForbidden();
@@ -135,12 +137,6 @@ class MedicalRecordTest extends TestCase
         $this->actingAs($this->alpha)->put(route('medical.records.update', $this->candidateInA), ['values' => [$this->bloodType->id => 'A+']])->assertForbidden();
         $this->actingAs($this->alpha)->get(route('medical.fields.index'))->assertForbidden();
         $this->assertSame('O+', $this->value($this->bloodType));
-
-        // No shared fields: the panel stays, empty, so the instructor can ask for the full record.
-        $this->putField($this->bloodType, ['visible_to_instructors' => false]);
-        $this->putField($this->allergies, ['visible_to_instructors' => false]);
-        $this->actingAs($this->alpha)->get(route('candidates.show', $this->candidateInA))->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->where('medical.scope', 'instructor')->has('medical.entries', 0)->where('medical.access.canRequest', true));
 
         // Any instructor of a candidate's class gets the same view of that candidate.
         $this->actingAs($this->bravo)->get(route('candidates.show', $this->candidateInB))->assertOk()
@@ -165,6 +161,26 @@ class MedicalRecordTest extends TestCase
         $this->actingAs($this->candidateInA->user)->get(route('medical.records.index'))->assertForbidden();
     }
 
+    public function test_number_fields_take_measurements_with_a_unit(): void
+    {
+        $height = $this->createField(['name' => 'Height', 'field_type' => 'number', 'unit' => 'cm', 'section' => 'General Information']);
+        $notes = $this->createField(['name' => 'Notes', 'field_type' => 'text', 'unit' => 'cm']);
+        $this->assertSame('cm', $height->unit);
+        $this->assertNull($notes->unit, 'Only number fields keep a unit.');
+
+        foreach (['tall', '170.555', '-5', '100000'] as $bad) {
+            $this->saveRecord([$height->id => $bad])->assertSessionHasErrors("values.{$height->id}");
+        }
+        $this->saveRecord([$height->id => '171.5'])->assertSessionHasNoErrors();
+
+        $this->actingAs($this->admin)->get(route('candidates.show', $this->candidateInA))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('medical.entries.3.name', 'Height')
+                ->where('medical.entries.3.section', 'General Information')
+                ->where('medical.entries.3.unit', 'cm')
+                ->where('medical.entries.3.value', '171.5'));
+    }
+
     public function test_inactive_fields_are_hidden_and_ignored(): void
     {
         $this->saveRecord([$this->allergies->id => 'None known.']);
@@ -185,7 +201,9 @@ class MedicalRecordTest extends TestCase
         $this->seed(DemoMedicalSeeder::class);
 
         // Blood Type, Allergies and Physician's Remarks already existed and were kept.
-        $this->assertSame(count(DemoMedicalSeeder::FIELDS), MedicalField::query()->count());
+        $this->assertSame(count(array_merge(...array_values(DemoMedicalSeeder::SECTIONS))), MedicalField::query()->count());
+        $this->assertSame('cm', MedicalField::query()->where('name', 'Height')->sole()->unit);
+        $this->assertSame('Fitness for Training', MedicalField::query()->where('name', 'Medical Classification')->sole()->section);
         $this->assertSame(['A+', 'B+', 'O+'], MedicalField::query()->where('name', 'Blood Type')->sole()->choiceOptions());
     }
 
@@ -210,7 +228,6 @@ class MedicalRecordTest extends TestCase
             'options' => null,
             'help_text' => null,
             'sort_order' => (string) (MedicalField::query()->count() + 1),
-            'visible_to_instructors' => false,
             'visible_to_candidate' => true,
             ...$data,
         ]);
@@ -229,7 +246,8 @@ class MedicalRecordTest extends TestCase
             'options' => implode("\n", $field->choiceOptions()),
             'help_text' => $field->help_text,
             'sort_order' => (string) $field->sort_order,
-            'visible_to_instructors' => $field->visible_to_instructors,
+            'section' => $field->section,
+            'unit' => $field->unit,
             'visible_to_candidate' => $field->visible_to_candidate,
             'is_active' => $field->is_active,
             ...$changes,

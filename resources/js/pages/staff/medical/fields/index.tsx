@@ -27,7 +27,7 @@ export default function MedicalFields({ fields }: { fields: FieldRow[] }) {
 
             <PageHeader
                 title="Medical Record Fields"
-                description="The questions every candidate's medical record answers, in order. Choose for each field whether instructors and the candidate see it. Fields in use are deactivated, never deleted."
+                description="The questions every candidate's medical record answers, in order. Choose for each field whether the candidate sees it. Instructors see the record only with approved access. Fields in use are deactivated, never deleted."
                 breadcrumbs={[{ label: 'Medical Records', href: routes.medical.records.index() }, { label: 'Fields' }]}
                 actions={addAction}
             />
@@ -44,6 +44,7 @@ export default function MedicalFields({ fields }: { fields: FieldRow[] }) {
                     <Table caption="Medical record fields" className="min-w-[52rem]">
                         <TableHead>
                             <Th align="right">Order</Th>
+                            <Th>Section</Th>
                             <Th>Field</Th>
                             <Th>Kind of Answer</Th>
                             <Th>Also Seen By</Th>
@@ -59,18 +60,19 @@ export default function MedicalFields({ fields }: { fields: FieldRow[] }) {
                                     <Td align="right" numeric>
                                         {field.sortOrder}
                                     </Td>
+                                    <Td className="text-ink">{field.section ?? '—'}</Td>
                                     <Td className="text-ink">
                                         <span className="font-medium">{field.name}</span>
                                         {field.helpText && <span className="block text-xs text-ink-muted">{field.helpText}</span>}
                                     </Td>
                                     <Td className="text-ink">
                                         {field.type.label}
+                                        {field.unit && <span className="text-ink-muted"> ({field.unit})</span>}
                                         {field.type.value === 'choice' && <span className="block text-xs text-ink-muted">{field.options.join(' · ')}</span>}
                                     </Td>
                                     <Td>
                                         <span className="flex flex-wrap gap-1.5">
-                                            <Audience instructors={field.visibleToInstructors} candidate={field.visibleToCandidate} />
-                                            {!field.visibleToInstructors && !field.visibleToCandidate && <span className="text-sm text-ink-muted">Medical staff only</span>}
+                                            {field.visibleToCandidate ? <span className="text-sm text-ink">Candidate (own record)</span> : <Audience candidate={false} />}
                                         </span>
                                     </Td>
                                     <Td>{field.isActive ? <StatusBadge tone="success">Active</StatusBadge> : <StatusBadge tone="neutral">Inactive</StatusBadge>}</Td>
