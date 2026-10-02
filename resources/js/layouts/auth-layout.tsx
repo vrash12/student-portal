@@ -77,6 +77,12 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                     <div className="absolute inset-y-0 left-16 right-0 -skew-x-[35deg] bg-gradient-to-r from-[#152f3f] to-[#0f2532]" />
                 </div>
 
+                {/* Below 1560 px the brand, the gold diagonal and the access notice leave no room beside them: the values get their own strip. */}
+                <CoreValues
+                    values={login.coreValues}
+                    className="relative flex justify-center gap-2.5 border-b border-white/10 px-4 py-1.5 text-[10px] tracking-[0.22em] sm:gap-3 sm:text-[11px] sm:tracking-[0.28em] min-[1560px]:hidden"
+                />
+
                 <div className="relative mx-auto flex max-w-[110rem] items-center justify-between gap-6 px-4 py-3 sm:px-8 lg:px-10">
                     <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                         <BrandMark round className="size-12 sm:size-16" />
@@ -86,16 +92,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                         </div>
                     </div>
 
-                    {login.coreValues.length > 0 && (
-                        <ul aria-label="Core values" className="hidden items-center gap-4 border-l border-white/25 pl-8 font-serif text-xs uppercase tracking-[0.28em] text-primary-100 min-[1560px]:flex">
-                            {login.coreValues.map((value, index) => (
-                                <Fragment key={value}>
-                                    {index > 0 && <li aria-hidden="true" className="size-1 rounded-full bg-accent-300" />}
-                                    <li>{value}</li>
-                                </Fragment>
-                            ))}
-                        </ul>
-                    )}
+                    <CoreValues values={login.coreValues} className="hidden gap-4 border-l border-white/25 pl-8 text-xs tracking-[0.28em] min-[1560px]:flex" />
 
                     <div className="hidden shrink-0 items-center gap-3 sm:flex">
                         <ShieldCheck className="size-9 text-accent-300" aria-hidden="true" />
@@ -153,6 +150,24 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
             <Toaster position="top" />
         </div>
+    );
+}
+
+/** The configured core values (INSTITUTION_CORE_VALUES), separated by gold dots; nothing when none are set. */
+function CoreValues({ values, className }: { values: string[]; className: string }) {
+    if (values.length === 0) {
+        return null;
+    }
+
+    return (
+        <ul aria-label="Core values" className={cn('items-center font-serif uppercase text-primary-100', className)}>
+            {values.map((value, index) => (
+                <Fragment key={value}>
+                    {index > 0 && <li aria-hidden="true" className="size-1 shrink-0 rounded-full bg-accent-300" />}
+                    <li>{value}</li>
+                </Fragment>
+            ))}
+        </ul>
     );
 }
 
