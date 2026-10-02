@@ -207,7 +207,7 @@ export function PerformanceAreaForm({ form, areaId, sources, subjects, activeSin
                                             description={details.join(' · ')}
                                             checked={form.data.subject_ids.includes(subject.id)}
                                             onChange={(event) => toggleSubject(subject.id, event.target.checked)}
-                                            className="rounded-lg border border-line px-4 py-3"
+                                            className="rounded-lg border border-line-box px-4 py-3"
                                         />
                                     );
                                 })}

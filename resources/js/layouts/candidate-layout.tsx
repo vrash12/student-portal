@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Award, ClipboardList, Dumbbell, GraduationCap, House, LogOut, UserRound, type LucideIcon } from 'lucide-react';
+import { Award, ClipboardList, Dumbbell, GraduationCap, HeartPulse, House, LogOut, UserRound, type LucideIcon } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
 import { buttonClasses } from '@/components/ui/button';
@@ -9,12 +9,16 @@ import { routes } from '@/lib/routes';
 import { useFocusMainOnNavigate } from '@/lib/use-focus-main-on-navigate';
 
 /** The portal's pages, in navigation order; each is active for its own page components. */
+/** One row of tabs from tablet width (static class names for Tailwind). */
+const TAB_COLUMNS: Record<number, string> = { 5: 'sm:grid-cols-5', 6: 'sm:grid-cols-6', 7: 'sm:grid-cols-7' };
+
 const PORTAL_SECTIONS: Array<{ href: string; label: string; icon: LucideIcon; isActive: (component: string) => boolean; fitness?: true }> = [
     { href: routes.portal.home(), label: 'Home', icon: House, isActive: (component) => component === 'portal/home' },
     { href: routes.portal.examinations(), label: 'Examinations', icon: ClipboardList, isActive: (component) => component.startsWith('portal/examinations/') },
     { href: routes.portal.grades(), label: 'My Grades', icon: GraduationCap, isActive: (component) => component === 'portal/grades' },
     { href: routes.portal.performance(), label: 'My Performance', icon: Award, isActive: (component) => component === 'portal/performance' },
     { href: routes.portal.fitness(), label: 'Physical Fitness', icon: Dumbbell, isActive: (component) => component === 'portal/fitness', fitness: true },
+    { href: routes.portal.medical(), label: 'Medical', icon: HeartPulse, isActive: (component) => component === 'portal/medical' },
     { href: routes.portal.profile(), label: 'My Information', icon: UserRound, isActive: (component) => component === 'portal/profile' },
 ];
 
@@ -48,10 +52,7 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
                 <div className="mx-auto flex min-h-20 w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-2 sm:px-6">
                     <div className="flex min-w-0 items-center gap-3">
                         <BrandMark className="size-12" />
-                        <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-white">{app.shortName}</p>
-                            <p className="truncate text-xs text-primary-100">{app.organizationName}</p>
-                        </div>
+                        <p className="min-w-0 truncate text-sm font-semibold text-white">{app.organizationName}</p>
                     </div>
 
                     <div className="ml-auto flex items-center gap-3 sm:gap-4">
@@ -76,7 +77,7 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
                 </div>
                 {component !== 'portal/examinations/attempt' && <nav aria-label="Candidate portal" className="mx-auto max-w-7xl px-2 pb-2 sm:px-4">
                     {/* Equal tabs, icon above the label: one row from tablet width, rows of three on phones. Nothing is hidden or scrolled. */}
-                    <ul className={`grid grid-cols-3 gap-1 ${sections.length === 6 ? 'sm:grid-cols-6' : 'sm:grid-cols-5'}`}>
+                    <ul className={`grid grid-cols-3 gap-1 ${TAB_COLUMNS[sections.length] ?? 'sm:grid-cols-7'}`}>
                         {sections.map((item) => {
                             const active = item.isActive(component);
 

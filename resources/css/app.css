@@ -24,7 +24,8 @@
     --color-overlay: rgb(15 23 20 / 0.45); /* dialog/drawer backdrop */
 
     /* Lines */
-    --color-line: #dde2e0; /* dividers and container borders */
+    --color-line: #cfd7d3; /* dividers inside boxes (table rows, list items) */
+    --color-line-box: #a9b5af; /* outlines of boxes, cards and panels, clearly visible on white */
     --color-line-strong: #7a8682; /* form control borders, 3.3:1 or more on every surface */
 
     /* Text */
@@ -173,5 +174,22 @@
             animation-duration: 0.01ms !important;
             transition-duration: 0.01ms !important;
         }
+    }
+}
+
+/*
+ * Protected medical document viewer (components/medical/protected-document-viewer.tsx):
+ * while it is open, printing the page gives a blank notice instead of the document.
+ */
+@media print {
+    body.medical-viewer-open > * {
+        display: none !important;
+    }
+
+    body.medical-viewer-open::before {
+        content: 'Printing medical documents is not allowed.';
+        display: block;
+        padding: 2rem;
+        font: 600 16pt sans-serif;
     }
 }

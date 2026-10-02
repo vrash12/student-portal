@@ -58,7 +58,7 @@ export default function MyClasses({ classes, periods, filters }: MyClassesProps)
                 }
             />
 
-            <div className="rounded-lg border border-line bg-surface">
+            <div className="rounded-lg border border-line-box bg-surface">
                 {periods.length > 1 && (
                     <div className="border-b border-line p-4">
                         <FormField label="Academic Period" className="sm:w-80">

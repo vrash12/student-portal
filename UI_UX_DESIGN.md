@@ -1207,6 +1207,10 @@ Excessive cards create visual noise.
 
 Use cards for meaningful grouping.
 
+Owner request (2026-10-02): box outlines must be clearly visible on white. Outer borders of cards, panels and boxes use the `line-box` colour (`#a9b5af`); `line` (`#cfd7d3`) is for dividers inside a box (table rows, list items).
+
+Titled boxes (`Panel` in the staff area, `PortalSection` in the candidate portal) open and close from their header: the chevron button in the heading (with `aria-expanded`) or a click anywhere on the title area. The choice is remembered per device for that box on that kind of page. Long record pages may start with their boxes closed (`StartCollapsed`, used on the staff candidate profile). Do not add "collapse all / expand all" controls (owner decision). Pass `collapsible={false}` for a box that must always stay open. Never use collapsible boxes on the examination screen.
+
 ---
 
 # 47. Empty States

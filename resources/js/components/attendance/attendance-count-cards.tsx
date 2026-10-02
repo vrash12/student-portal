@@ -17,7 +17,7 @@ export function AttendanceCountCards({ options, counts, unrecorded }: Attendance
     return (
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             {options.map((option) => (
-                <div key={option.value} className="rounded-lg border border-line bg-surface px-4 py-4">
+                <div key={option.value} className="rounded-lg border border-line-box bg-surface px-4 py-4">
                     <dt>
                         <StatusBadge tone={option.tone}>{option.label}</StatusBadge>
                     </dt>
@@ -25,7 +25,7 @@ export function AttendanceCountCards({ options, counts, unrecorded }: Attendance
                 </div>
             ))}
             {unrecorded !== undefined && (
-                <div className="rounded-lg border border-line bg-surface px-4 py-4">
+                <div className="rounded-lg border border-line-box bg-surface px-4 py-4">
                     <dt>
                         <StatusBadge tone="neutral">Not Recorded</StatusBadge>
                     </dt>

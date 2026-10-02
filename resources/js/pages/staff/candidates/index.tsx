@@ -71,7 +71,7 @@ export default function CandidatesIndex({ candidates, filters, classOptions, sta
 
             <ListCharts charts={charts} />
 
-            <div className="rounded-lg border border-line bg-surface">
+            <div className="rounded-lg border border-line-box bg-surface">
                 <FilterBar onReset={reset} canReset={isFiltered}>
                     <SearchField
                         placeholder="Search candidates by number or name…"

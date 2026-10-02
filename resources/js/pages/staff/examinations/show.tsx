@@ -217,7 +217,7 @@ function SummaryTiles({ exam }: { exam: Examination }) {
 
 function SummaryTile({ label, children }: { label: string; children: ReactNode }) {
     return (
-        <div className="rounded-lg border border-line bg-surface px-4 py-4">
+        <div className="rounded-lg border border-line-box bg-surface px-4 py-4">
             <dt className="text-sm font-medium text-ink-muted">{label}</dt>
             <dd className="mt-1 font-semibold text-ink tabular-nums">{children}</dd>
         </div>
@@ -316,7 +316,7 @@ function QuestionReview({ exam, draft, publicationErrors, onPublish }: QuestionR
             ) : (
                 <ol className="space-y-4">
                     {exam.examination_questions.map((item, index) => (
-                        <li key={item.id} className="rounded-lg border border-line p-4">
+                        <li key={item.id} className="rounded-lg border border-line-box p-4">
                             <p className="text-sm text-ink-muted">
                                 Question {index + 1} · {item.question.type.label} · {item.points} points
                             </p>

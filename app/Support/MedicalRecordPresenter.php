@@ -3,8 +3,10 @@
 namespace App\Support;
 
 use App\Enums\MedicalAccessStatus;
+use App\Enums\MedicalDocumentStatus;
 use App\Enums\Permission;
 use App\Models\Candidate;
+use App\Models\CandidateMedicalDocument;
 use App\Models\CandidateMedicalValue;
 use App\Models\MedicalAccessRequest;
 use App\Models\MedicalField;
@@ -21,7 +23,12 @@ use Illuminate\Database\Eloquent\Collection;
  *   while the medical staff have approved their request ("granted");
  * - the candidate in the portal: only the fields shared with the candidate.
  *
- * Fields that are not shown are never sent to the browser.
+ * Uploaded medical documents follow the same scopes: medical staff see every
+ * document (view, download, review); instructors with approved access see the
+ * documents that were not returned, in the protected viewer only (no file
+ * link that opens on its own, no download); candidates see their own.
+ *
+ * Fields and documents that are not shown are never sent to the browser.
  */
 final class MedicalRecordPresenter
 {
@@ -76,6 +83,13 @@ final class MedicalRecordPresenter
             'updatedBy' => $scope === 'full' ? $latest?->updater?->name : null,
             // Instructors only: their access to the full record and their requests for it.
             'access' => $scope === 'full' ? null : self::access($candidate, $viewer, $grant),
+            'documents' => match ($scope) {
+                'full' => self::documents($candidate, 'staff', $viewer),
+                'granted' => self::documents($candidate, 'granted', $viewer),
+                default => [],
+            },
+            // Documents waiting for review (medical staff only).
+            'waitingDocuments' => $scope === 'full' ? CandidateMedicalDocument::query()->where('candidate_id', $candidate->id)->waiting()->count() : 0,
         ];
     }
 
@@ -124,6 +138,64 @@ final class MedicalRecordPresenter
         $fields = MedicalField::query()->active()->where('visible_to_candidate', true)->ordered()->get();
 
         return self::entries($fields, self::values($candidate, $fields));
+    }
+
+    /**
+     * A candidate's uploaded medical documents, newest first, for one audience:
+     * "staff" (every document, download and review), "granted" (instructors
+     * with approved access: not returned, protected viewer only) or
+     * "candidate" (their own, with withdraw while waiting).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function documents(Candidate $candidate, string $audience, User $viewer): array
+    {
+        return CandidateMedicalDocument::query()
+            ->where('candidate_id', $candidate->id)
+            ->when($audience === 'granted', fn ($query) => $query->notReturned())
+            ->with(['reviewer:id,name', 'candidate:id,class_batch_id'])
+            ->latest('id')
+            ->get()
+            ->map(fn (CandidateMedicalDocument $document): array => self::document($document, $audience, $viewer))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function document(CandidateMedicalDocument $document, string $audience, User $viewer): array
+    {
+        $protected = $audience === 'granted';
+        $fileUrl = match ($audience) {
+            'staff' => route('medical.documents.file', $document, false),
+            'candidate' => route('portal.medical.documents.file', $document, false),
+            default => null,
+        };
+
+        return [
+            'id' => $document->id,
+            'title' => $document->title,
+            'category' => ['value' => $document->category->value, 'label' => $document->category->label()],
+            'documentDate' => $document->document_date?->toDateString(),
+            'notes' => $document->notes,
+            'fileType' => $document->isPdf() ? 'pdf' : 'image',
+            'sizeBytes' => $document->size_bytes,
+            'status' => $document->status->toArray(),
+            'uploadedAt' => $document->created_at?->toIso8601String(),
+            'reviewedAt' => $protected ? null : $document->reviewed_at?->toIso8601String(),
+            'reviewedBy' => $protected ? null : $document->reviewer?->name,
+            'reviewNote' => $protected ? null : $document->review_note,
+            // Opens in a new tab (medical staff and the candidate); null for instructors.
+            'fileUrl' => $fileUrl,
+            'downloadUrl' => $fileUrl === null ? null : $fileUrl.'?download=1',
+            // Instructors: the protected viewer fetches the file from here.
+            'protectedUrl' => $protected ? route('medical.documents.protected', $document, false) : null,
+            'can' => [
+                'review' => $audience === 'staff' && $document->status === MedicalDocumentStatus::Submitted && $viewer->can('review', $document),
+                'withdraw' => $audience === 'candidate' && $viewer->can('withdraw', $document),
+            ],
+        ];
     }
 
     /**

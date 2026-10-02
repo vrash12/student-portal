@@ -280,7 +280,7 @@ function DraftPreview({ data }: { data: QuestionFormData }) {
               : [];
 
     return (
-        <section className="overflow-hidden rounded-lg border border-line bg-surface shadow-sm">
+        <section className="overflow-hidden rounded-lg border border-line-box bg-surface shadow-sm">
             <div className="flex items-center gap-2 border-b border-line bg-surface-muted px-4 py-3">
                 <Eye className="size-4 text-ink-muted" aria-hidden="true" />
                 <h2 className="text-sm font-semibold text-ink">Candidate view</h2>

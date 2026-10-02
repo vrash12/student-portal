@@ -40,7 +40,7 @@ export function GradeBreakdownDialog({ subjectName, thresholds, entry, onClose }
 function Breakdown({ result, thresholds }: { result: SubjectGrade; thresholds: GradingThresholds | null }) {
     return (
         <div className="flex flex-col gap-5">
-            <dl className="grid gap-4 rounded-lg border border-line bg-surface-muted px-4 py-3 sm:grid-cols-2 lg:grid-cols-4">
+            <dl className="grid gap-4 rounded-lg border border-line-box bg-surface-muted px-4 py-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                     <dt className="text-sm text-ink-muted">Current Grade</dt>
                     <dd className="mt-0.5 text-2xl font-semibold tabular-nums text-ink">{formatGrade(result.grade)}</dd>

@@ -124,7 +124,7 @@ export default function ExaminationCreate({ offerings, examination }: { offering
             {offerings.length > 0 && <BuilderSteps current="settings" examinationId={examination?.id} />}
 
             {offerings.length === 0 ? (
-                <div className="max-w-4xl rounded-xl border border-line bg-surface">
+                <div className="max-w-4xl rounded-xl border border-line-box bg-surface">
                     <EmptyState
                         icon={BookOpen}
                         title="You are not assigned to any subject yet"

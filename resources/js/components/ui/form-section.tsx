@@ -15,7 +15,7 @@ export function FormSection({ title, description, step, children }: FormSectionP
     const titleId = useId();
 
     return (
-        <section aria-labelledby={titleId} className="rounded-lg border border-line bg-surface">
+        <section aria-labelledby={titleId} className="rounded-lg border border-line-box bg-surface">
             <div className="flex items-start gap-3 border-b border-line px-5 py-4">
                 {step !== undefined && (
                     <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-600 text-sm font-bold text-white" aria-hidden="true">

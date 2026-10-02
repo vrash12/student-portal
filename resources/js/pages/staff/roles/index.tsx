@@ -45,7 +45,7 @@ export default function RolesIndex({ roles, permissionGroups }: RolesIndexProps)
                 available in this version. Administrators can only assign roles ranked below their own.
             </Alert>
 
-            <div className="rounded-lg border border-line bg-surface">
+            <div className="rounded-lg border border-line-box bg-surface">
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[48rem] text-left text-sm">
                         <caption className="sr-only">Permissions granted by each role</caption>

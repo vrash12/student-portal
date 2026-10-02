@@ -63,7 +63,7 @@ export function FocusEventList({ events }: { events: FocusEvent[] }) {
             <p className="mt-1 text-sm text-ink-muted">
                 Recorded when the candidate switched tabs or apps, minimized the browser, or focused another window. Browsers cannot tell why, so treat this as something to follow up on, not as proof. It does not affect the score.
             </p>
-            <div className="mt-3 rounded-xl border border-line bg-surface">
+            <div className="mt-3 rounded-xl border border-line-box bg-surface">
                 {events.length === 0 ? (
                     <p className="p-5 text-ink-muted">The candidate stayed on the examination screen.</p>
                 ) : (

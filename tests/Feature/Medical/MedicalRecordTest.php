@@ -147,17 +147,20 @@ class MedicalRecordTest extends TestCase
     {
         $this->saveRecord([$this->bloodType->id => 'B+', $this->remarks->id => 'Staff-only remark.']);
 
-        $response = $this->actingAs($this->candidateInA->user)->get('/portal/profile')->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->component('portal/profile')
-                ->has('medical', 2)
-                ->where('medical.0.name', 'Blood Type')
-                ->where('medical.0.value', 'B+')
-                ->where('medical.1.value', null));
+        // The shared fields are on the candidate's Medical page, below their uploads.
+        $response = $this->actingAs($this->candidateInA->user)->get('/portal/medical')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('portal/medical')
+                ->has('fields', 2)
+                ->where('fields.0.name', 'Blood Type')
+                ->where('fields.0.value', 'B+')
+                ->where('fields.1.value', null));
         $this->assertStringNotContainsString('Staff-only remark.', $response->getContent());
+        $this->actingAs($this->candidateInA->user)->get('/portal/profile')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('portal/profile')->missing('medical'));
 
         // Another candidate sees their own (empty) record, never this one.
-        $this->actingAs($this->candidateInB->user)->get('/portal/profile')->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->where('medical.0.value', null));
+        $this->actingAs($this->candidateInB->user)->get('/portal/medical')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('fields.0.value', null));
         $this->actingAs($this->candidateInA->user)->get(route('medical.records.index'))->assertForbidden();
     }
 

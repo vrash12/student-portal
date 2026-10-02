@@ -12,6 +12,7 @@ use App\Models\AssessmentCategory;
 use App\Models\AssessmentScore;
 use App\Models\AttendanceSession;
 use App\Models\Candidate;
+use App\Models\CandidateMedicalDocument;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
 use App\Models\ConductEntry;
@@ -79,6 +80,8 @@ class AppServiceProvider extends ServiceProvider
         $perUser('record-downloads', 10);
         // Question media uploads and question imports.
         $perUser('staff-uploads', 30);
+        // Candidates' medical document uploads.
+        $perUser('medical-uploads', 20);
         // Changing one's own password (the current password is checked).
         $perUser('password-change', 6);
 
@@ -110,6 +113,7 @@ class AppServiceProvider extends ServiceProvider
             'grade_correction_request' => GradeCorrectionRequest::class,
             'medical_field' => MedicalField::class,
             'medical_access_request' => MedicalAccessRequest::class,
+            'candidate_medical_document' => CandidateMedicalDocument::class,
             'question' => Question::class,
             // Created by the examination builder (Milestone 8).
             'examination' => Examination::class,

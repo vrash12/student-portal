@@ -65,7 +65,7 @@ export default function PerformanceAreas({ areas, activeWeightTotal, hasActiveMu
                     </Alert>
                 )}
 
-                <section className="rounded-lg border border-line bg-surface" aria-label="Performance areas">
+                <section className="rounded-lg border border-line-box bg-surface" aria-label="Performance areas">
                     {areas.length === 0 ? (
                         <EmptyState
                             icon={Award}

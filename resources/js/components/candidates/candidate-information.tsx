@@ -13,8 +13,8 @@ export function CandidateInformationPanels({ candidate }: { candidate: Candidate
         <Panel title="Candidate Information">
             <div className="mb-5 flex items-center gap-4">
                 {candidate.photoUrl
-                    ? <img src={candidate.photoUrl} alt={`Profile of ${candidate.name}`} className="size-24 shrink-0 rounded-lg border border-line object-cover" />
-                    : <div className="flex size-24 shrink-0 items-center justify-center rounded-lg border border-line bg-canvas text-ink-muted"><UserRound className="size-10" aria-hidden="true" /><span className="sr-only">No profile photo</span></div>}
+                    ? <img src={candidate.photoUrl} alt={`Profile of ${candidate.name}`} className="size-24 shrink-0 rounded-lg border border-line-box object-cover" />
+                    : <div className="flex size-24 shrink-0 items-center justify-center rounded-lg border border-line-box bg-canvas text-ink-muted"><UserRound className="size-10" aria-hidden="true" /><span className="sr-only">No profile photo</span></div>}
                 <div className="min-w-0"><p className="break-words text-lg font-semibold text-ink">{candidate.name}</p><p className="text-sm text-ink-muted">Candidate {candidate.candidateNumber}</p></div>
             </div>
             <dl className="grid gap-4 sm:grid-cols-2">

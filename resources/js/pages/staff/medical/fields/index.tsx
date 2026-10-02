@@ -32,7 +32,7 @@ export default function MedicalFields({ fields }: { fields: FieldRow[] }) {
                 actions={addAction}
             />
 
-            <div className="rounded-lg border border-line bg-surface">
+            <div className="rounded-lg border border-line-box bg-surface">
                 {fields.length === 0 ? (
                     <EmptyState
                         icon={ClipboardPlus}

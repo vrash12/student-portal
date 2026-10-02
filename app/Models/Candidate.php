@@ -80,6 +80,16 @@ class Candidate extends Model
     }
 
     /**
+     * Medical documents the candidate uploaded.
+     *
+     * @return HasMany<CandidateMedicalDocument, $this>
+     */
+    public function medicalDocuments(): HasMany
+    {
+        return $this->hasMany(CandidateMedicalDocument::class);
+    }
+
+    /**
      * Whether scores may be recorded for this candidate in the class. Withdrawn
      * candidates keep the scores already recorded but receive no new ones.
      */

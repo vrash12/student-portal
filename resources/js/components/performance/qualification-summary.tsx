@@ -35,13 +35,13 @@ export function QualificationSummary({ areas, qualification, showRank = false }:
     return (
         <div className="flex flex-col gap-5">
             <dl className={cn('grid gap-4', showRank ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
-                <div className="rounded-lg border border-line px-4 py-3">
+                <div className="rounded-lg border border-line-box px-4 py-3">
                     <dt className="text-sm font-medium text-ink-muted">Qualification</dt>
                     <dd className="mt-2">
                         <QualificationBadge status={decision.status} className="px-2.5 py-1 text-sm" />
                     </dd>
                 </div>
-                <div className="rounded-lg border border-line px-4 py-3">
+                <div className="rounded-lg border border-line-box px-4 py-3">
                     <dt className="text-sm font-medium text-ink-muted">Overall Score</dt>
                     <dd className="mt-1 text-2xl font-semibold text-ink tabular-nums">{formatAreaGrade(overall.score)}</dd>
                     {overall.score !== null && !overall.complete && (
@@ -50,7 +50,7 @@ export function QualificationSummary({ areas, qualification, showRank = false }:
                     {overall.score === null && <dd className="mt-0.5 text-xs text-ink-muted">No weighted area has a grade yet.</dd>}
                 </div>
                 {showRank && (
-                    <div className="rounded-lg border border-line px-4 py-3">
+                    <div className="rounded-lg border border-line-box px-4 py-3">
                         <dt className="text-sm font-medium text-ink-muted">Class Rank</dt>
                         <dd className="mt-1 text-2xl font-semibold text-ink tabular-nums">{rank === null ? 'Unranked' : rank}</dd>
                         {rank === null && <dd className="mt-0.5 text-xs text-ink-muted">Ranked once there is an overall score.</dd>}
@@ -60,7 +60,7 @@ export function QualificationSummary({ areas, qualification, showRank = false }:
 
             <QualificationReasons reasons={decision.reasons} pending={decision.pending} />
 
-            <div className="overflow-hidden rounded-lg border border-line">
+            <div className="overflow-hidden rounded-lg border border-line-box">
                 <AreaResultsTable areas={areas} results={qualification.areas} />
             </div>
         </div>
@@ -125,7 +125,7 @@ export function QualificationChecklist({ areas, results }: { areas: PerformanceA
     }
 
     return (
-        <ul className="flex flex-col divide-y divide-line rounded-lg border border-line">
+        <ul className="flex flex-col divide-y divide-line rounded-lg border border-line-box">
             {required.map((area) => {
                 const result = resultsByArea.get(area.id);
                 const item = CHECKLIST[result?.status.value ?? 'not_yet'];

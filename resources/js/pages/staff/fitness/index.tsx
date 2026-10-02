@@ -68,7 +68,7 @@ export default function FitnessIndex({ tests, filters, periods, classes, scope, 
                 }
             />
 
-            <section className="rounded-lg border border-line bg-surface" aria-label="Fitness tests">
+            <section className="rounded-lg border border-line-box bg-surface" aria-label="Fitness tests">
                 <FilterBar onReset={() => updateMany({ period: defaultPeriod, class: '' })} canReset={canReset}>
                     <FormField label="Academic period" className="sm:w-60">
                         <SelectInput value={values.period} onChange={(event) => updateMany({ period: event.target.value, class: '' })}>

@@ -17,6 +17,8 @@ use RuntimeException;
  * values for the demo candidates student01–student20. The values are
  * invented for the demo; they describe no real person.
  *
+ * Also adds fictional uploaded documents (DemoMedicalDocumentSeeder).
+ *
  * Safe to run again: fields that exist (same name) are kept (a demo field
  * without a section gets its section and position), and only empty values
  * are filled. Never runs in production.
@@ -161,6 +163,8 @@ class DemoMedicalSeeder extends Seeder
                 $service->saveRecord($candidate, $missing, $admin);
             }
         }
+
+        $this->call(DemoMedicalDocumentSeeder::class);
     }
 
     /**

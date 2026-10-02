@@ -50,7 +50,7 @@ export function Dialog({ open, title, description, children, footer, busy = fals
                 }
             }}
             className={cn(
-                'm-auto w-[calc(100%-2rem)] rounded-xl border border-line bg-surface p-0 text-ink shadow-lg',
+                'm-auto w-[calc(100%-2rem)] rounded-xl border border-line-box bg-surface p-0 text-ink shadow-lg',
                 size === 'lg' ? 'max-w-2xl' : 'max-w-lg',
             )}
         >

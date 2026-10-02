@@ -40,7 +40,7 @@ export default function ExaminationIndex({ examinations, charts }: { examination
 
             <ListCharts charts={charts} />
 
-            <section aria-label="Examinations" className="rounded-xl border border-line bg-surface">
+            <section aria-label="Examinations" className="rounded-xl border border-line-box bg-surface">
                 {examinations.total === 0 ? (
                     <EmptyState
                         icon={ClipboardList}

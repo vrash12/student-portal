@@ -125,7 +125,7 @@ export default function ImportQuestions({ subjects, selectedSubjectId, limits }:
                 />
 
                 {subjects.length === 0 ? (
-                    <div className="rounded-lg border border-line bg-surface">
+                    <div className="rounded-lg border border-line-box bg-surface">
                         <EmptyState
                             icon={ClipboardList}
                             title="You do not teach any subjects yet"
@@ -214,7 +214,7 @@ export default function ImportQuestions({ subjects, selectedSubjectId, limits }:
                             </FormActions>
                         </form>
 
-                        <section aria-labelledby="import-format-heading" className="rounded-lg border border-line bg-surface">
+                        <section aria-labelledby="import-format-heading" className="rounded-lg border border-line-box bg-surface">
                             <div className="flex flex-col gap-3 border-b border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <h2 id="import-format-heading" className="text-base font-semibold text-ink">

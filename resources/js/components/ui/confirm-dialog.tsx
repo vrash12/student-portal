@@ -59,7 +59,7 @@ export function ConfirmDialog({
                     onCancel();
                 }
             }}
-            className="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl border border-line bg-surface p-0 text-ink shadow-lg"
+            className="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl border border-line-box bg-surface p-0 text-ink shadow-lg"
         >
             <div className="p-6">
                 <h2 id={titleId} className="text-lg font-semibold">

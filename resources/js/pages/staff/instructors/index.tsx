@@ -44,7 +44,7 @@ export default function InstructorsIndex({ instructors, filters, canCreateAccoun
                 actions={createAction}
             />
 
-            <div className="rounded-lg border border-line bg-surface">
+            <div className="rounded-lg border border-line-box bg-surface">
                 <FilterBar onReset={reset} canReset={isFiltered}>
                     <SearchField
                         placeholder="Search instructors by name or username…"

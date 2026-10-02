@@ -250,7 +250,7 @@ function FillRows({ unit, higherIsBetter, maximumRows, hasRows, onFill }: FillRo
     };
 
     return (
-        <details className="rounded-lg border border-line bg-surface-muted/40 open:bg-surface">
+        <details className="rounded-lg border border-line-box bg-surface-muted/40 open:bg-surface">
             <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-3 text-sm font-semibold text-primary-800">
                 <ListPlus className="size-4" aria-hidden="true" />
                 Fill the table in steps

@@ -1,11 +1,12 @@
 import { Head } from '@inertiajs/react';
-import { HeartPulse, LockKeyhole, Settings2 } from 'lucide-react';
+import { FileStack, HeartPulse, LockKeyhole, Settings2 } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FilterBar } from '@/components/ui/filter-bar';
 import { FormField, SelectInput, TextInput } from '@/components/ui/form-field';
 import { PageHeader } from '@/components/ui/page-header';
 import { Pagination } from '@/components/ui/pagination';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
 import { useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
@@ -21,6 +22,9 @@ interface MedicalCandidateRow {
     /** Active fields with a value. */
     recorded: number;
     updatedAt: string | null;
+    /** Documents the candidate uploaded, and how many wait for review. */
+    documents: number;
+    waitingDocuments: number;
 }
 
 interface MedicalRecordsProps {
@@ -31,11 +35,13 @@ interface MedicalRecordsProps {
     classes: Array<{ id: number; name: string }>;
     /** Instructors' requests to see a full record, waiting for a decision. */
     pendingAccessRequests: number;
+    /** Uploaded documents waiting for review. */
+    waitingDocuments: number;
     can: { configure: boolean; manage: boolean };
 }
 
 /** Candidates and how much of their medical record is filled in. Medical staff only. */
-export default function MedicalRecords({ candidates, fieldCount, filters, classes, pendingAccessRequests, can }: MedicalRecordsProps) {
+export default function MedicalRecords({ candidates, fieldCount, filters, classes, pendingAccessRequests, waitingDocuments, can }: MedicalRecordsProps) {
     const formatDate = useDateFormatter();
     const { values, update, updateMany } = useQueryFilters(routes.medical.records.index(), filters);
     const configureAction = can.configure && (
@@ -50,9 +56,20 @@ export default function MedicalRecords({ candidates, fieldCount, filters, classe
 
             <PageHeader
                 title="Medical Records"
-                description="Confidential. Each candidate's medical record answers the fields set by the administrators. Every change is kept in the record's history."
+                description="Confidential. Candidates upload their medical certificates and check-up findings for review; the record fields set by the administrators complete the record. Every change is kept in the record's history."
                 actions={
                     <>
+                        {can.manage && (
+                            <ButtonLink href={routes.medical.documents.index()} variant={waitingDocuments > 0 ? 'primary' : 'secondary'} icon={<FileStack className="size-4" aria-hidden="true" />}>
+                                Documents to Review
+                                {waitingDocuments > 0 && (
+                                    <span className="ml-1 rounded-full bg-accent-300 px-2 text-xs font-bold text-primary-900 tabular-nums">
+                                        {waitingDocuments}
+                                        <span className="sr-only"> waiting</span>
+                                    </span>
+                                )}
+                            </ButtonLink>
+                        )}
                         {can.manage && (
                             <ButtonLink href={routes.medical.access.index()} icon={<LockKeyhole className="size-4" aria-hidden="true" />}>
                                 Access Requests
@@ -69,7 +86,7 @@ export default function MedicalRecords({ candidates, fieldCount, filters, classe
                 }
             />
 
-            <section className="rounded-lg border border-line bg-surface" aria-label="Candidate medical records">
+            <section className="rounded-lg border border-line-box bg-surface" aria-label="Candidate medical records">
                 <FilterBar onReset={() => updateMany({ search: '', class: '' })} canReset={values.search !== '' || values.class !== ''}>
                     <FormField label="Search" className="sm:w-72">
                         <TextInput type="search" value={values.search} onChange={(event) => update('search', event.target.value)} placeholder="Candidate number or name" />
@@ -101,6 +118,7 @@ export default function MedicalRecords({ candidates, fieldCount, filters, classe
                             <Th>Candidate</Th>
                             <Th>{terms.classBatch.singular}</Th>
                             <Th align="right">Fields Recorded</Th>
+                            <Th>Documents</Th>
                             <Th>Last Updated</Th>
                             <Th align="right">
                                 <span className="sr-only">Actions</span>
@@ -116,6 +134,14 @@ export default function MedicalRecords({ candidates, fieldCount, filters, classe
                                     <Td className="text-ink">{candidate.className ?? '—'}</Td>
                                     <Td align="right" numeric className={candidate.recorded === 0 ? 'text-ink-muted' : 'text-ink'}>
                                         {candidate.recorded} of {fieldCount}
+                                    </Td>
+                                    <Td className="whitespace-nowrap text-ink">
+                                        <span className={candidate.documents === 0 ? 'text-ink-muted' : undefined}>{candidate.documents}</span>
+                                        {candidate.waitingDocuments > 0 && (
+                                            <StatusBadge tone="warning" className="ml-2">
+                                                {candidate.waitingDocuments} to review
+                                            </StatusBadge>
+                                        )}
                                     </Td>
                                     <Td className="whitespace-nowrap text-ink">{candidate.updatedAt === null ? 'Never' : formatDate.dateTime(candidate.updatedAt)}</Td>
                                     <Td align="right">

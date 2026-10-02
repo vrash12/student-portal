@@ -1,6 +1,7 @@
 import { useForm } from '@inertiajs/react';
-import { HeartPulse, Hourglass, LockKeyhole, Pencil } from 'lucide-react';
+import { FileStack, HeartPulse, Hourglass, LockKeyhole, Pencil } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { MedicalDocumentList } from '@/components/medical/medical-documents';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { ConfirmAction } from '@/components/ui/confirm-action';
@@ -142,6 +143,27 @@ export function CandidateMedicalPanel({ medical, candidateId }: { medical: Profi
                 ) : (
                     <MedicalEntries entries={medical.entries} showAudience={full} />
                 )}
+                {medical.scope !== 'instructor' && (
+                    <section aria-labelledby="medical-documents-heading" className="flex flex-col gap-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-1.5">
+                            <h3 id="medical-documents-heading" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary-800">
+                                <FileStack className="size-4" aria-hidden="true" />
+                                Uploaded Documents ({medical.documents.length})
+                            </h3>
+                            {full && medical.waitingDocuments > 0 && (
+                                <StatusBadge tone="warning">{medical.waitingDocuments === 1 ? '1 waiting for review' : `${medical.waitingDocuments} waiting for review`}</StatusBadge>
+                            )}
+                        </div>
+                        {!full && (
+                            <p className="text-sm text-ink-muted">View only. Printing and downloading are disabled, and each document you open is recorded.</p>
+                        )}
+                        <MedicalDocumentList
+                            documents={medical.documents}
+                            audience={full ? 'staff' : 'granted'}
+                            emptyText="The candidate has not uploaded any medical document yet. Candidates upload certificates and check-up findings in the candidate portal."
+                        />
+                    </section>
+                )}
                 {medical.access !== null && medical.access.grant === null && <AccessRequestBox access={medical.access} candidateId={candidateId} />}
             </div>
         </Panel>
@@ -154,7 +176,7 @@ function AccessRequestBox({ access, candidateId }: { access: MedicalAccessState;
     const [requesting, setRequesting] = useState(false);
 
     return (
-        <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface-muted px-4 py-4">
+        <div className="flex flex-col gap-3 rounded-lg border border-line-box bg-surface-muted px-4 py-4">
             {access.pending !== null ? (
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="flex items-center gap-2 text-sm text-ink">
@@ -188,7 +210,7 @@ function AccessRequestBox({ access, candidateId }: { access: MedicalAccessState;
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <p className="flex items-center gap-2 text-sm text-ink">
                                 <LockKeyhole className="size-4 text-ink-muted" aria-hidden="true" />
-                                Need the full medical record? Ask the medical staff, with a reason.
+                                Need the full medical record, including the documents the candidate uploaded? Ask the medical staff, with a reason.
                             </p>
                             <Button variant="secondary" size="sm" onClick={() => setRequesting(true)}>
                                 Request Full Record
@@ -219,7 +241,7 @@ function RequestAccessDialog({ open, candidateId, onClose }: { open: boolean; ca
     return (
         <Dialog open={open} title="Request the Full Medical Record" busy={form.processing} onClose={onClose}>
             <form onSubmit={submit} noValidate className="flex flex-col gap-5">
-                <Alert tone="info">The medical staff decide, and choose how long you may see the record (up to 30 days). Each time you open it is recorded.</Alert>
+                <Alert tone="info">The medical staff decide, and choose how long you may see the record (up to 30 days). It is view only: uploaded documents cannot be printed or downloaded, and each time you open the record or a document is recorded.</Alert>
                 <FormField
                     label="Why do you need it?"
                     required

@@ -108,7 +108,7 @@ export default function AcademicPeriodShow({ period, classes, totals, can }: Aca
                 )}
 
                 {classes.length === 0 ? (
-                    <div className="rounded-lg border border-line bg-surface">
+                    <div className="rounded-lg border border-line-box bg-surface">
                         <EmptyState
                             icon={Users}
                             title={`No ${plural.toLowerCase()} in this period`}

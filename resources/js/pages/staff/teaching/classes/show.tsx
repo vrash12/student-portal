@@ -47,7 +47,7 @@ export default function TeachingClass({ classBatch, subjects, candidates, filter
                 breadcrumbs={[{ label: `My ${plural}`, href: routes.teaching.classes.index() }, { label: classBatch.name }]}
             />
 
-            <section aria-labelledby="subjects-you-teach" className="mb-6 rounded-lg border border-line bg-surface px-5 py-4">
+            <section aria-labelledby="subjects-you-teach" className="mb-6 rounded-lg border border-line-box bg-surface px-5 py-4">
                 <h2 id="subjects-you-teach" className="text-sm font-semibold text-ink">
                     Subjects You Teach in This {singular}
                 </h2>
@@ -68,7 +68,7 @@ export default function TeachingClass({ classBatch, subjects, candidates, filter
                 </ul>
             </section>
 
-            <div className="rounded-lg border border-line bg-surface">
+            <div className="rounded-lg border border-line-box bg-surface">
                 <div className="border-b border-line px-5 py-4">
                     <h2 className="text-base font-semibold text-ink">Candidates</h2>
                     <p className="mt-0.5 text-sm text-ink-muted">

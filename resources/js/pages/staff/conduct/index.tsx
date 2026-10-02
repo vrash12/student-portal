@@ -55,7 +55,7 @@ export default function ConductIndex({ candidates, filters, classOptions, scope,
             />
 
             <div className="flex flex-col gap-6">
-                <section className="rounded-lg border border-line bg-surface" aria-label="Candidate merits and demerits">
+                <section className="rounded-lg border border-line-box bg-surface" aria-label="Candidate merits and demerits">
                     <FilterBar onReset={reset} canReset={isFiltered}>
                         <SearchField
                             placeholder="Search candidates by number or name…"

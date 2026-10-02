@@ -22,7 +22,7 @@ Use trusted HTTPS on actual LAN tablets for service workers, installation and se
 
 Leaving the examination screen (switching tabs or apps, or another window taking focus for more than a second) is recorded with server times. Instructors see it in live monitoring (Left screen, Away now) and on the essay grading page. It is an indicator only: browsers cannot see other apps or tell why focus was lost, and it never changes answers or scores. For hard prevention, lock the tablets into the browser with the device's kiosk or managed mode.
 
-Question images, audio, and video are stored privately in `storage/app/private/question-media` (candidate photos in `storage/app/private/candidate-photos`). Include both folders in backups together with the database; restoring the database without them leaves questions without their media.
+Question images, audio, and video are stored privately in `storage/app/private/question-media` (candidate photos in `storage/app/private/candidate-photos`, the medical documents candidates upload in `storage/app/private/medical-documents`). Include these folders in backups together with the database; restoring the database without them leaves questions without their media and medical records without their documents.
 
 For a demonstration, `php artisan db:seed --class=DemoExaminationSeeder` publishes two quizzes for Sample Batch A (one with an image in every question). It refuses to run in production.
 

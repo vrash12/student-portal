@@ -43,7 +43,7 @@ export function ExamCard({ exam, upcoming = false }: { exam: PortalExam; upcomin
               : { label: 'Start', icon: PlayCircle, href: routes.portal.examination(exam.id), primary: true };
 
     return (
-        <article className="flex flex-col rounded-2xl border border-line bg-surface p-6 shadow-sm">
+        <article className="flex flex-col rounded-2xl border border-line-box bg-surface p-6 shadow-sm">
             <div className="flex items-center justify-between gap-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">{exam.kind}</span>
                 <StatusBadge tone={state.tone}>{state.label}</StatusBadge>

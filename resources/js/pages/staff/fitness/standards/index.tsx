@@ -46,7 +46,7 @@ export default function FitnessStandards({ events }: { events: FitnessEventRow[]
                 actions={addAction}
             />
 
-            <div className="rounded-lg border border-line bg-surface">
+            <div className="rounded-lg border border-line-box bg-surface">
                 {events.length === 0 ? (
                     <EmptyState
                         icon={Dumbbell}

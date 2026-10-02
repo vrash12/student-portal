@@ -62,7 +62,7 @@ export default function UsersIndex({ users, filters, roles, canCreate, charts }:
 
             <ListCharts charts={charts} />
 
-            <div className="rounded-lg border border-line bg-surface">
+            <div className="rounded-lg border border-line-box bg-surface">
                 <FilterBar onReset={reset} canReset={isFiltered}>
                     <SearchField
                         placeholder="Search accounts by name or username…"

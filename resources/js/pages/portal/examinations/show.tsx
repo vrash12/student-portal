@@ -70,7 +70,7 @@ export default function ExamStart({ examination: e }: { examination: Exam }) {
                     event.preventDefault();
                     form.post(`/portal/examinations/${e.id}/start`);
                 }}
-                className="space-y-6 rounded-xl border border-line bg-surface p-6 shadow-sm"
+                className="space-y-6 rounded-xl border border-line-box bg-surface p-6 shadow-sm"
             >
                 {e.description && <p className="whitespace-pre-wrap break-words">{e.description}</p>}
 
@@ -117,7 +117,7 @@ export default function ExamStart({ examination: e }: { examination: Exam }) {
                         Continue Examination
                     </Button>
                 ) : unavailableReason ? (
-                    <p role="status" className="rounded-lg border border-line bg-canvas p-3 font-medium">
+                    <p role="status" className="rounded-lg border border-line-box bg-canvas p-3 font-medium">
                         {unavailableReason}
                     </p>
                 ) : (
@@ -127,7 +127,7 @@ export default function ExamStart({ examination: e }: { examination: Exam }) {
                 )}
             </form>
 
-            <section className="rounded-xl border border-line bg-surface p-6 shadow-sm" aria-labelledby="attempt-history">
+            <section className="rounded-xl border border-line-box bg-surface p-6 shadow-sm" aria-labelledby="attempt-history">
                 <h2 id="attempt-history" className="text-lg font-semibold">
                     Your Attempts
                 </h2>
@@ -136,7 +136,7 @@ export default function ExamStart({ examination: e }: { examination: Exam }) {
                 ) : (
                     <ul className="mt-3 space-y-2">
                         {e.attempts.map((attempt) => (
-                            <li key={attempt.number} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line p-3 text-sm">
+                            <li key={attempt.number} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line-box p-3 text-sm">
                                 <span className="font-medium">Attempt {attempt.number}</span>
                                 <span>{ATTEMPT_STATUS[attempt.status] ?? 'Closed'}</span>
                                 <span>{attempt.submittedAt ? dateTime(attempt.submittedAt) : ''}</span>
@@ -159,7 +159,7 @@ export default function ExamStart({ examination: e }: { examination: Exam }) {
 
 function Fact({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
     return (
-        <div className="rounded-lg border border-line bg-surface-muted p-4">
+        <div className="rounded-lg border border-line-box bg-surface-muted p-4">
             <dt className="flex items-center gap-2 text-sm text-ink-muted">
                 <Icon className="size-4" aria-hidden="true" />
                 {label}

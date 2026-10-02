@@ -97,7 +97,7 @@ php artisan db:seed --class=DemoActivitySeeder
 php artisan db:seed --class=DemoPeopleSeeder
 ```
 
-Last, `DemoMedicalSeeder` adds 39 placeholder medical record fields in seven sections (General Information, Medical History, Immunizations, Examinations and Tests, Fitness for Training, Emergency, Medical Staff Notes; see Records → Medical Records → Configure Fields) and **fictional** medical values for `student01`–`student20`; it never runs in production, is safe to run again, and only fills empty values:
+Last, `DemoMedicalSeeder` adds 39 placeholder medical record fields in seven sections (General Information, Medical History, Immunizations, Examinations and Tests, Fitness for Training, Emergency, Medical Staff Notes; see Records → Medical Records → Configure Fields) and **fictional** medical values for `student01`–`student20`, then (`DemoMedicalDocumentSeeder`) seven **fictional** uploaded medical documents, each marked as a demo document on its face: `student01` (one accepted, one waiting for review), `student02` (waiting), `student03` (returned with a reason), `student05` (a photo, waiting) and `student06` (two accepted). It never runs in production, is safe to run again, and only fills empty values:
 
 ```bash
 php artisan db:seed --class=DemoMedicalSeeder
@@ -140,7 +140,7 @@ The test suite refuses to run against any database whose name does not end in `_
 - The application sends a Content-Security-Policy and, on HTTPS requests, `Strict-Transport-Security`. Do not add a second, conflicting policy in the web server.
 - Staff accounts created or reset by an administrator must choose their own password at the next sign-in.
 - Never commit `.env` or credentials. Keep `.env.example` current.
-- Back up the database together with `storage/app/private` (question images/audio/video and candidate photos). See `docs/examination-operations.md`.
+- Back up the database together with `storage/app/private` (question images/audio/video, candidate photos and the medical documents candidates upload). See `docs/examination-operations.md`.
 
 ## Candidate examination PWA (Milestone 9)
 

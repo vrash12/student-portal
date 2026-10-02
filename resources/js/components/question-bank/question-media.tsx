@@ -21,7 +21,7 @@ export function QuestionMediaList<T extends QuestionMediaView>({ media, urlFor, 
     return (
         <div className={className ?? 'space-y-4'}>
             {media.map((item) => (
-                <figure key={item.id} className="rounded-lg border border-line bg-surface p-2">
+                <figure key={item.id} className="rounded-lg border border-line-box bg-surface p-2">
                     {item.kind === 'image' && (
                         <img
                             src={urlFor(item)}

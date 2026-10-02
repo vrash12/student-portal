@@ -29,7 +29,7 @@ export default function ConductTypes({ types }: { types: ConductTypeRow[] }) {
                 actions={addAction}
             />
 
-            <div className="rounded-lg border border-line bg-surface">
+            <div className="rounded-lg border border-line-box bg-surface">
                 {types.length === 0 ? (
                     <EmptyState
                         icon={Tags}

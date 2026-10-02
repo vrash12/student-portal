@@ -58,7 +58,7 @@ export default function MyPerformance({ candidate, areas, result, staffAssessedA
                     ) : (
                         <div className="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
                             <dl className="flex flex-col gap-5">
-                                <div className="rounded-xl border border-line bg-surface-muted/60 p-5">
+                                <div className="rounded-xl border border-line-box bg-surface-muted/60 p-5">
                                     <dt className="text-sm font-medium text-ink-muted">Status</dt>
                                     <dd className="mt-3">
                                         <QualificationBadge status={result.qualification.status} className="px-3 py-1.5 text-base" />
@@ -97,7 +97,7 @@ export default function MyPerformance({ candidate, areas, result, staffAssessedA
                                     const areaResult = resultsByArea.get(area.id);
 
                                     return (
-                                        <li key={area.id} className="flex flex-col gap-3 rounded-xl border border-line p-5">
+                                        <li key={area.id} className="flex flex-col gap-3 rounded-xl border border-line-box p-5">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="min-w-0">
                                                     <p className="text-lg font-semibold text-primary-900">{area.name}</p>
@@ -126,7 +126,7 @@ export default function MyPerformance({ candidate, areas, result, staffAssessedA
                             <PortalEmpty icon={Medal} title="No merits or demerits yet" />
                         ) : (
                             <div>
-                                <ul className="divide-y divide-line rounded-xl border border-line" aria-label="Your merits and demerits">
+                                <ul className="divide-y divide-line rounded-xl border border-line-box" aria-label="Your merits and demerits">
                                     {conductPages.rows.map((entry) => (
                                         <li key={entry.id} className="flex flex-wrap items-start justify-between gap-3 px-5 py-4">
                                             <div className="min-w-0 flex-1">

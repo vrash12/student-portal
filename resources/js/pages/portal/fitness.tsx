@@ -43,7 +43,7 @@ export default function PortalFitness({ tests }: FitnessProps) {
                     <PortalSection icon={Trophy} title={latest.title} description={`Latest test · ${formatCalendarDate(latest.testedOn)} · ${latest.classBatch}`}>
                         <div className="flex flex-col gap-8">
                             <dl className="grid gap-5 sm:grid-cols-2">
-                                <div className="rounded-xl border border-line bg-surface-muted/60 p-5">
+                                <div className="rounded-xl border border-line-box bg-surface-muted/60 p-5">
                                     <dt className="text-sm font-medium text-ink-muted">Result</dt>
                                     <dd className="mt-3">
                                         <StatusBadge tone={latest.outcome.status.tone as StatusTone} className="px-3 py-1.5 text-base">
@@ -68,7 +68,7 @@ export default function PortalFitness({ tests }: FitnessProps) {
 
                             <ul className="grid gap-5 md:grid-cols-2">
                                 {latest.events.map((event) => (
-                                    <li key={event.id} className="flex flex-col gap-3 rounded-xl border border-line p-5">
+                                    <li key={event.id} className="flex flex-col gap-3 rounded-xl border border-line-box p-5">
                                         <div className="flex items-start justify-between gap-3">
                                             <p className="text-lg font-semibold text-primary-900">{event.name}</p>
                                             <EventOutcome passed={event.result?.passed ?? null} />
@@ -93,7 +93,7 @@ export default function PortalFitness({ tests }: FitnessProps) {
                                     formatValue={points}
                                     emptyValue="Incomplete"
                                 />
-                                <ul className="divide-y divide-line rounded-xl border border-line">
+                                <ul className="divide-y divide-line rounded-xl border border-line-box">
                                     {earlier.map((test) => (
                                         <li key={test.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                                             <div className="min-w-0">

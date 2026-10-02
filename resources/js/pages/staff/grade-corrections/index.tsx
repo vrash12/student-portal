@@ -45,7 +45,7 @@ export default function GradeCorrectionsIndex({ requests, status, counts, status
                 }
             />
 
-            <section className="rounded-lg border border-line bg-surface" aria-label="Grade correction requests">
+            <section className="rounded-lg border border-line-box bg-surface" aria-label="Grade correction requests">
                 <nav aria-label="Filter by status" className="flex flex-wrap gap-2 border-b border-line px-4 py-3">
                     {tabs.map((tab) => {
                         const active = tab.value === status;

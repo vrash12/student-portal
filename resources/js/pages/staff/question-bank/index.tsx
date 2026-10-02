@@ -75,7 +75,7 @@ export default function QuestionBankIndex({ questions, filters, subjects, topics
             <ListCharts charts={charts} />
 
             {subjects.length === 0 ? (
-                <div className="rounded-lg border border-line bg-surface">
+                <div className="rounded-lg border border-line-box bg-surface">
                     <EmptyState
                         icon={ClipboardList}
                         title="You do not teach any subjects yet"
@@ -83,7 +83,7 @@ export default function QuestionBankIndex({ questions, filters, subjects, topics
                     />
                 </div>
             ) : (
-                <div className="rounded-lg border border-line bg-surface">
+                <div className="rounded-lg border border-line-box bg-surface">
                     <FilterBar onReset={reset} canReset={isFiltered}>
                         <SearchField
                             placeholder="Search questions by text…"

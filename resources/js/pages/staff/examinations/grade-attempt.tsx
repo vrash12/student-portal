@@ -92,7 +92,7 @@ export default function GradeAttempt({ examination, attempt, questions, history,
                 }
             />
 
-            <div className="mb-6 rounded-xl border border-line bg-surface p-5">
+            <div className="mb-6 rounded-xl border border-line-box bg-surface p-5">
                 <p className="text-sm text-ink-muted">Current result</p>
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                     <StatusBadge tone={pending ? 'warning' : 'success'}>{pending ? 'Pending essay review' : 'Final'}</StatusBadge>
@@ -110,7 +110,7 @@ export default function GradeAttempt({ examination, attempt, questions, history,
                 <h2 id="grading-history" className="text-lg font-semibold">
                     Grading History
                 </h2>
-                <div className="mt-3 rounded-xl border border-line bg-surface">
+                <div className="mt-3 rounded-xl border border-line-box bg-surface">
                     {history.data.length === 0 ? (
                         <p className="p-5 text-ink-muted">No scores have been saved.</p>
                     ) : (

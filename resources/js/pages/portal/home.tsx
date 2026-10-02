@@ -1,5 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
-import { Award, CalendarClock, CalendarDays, ClipboardList, Dumbbell, GraduationCap, IdCard, PartyPopper, Users } from 'lucide-react';
+import { Award, CalendarClock, CalendarDays, ClipboardList, Dumbbell, GraduationCap, HeartPulse, IdCard, PartyPopper, Users } from 'lucide-react';
 import { QualificationBadge } from '@/components/performance/area-status';
 import { ExamCard, type PortalExam } from '@/components/portal/exam-card';
 import { PortalEmpty, PortalSection, PortalTile } from '@/components/portal/portal-ui';
@@ -24,6 +24,8 @@ interface HomeProps {
         grades: { overall: OverallStanding; subjectCount: number; outstandingCount: number };
         examinations: { openCount: number; upcomingCount: number; releasedCount: number };
         fitness: { title: string; testedOn: string; status: StatusValue; points: number | null } | null;
+        /** Own uploaded medical documents by review status. */
+        medical: { documentCount: number; waitingCount: number; returnedCount: number };
     };
 }
 
@@ -115,7 +117,7 @@ export default function PortalHome({ summary, available, upcoming, performance, 
                     <h2 id="sections-title" className="mb-4 text-xl font-semibold text-primary-900">
                         My Records
                     </h2>
-                    <div className={`grid gap-5 sm:grid-cols-2 ${showFitness ? 'xl:grid-cols-4' : 'lg:grid-cols-3'}`}>
+                    <div className={`grid gap-5 sm:grid-cols-2 ${showFitness ? 'lg:grid-cols-3' : 'xl:grid-cols-4'}`}>
                         <PortalTile href={routes.portal.grades()} icon={GraduationCap} title="My Grades" cta="View Grades">
                             <span className="flex flex-col items-start gap-2">
                                 {sections.grades.overall.standing === null ? (
@@ -170,6 +172,23 @@ export default function PortalHome({ summary, available, upcoming, performance, 
                                 )}
                             </PortalTile>
                         )}
+
+                        <PortalTile href={routes.portal.medical()} icon={HeartPulse} title="Medical" cta="Open Medical Records">
+                            {sections.medical.documentCount === 0 ? (
+                                <span className="text-ink-muted">No documents yet. Upload your medical certificate.</span>
+                            ) : (
+                                <span className="flex flex-col items-start gap-2">
+                                    <span>
+                                        <span className="text-2xl font-bold tabular-nums">{sections.medical.documentCount}</span>{' '}
+                                        {sections.medical.documentCount === 1 ? 'document' : 'documents'} uploaded
+                                    </span>
+                                    {sections.medical.returnedCount > 0 && (
+                                        <StatusBadge tone="danger">{sections.medical.returnedCount} returned: see the reason</StatusBadge>
+                                    )}
+                                    {sections.medical.waitingCount > 0 && <span className="text-ink-muted">{sections.medical.waitingCount} waiting for review</span>}
+                                </span>
+                            )}
+                        </PortalTile>
                     </div>
                 </section>
             </div>

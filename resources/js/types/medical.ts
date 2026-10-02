@@ -47,6 +47,38 @@ export interface MedicalAccessState {
     canRequest: boolean;
 }
 
+export type MedicalDocumentStatusValue = 'submitted' | 'accepted' | 'returned';
+
+/**
+ * A medical document a candidate uploaded (MedicalRecordPresenter::document).
+ * Instructors with approved access get `protectedUrl` only (view in the
+ * protected viewer); medical staff and the candidate get `fileUrl`/`downloadUrl`.
+ */
+export interface MedicalDocument {
+    id: number;
+    title: string;
+    category: { value: string; label: string };
+    documentDate: string | null;
+    notes: string | null;
+    fileType: 'pdf' | 'image';
+    sizeBytes: number;
+    status: { value: MedicalDocumentStatusValue; label: string; tone: StatusTone };
+    uploadedAt: string | null;
+    reviewedAt: string | null;
+    reviewedBy: string | null;
+    /** Accepting note, or the reason a document was returned. */
+    reviewNote: string | null;
+    fileUrl: string | null;
+    downloadUrl: string | null;
+    protectedUrl: string | null;
+    can: { review: boolean; withdraw: boolean };
+}
+
+/** A document on the medical staff's review page. */
+export interface MedicalDocumentRow extends MedicalDocument {
+    candidate: { id: number; number: string; name: string; className: string | null };
+}
+
 /** The medical panel of the staff candidate profile. */
 export interface ProfileMedical {
     /**
@@ -61,6 +93,10 @@ export interface ProfileMedical {
     updatedBy: string | null;
     /** Instructors only. */
     access: MedicalAccessState | null;
+    /** Uploaded documents: every one for medical staff; not returned ones, view-only, with approved access; none otherwise. */
+    documents: MedicalDocument[];
+    /** Medical staff only: documents waiting for review. */
+    waitingDocuments: number;
 }
 
 /** A request on the medical staff's Access Requests page. */

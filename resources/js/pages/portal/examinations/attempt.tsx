@@ -448,7 +448,7 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
 
     return <><Head title={attempt.title} /><div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_19rem] [&_button]:min-h-12">
         <div className="min-w-0 space-y-5">
-            <header className="rounded-xl border border-line bg-surface p-5 shadow-sm">
+            <header className="rounded-xl border border-line-box bg-surface p-5 shadow-sm">
                 <p className="text-sm font-medium text-primary-700">{candidateName}</p>
                 <h1 className="mt-1 text-xl font-bold break-words sm:text-2xl">{attempt.title}</h1>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
@@ -462,7 +462,7 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
             </header>
 
             {/* Tablets in portrait: time and the question list in a sticky bar. */}
-            <div className="sticky top-0 z-10 rounded-xl border border-line bg-surface p-3 shadow-sm lg:hidden">
+            <div className="sticky top-0 z-10 rounded-xl border border-line-box bg-surface p-3 shadow-sm lg:hidden">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <TimeDisplay remaining={remaining} lowTime={lowTime} hidden={timeHidden} onToggle={() => setTimeHidden((value) => !value)} compact />
                     <Button variant="secondary" size="sm" aria-expanded={showList} aria-controls="question-list-compact" onClick={() => setShowList((value) => !value)}>
@@ -479,7 +479,7 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
             {!storageAvailable && <p role="alert" className="rounded-lg border border-warning-border bg-warning-bg p-3 text-sm text-warning-fg">This tablet cannot keep a copy of your answers. Answers are still saved to the server while connected; keep this page open.</p>}
             {submitError && <p role="alert" className="rounded-lg border border-danger-border bg-danger-bg p-3 text-danger-fg">{submitError}</p>}
 
-            <fieldset disabled={!recoveryReady || navigating || remaining === 0} aria-describedby={promptId} className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
+            <fieldset disabled={!recoveryReady || navigating || remaining === 0} aria-describedby={promptId} className="overflow-hidden rounded-xl border border-line-box bg-surface shadow-sm">
                 <legend className="sr-only">Question {position + 1} of {questions.length}</legend>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface-muted px-5 py-3 sm:px-8">
                     <h2 ref={questionHeading} tabIndex={-1} className="text-base font-semibold focus:outline-none">Question {position + 1}</h2>
@@ -531,15 +531,15 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
 
         <aside className="hidden lg:block" aria-label="Examination progress">
             <div className="sticky top-4 space-y-4">
-                <section className="rounded-xl border border-line bg-surface p-4 shadow-sm" aria-labelledby="questions-heading">
+                <section className="rounded-xl border border-line-box bg-surface p-4 shadow-sm" aria-labelledby="questions-heading">
                     <h2 id="questions-heading" className="text-lg font-semibold">Questions</h2>
                     <div className="mt-3 max-h-[45vh] overflow-y-auto pr-1">{questionList(false)}</div>
                 </section>
-                <section className="rounded-xl border border-line bg-surface p-4 shadow-sm">
+                <section className="rounded-xl border border-line-box bg-surface p-4 shadow-sm">
                     <TimeDisplay remaining={remaining} lowTime={lowTime} hidden={timeHidden} onToggle={() => setTimeHidden((value) => !value)} />
                     <p className="mt-3 text-sm text-ink-muted">Attempt ends: <span className="font-medium text-ink">{dateTime(attempt.expiresAt)}</span></p>
                 </section>
-                <section className="space-y-3 rounded-xl border border-line bg-surface p-4 shadow-sm">
+                <section className="space-y-3 rounded-xl border border-line-box bg-surface p-4 shadow-sm">
                     <dl className="grid grid-cols-3 gap-2 text-center text-sm">
                         <div><dt className="text-ink-muted">Answered</dt><dd className="text-lg font-semibold">{answeredCount}</dd></div>
                         <div><dt className="text-ink-muted">Remaining</dt><dd className="text-lg font-semibold">{unansweredCount}</dd></div>

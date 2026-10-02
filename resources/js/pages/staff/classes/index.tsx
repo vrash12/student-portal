@@ -56,7 +56,7 @@ export default function ClassesIndex({ classes, filters, periods, charts }: Clas
 
             <ListCharts charts={charts} />
 
-            <div className="rounded-lg border border-line bg-surface">
+            <div className="rounded-lg border border-line-box bg-surface">
                 {periods.length > 0 && (
                     <div className="border-b border-line p-4">
                         <FormField label="Academic Period" className="sm:w-80">

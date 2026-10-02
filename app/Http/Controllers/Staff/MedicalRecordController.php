@@ -6,6 +6,7 @@ use App\Enums\MedicalAccessStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Medical\MedicalRecordRequest;
 use App\Models\Candidate;
+use App\Models\CandidateMedicalDocument;
 use App\Models\CandidateMedicalRevision;
 use App\Models\ClassBatch;
 use App\Models\MedicalAccessRequest;
@@ -46,6 +47,7 @@ class MedicalRecordController extends Controller
             ->when($filters['class'] !== '', fn (Builder $query) => $query->where('class_batch_id', (int) $filters['class']))
             ->withCount(['medicalValues as recorded_count' => fn (Builder $values) => $values->whereIn('medical_field_id', $activeFieldIds)])
             ->withMax('medicalValues as medical_updated_at', 'updated_at')
+            ->withCount(['medicalDocuments as documents_count', 'medicalDocuments as waiting_documents_count' => fn (Builder $documents) => $documents->waiting()])
             ->orderBy('candidate_number')
             ->paginate(self::PER_PAGE)
             ->withQueryString();
@@ -58,12 +60,16 @@ class MedicalRecordController extends Controller
                 'className' => $candidate->classBatch?->name,
                 'recorded' => (int) $candidate->recorded_count,
                 'updatedAt' => $candidate->medical_updated_at === null ? null : (string) $candidate->medical_updated_at,
+                'documents' => (int) $candidate->documents_count,
+                'waitingDocuments' => (int) $candidate->waiting_documents_count,
             ]),
             'fieldCount' => count($activeFieldIds),
             'filters' => $filters,
             'classes' => ClassBatch::query()->orderBy('name')->get(['id', 'name'])->map(fn (ClassBatch $class): array => ['id' => $class->id, 'name' => $class->name])->all(),
             // Instructors' requests to see a full record, waiting for a decision.
             'pendingAccessRequests' => MedicalAccessRequest::query()->where('status', MedicalAccessStatus::Pending->value)->count(),
+            // Uploaded documents waiting for review.
+            'waitingDocuments' => CandidateMedicalDocument::query()->waiting()->count(),
             'can' => [
                 'configure' => $request->user()->can('medical.configure'),
                 'manage' => $request->user()->can('medical.manage'),

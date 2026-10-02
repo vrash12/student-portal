@@ -80,7 +80,7 @@ export default function AcademicMonitoring(props: AcademicMonitoringProps) {
             />
 
             {period === null ? (
-                <div className="rounded-lg border border-line bg-surface">
+                <div className="rounded-lg border border-line-box bg-surface">
                     <EmptyState
                         icon={CalendarClock}
                         title="Nothing to monitor yet"
@@ -145,7 +145,7 @@ export default function AcademicMonitoring(props: AcademicMonitoringProps) {
                                     current={filters.standing}
                                 />
                             ) : (
-                                <p className="rounded-lg border border-line bg-surface px-4 py-3 text-sm text-ink">
+                                <p className="rounded-lg border border-line-box bg-surface px-4 py-3 text-sm text-ink">
                                     No standings yet for the <span className="tabular-nums">{counts.monitored}</span> monitored{' '}
                                     {counts.monitored === 1 ? 'candidate' : 'candidates'}: standings appear once assessments are finalized.
                                 </p>

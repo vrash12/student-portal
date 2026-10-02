@@ -233,7 +233,7 @@ export default function ExaminationQuestions({ examination, questions }: { exami
                         )}
                     </Panel>
 
-                    <section aria-labelledby="selected-questions-heading" className="institution-panel min-w-0 rounded-xl border border-line bg-surface lg:sticky lg:top-4">
+                    <section aria-labelledby="selected-questions-heading" className="institution-panel min-w-0 rounded-xl border border-line-box bg-surface lg:sticky lg:top-4">
                         <header className="flex flex-wrap items-start justify-between gap-3 rounded-t-xl border-b border-line bg-primary-50/70 px-5 py-4">
                             <div>
                                 <h2 id="selected-questions-heading" ref={selectedHeadingRef} tabIndex={-1} className="text-base font-bold text-primary-900 focus:outline-none">
@@ -316,7 +316,7 @@ export default function ExaminationQuestions({ examination, questions }: { exami
                     </Alert>
                 )}
 
-                <div className="sticky bottom-0 z-10 mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface/95 px-4 py-3 shadow-lg backdrop-blur">
+                <div className="sticky bottom-0 z-10 mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line-box bg-surface/95 px-4 py-3 shadow-lg backdrop-blur">
                     <p className="text-sm">
                         <span className="font-semibold">
                             {selected.length} {selected.length === 1 ? 'question' : 'questions'} · {formatPoints(totalPoints)}

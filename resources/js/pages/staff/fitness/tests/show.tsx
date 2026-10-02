@@ -83,14 +83,14 @@ export default function FitnessTestShow({ test, events, rows, summary, can }: Fi
                     <div className="flex flex-col gap-6">
                         <dl className="grid grid-cols-2 gap-4 lg:grid-cols-5">
                             {outcomeCards.map((card) => (
-                                <div key={card.key} className="rounded-lg border border-line bg-surface px-4 py-4">
+                                <div key={card.key} className="rounded-lg border border-line-box bg-surface px-4 py-4">
                                     <dt>
                                         <StatusBadge tone={card.tone}>{card.label}</StatusBadge>
                                     </dt>
                                     <dd className="mt-2 text-3xl font-semibold text-ink tabular-nums">{summary.counts[card.key]}</dd>
                                 </div>
                             ))}
-                            <div className="rounded-lg border border-line bg-surface px-4 py-4">
+                            <div className="rounded-lg border border-line-box bg-surface px-4 py-4">
                                 <dt className="text-sm font-medium text-ink-muted">Mean overall score</dt>
                                 <dd className="mt-2 text-3xl font-semibold text-ink tabular-nums">{formatGrade(summary.meanPoints)}</dd>
                             </div>

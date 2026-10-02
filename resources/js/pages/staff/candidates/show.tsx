@@ -29,6 +29,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
 import { formatGrade } from '@/lib/format';
 import { routes } from '@/lib/routes';
+import { StartCollapsed } from '@/lib/use-collapsible';
 import { terms } from '@/lib/terminology';
 import type { GradingThresholds, OverallStanding, SubjectGrade } from '@/types/grading';
 import type { SubjectConcern } from '@/types/monitoring';
@@ -159,6 +160,8 @@ export default function CandidateShow({
                     hasClass={candidate.classBatch !== null}
                 />
 
+                {/* The long record starts closed; each section opens from its header. */}
+                <StartCollapsed.Provider value>
                 <CandidateInformationPanels candidate={candidate} />
 
                 {medical !== null && <CandidateMedicalPanel medical={medical} candidateId={candidate.id} />}
@@ -258,6 +261,7 @@ export default function CandidateShow({
                     />
                 )}
                 {candidate.classBatch !== null && <RecentActivity entries={recentActivity} />}
+                </StartCollapsed.Provider>
             </div>
         </>
     );

@@ -70,6 +70,11 @@ export const routes = {
             reject: (requestId: number) => `/medical-access-requests/${requestId}/reject`,
             revoke: (requestId: number) => `/medical-access-requests/${requestId}/revoke`,
         },
+        documents: {
+            index: (query?: Record<string, string>) => withQuery('/medical-records/documents', query),
+            accept: (documentId: number) => `/medical-documents/${documentId}/accept`,
+            return: (documentId: number) => `/medical-documents/${documentId}/return`,
+        },
         fields: {
             index: () => '/medical-records/fields',
             create: () => '/medical-records/fields/create',
@@ -207,6 +212,11 @@ export const routes = {
         fitness: () => '/portal/fitness',
         performance: () => '/portal/performance',
         profile: () => '/portal/profile',
+        medical: () => '/portal/medical',
+        medicalDocuments: {
+            store: () => '/portal/medical/documents',
+            destroy: (documentId: number) => `/portal/medical/documents/${documentId}`,
+        },
         examination: (id: number) => `/portal/examinations/${id}`,
         start: (id: number) => `/portal/examinations/${id}/start`,
         attempt: (id: number) => `/portal/attempts/${id}`,

@@ -75,7 +75,7 @@ function MediaItem({ question, media, heading }: { question: StaffQuestion; medi
     };
 
     return (
-        <li className="flex flex-col gap-4 rounded-lg border border-line p-3 sm:flex-row">
+        <li className="flex flex-col gap-4 rounded-lg border border-line-box p-3 sm:flex-row">
             <div className="flex w-full shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-muted sm:w-40">
                 {media.kind === 'image' ? (
                     <img src={media.url} alt="" className="max-h-32 w-auto object-contain" loading="lazy" />

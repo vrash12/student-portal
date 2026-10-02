@@ -57,7 +57,7 @@ export default function MedicalAccessRequests({ requests, status, counts, durati
                 </Alert>
             )}
 
-            <section className="rounded-lg border border-line bg-surface" aria-label="Medical record access requests">
+            <section className="rounded-lg border border-line-box bg-surface" aria-label="Medical record access requests">
                 <nav aria-label="Filter by status" className="flex flex-wrap gap-2 border-b border-line px-4 py-3">
                     {TABS.map((tab) => {
                         const active = tab.value === status;
@@ -235,7 +235,7 @@ function DecisionForm({ row, approving, durations, defaultDuration, onProcessing
 
     return (
         <form onSubmit={submit} noValidate className="flex flex-col gap-5">
-            <p className="whitespace-pre-line rounded-lg border border-line bg-surface-muted px-4 py-3 text-sm text-ink">{row.reason}</p>
+            <p className="whitespace-pre-line rounded-lg border border-line-box bg-surface-muted px-4 py-3 text-sm text-ink">{row.reason}</p>
             {approving && (
                 <RadioCards
                     legend="Share the full record for"

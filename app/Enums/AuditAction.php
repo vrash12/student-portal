@@ -53,6 +53,11 @@ enum AuditAction: string
     case MedicalAccessRejected = 'medical_access.rejected';
     case MedicalAccessCancelled = 'medical_access.cancelled';
     case MedicalAccessRevoked = 'medical_access.revoked';
+    case MedicalDocumentUploaded = 'medical_document.uploaded';
+    case MedicalDocumentWithdrawn = 'medical_document.withdrawn';
+    case MedicalDocumentAccepted = 'medical_document.accepted';
+    case MedicalDocumentReturned = 'medical_document.returned';
+    case MedicalDocumentViewed = 'medical_document.viewed';
     case GradingThresholdsUpdated = 'grading_thresholds.updated';
     case QuestionCreated = 'question.created';
     case QuestionUpdated = 'question.updated';
@@ -147,6 +152,11 @@ enum AuditAction: string
             self::MedicalAccessRejected => 'Rejected access to a full medical record',
             self::MedicalAccessCancelled => 'Cancelled a medical record access request',
             self::MedicalAccessRevoked => 'Withdrew access to a full medical record',
+            self::MedicalDocumentUploaded => 'Uploaded a medical document',
+            self::MedicalDocumentWithdrawn => 'Withdrew a medical document before review',
+            self::MedicalDocumentAccepted => 'Accepted a medical document',
+            self::MedicalDocumentReturned => 'Returned a medical document',
+            self::MedicalDocumentViewed => 'Viewed a medical document through approved access',
             self::GradingThresholdsUpdated => 'Updated passing and warning grades',
             self::QuestionCreated => 'Created question',
             self::QuestionUpdated => 'Updated question',

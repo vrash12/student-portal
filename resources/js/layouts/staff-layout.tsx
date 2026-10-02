@@ -121,12 +121,13 @@ function SidebarContent({ inDrawer = false, collapsed = false, onToggle }: Sideb
     const navId = useId();
     const visibleItems = staffNavigation.flatMap((section) => section.items).filter((item) => isVisibleItem(item, can));
     const activeHref = activeItemHref(url, visibleItems);
+    const systemTitle = usePage().props.app.login.cardTitle;
     const toggleLabel = collapsed ? 'Expand navigation' : 'Collapse navigation to icons';
 
     return (
         <div className="brand-dark flex h-full flex-col bg-primary-900 text-white">
             {/* The logo alone, centred; in the drawer, space is kept for the close button on both sides. */}
-            <div className={cn('flex h-16 shrink-0 items-center justify-center border-b border-white/15', inDrawer ? 'px-14' : 'px-3')}>
+            <div className={cn('flex shrink-0 flex-col items-center justify-center gap-2 border-b border-white/15 py-3', inDrawer ? 'px-14' : 'px-3')}>
                 {onToggle === undefined ? (
                     <BrandMark round className="size-12" />
                 ) : (
@@ -142,6 +143,7 @@ function SidebarContent({ inDrawer = false, collapsed = false, onToggle }: Sideb
                         <BrandMark round className={collapsed ? 'size-11' : 'size-12'} />
                     </button>
                 )}
+                {!collapsed && <p className="text-center text-xs leading-snug font-semibold text-accent-200">{systemTitle}</p>}
             </div>
 
             <nav id={navId} aria-label="Main" className={cn('sidebar-scroll flex-1 overflow-y-auto py-4', collapsed ? 'px-0.5' : 'px-1.5')}>
@@ -324,7 +326,7 @@ function UserMenu() {
             {open && (
                 <div
                     id={menuId}
-                    className="absolute right-0 mt-2 w-60 overflow-hidden rounded-lg border border-line bg-surface py-1 shadow-lg"
+                    className="absolute right-0 mt-2 w-60 overflow-hidden rounded-lg border border-line-box bg-surface py-1 shadow-lg"
                 >
                     <div className="border-b border-line px-4 py-3 sm:hidden">
                         <p className="truncate text-sm font-medium text-ink">{user.name}</p>

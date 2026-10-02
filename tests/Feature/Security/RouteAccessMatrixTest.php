@@ -7,6 +7,7 @@ use App\Enums\Permission;
 use App\Enums\SystemRole;
 use App\Models\AccountCategory;
 use App\Models\Assessment;
+use App\Models\CandidateMedicalDocument;
 use App\Models\ConductType;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
@@ -147,6 +148,19 @@ class RouteAccessMatrixTest extends TestCase
         // Bravo's request to see candidate B1's full medical record (Bravo cancels; medical staff decide).
         $medicalAccess = app(MedicalAccessService::class)->request($this->candidateInB, 'Planning a field exercise for Batch B.', $this->bravo);
 
+        // A medical document candidate B1 uploaded (B1 and medical staff only; instructors through approved access).
+        $medicalDocument = new CandidateMedicalDocument;
+        $medicalDocument->candidate_id = $this->candidateInB->id;
+        $medicalDocument->category = 'medical_certificate';
+        $medicalDocument->title = 'Medical certificate';
+        $medicalDocument->path = 'medical-documents/'.$this->candidateInB->id.'/sample.pdf';
+        $medicalDocument->original_name = 'sample.pdf';
+        $medicalDocument->mime_type = 'application/pdf';
+        $medicalDocument->size_bytes = 100;
+        $medicalDocument->status = 'submitted';
+        $medicalDocument->uploaded_by = $this->candidateInB->user_id;
+        $medicalDocument->save();
+
         $this->parameters = [
             'academicPeriod' => (string) $this->activePeriod->id,
             'accountCategory' => (string) $accountEntry->account_category_id,
@@ -167,6 +181,7 @@ class RouteAccessMatrixTest extends TestCase
             'instructor' => (string) $this->bravo->id,
             'instructorAssignment' => (string) InstructorAssignment::query()->where('instructor_id', $this->bravo->id)->value('id'),
             'medicalAccessRequest' => (string) $medicalAccess->id,
+            'medicalDocument' => (string) $medicalDocument->id,
             'medicalField' => (string) $medicalField->id,
             'medium' => (string) $media->id,
             'performanceArea' => (string) $performanceArea->id,

@@ -176,7 +176,7 @@ function StandingPreview({ passing, warning }: { passing: string; warning: strin
     return (
         // Static explanation next to the fields, not a live region: announcing
         // the whole preview on every keystroke would drown out the form.
-        <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface-muted px-4 py-3">
+        <div className="flex flex-col gap-2 rounded-lg border border-line-box bg-surface-muted px-4 py-3">
             <p className="text-sm font-medium text-ink">Preview</p>
             {isValid ? (
                 <>

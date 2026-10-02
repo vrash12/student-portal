@@ -245,7 +245,7 @@ function DecisionForm({ correction, decision, onProcessingChange, onClose }: Dec
 
 function ScoreBox({ label, score, comment, max, emphasis = false }: { label: string; score: string | null; comment: string | null; max: string; emphasis?: boolean }) {
     return (
-        <div className={emphasis ? 'rounded-lg border-2 border-primary-700 bg-primary-50 p-4' : 'rounded-lg border border-line bg-surface-muted p-4'}>
+        <div className={emphasis ? 'rounded-lg border-2 border-primary-700 bg-primary-50 p-4' : 'rounded-lg border border-line-box bg-surface-muted p-4'}>
             <p className="text-sm text-ink-muted">{label}</p>
             <p className="mt-1 text-3xl font-bold tabular-nums text-ink">{score ?? '—'}</p>
             <p className="text-sm text-ink-muted">{score === null ? 'No score' : `of ${max}`}</p>

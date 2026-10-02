@@ -85,7 +85,7 @@ export default function ExaminationItemAnalysis({ examination, analysis, generat
                 }
             />
 
-            <div className="mb-6 flex flex-col gap-4 rounded-xl border border-line bg-surface p-4 lg:flex-row lg:items-end lg:justify-between print:hidden">
+            <div className="mb-6 flex flex-col gap-4 rounded-xl border border-line-box bg-surface p-4 lg:flex-row lg:items-end lg:justify-between print:hidden">
                 <SegmentedLinks label="Attempts counted" options={scopeOptions} current={analysis.scope} hrefFor={(value) => query({ scope: value })} />
                 <SegmentedLinks label="Order questions by" options={sortOptions} current={analysis.sort} hrefFor={(value) => query({ sort: value })} />
             </div>
@@ -202,7 +202,7 @@ function SummaryPanel({ analysis }: { analysis: ItemAnalysis }) {
 
 function Stat({ label, value, description }: { label: string; value: string; description?: string }) {
     return (
-        <div className="rounded-lg border border-line bg-surface px-4 py-3">
+        <div className="rounded-lg border border-line-box bg-surface px-4 py-3">
             <dt className="text-sm font-medium text-ink-muted">{label}</dt>
             <dd className="mt-1 text-2xl font-semibold tabular-nums text-ink">{value}</dd>
             {description && <dd className="mt-1 text-sm text-ink-subtle">{description}</dd>}
@@ -280,7 +280,7 @@ function QuestionDetail({ question }: { question: ItemAnalysisQuestion }) {
     const isEssay = question.essay !== null;
 
     return (
-        <article id={`question-${question.id}`} className="scroll-mt-6 rounded-xl border border-line bg-surface print:break-inside-avoid">
+        <article id={`question-${question.id}`} className="scroll-mt-6 rounded-xl border border-line-box bg-surface print:break-inside-avoid">
             <header className="flex flex-col gap-2 rounded-t-xl border-b border-line bg-primary-50/70 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                     <h3 className="text-base font-bold text-primary-900">{questionName(question)}</h3>
@@ -331,7 +331,7 @@ function QuestionDetail({ question }: { question: ItemAnalysisQuestion }) {
 
 function ChoiceDistribution({ question }: { question: ItemAnalysisQuestion }) {
     return (
-        <div className="rounded-lg border border-line">
+        <div className="rounded-lg border border-line-box">
             <Table caption={`Answer choices chosen for ${questionName(question)}, out of ${question.delivered} deliveries`} className="min-w-[36rem]">
                 <TableHead>
                     <Th>Choice</Th>

@@ -10,6 +10,7 @@ use App\Http\Controllers\Portal\ExaminationController as PortalExaminationContro
 use App\Http\Controllers\Portal\ExaminationListController;
 use App\Http\Controllers\Portal\FitnessController as PortalFitnessController;
 use App\Http\Controllers\Portal\GradesController;
+use App\Http\Controllers\Portal\MedicalController as PortalMedicalController;
 use App\Http\Controllers\Portal\PerformanceController as PortalPerformanceController;
 use App\Http\Controllers\Portal\PortalHomeController;
 use App\Http\Controllers\Staff\AcademicMonitoringController;
@@ -36,6 +37,7 @@ use App\Http\Controllers\Staff\GradingThresholdController;
 use App\Http\Controllers\Staff\InstructorAssignmentController;
 use App\Http\Controllers\Staff\InstructorController;
 use App\Http\Controllers\Staff\MedicalAccessController;
+use App\Http\Controllers\Staff\MedicalDocumentController;
 use App\Http\Controllers\Staff\MedicalFieldController;
 use App\Http\Controllers\Staff\MedicalRecordController;
 use App\Http\Controllers\Staff\PerformanceAreaController;
@@ -166,6 +168,14 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::post('medical-access-requests/{medicalAccessRequest}/approve', [MedicalAccessController::class, 'approve'])->name('medical.access.approve')->whereNumber('medicalAccessRequest')->can('decide', 'medicalAccessRequest');
         Route::post('medical-access-requests/{medicalAccessRequest}/reject', [MedicalAccessController::class, 'reject'])->name('medical.access.reject')->whereNumber('medicalAccessRequest')->can('decide', 'medicalAccessRequest');
         Route::post('medical-access-requests/{medicalAccessRequest}/revoke', [MedicalAccessController::class, 'revoke'])->name('medical.access.revoke')->whereNumber('medicalAccessRequest')->can('revoke', 'medicalAccessRequest');
+        // Medical documents candidates upload (MedicalDocumentController): the review queue and
+        // accept/return (medical.manage), files for medical staff (medical.view), and the
+        // protected, view-only feed for instructors with approved access.
+        Route::get('medical-records/documents', [MedicalDocumentController::class, 'index'])->name('medical.documents.index')->can(Permission::ManageMedical->value);
+        Route::get('medical-documents/{medicalDocument}/file', [MedicalDocumentController::class, 'file'])->name('medical.documents.file')->whereNumber('medicalDocument')->can('view', 'medicalDocument');
+        Route::get('medical-documents/{medicalDocument}/protected', [MedicalDocumentController::class, 'protected'])->name('medical.documents.protected')->whereNumber('medicalDocument')->can('viewProtected', 'medicalDocument');
+        Route::post('medical-documents/{medicalDocument}/accept', [MedicalDocumentController::class, 'accept'])->name('medical.documents.accept')->whereNumber('medicalDocument')->can('review', 'medicalDocument');
+        Route::post('medical-documents/{medicalDocument}/return', [MedicalDocumentController::class, 'return'])->name('medical.documents.return')->whereNumber('medicalDocument')->can('review', 'medicalDocument');
         Route::middleware('can:'.Permission::ConfigureMedical->value)->group(function (): void {
             Route::get('medical-records/fields', [MedicalFieldController::class, 'index'])->name('medical.fields.index');
             Route::get('medical-records/fields/create', [MedicalFieldController::class, 'create'])->name('medical.fields.create');
@@ -314,6 +324,11 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::get('fitness', PortalFitnessController::class)->name('fitness');
             Route::get('profile', CandidateProfileController::class)->name('profile');
             Route::get('profile/photo', [CandidatePhotoController::class, 'own'])->name('profile.photo');
+            // The candidate's own medical documents (uploads, review, withdraw) and shared record fields.
+            Route::get('medical', [PortalMedicalController::class, 'show'])->name('medical');
+            Route::post('medical/documents', [PortalMedicalController::class, 'store'])->name('medical.documents.store')->middleware('throttle:medical-uploads');
+            Route::delete('medical/documents/{medicalDocument}', [PortalMedicalController::class, 'destroy'])->name('medical.documents.destroy')->whereNumber('medicalDocument')->can('withdraw', 'medicalDocument');
+            Route::get('medical/documents/{medicalDocument}/file', [PortalMedicalController::class, 'file'])->name('medical.documents.file')->whereNumber('medicalDocument')->can('view', 'medicalDocument');
             // The candidate's own areas, qualification, merits/demerits and attendance (no rank).
             Route::get('performance', [PortalPerformanceController::class, 'show'])->name('performance');
             Route::get('profile/documents/{type}', [CandidatePdfController::class, 'own'])

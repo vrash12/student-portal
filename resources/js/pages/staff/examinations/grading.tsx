@@ -80,7 +80,7 @@ export default function ExaminationGrading({ examination, attempts, status = 'pe
                 </ul>
             </nav>
 
-            <section aria-label="Submissions" className="rounded-xl border border-line bg-surface">
+            <section aria-label="Submissions" className="rounded-xl border border-line-box bg-surface">
                 {attempts.data.length === 0 ? (
                     <EmptyState icon={ClipboardCheck} title={empty.title} description={empty.description} />
                 ) : (

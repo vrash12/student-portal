@@ -72,7 +72,7 @@ export default function AuditHistory({ entries, actors, actions, entities, filte
 
             <ListCharts charts={charts} />
 
-            <div className="rounded-lg border border-line bg-surface">
+            <div className="rounded-lg border border-line-box bg-surface">
                 <FilterBar onReset={reset} canReset={isFiltered}>
                     <FormField label="Actor" className="sm:w-52">
                         <SelectInput value={values.actor} onChange={(event) => update('actor', event.target.value)}>

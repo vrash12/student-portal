@@ -37,7 +37,7 @@ export default function PortalGrades({ summary, academics, thresholds, outstandi
 
             <div className="flex flex-col gap-10">
                 <dl className="grid gap-5 md:grid-cols-3">
-                    <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm">
+                    <div className="rounded-2xl border border-line-box bg-surface p-6 shadow-sm">
                         <dt className="text-sm font-medium text-ink-muted">Overall Standing</dt>
                         <dd className="mt-3">
                             {academics.overall.standing === null ? <span className="text-base text-ink-muted">Not available yet</span> : <OverallStandingValue overall={academics.overall} />}
@@ -67,7 +67,7 @@ export default function PortalGrades({ summary, academics, thresholds, outstandi
                             />
                             <ul className="grid gap-5 md:grid-cols-2">
                                 {subjects.map((subject) => (
-                                    <li key={subject.id} className="flex flex-col gap-3 rounded-xl border border-line p-5">
+                                    <li key={subject.id} className="flex flex-col gap-3 rounded-xl border border-line-box p-5">
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
                                                 <p className="text-lg font-semibold text-primary-900">{subject.name}</p>

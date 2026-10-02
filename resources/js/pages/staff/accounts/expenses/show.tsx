@@ -292,7 +292,7 @@ function AssignPanel({ expense, filters, picker, classOptions, today, maxCandida
                 </div>
 
                 {form.data.mode === 'candidates' && (
-                    <div className="rounded-lg border border-line">
+                    <div className="rounded-lg border border-line-box">
                         <FilterBar onReset={reset} canReset={isFiltered}>
                             <FormField label={classTerm} className="sm:w-56">
                                 <SelectInput value={values.class} onChange={(event) => update('class', event.target.value)}>

@@ -57,7 +57,7 @@ export function AttendanceBreakdown({ summary, sessions }: { summary: Attendance
             {sessions.length > 0 && (
                 <div>
                     <h3 className="mb-3 text-base font-semibold text-ink">Latest Sessions</h3>
-                    <ul className="divide-y divide-line rounded-xl border border-line">
+                    <ul className="divide-y divide-line rounded-xl border border-line-box">
                         {sessions.map((session) => (
                             <li key={session.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                                 <div className="min-w-0">

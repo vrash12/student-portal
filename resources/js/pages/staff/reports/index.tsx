@@ -160,7 +160,7 @@ export default function Reports({
                 />
             </div>
 
-            <section className="rounded-lg border border-line bg-surface print:border-0" aria-labelledby="report-title">
+            <section className="rounded-lg border border-line-box bg-surface print:border-0" aria-labelledby="report-title">
                 {!printMode && (
                     <FilterBar onReset={resetFilters} canReset={canReset}>
                         <FormField label="Report" className="sm:w-60">

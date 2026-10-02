@@ -56,7 +56,7 @@ export default function AttendanceIndex({ sessions, filters, periods, classes, s
                 actions={newSessionAction}
             />
 
-            <section className="rounded-lg border border-line bg-surface" aria-label="Training sessions">
+            <section className="rounded-lg border border-line-box bg-surface" aria-label="Training sessions">
                 <FilterBar onReset={() => updateMany({ period: defaultPeriod, class: '' })} canReset={canReset}>
                     <FormField label="Academic period" className="sm:w-60">
                         <SelectInput value={values.period} onChange={(event) => updateMany({ period: event.target.value, class: '' })}>

@@ -114,7 +114,7 @@ export default function Qualification({
             </div>
 
             {classBatch === null ? (
-                <section className="rounded-lg border border-line bg-surface">
+                <section className="rounded-lg border border-line-box bg-surface">
                     <EmptyState
                         icon={UsersRound}
                         title={`No ${terms.classBatch.plural.toLowerCase()} yet`}
@@ -123,7 +123,7 @@ export default function Qualification({
                 </section>
             ) : (
                 <div className="flex flex-col gap-6">
-                    <section className="rounded-lg border border-line bg-surface print:border-0" aria-labelledby="qualification-context">
+                    <section className="rounded-lg border border-line-box bg-surface print:border-0" aria-labelledby="qualification-context">
                         <div className="print:hidden">
                             <FilterBar onReset={resetFilters} canReset={canReset}>
                                 <FormField label={classTerm} className="sm:w-60">
@@ -258,7 +258,7 @@ export default function Qualification({
                         </Panel>
                     )}
 
-                    <section className="rounded-lg border border-line bg-surface print:border-0" aria-label="Qualification of candidates">
+                    <section className="rounded-lg border border-line-box bg-surface print:border-0" aria-label="Qualification of candidates">
                         {classSize === 0 ? (
                             <EmptyState
                                 icon={Award}

@@ -1,7 +1,8 @@
 import { Link } from '@inertiajs/react';
-import { ArrowRight, type LucideIcon } from 'lucide-react';
+import { ArrowRight, ChevronDown, type LucideIcon } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
+import { useCollapsible } from '@/lib/use-collapsible';
 
 /**
  * Building blocks of the candidate portal (UI_UX_DESIGN.md §20, §22, §45):
@@ -37,29 +38,59 @@ interface PortalSectionProps {
     /** Content runs to the card's edges (lists with their own padding). */
     flush?: boolean;
     className?: string;
+    /** Opens and closes from its header (default); false keeps it always open. */
+    collapsible?: boolean;
 }
 
 /** A titled section: one subject per card, with room around everything. */
-export function PortalSection({ icon: Icon, title, description, action, children, id, flush = false, className }: PortalSectionProps) {
+export function PortalSection({ icon: Icon, title, description, action, children, id, flush = false, className, collapsible = true }: PortalSectionProps) {
     const headingId = useId();
+    const bodyId = useId();
+    const { collapsed, toggle } = useCollapsible(title, collapsible);
 
     return (
-        <section id={id} aria-labelledby={headingId} className={cn('scroll-mt-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm', className)}>
-            <div className="flex flex-col gap-3 px-5 pt-6 sm:flex-row sm:items-start sm:justify-between sm:px-7">
+        <section id={id} aria-labelledby={headingId} className={cn('scroll-mt-6 overflow-hidden rounded-2xl border border-line-box bg-surface shadow-sm', className)}>
+            <div
+                className={cn('flex flex-col gap-3 px-5 pt-6 sm:flex-row sm:items-start sm:justify-between sm:px-7', collapsed && 'pb-6', collapsible && 'cursor-pointer')}
+                onClick={(event) => {
+                    // Only the header area itself; links and buttons in it keep working on their own.
+                    if (collapsible && !(event.target instanceof Element && event.target.closest('a, button, input, select, textarea'))) {
+                        toggle();
+                    }
+                }}
+            >
                 <div className="flex min-w-0 items-start gap-3">
                     <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
                         <Icon className="size-5" aria-hidden="true" />
                     </span>
                     <div className="min-w-0">
                         <h2 id={headingId} className="text-xl font-semibold text-primary-900">
-                            {title}
+                            {collapsible ? (
+                                <button
+                                    type="button"
+                                    onClick={toggle}
+                                    aria-expanded={!collapsed}
+                                    aria-controls={bodyId}
+                                    className="-mx-1 inline-flex min-h-10 items-center gap-2 rounded-md px-1 text-left"
+                                >
+                                    {title}
+                                    <ChevronDown
+                                        className={cn('size-5 shrink-0 text-primary-700 transition-transform motion-reduce:transition-none', collapsed && '-rotate-90')}
+                                        aria-hidden="true"
+                                    />
+                                </button>
+                            ) : (
+                                title
+                            )}
                         </h2>
                         {description && <p className="mt-1 text-sm leading-relaxed text-ink-muted">{description}</p>}
                     </div>
                 </div>
-                {action && <div className="shrink-0">{action}</div>}
+                {action && !collapsed && <div className="shrink-0">{action}</div>}
             </div>
-            <div className={flush ? 'mt-5 border-t border-line' : 'px-5 pb-7 pt-6 sm:px-7'}>{children}</div>
+            <div id={bodyId} hidden={collapsed} className={flush ? 'mt-5 border-t border-line' : 'px-5 pb-7 pt-6 sm:px-7'}>
+                {children}
+            </div>
         </section>
     );
 }
@@ -67,7 +98,7 @@ export function PortalSection({ icon: Icon, title, description, action, children
 /** One figure with its label: used in a <dl>. */
 export function StatTile({ icon: Icon, label, value, hint }: { icon: LucideIcon; label: string; value: ReactNode; hint?: ReactNode }) {
     return (
-        <div className="flex items-start gap-4 rounded-xl border border-line bg-surface-muted/60 p-5">
+        <div className="flex items-start gap-4 rounded-xl border border-line-box bg-surface-muted/60 p-5">
             <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-surface text-primary-700 shadow-sm">
                 <Icon className="size-5" aria-hidden="true" />
             </span>
@@ -94,7 +125,7 @@ export function PortalTile({ href, icon: Icon, title, children, cta }: PortalTil
     return (
         <Link
             href={href}
-            className="group flex min-h-48 flex-col rounded-2xl border border-line bg-surface p-6 shadow-sm transition-colors hover:border-primary-600 hover:bg-primary-50/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 motion-reduce:transition-none"
+            className="group flex min-h-48 flex-col rounded-2xl border border-line-box bg-surface p-6 shadow-sm transition-colors hover:border-primary-600 hover:bg-primary-50/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 motion-reduce:transition-none"
         >
             <span className="flex size-12 items-center justify-center rounded-xl bg-primary-100 text-primary-700">
                 <Icon className="size-6" aria-hidden="true" />

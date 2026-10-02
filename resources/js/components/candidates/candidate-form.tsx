@@ -121,7 +121,7 @@ export function CandidateForm({
                 </FormField>
                 {currentPhotoUrl && (
                     <div className="flex items-center gap-4">
-                        <img src={currentPhotoUrl} alt="Current candidate profile" className="size-20 rounded-lg border border-line object-cover" />
+                        <img src={currentPhotoUrl} alt="Current candidate profile" className="size-20 rounded-lg border border-line-box object-cover" />
                         <CheckboxField label="Remove current photo" checked={form.data.remove_photo} onChange={(event) => { form.setData('remove_photo', event.target.checked); if (event.target.checked) form.setData('profile_photo', null); }} error={form.errors.remove_photo} />
                     </div>
                 )}

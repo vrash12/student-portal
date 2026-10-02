@@ -123,7 +123,7 @@ function CorrectionForm({ assessmentId, maxScore, incidentTypes, row, onProcessi
         <form onSubmit={submit} noValidate className="flex flex-col gap-5">
             <Alert tone="info">The score does not change yet. An administrator reviews your incident report and approves or rejects the correction.</Alert>
 
-            <dl className="grid grid-cols-2 gap-4 rounded-lg border border-line bg-surface-muted px-4 py-3 text-sm">
+            <dl className="grid grid-cols-2 gap-4 rounded-lg border border-line-box bg-surface-muted px-4 py-3 text-sm">
                 <div>
                     <dt className="text-ink-muted">Current Score</dt>
                     <dd className="mt-0.5 font-semibold tabular-nums text-ink">{row.score === null ? 'No score' : `${row.score} of ${maxScore}`}</dd>
@@ -163,7 +163,7 @@ function CorrectionForm({ assessmentId, maxScore, incidentTypes, row, onProcessi
                 </FormField>
             </div>
 
-            <fieldset className="flex flex-col gap-5 rounded-lg border border-line px-4 pt-3 pb-4">
+            <fieldset className="flex flex-col gap-5 rounded-lg border border-line-box px-4 pt-3 pb-4">
                 <legend className="px-1 text-sm font-semibold text-ink">Incident Report</legend>
                 <FormField label="What happened?" required error={form.errors.incident_type} hint={selectedType?.description}>
                     <SelectInput value={form.data.incident_type} onChange={(event) => form.setData('incident_type', event.target.value)}>

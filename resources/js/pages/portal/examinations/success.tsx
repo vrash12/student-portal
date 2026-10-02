@@ -47,7 +47,7 @@ export default function ExamSuccess({ title, status, submissionKind, submittedAt
             <Head title={heading} />
             <PageHeader title={heading} description={description} />
 
-            <section className="mb-6 max-w-xl rounded-xl border border-line bg-surface p-6 shadow-sm">
+            <section className="mb-6 max-w-xl rounded-xl border border-line-box bg-surface p-6 shadow-sm">
                 <p className="flex items-center gap-3 text-lg font-semibold">
                     <span className={'flex size-12 items-center justify-center rounded-full ' + (submitted ? 'bg-success-bg text-success-fg' : 'bg-warning-bg text-warning-fg')}>
                         <Icon className="size-7" aria-hidden="true" />

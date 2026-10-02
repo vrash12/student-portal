@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Enums\ExaminationStatus;
+use App\Enums\MedicalDocumentStatus;
 use App\Models\Assessment;
 use App\Models\Candidate;
+use App\Models\CandidateMedicalDocument;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
 use App\Services\Fitness\FitnessResults;
@@ -58,7 +60,29 @@ final class CandidateHomeService
                 'examinations' => ['openCount' => $available->total(), 'upcomingCount' => $upcoming->total(), 'releasedCount' => $this->releasedResults($candidate)->count()],
                 // Null as well when the portal does not show fitness (staff only by default).
                 'fitness' => config('institution.portal.show_fitness') ? $this->latestFitness($candidate) : null,
+                'medical' => $this->medicalDocuments($candidate),
             ],
+        ];
+    }
+
+    /**
+     * The candidate's uploaded medical documents by review status.
+     *
+     * @return array{documentCount: int, waitingCount: int, returnedCount: int}
+     */
+    private function medicalDocuments(Candidate $candidate): array
+    {
+        $counts = CandidateMedicalDocument::query()
+            ->where('candidate_id', $candidate->id)
+            ->toBase()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        return [
+            'documentCount' => (int) $counts->sum(),
+            'waitingCount' => (int) ($counts[MedicalDocumentStatus::Submitted->value] ?? 0),
+            'returnedCount' => (int) ($counts[MedicalDocumentStatus::Returned->value] ?? 0),
         ];
     }
 
