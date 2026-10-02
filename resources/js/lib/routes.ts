@@ -160,7 +160,14 @@ export const routes = {
         destroy: (assessmentId: number) => `/assessments/${assessmentId}`,
         finalize: (assessmentId: number) => `/assessments/${assessmentId}/finalize`,
         scores: (assessmentId: number) => `/assessments/${assessmentId}/scores`,
-        corrections: (assessmentId: number) => `/assessments/${assessmentId}/corrections`,
+        correctionRequests: (assessmentId: number) => `/assessments/${assessmentId}/correction-requests`,
+    },
+    gradeCorrections: {
+        index: (query?: Record<string, string>) => withQuery('/grade-corrections', query),
+        show: (requestId: number) => `/grade-corrections/${requestId}`,
+        approve: (requestId: number) => `/grade-corrections/${requestId}/approve`,
+        reject: (requestId: number) => `/grade-corrections/${requestId}/reject`,
+        cancel: (requestId: number) => `/grade-corrections/${requestId}/cancel`,
     },
     candidates: {
         index: () => '/candidates',

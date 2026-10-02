@@ -68,6 +68,16 @@ class Assessment extends Model
     }
 
     /**
+     * Requests to correct finalized scores (GradeCorrectionService).
+     *
+     * @return HasMany<GradeCorrectionRequest, $this>
+     */
+    public function correctionRequests(): HasMany
+    {
+        return $this->hasMany(GradeCorrectionRequest::class);
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function creator(): BelongsTo

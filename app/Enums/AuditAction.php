@@ -39,6 +39,10 @@ enum AuditAction: string
     case AssessmentFinalized = 'assessment.finalized';
     case AssessmentScoresRecorded = 'assessment.scores_recorded';
     case AssessmentScoreCorrected = 'assessment_score.corrected';
+    case GradeCorrectionRequested = 'grade_correction.requested';
+    case GradeCorrectionApproved = 'grade_correction.approved';
+    case GradeCorrectionRejected = 'grade_correction.rejected';
+    case GradeCorrectionCancelled = 'grade_correction.cancelled';
     case GradingThresholdsUpdated = 'grading_thresholds.updated';
     case QuestionCreated = 'question.created';
     case QuestionUpdated = 'question.updated';
@@ -119,6 +123,10 @@ enum AuditAction: string
             self::AssessmentFinalized => 'Finalized assessment',
             self::AssessmentScoresRecorded => 'Recorded assessment scores',
             self::AssessmentScoreCorrected => 'Corrected finalized score',
+            self::GradeCorrectionRequested => 'Requested grade correction',
+            self::GradeCorrectionApproved => 'Approved grade correction',
+            self::GradeCorrectionRejected => 'Rejected grade correction',
+            self::GradeCorrectionCancelled => 'Cancelled grade correction request',
             self::GradingThresholdsUpdated => 'Updated passing and warning grades',
             self::QuestionCreated => 'Created question',
             self::QuestionUpdated => 'Updated question',

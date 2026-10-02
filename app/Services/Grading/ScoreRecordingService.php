@@ -8,6 +8,7 @@ use App\Models\Assessment;
 use App\Models\AssessmentScore;
 use App\Models\AssessmentScoreRevision;
 use App\Models\Candidate;
+use App\Models\GradeCorrectionRequest;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Support\DecimalValue;
@@ -20,7 +21,7 @@ use Illuminate\Validation\ValidationException;
  *
  * - Draft assessments: scores are saved in batches from the score sheet.
  * - Finalized assessments: one score at a time, through a correction that
- *   requires a reason.
+ *   requires a reason and an approved grade correction request.
  *
  * Both paths lock the assessment row, re-check that every candidate belongs
  * to the class, re-check the maximum score, and detect edits made by another
@@ -114,7 +115,9 @@ final class ScoreRecordingService
 
     /**
      * Changes one score of a finalized assessment. The reason is stored with
-     * the revision and in the audit log.
+     * the revision and in the audit log. Staff never call this directly: it
+     * runs when an administrator approves a grade correction request
+     * (GradeCorrectionService), which is linked to the revision.
      *
      * @throws ValidationException
      */
@@ -127,8 +130,9 @@ final class ScoreRecordingService
         ?string $expectedScore,
         ?string $expectedComment,
         User $actor,
+        ?GradeCorrectionRequest $approvedRequest = null,
     ): void {
-        DB::transaction(function () use ($assessment, $candidateId, $score, $comment, $reason, $expectedScore, $expectedComment, $actor): void {
+        DB::transaction(function () use ($assessment, $candidateId, $score, $comment, $reason, $expectedScore, $expectedComment, $actor, $approvedRequest): void {
             $locked = $this->lock($assessment);
 
             if (! $locked->isFinalized()) {
@@ -167,7 +171,7 @@ final class ScoreRecordingService
             // Captured before write(), which updates the same model instance.
             $previous = ['score' => DecimalValue::normalize($existing?->score), 'comment' => $existing?->comment];
 
-            $record = $this->write($locked, $candidateId, $existing, $score, $comment, ScoreRevisionKind::Corrected, $reason, $actor);
+            $record = $this->write($locked, $candidateId, $existing, $score, $comment, ScoreRevisionKind::Corrected, $reason, $actor, $approvedRequest);
             $record->loadMissing('candidate:id,candidate_number');
 
             $this->audit->record(
@@ -262,6 +266,7 @@ final class ScoreRecordingService
         ScoreRevisionKind $kind,
         ?string $reason,
         User $actor,
+        ?GradeCorrectionRequest $approvedRequest = null,
     ): AssessmentScore {
         $previousScore = DecimalValue::normalize($existing?->score);
 
@@ -282,6 +287,7 @@ final class ScoreRecordingService
         $revision->new_score = $score;
         $revision->comment = $comment;
         $revision->reason = $reason;
+        $revision->grade_correction_request_id = $approvedRequest?->getKey();
         $revision->changer()->associate($actor);
         $revision->save();
 

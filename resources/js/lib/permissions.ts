@@ -22,6 +22,7 @@ export const Permission = {
     TeachClasses: 'classes.teach',
     ConfigureGrading: 'grading.configure',
     RecordGrades: 'grades.record',
+    ApproveGradeCorrections: 'grade_corrections.approve',
     ViewAcademicMonitoring: 'academic_monitoring.view',
     ManageQuestionBank: 'question_bank.manage',
     ManageExaminations: 'examinations.manage',

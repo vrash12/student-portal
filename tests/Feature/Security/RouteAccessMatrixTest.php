@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Security;
 
+use App\Enums\CorrectionIncidentType;
 use App\Enums\Permission;
 use App\Enums\SystemRole;
 use App\Models\AccountCategory;
@@ -20,6 +21,7 @@ use App\Services\Conduct\ConductService;
 use App\Services\Examinations\CandidateAttemptService;
 use App\Services\Fitness\FitnessStandardService;
 use App\Services\Fitness\FitnessTestService;
+use App\Services\Grading\GradeCorrectionService;
 use App\Services\Performance\PerformanceAreaService;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as Router;
@@ -60,6 +62,15 @@ class RouteAccessMatrixTest extends TestCase
         // Bravo's grading setup and an assessment in Batch B / Subject 1.
         $this->setScheme($this->offeringB1, ['Quizzes' => '100']);
         $assessment = $this->createAssessment($this->offeringB1->assessmentCategories()->sole(), 'Quiz B', '50', actor: $this->bravo);
+
+        // Bravo's correction request on a finalized Batch B quiz (Bravo, as requester, and administrators only).
+        $finalizedQuiz = $this->createAssessment($this->offeringB1->assessmentCategories()->sole(), 'Quiz B2', '50', actor: $this->bravo);
+        $this->recordScores($finalizedQuiz, [$this->candidateInB->id => '30'], $this->bravo);
+        $this->finalize($finalizedQuiz, $this->bravo);
+        $correction = app(GradeCorrectionService::class)->request(
+            $finalizedQuiz, $this->candidateInB->id, '35', null, CorrectionIncidentType::EncodingError,
+            'The score was typed in wrongly from the paper.', '30', null, $this->bravo,
+        );
 
         // Bravo's published examination in Batch B, and B1's attempt.
         $exam = new Examination;
@@ -141,6 +152,7 @@ class RouteAccessMatrixTest extends TestCase
             'examination' => (string) $exam->id,
             'fitnessEvent' => (string) $fitnessEvent->id,
             'fitnessTest' => (string) $fitnessTest->id,
+            'gradeCorrectionRequest' => (string) $correction->id,
             'instructor' => (string) $this->bravo->id,
             'instructorAssignment' => (string) InstructorAssignment::query()->where('instructor_id', $this->bravo->id)->value('id'),
             'medium' => (string) $media->id,
@@ -279,6 +291,7 @@ class RouteAccessMatrixTest extends TestCase
             '/conduct/candidates/'.$this->parameters['candidate'],
             '/attendance/sessions/'.$this->parameters['attendanceSession'],
             '/fitness/tests/'.$this->parameters['fitnessTest'],
+            '/grade-corrections/'.$this->parameters['gradeCorrectionRequest'],
         ] as $url) {
             $this->get($url)->assertOk();
         }

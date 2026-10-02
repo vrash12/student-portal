@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/cn';
-import { activeItemHref, staffNavigation } from '@/lib/navigation';
+import { activeItemHref, isVisibleItem, staffNavigation } from '@/lib/navigation';
 import { usePermissions } from '@/lib/permissions';
 import { routes } from '@/lib/routes';
 import { useFocusMainOnNavigate } from '@/lib/use-focus-main-on-navigate';
@@ -76,7 +76,7 @@ function OrganizationName() {
 function SidebarContent({ inDrawer = false }: { inDrawer?: boolean }) {
     const { url, props } = usePage();
     const { can } = usePermissions();
-    const visibleItems = staffNavigation.flatMap((section) => section.items).filter((item) => can(item.permission));
+    const visibleItems = staffNavigation.flatMap((section) => section.items).filter((item) => isVisibleItem(item, can));
     const activeHref = activeItemHref(url, visibleItems);
 
     return (
@@ -92,7 +92,7 @@ function SidebarContent({ inDrawer = false }: { inDrawer?: boolean }) {
 
             <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 py-4">
                 {staffNavigation.map((section, sectionIndex) => {
-                    const items = section.items.filter((item) => can(item.permission));
+                    const items = section.items.filter((item) => isVisibleItem(item, can));
                     if (items.length === 0) {
                         return null;
                     }

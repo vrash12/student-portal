@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Enums\CorrectionIncidentType;
+use App\Enums\GradeCorrectionStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Grading\AssessmentRequest;
 use App\Models\Assessment;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
+use App\Models\GradeCorrectionRequest;
 use App\Services\Grading\AssessmentService;
 use App\Services\Grading\Gradebook;
 use App\Support\DecimalValue;
+use App\Support\GradeCorrectionPresenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -23,6 +27,8 @@ use Inertia\Response;
 class AssessmentController extends Controller
 {
     private const HISTORY_LIMIT = 50;
+
+    private const CORRECTIONS_LIMIT = 10;
 
     public function __construct(
         private readonly AssessmentService $assessments,
@@ -62,6 +68,7 @@ class AssessmentController extends Controller
             ],
             'roster' => $this->gradebook->scoreSheet($assessment),
             'history' => $this->gradebook->history($assessment, self::HISTORY_LIMIT),
+            'corrections' => $this->corrections($assessment),
             'can' => [
                 'manage' => $request->user()->can('manage', $assessment),
             ],
@@ -136,6 +143,36 @@ class AssessmentController extends Controller
             'maxScore' => DecimalValue::display($assessment->max_score),
             'assessedOn' => $assessment->assessed_on?->toDateString(),
             'status' => $assessment->status->toArray(),
+        ];
+    }
+
+    /**
+     * Correction requests of a finalized assessment: which candidates have
+     * one waiting for approval, the latest requests, and the incident types
+     * for the request form.
+     *
+     * @return array<string, mixed>
+     */
+    private function corrections(Assessment $assessment): array
+    {
+        if ($assessment->isDraft()) {
+            return ['pending' => (object) [], 'recent' => [], 'incidentTypes' => []];
+        }
+
+        $recent = $assessment->correctionRequests()
+            ->with(['assessment.classSubject.subject:id,name', 'assessment.classSubject.classBatch:id,name', 'candidate', 'requester:id,name', 'decider:id,name'])
+            ->latest('id')
+            ->limit(self::CORRECTIONS_LIMIT)
+            ->get();
+
+        return [
+            // Candidate id => pending request id.
+            'pending' => (object) $assessment->correctionRequests()
+                ->where('status', GradeCorrectionStatus::Pending->value)
+                ->pluck('id', 'candidate_id')
+                ->all(),
+            'recent' => $recent->map(fn (GradeCorrectionRequest $request): array => GradeCorrectionPresenter::summary($request))->all(),
+            'incidentTypes' => CorrectionIncidentType::options(),
         ];
     }
 }

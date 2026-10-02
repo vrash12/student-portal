@@ -942,6 +942,7 @@ Implemented at the owner's request (details and decisions in `SESSION_HANDOFF.md
 - Standard military fitness testing; charts on dashboards and reports; Expenses assigned by the Admin
 - OCS performance: merits and demerits, attendance, company/platoon, performance areas with qualification and class rank (staff only)
 - Candidate portal split into Home, Examinations, My Grades, My Performance, Physical Fitness and My Information pages, with icons and charts (own records only, no rank)
+- Authorized grade corrections: instructors request changes to finalized scores with an incident report; administrators approve or reject them (2026-10-02)
 
 The next planned milestone remains **Milestone 17 — Security Hardening**.
 

@@ -1,5 +1,5 @@
 import { Head, useRemember, usePage } from '@inertiajs/react';
-import { Lock, Pencil, PencilLine, Trash2 } from 'lucide-react';
+import { FilePenLine, Hourglass, Lock, Pencil, Trash2 } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { CorrectionDialog } from '@/components/grading/correction-dialog';
 import { gradebookBreadcrumbs, OfferingDescription } from '@/components/grading/offering-context';
@@ -12,9 +12,10 @@ import { ConfirmAction } from '@/components/ui/confirm-action';
 import { PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
+import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
 import { formatCalendarDate, formatPercent, useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
+import type { AssessmentCorrections, GradeCorrectionSummary } from '@/types/grade-corrections';
 import type { OfferingContext, StatusValue } from '@/types/grading';
 
 interface AssessmentShowProps {
@@ -34,11 +35,13 @@ interface AssessmentShowProps {
     };
     roster: RosterRow[];
     history: { entries: ScoreHistoryEntry[]; total: number };
+    /** Correction requests (finalized assessments only). */
+    corrections: AssessmentCorrections;
     /** May create, edit, and record scores for this subject. */
     can: { manage: boolean };
 }
 
-export default function AssessmentShow({ offering, assessment, roster, history, can }: AssessmentShowProps) {
+export default function AssessmentShow({ offering, assessment, roster, history, corrections, can }: AssessmentShowProps) {
     const formatDate = useDateFormatter();
     const errors = usePage().props.errors as Record<string, string | undefined>;
     // Kept in the page's history state, so Back/Forward does not lose entries.
@@ -98,12 +101,12 @@ export default function AssessmentShow({ offering, assessment, roster, history, 
                                         {withoutScore > 0 && (
                                             <p>
                                                 {withoutScore === 1 ? '1 candidate has' : `${withoutScore} candidates have`} no score and will be shown as
-                                                missing until a score is recorded through a correction.
+                                                missing until a score is added through an approved correction.
                                             </p>
                                         )}
                                         <p>
-                                            Finalized scores count toward grades and can only be changed through a correction with a reason. This cannot
-                                            be undone.
+                                            Finalized scores count toward grades. After this, a score can only be changed through a correction request that an
+                                            administrator approves. This cannot be undone.
                                         </p>
                                     </>
                                 }
@@ -144,11 +147,11 @@ export default function AssessmentShow({ offering, assessment, roster, history, 
                                 since {formatDate.dateTime(assessment.finalizedAt)} ({assessment.finalizedBy})
                             </>
                         )}
-                        . Corrections require a reason and are recorded in the change history.
+                        . To change a score, request a correction with an incident report; it applies only after an administrator approves it.
                     </Alert>
                 )}
 
-                {assessment.sourceExaminationId !== null && <Alert tone="info" title="Posted Examination Results">These scores were posted from examination #{assessment.sourceExaminationId} using the {assessment.examAttemptRule} submitted attempt. Later examination regrading does not change these recorded grades. Use Correct Score with a reason for any adjustment.</Alert>}
+                {assessment.sourceExaminationId !== null && <Alert tone="info" title="Posted Examination Results">These scores were posted from examination #{assessment.sourceExaminationId} using the {assessment.examAttemptRule} submitted attempt. Later examination regrading does not change these recorded grades. Request a correction for any adjustment.</Alert>}
                 <Panel title="Details">
                     <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <Detail label="Status">
@@ -182,10 +185,17 @@ export default function AssessmentShow({ offering, assessment, roster, history, 
                             roster={roster}
                             maxScore={assessment.maxScore}
                             finalized={!isDraft}
+                            pending={corrections.pending}
                             onCorrect={!isDraft && can.manage ? (row) => setCorrectingId(row.candidate.id) : null}
                         />
                     )}
                 </Panel>
+
+                {!isDraft && corrections.recent.length > 0 && (
+                    <Panel title="Correction Requests" description="The latest requests for this assessment." bodyClassName="p-0">
+                        <CorrectionRequests requests={corrections.recent} />
+                    </Panel>
+                )}
 
                 <Panel title="Change History" description="Changes after a score was first recorded, newest first." bodyClassName="p-0">
                     <ScoreHistory entries={history.entries} total={history.total} />
@@ -223,7 +233,13 @@ export default function AssessmentShow({ offering, assessment, roster, history, 
                 )}
             </div>
 
-            <CorrectionDialog assessmentId={assessment.id} maxScore={assessment.maxScore} row={correctingRow} onClose={() => setCorrectingId(null)} />
+            <CorrectionDialog
+                assessmentId={assessment.id}
+                maxScore={assessment.maxScore}
+                incidentTypes={corrections.incidentTypes}
+                row={correctingRow}
+                onClose={() => setCorrectingId(null)}
+            />
         </>
     );
 }
@@ -233,12 +249,14 @@ interface ScoreTableProps {
     maxScore: string;
     /** In finalized assessments an unscored candidate counts as missing. */
     finalized: boolean;
-    /** Present when finalized scores may be corrected. */
+    /** Candidate id => request waiting for approval. */
+    pending: Record<string, number>;
+    /** Present when corrections of finalized scores may be requested. */
     onCorrect: ((row: RosterRow) => void) | null;
 }
 
-/** Read-only scores, with a Correct action per row for finalized assessments. */
-function ScoreTable({ roster, maxScore, finalized, onCorrect }: ScoreTableProps) {
+/** Read-only scores, with a Request Correction action per row for finalized assessments. */
+function ScoreTable({ roster, maxScore, finalized, pending, onCorrect }: ScoreTableProps) {
     const pagination = useClientPagination(roster);
 
     if (roster.length === 0) {
@@ -279,17 +297,7 @@ function ScoreTable({ roster, maxScore, finalized, onCorrect }: ScoreTableProps)
                             <Td className="text-ink-muted">{row.comment ?? '—'}</Td>
                             {onCorrect !== null && (
                                 <Td align="right">
-                                    {row.gradable && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            icon={<PencilLine className="size-4" aria-hidden="true" />}
-                                            aria-label={`Correct score for ${row.candidate.name}`}
-                                            onClick={() => onCorrect(row)}
-                                        >
-                                            Correct
-                                        </Button>
-                                    )}
+                                    {row.gradable && <CorrectionAction row={row} pendingId={pending[row.candidate.id]} onCorrect={onCorrect} />}
                                 </Td>
                             )}
                         </Tr>
@@ -307,5 +315,75 @@ function Detail({ label, children }: { label: string; children: ReactNode }) {
             <dt className="text-sm text-ink-muted">{label}</dt>
             <dd className="mt-0.5 font-medium text-ink">{children}</dd>
         </div>
+    );
+}
+
+/** A link to the request waiting for approval, or the button to file one. */
+function CorrectionAction({ row, pendingId, onCorrect }: { row: RosterRow; pendingId: number | undefined; onCorrect: (row: RosterRow) => void }) {
+    if (pendingId !== undefined) {
+        return (
+            <RowAction href={routes.gradeCorrections.show(pendingId)} label={`Correction for ${row.candidate.name} is waiting for approval`}>
+                <span className="inline-flex items-center gap-1.5">
+                    <Hourglass className="size-4" aria-hidden="true" />
+                    Pending
+                </span>
+            </RowAction>
+        );
+    }
+
+    return (
+        <Button
+            variant="ghost"
+            size="sm"
+            icon={<FilePenLine className="size-4" aria-hidden="true" />}
+            aria-label={`Request a correction of the score of ${row.candidate.name}`}
+            onClick={() => onCorrect(row)}
+        >
+            Request Correction
+        </Button>
+    );
+}
+
+/** The latest correction requests of this assessment, each linking to its incident report. */
+function CorrectionRequests({ requests }: { requests: GradeCorrectionSummary[] }) {
+    const formatDate = useDateFormatter();
+
+    return (
+        <Table caption="Correction requests" className="min-w-[44rem]">
+            <TableHead>
+                <Th>Filed</Th>
+                <Th>Candidate</Th>
+                <Th align="right">Score Change</Th>
+                <Th>Status</Th>
+                <Th align="right">
+                    <span className="sr-only">Actions</span>
+                </Th>
+            </TableHead>
+            <TableBody>
+                {requests.map((request) => (
+                    <Tr key={request.id}>
+                        <Td className="whitespace-nowrap text-ink">
+                            {formatDate.dateTime(request.requestedAt)}
+                            <span className="block text-xs text-ink-muted">{request.requestedBy}</span>
+                        </Td>
+                        <Td className="text-ink">
+                            {request.candidate.name}
+                            <span className="block text-xs text-ink-muted">{request.candidate.number}</span>
+                        </Td>
+                        <Td align="right" numeric className="text-ink">
+                            {request.currentScore ?? 'None'} → <strong>{request.proposedScore ?? 'None'}</strong>
+                        </Td>
+                        <Td>
+                            <StatusBadge tone={request.status.tone}>{request.status.label}</StatusBadge>
+                        </Td>
+                        <Td align="right">
+                            <RowAction href={routes.gradeCorrections.show(request.id)} label={`Open correction request #${request.id}`}>
+                                Open
+                            </RowAction>
+                        </Td>
+                    </Tr>
+                ))}
+            </TableBody>
+        </Table>
     );
 }

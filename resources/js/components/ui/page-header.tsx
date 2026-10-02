@@ -1,7 +1,8 @@
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronRight, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { isActivePath, staffNavigation } from '@/lib/navigation';
+import { isActivePath, isVisibleItem, staffNavigation } from '@/lib/navigation';
+import { usePermissions } from '@/lib/permissions';
 
 export interface BreadcrumbItem {
     label: string;
@@ -22,12 +23,13 @@ interface PageHeaderProps {
  */
 function useSection(): { icon: LucideIcon | null; group: string | null; item: string | null } {
     const { url } = usePage();
+    const { can } = usePermissions();
     for (const matcher of [
         (href: string) => isActivePath(url, href),
         (_href: string, activeFor?: string[]) => activeFor?.some((prefix) => isActivePath(url, prefix)) ?? false,
     ]) {
         for (const section of staffNavigation) {
-            const item = section.items.find((candidate) => matcher(candidate.href, candidate.activeFor));
+            const item = section.items.find((candidate) => isVisibleItem(candidate, can) && matcher(candidate.href, candidate.activeFor));
             if (item !== undefined) {
                 return { icon: item.icon, group: section.label, item: item.label };
             }

@@ -11,6 +11,7 @@ use App\Models\AssessmentScore;
 use App\Models\AssessmentScoreRevision;
 use App\Models\AuditLog;
 use App\Models\Candidate;
+use App\Models\GradeCorrectionRequest;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -25,7 +26,9 @@ use Tests\TestCase;
 
 /**
  * Score recording on draft assessments (PUT /assessments/{a}/scores),
- * corrections of finalized scores (POST /assessments/{a}/corrections), the
+ * corrections of finalized scores (a request filed with
+ * POST /assessments/{a}/correction-requests and approved by an
+ * administrator; GradeCorrectionRequestTest covers the approval rules), the
  * change history on the assessment page, and the database constraints that
  * back them.
  */
@@ -377,15 +380,19 @@ class ScoreRecordingTest extends TestCase
         $this->assertSame('40.00', $revision->previous_score);
         $this->assertSame('44.00', $revision->new_score);
         $this->assertSame('Re-marked', $revision->comment);
-        $this->assertSame('Item 3 was marked against the wrong key.', $revision->reason);
-        $this->assertSame($this->alpha->id, (int) $revision->changed_by);
+        // The incident report and both people are named in the reason; the approver made the change.
+        $request = GradeCorrectionRequest::query()->sole();
+        $this->assertSame($request->id, (int) $revision->grade_correction_request_id);
+        $this->assertStringContainsString("Correction request #{$request->id}", $revision->reason);
+        $this->assertStringContainsString('Item 3 was marked against the wrong key.', $revision->reason);
+        $this->assertSame($this->academicAdmin->id, (int) $revision->changed_by);
 
         $scoreRow = $this->scoreRow($this->quiz, $this->candidateInA);
         $audit = AuditLog::query()->where('action', 'assessment_score.corrected')->sole();
         $this->assertSame('assessment_score', $audit->auditable_type);
         $this->assertSame($scoreRow->id, (int) $audit->auditable_id);
-        $this->assertSame($this->alpha->id, (int) $audit->actor_id);
-        $this->assertSame('Item 3 was marked against the wrong key.', $audit->reason);
+        $this->assertSame($this->academicAdmin->id, (int) $audit->actor_id);
+        $this->assertSame($revision->reason, $audit->reason);
         $this->assertEquals(44.0, (float) $audit->new_values['score']);
         // Staff comments stay in the restricted score history, not the general audit log.
         $this->assertArrayNotHasKey('comment', $audit->new_values);
@@ -415,7 +422,7 @@ class ScoreRecordingTest extends TestCase
         // Old values must be the values before the correction, new values the corrected ones.
         $this->assertEquals(40.0, (float) $audit->old_values['score'], 'Audit old_values.score must be the score before the correction.');
         $this->assertEquals(44.0, (float) $audit->new_values['score']);
-        $this->assertSame('Item 3 was marked against the wrong key.', $audit->reason);
+        $this->assertStringContainsString('Item 3 was marked against the wrong key.', (string) $audit->reason);
         $this->assertArrayNotHasKey('comment', $audit->old_values);
         $this->assertArrayNotHasKey('comment', $audit->new_values);
 
@@ -425,15 +432,16 @@ class ScoreRecordingTest extends TestCase
         $this->assertEquals(40.0, (float) $revision->previous_score);
     }
 
-    public function test_a_correction_requires_a_reason_of_5_to_500_characters(): void
+    public function test_a_correction_requires_an_incident_report_of_20_to_2000_characters(): void
     {
         $this->recordScores($this->quiz, [$this->candidateInA->id => '40']);
         $this->finalize($this->quiz);
 
-        foreach ([null, '', '     ', 'typo', str_repeat('r', 501)] as $reason) {
+        foreach ([null, '', '     ', 'Typo in the score.', str_repeat('r', 2001)] as $reason) {
             $this->postCorrection($this->quiz, $this->correction($this->candidateInA, '44', '40', reason: $reason))
-                ->assertSessionHasErrors('reason');
+                ->assertSessionHasErrors('incident_details');
         }
+        $this->assertSame(0, GradeCorrectionRequest::query()->count());
 
         $this->assertStoredScore($this->quiz, $this->candidateInA, '40.00', null);
         $this->assertNoCorrections();
@@ -488,7 +496,7 @@ class ScoreRecordingTest extends TestCase
         $this->assertSame(ScoreRevisionKind::Corrected, $latest->kind);
         $this->assertSame('44.00', $latest->previous_score);
         $this->assertSame('46.00', $latest->new_score);
-        $this->assertSame($this->alpha->id, (int) $latest->changed_by);
+        $this->assertSame($this->academicAdmin->id, (int) $latest->changed_by);
     }
 
     public function test_a_correction_must_change_the_score_or_comment(): void
@@ -532,7 +540,7 @@ class ScoreRecordingTest extends TestCase
         $this->assertSame(ScoreRevisionKind::Corrected, $revisions[0]->kind);
         $this->assertNull($revisions[0]->previous_score);
         $this->assertSame('35.00', $revisions[0]->new_score);
-        $this->assertSame('Paper found after finalization.', $revisions[0]->reason);
+        $this->assertStringContainsString('Paper found after finalization.', (string) $revisions[0]->reason);
 
         $audit = AuditLog::query()->where('action', 'assessment_score.corrected')->sole();
         $this->assertNull($audit->old_values['score'] ?? null);
@@ -588,8 +596,8 @@ class ScoreRecordingTest extends TestCase
                     ->where('previousScore', '30')
                     ->where('newScore', '33')
                     ->where('comment', null)
-                    ->where('reason', 'Addition error on page 2.')
-                    ->where('changedBy', 'Instructor Alpha')
+                    ->where('reason', fn (string $reason): bool => str_ends_with($reason, 'approved by Academic Admin: Addition error on page 2.'))
+                    ->where('changedBy', 'Academic Admin')
                     ->whereType('changedAt', 'string')
                     ->etc())
                 ->has('history.entries.1', fn (Assert $entry) => $entry
@@ -716,7 +724,24 @@ class ScoreRecordingTest extends TestCase
      */
     private function postCorrection(Assessment $assessment, array $data, ?User $actor = null): TestResponse
     {
-        return $this->actingAs($actor ?? $this->alpha)->post("/assessments/{$assessment->id}/corrections", $data);
+        // Files the request (the reason is its incident report) and, when it is accepted, has an administrator approve it.
+        $before = (int) GradeCorrectionRequest::query()->max('id');
+        $response = $this->actingAs($actor ?? $this->alpha)->post("/assessments/{$assessment->id}/correction-requests", [
+            'candidate_id' => $data['candidate_id'],
+            'score' => $data['score'],
+            'comment' => $data['comment'],
+            'incident_type' => 'encoding_error',
+            'incident_details' => $data['reason'],
+            'expected_score' => $data['expected_score'],
+            'expected_comment' => $data['expected_comment'],
+        ]);
+
+        $filed = GradeCorrectionRequest::query()->where('id', '>', $before)->first();
+        if ($filed !== null) {
+            $this->actingAs($this->academicAdmin)->post("/grade-corrections/{$filed->id}/approve")->assertSessionHasNoErrors();
+        }
+
+        return $response;
     }
 
     /**

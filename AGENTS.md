@@ -1060,6 +1060,8 @@ If an instructor changes a previously recorded or finalized grade, preserve:
 
 Important academic history must remain traceable.
 
+Owner decision (2026-10-02): an instructor cannot overwrite a finalized score. They file a **grade correction request** with an **incident report** (what happened and why the score must change); the score changes only when an administrator with the approval permission approves it, and a rejection needs a reason. Nobody approves their own request. Draft scores (before the assessment is finalized) stay freely editable by the instructor, with every change kept in the score history.
+
 ---
 
 # 37. Database Transactions

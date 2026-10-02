@@ -66,6 +66,7 @@ enum SystemRole: string
             Permission::ViewAllCandidates,
             Permission::ManageCandidates,
             Permission::ConfigureGrading,
+            Permission::ApproveGradeCorrections,
             Permission::ViewAcademicMonitoring,
             Permission::ViewReports,
             Permission::ViewAuditHistory,

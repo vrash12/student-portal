@@ -30,6 +30,7 @@ use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\FitnessEventController;
 use App\Http\Controllers\Staff\FitnessTestController;
 use App\Http\Controllers\Staff\GradebookController;
+use App\Http\Controllers\Staff\GradeCorrectionController;
 use App\Http\Controllers\Staff\GradingSchemeController;
 use App\Http\Controllers\Staff\GradingThresholdController;
 use App\Http\Controllers\Staff\InstructorAssignmentController;
@@ -42,6 +43,7 @@ use App\Http\Controllers\Staff\SubjectController;
 use App\Http\Controllers\Staff\TeachingClassController;
 use App\Http\Controllers\Staff\UserController;
 use App\Models\Candidate;
+use App\Models\GradeCorrectionRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
@@ -139,6 +141,13 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::delete('attendance/sessions/{attendanceSession}', [AttendanceSessionController::class, 'destroy'])->name('attendance.sessions.destroy')->whereNumber('attendanceSession');
             Route::put('attendance/sessions/{attendanceSession}/records', [AttendanceSessionController::class, 'recordAttendance'])->name('attendance.sessions.records')->whereNumber('attendanceSession');
         });
+
+        // Grade correction requests: instructors file them, administrators approve or reject them (GradeCorrectionRequestPolicy).
+        Route::get('grade-corrections', [GradeCorrectionController::class, 'index'])->name('grade-corrections.index')->can('viewAny', GradeCorrectionRequest::class);
+        Route::get('grade-corrections/{gradeCorrectionRequest}', [GradeCorrectionController::class, 'show'])->name('grade-corrections.show')->whereNumber('gradeCorrectionRequest')->can('view', 'gradeCorrectionRequest');
+        Route::post('grade-corrections/{gradeCorrectionRequest}/approve', [GradeCorrectionController::class, 'approve'])->name('grade-corrections.approve')->whereNumber('gradeCorrectionRequest')->can('decide', 'gradeCorrectionRequest');
+        Route::post('grade-corrections/{gradeCorrectionRequest}/reject', [GradeCorrectionController::class, 'reject'])->name('grade-corrections.reject')->whereNumber('gradeCorrectionRequest')->can('decide', 'gradeCorrectionRequest');
+        Route::post('grade-corrections/{gradeCorrectionRequest}/cancel', [GradeCorrectionController::class, 'cancel'])->name('grade-corrections.cancel')->whereNumber('gradeCorrectionRequest')->can('cancel', 'gradeCorrectionRequest');
 
         // Performance areas and qualification: ranking of every candidate
         // (performance.view); configuration (performance.configure).
@@ -246,7 +255,8 @@ Route::middleware(['auth', 'active'])->group(function (): void {
                 Route::delete('assessments/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
                 Route::post('assessments/{assessment}/finalize', [AssessmentController::class, 'finalize'])->name('assessments.finalize');
                 Route::put('assessments/{assessment}/scores', [AssessmentScoreController::class, 'update'])->name('assessments.scores.update');
-                Route::post('assessments/{assessment}/corrections', [AssessmentScoreController::class, 'correct'])->name('assessments.corrections.store');
+                // Finalized scores change only through an approved correction request (owner request, 2026-10-02).
+                Route::post('assessments/{assessment}/correction-requests', [GradeCorrectionController::class, 'store'])->name('assessments.correction-requests.store');
             });
         });
 

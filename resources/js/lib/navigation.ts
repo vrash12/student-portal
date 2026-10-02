@@ -7,6 +7,7 @@ import {
     ClipboardCheck,
     Dumbbell,
     FileChartColumn,
+    FilePenLine,
     GraduationCap,
     History,
     LayoutDashboard,
@@ -30,6 +31,8 @@ export interface NavigationItem {
     icon: LucideIcon;
     /** Item is shown only when the user holds this permission. */
     permission: PermissionCode;
+    /** Item is hidden when the user also holds this permission (another item covers the same page). */
+    hiddenWith?: PermissionCode;
     /**
      * Extra URL prefixes that highlight this item when no visible item
      * matches directly (e.g. instructors reach candidate profiles from
@@ -64,6 +67,13 @@ export const staffNavigation: NavigationSection[] = [
                 permission: Permission.TeachClasses,
                 activeFor: [routes.candidates.index()],
             },
+            {
+                label: 'Grade Corrections',
+                href: routes.gradeCorrections.index(),
+                icon: FilePenLine,
+                permission: Permission.RecordGrades,
+                hiddenWith: Permission.ApproveGradeCorrections,
+            },
         ],
     },
     {
@@ -97,6 +107,7 @@ export const staffNavigation: NavigationSection[] = [
                 permission: Permission.ViewPerformance,
                 activeFor: [routes.performanceAreas.index()],
             },
+            { label: 'Grade Corrections', href: routes.gradeCorrections.index(), icon: FilePenLine, permission: Permission.ApproveGradeCorrections },
             { label: 'Military Fitness', href: routes.fitness.index(), icon: Dumbbell, permission: Permission.ViewFitness },
             { label: 'Merits & Demerits', href: routes.conduct.index(), icon: Medal, permission: Permission.ManageConduct },
             { label: 'Attendance', href: routes.attendance.index(), icon: CalendarCheck, permission: Permission.ManageAttendance },
@@ -124,6 +135,11 @@ export const staffNavigation: NavigationSection[] = [
         ],
     },
 ];
+
+/** Whether the user sees a navigation item, given their permission check. */
+export function isVisibleItem(item: NavigationItem, can: (permission: PermissionCode) => boolean): boolean {
+    return can(item.permission) && (item.hiddenWith === undefined || !can(item.hiddenWith));
+}
 
 /** Whether `currentUrl` is the item's page or one of its sub-pages. */
 export function isActivePath(currentUrl: string, href: string): boolean {

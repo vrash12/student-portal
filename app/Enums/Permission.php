@@ -29,6 +29,7 @@ enum Permission: string
     case TeachClasses = 'classes.teach';
     case ConfigureGrading = 'grading.configure';
     case RecordGrades = 'grades.record';
+    case ApproveGradeCorrections = 'grade_corrections.approve';
     case ViewAcademicMonitoring = 'academic_monitoring.view';
     case ManageQuestionBank = 'question_bank.manage';
     case ManageExaminations = 'examinations.manage';
@@ -61,6 +62,7 @@ enum Permission: string
             self::TeachClasses => 'Teach assigned classes',
             self::ConfigureGrading => 'Configure grading rules',
             self::RecordGrades => 'Record grades for assigned subjects',
+            self::ApproveGradeCorrections => 'Approve grade corrections',
             self::ViewAcademicMonitoring => 'View academic monitoring',
             self::ManageQuestionBank => 'Manage the question bank',
             self::ManageExaminations => 'Manage quizzes and examinations',
@@ -94,7 +96,8 @@ enum Permission: string
             self::ManageCandidates => 'Create and update candidate records and their sign-in accounts.',
             self::TeachClasses => 'Can be assigned to teach subjects, and view the classes and candidates they teach.',
             self::ConfigureGrading => 'Set the grading categories and weights used for each subject of a class, and the passing and warning grades that decide academic standing in each academic period.',
-            self::RecordGrades => 'Create assessments, record and finalize scores, and correct finalized scores for the subjects they are assigned to teach.',
+            self::RecordGrades => 'Create assessments, record and finalize scores, and request corrections of finalized scores (with an incident report) for the subjects they are assigned to teach.',
+            self::ApproveGradeCorrections => 'Review grade correction requests and their incident reports, and approve them (the finalized score is then changed) or reject them with a reason. Nobody can approve their own request.',
             self::ViewAcademicMonitoring => 'See academic standings and the candidates who need attention: every candidate for users who can view all candidates, otherwise only the classes and subjects the user teaches. Candidate profiles follow their own permissions.',
             self::ManageQuestionBank => 'Create, edit, preview, activate, and deactivate questions, including their correct answers, for the subjects they are assigned to teach.',
             self::ManageExaminations => 'Create quizzes and examinations for the class subjects they are assigned to teach, choose their questions from the question bank, configure them, and publish them.',
@@ -121,7 +124,7 @@ enum Permission: string
             self::ManageInstructorAssignments => 'Academic Structure',
             self::ViewAllCandidates, self::ManageCandidates => 'Candidates',
             self::TeachClasses => 'Teaching',
-            self::ConfigureGrading, self::RecordGrades => 'Grading',
+            self::ConfigureGrading, self::RecordGrades, self::ApproveGradeCorrections => 'Grading',
             self::ViewAcademicMonitoring => 'Monitoring',
             self::ViewReports => 'Monitoring',
             self::ViewAuditHistory => 'Administration',
