@@ -15,23 +15,40 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skips columns already added (a deploy that stopped half-way: MariaDB cannot roll back DDL).
         Schema::table('medical_fields', function (Blueprint $table) {
-            $table->string('section', 60)->nullable()->after('name');
-            $table->string('unit', 20)->nullable()->after('options');
+            if (! Schema::hasColumn('medical_fields', 'section')) {
+                $table->string('section', 60)->nullable()->after('name');
+            }
+            if (! Schema::hasColumn('medical_fields', 'unit')) {
+                $table->string('unit', 20)->nullable()->after('options');
+            }
         });
 
         if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
-            $drop = DB::getDriverName() === 'mariadb' ? 'drop constraint' : 'drop check';
+            $drop = $this->dropCheck();
             DB::statement("alter table `medical_fields` {$drop} `medical_fields_type_check`");
             DB::statement("alter table `medical_fields` add constraint `medical_fields_type_check` check (`field_type` in ('text', 'long_text', 'number', 'choice', 'date', 'yes_no'))");
             DB::statement("alter table `medical_fields` add constraint `medical_fields_unit_check` check (`unit` is null or `field_type` = 'number')");
         }
     }
 
+    /**
+     * MariaDB drops a CHECK with "drop constraint", MySQL with "drop check".
+     * Asks the server itself: a MariaDB server may be configured with the
+     * `mysql` driver (as on the Hostinger trial site).
+     */
+    private function dropCheck(): string
+    {
+        $connection = DB::connection();
+
+        return $connection->getDriverName() === 'mariadb' || (method_exists($connection, 'isMaria') && $connection->isMaria()) ? 'drop constraint' : 'drop check';
+    }
+
     public function down(): void
     {
         if (in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)) {
-            $drop = DB::getDriverName() === 'mariadb' ? 'drop constraint' : 'drop check';
+            $drop = $this->dropCheck();
             DB::statement("alter table `medical_fields` {$drop} `medical_fields_unit_check`");
             DB::statement("alter table `medical_fields` {$drop} `medical_fields_type_check`");
             DB::statement("alter table `medical_fields` add constraint `medical_fields_type_check` check (`field_type` in ('text', 'long_text', 'choice', 'date', 'yes_no'))");
