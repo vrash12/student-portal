@@ -7,8 +7,10 @@ import { Button, ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FilterBar, SearchField } from '@/components/ui/filter-bar';
 import { FormField, SelectInput } from '@/components/ui/form-field';
+import { ExaminationSectionTabs } from '@/components/examinations/examination-section-tabs';
 import { PageHeader } from '@/components/ui/page-header';
 import { Pagination } from '@/components/ui/pagination';
+import { examinationRoutes } from '@/lib/examination-routes';
 import { routes } from '@/lib/routes';
 import { useQueryFilters } from '@/lib/use-query-filters';
 import type { Paginated } from '@/types';
@@ -56,6 +58,7 @@ export default function QuestionBankIndex({ questions, filters, subjects, topics
 
             <PageHeader
                 title="Question Bank"
+                breadcrumbs={[{ label: 'Examinations', href: examinationRoutes.index() }, { label: 'Question Bank' }]}
                 description="Reusable questions for the subjects you teach. Correct answers and explanations are visible to staff only."
                 actions={
                     subjects.length > 0 ? (
@@ -71,6 +74,8 @@ export default function QuestionBankIndex({ questions, filters, subjects, topics
                     ) : undefined
                 }
             />
+
+            <ExaminationSectionTabs current="questions" />
 
             <ListCharts charts={charts} />
 

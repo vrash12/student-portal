@@ -7,6 +7,7 @@ import { useUnsavedChangesWarning } from '@/components/question-bank/use-unsaved
 import { Button, ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
+import { examinationRoutes } from '@/lib/examination-routes';
 import { routes } from '@/lib/routes';
 import type { QuestionBankSubject, QuestionLimits, QuestionTypeOption } from '@/types/question-bank';
 
@@ -49,7 +50,11 @@ export default function CreateQuestion({ subjects, selectedSubjectId, types, lim
                 <PageHeader
                     title="Add Question"
                     description="Questions are usually written while building a quiz or examination (its Questions step). Questions added here can be reused in any quiz or examination of the subject. After saving, add images, audio, or video from Edit."
-                    breadcrumbs={[{ label: 'Question Bank', href: routes.questionBank.index() }, { label: 'Add Question' }]}
+                    breadcrumbs={[
+                        { label: 'Examinations', href: examinationRoutes.index() },
+                        { label: 'Question Bank', href: routes.questionBank.index() },
+                        { label: 'Add Question' },
+                    ]}
                 />
 
                 {subjects.length === 0 ? (

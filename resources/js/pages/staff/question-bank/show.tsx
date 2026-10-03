@@ -11,6 +11,7 @@ import { ConfirmAction } from '@/components/ui/confirm-action';
 import { PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { useDateFormatter } from '@/lib/format';
+import { examinationRoutes } from '@/lib/examination-routes';
 import { routes } from '@/lib/routes';
 import type { StaffQuestion } from '@/types/question-bank';
 
@@ -38,7 +39,8 @@ export default function ShowQuestion({ question, record }: ShowQuestionProps) {
                 title="Question Preview"
                 description={`${question.subject.name} · ${question.topic === null ? 'No topic' : question.topic.name}`}
                 breadcrumbs={[
-                    { label: 'Question Bank', href: routes.questionBank.index() },
+                    { label: 'Examinations', href: examinationRoutes.index() },
+                        { label: 'Question Bank', href: routes.questionBank.index() },
                     { label: question.subject.name, href: routes.questionBank.index({ subject: String(question.subject.id) }) },
                     { label: 'Preview' },
                 ]}

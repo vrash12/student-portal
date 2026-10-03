@@ -9,6 +9,7 @@ import { FileInput, FormField, SelectInput } from '@/components/ui/form-field';
 import { FormActions, FormSection } from '@/components/ui/form-section';
 import { PageHeader } from '@/components/ui/page-header';
 import { Table, TableBody, TableHead, Td, Th } from '@/components/ui/table';
+import { examinationRoutes } from '@/lib/examination-routes';
 import { routes } from '@/lib/routes';
 import type { QuestionBankSubject } from '@/types/question-bank';
 
@@ -121,7 +122,11 @@ export default function ImportQuestions({ subjects, selectedSubjectId, limits }:
                 <PageHeader
                     title="Import Questions"
                     description="Add many questions to one subject at once from a CSV file. If any row has a problem, nothing is imported."
-                    breadcrumbs={[{ label: 'Question Bank', href: routes.questionBank.index() }, { label: 'Import Questions' }]}
+                    breadcrumbs={[
+                        { label: 'Examinations', href: examinationRoutes.index() },
+                        { label: 'Question Bank', href: routes.questionBank.index() },
+                        { label: 'Import Questions' },
+                    ]}
                 />
 
                 {subjects.length === 0 ? (

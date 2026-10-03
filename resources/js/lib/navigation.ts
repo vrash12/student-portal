@@ -14,7 +14,6 @@ import {
     History,
     Layers,
     LayoutDashboard,
-    Library,
     Medal,
     School,
     SlidersHorizontal,
@@ -61,8 +60,14 @@ export const staffNavigation: NavigationSection[] = [
     {
         label: 'Teaching',
         items: [
-            { label: 'Question Bank', href: routes.questionBank.index(), icon: Library, permission: Permission.ManageQuestionBank },
-            { label: 'Examinations', href: '/examinations', icon: ClipboardCheck, permission: Permission.ManageExaminations, activeFor: ['/examination-attempts'] },
+            // The Question Bank is part of Examinations (a tab on its page, owner request 2026-10-03).
+            {
+                label: 'Examinations',
+                href: '/examinations',
+                icon: ClipboardCheck,
+                permission: Permission.ManageExaminations,
+                activeFor: ['/examination-attempts', routes.questionBank.index()],
+            },
             {
                 label: `My ${terms.classBatch.plural}`,
                 href: routes.teaching.classes.index(),

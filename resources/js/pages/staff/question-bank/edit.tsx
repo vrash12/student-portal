@@ -7,6 +7,7 @@ import { focusFirstInvalidField, QuestionForm } from '@/components/question-bank
 import { questionFormDataFrom, questionPayload, type QuestionFormData } from '@/components/question-bank/question-form-data';
 import { useUnsavedChangesWarning } from '@/components/question-bank/use-unsaved-changes-warning';
 import { PageHeader } from '@/components/ui/page-header';
+import { examinationRoutes } from '@/lib/examination-routes';
 import { routes } from '@/lib/routes';
 import type { QuestionLimits, QuestionTypeOption, StaffQuestion } from '@/types/question-bank';
 
@@ -44,6 +45,7 @@ export default function EditQuestion({ question, topics, types, limits }: EditQu
                     title="Edit Question"
                     description={`${question.subject.name} · ${question.type.label}`}
                     breadcrumbs={[
+                        { label: 'Examinations', href: examinationRoutes.index() },
                         { label: 'Question Bank', href: routes.questionBank.index() },
                         { label: question.subject.name, href: routes.questionBank.index({ subject: String(question.subject.id) }) },
                         { label: 'Preview', href: routes.questionBank.show(question.id) },

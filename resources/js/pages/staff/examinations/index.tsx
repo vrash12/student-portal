@@ -3,6 +3,7 @@ import { ListCharts, type ListChart } from '@/components/charts/list-charts';
 import { ClipboardList, Plus } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ExaminationSectionTabs } from '@/components/examinations/examination-section-tabs';
 import { PageHeader } from '@/components/ui/page-header';
 import { Pagination } from '@/components/ui/pagination';
 import { StatusBadge, type StatusTone } from '@/components/ui/status-badge';
@@ -37,6 +38,8 @@ export default function ExaminationIndex({ examinations, charts }: { examination
                 description="Build, review, and monitor assessments for your assigned subjects."
                 actions={createAction}
             />
+
+            <ExaminationSectionTabs current="examinations" />
 
             <ListCharts charts={charts} />
 

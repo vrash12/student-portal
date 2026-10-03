@@ -31,6 +31,10 @@ Updated 2026-10-01 by Claude Code (earlier sections by Codex, 2026-09-30). Read 
 - **Open owner decisions** are under "Requirements still needing confirmation" at the end of this file, plus whether to deactivate the "Pay & Allowances" and "Deductions" account categories.
 - Extra test databases `academic_system_{r1,r2,r3,w1,w2,w3,v1…v12,login}_testing` exist from parallel runs and can be dropped.
 
+## Owner request — Question Bank moved into Examinations (2026-10-03, Claude Code)
+
+- **Request:** "remove the question bank nav bar and put it into the examination section." The sidebar's Question Bank item is gone; the Examinations item (`lib/navigation.ts`) is also active on `/question-bank` pages. `components/examinations/examination-section-tabs.tsx` shows "Quizzes & Examinations | Question Bank" under the header of both list pages (each tab only with its permission; nothing when only one applies). Question bank pages' header path now starts with Examinations. Routes, permissions and pages are unchanged. Checked in headless Chrome as `instructor1`; `npm run types`, `npm run build`. Not pushed or deployed.
+
 ## Owner request — sharp sign-in photograph that never covers the school (2026-10-03, Claude Code)
 
 - **Report:** on a large screen the sign-in picture was low quality (the upscaled 1672 x 805 JPEG `login-campus.jpg` with a painted card area); on smaller windows the sharp picture showed but the centered card covered the school.
