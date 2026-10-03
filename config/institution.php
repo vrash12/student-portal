@@ -22,12 +22,13 @@ return [
     // Public URL of the approved logo. Null renders a neutral placeholder.
     'logo_url' => env('ORGANIZATION_LOGO_URL'),
 
-    // Locally served sign-in background. An explicit empty value disables the
-    // photograph and keeps the institutional green background.
+    // Locally served sign-in photograph, used when login_compact_image_url is
+    // empty. An explicit empty value for both keeps the plain navy background.
     'login_image_url' => env('LOGIN_IMAGE_URL', '/branding/login-campus.jpg') ?: null,
 
-    // Background for smaller screens (below 1280 x 860), where the card cannot
-    // line up with the supplied picture. Empty: the main image everywhere.
+    // The sign-in photograph shown at every screen size (full quality; the
+    // layout keeps the school's building clear of the card). Empty: the main
+    // image setting instead.
     'login_compact_image_url' => env('LOGIN_COMPACT_IMAGE_URL', '/branding/login-background.png') ?: null,
 
     // Sign-in page texts. Empty values fall back (titles) or are hidden.

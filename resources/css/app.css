@@ -7,8 +7,6 @@
  * Tailwind's default palette is cleared so every color in the interface
  * comes from this list. Contrast notes are against white (#ffffff).
  */
-/* Large desktop screens (wide and tall): the sign-in card lines up with the supplied background. */
-@custom-variant signin-wide (@media (min-width: 80rem) and (min-height: 53.75rem));
 
 
 @theme {

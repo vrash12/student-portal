@@ -31,6 +31,12 @@ Updated 2026-10-01 by Claude Code (earlier sections by Codex, 2026-09-30). Read 
 - **Open owner decisions** are under "Requirements still needing confirmation" at the end of this file, plus whether to deactivate the "Pay & Allowances" and "Deductions" account categories.
 - Extra test databases `academic_system_{r1,r2,r3,w1,w2,w3,v1…v12,login}_testing` exist from parallel runs and can be dropped.
 
+## Owner request — sharp sign-in photograph that never covers the school (2026-10-03, Claude Code)
+
+- **Report:** on a large screen the sign-in picture was low quality (the upscaled 1672 x 805 JPEG `login-campus.jpg` with a painted card area); on smaller windows the sharp picture showed but the centered card covered the school.
+- **Now (`layouts/auth-layout.tsx`):** one photograph at every size, the sharp `LOGIN_COMPACT_IMAGE_URL` (`login-background.png`, 1672 x 941), else `LOGIN_IMAGE_URL`; no `.env` change needed (live keeps both settings). `placementFor()` knows where the building's front is in the picture (x 535-915, y 165-470): from 768 px wide, when the whole front fits left of the 31rem card, the picture covers the page and is shifted (`object-position` in px) so the front is centered in the free space, with the card on the right; otherwise (portrait tablets, phones) the picture is a banner (32vh) above the card. Measured before paint with the window's free height (not the stacked page's height) and on resize. The painted motto of the old picture is gone; `LOGIN_MOTTO` shows one at the bottom left on large screens if set. Removed the unused `signin-wide` CSS variant; config and `.env.example` comments updated.
+- **Checked:** headless Chrome at 1893x977, 1366x768, 1024x768, 950x870 (side by side, front clear), 768x1024 and 390x844 (banner); `LoginTest` + `CandidateExamPagesTest` 23 passing; `npm run types`, `npm run build`. Not pushed or deployed.
+
 ## Owner request — training phases inside a one-year academic year (2026-10-03, Claude Code)
 
 - **Request:** "all of the training phases it must be under 1 year. since the whole learning of the candidate is only 1 year. like in the system it must have like 2026-2027, 2027-2028". The academic period is the course year; phases belong to a year.
