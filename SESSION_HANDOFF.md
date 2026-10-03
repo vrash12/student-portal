@@ -31,6 +31,13 @@ Updated 2026-10-01 by Claude Code (earlier sections by Codex, 2026-09-30). Read 
 - **Open owner decisions** are under "Requirements still needing confirmation" at the end of this file, plus whether to deactivate the "Pay & Allowances" and "Deductions" account categories.
 - Extra test databases `academic_system_{r1,r2,r3,w1,w2,w3,v1…v12,login}_testing` exist from parallel runs and can be dropped.
 
+## Owner request — expenses on the Registration PDF (2026-10-04, Claude Code)
+
+- **Request:** "add also the track expenses inside the pdf academic registration to the student portal so that the student will know how much the school provide for him", then "make the track expenses in a table in the pdf". AGENTS.md §11 and §75 record the owner decision (only on the Registration PDF; still no balance, statement or payments).
+- `CandidatePdfService::expenses()` (registration only): the candidate's own charges that stand (voided ones left out), oldest first, with category, and the exact total (`Money::toCents`/`decimal`). Downloaded from the portal's My Information (the header now says the Registration PDF lists the expenses) and by staff who may download the record (unchanged policy).
+- **PDF layout** (`pdf/candidate-record.blade.php`): the bottom-left "Registration Summary" box only repeated the general information (period, campus, class, status, subject count), so it became **"Expenses Provided by the Institution"**: a table (No., Date, Expense, Amount) with "Total provided by the institution (a scholar owes nothing)". The form stays **one page**: up to 5 lines (`BOX_EXPENSES`) are listed in the box; with more, the box shows the total per category (three largest + "Other") and a following page lists every expense (No., Date, Expense, Category, Amount, total). Checked by counting pages for `student05`, `east07`, `north12` (1 page each) and with up to 30 extra lines.
+- **Tests:** `CandidatePdfTest` + 2 (own standing charges only, order, exact total, rendered text, one page, none on the academic record; six charges → category summary with "Other", itemized page, two pages). File: 6 passing.
+
 ## Owner request — 20 demo students on every campus (2026-10-04, Claude Code)
 
 - **Request:** "now add more students per campus and apply tests as well"; owner chose **20 per campus** (80 in all).

@@ -3,10 +3,13 @@
 namespace Tests\Feature\Candidates;
 
 use App\Enums\SystemRole;
+use App\Models\AccountCategory;
+use App\Models\AccountEntry;
 use App\Models\AuditLog;
 use App\Models\Candidate;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
+use App\Services\Accounts\AccountService;
 use App\Services\CandidateBackgroundService;
 use App\Services\CandidatePdfService;
 use Illuminate\Support\Facades\Gate;
@@ -119,5 +122,85 @@ class CandidatePdfTest extends TestCase
 
         // The academic record does not carry it.
         $this->assertNull($service->data($this->academicAdmin, $this->candidateInA, 'academic')['background']);
+    }
+
+    public function test_the_registration_form_lists_the_expenses_the_institution_provides(): void
+    {
+        $this->buildGradingFixtures();
+        $meals = $this->charge($this->candidateInA, 'Meals', '4500.00', '2026-09-01', 'Meals, first month');
+        $this->charge($this->candidateInA, 'Uniforms', '3500.25', '2026-08-10', 'Uniform set');
+        $mistake = $this->charge($this->candidateInA, 'Billing', '999.99', '2026-08-03', 'Mistaken charge');
+        app(AccountService::class)->void($mistake, 'Entered twice.', $this->academicAdmin);
+        $this->charge($this->candidateInB, 'Billing', '15000.00', '2026-08-03', 'Training fees');
+        $service = app(CandidatePdfService::class);
+
+        $data = $service->data($this->candidateInA->user, $this->candidateInA, 'registration');
+
+        // Only the candidate's own charges that stand, oldest first, with an exact total.
+        $this->assertSame('PHP', $data['expenses']['currency']);
+        $this->assertSame(
+            [['2026-08-10', 'Uniform set', 'Uniforms', '3500.25'], ['2026-09-01', 'Meals, first month', 'Meals', '4500.00']],
+            array_map(fn (array $row): array => [$row['postedOn'], $row['name'], $row['category'], $row['amount']], $data['expenses']['rows']),
+        );
+        $this->assertSame('8000.25', $data['expenses']['total']);
+        $this->assertTrue($data['expenses']['itemizedInBox']);
+
+        $html = view('pdf.candidate-record', $data)->render();
+        foreach (['Expenses Provided by the Institution', 'Uniform set', 'Meals, first month', '3,500.25', 'PHP 8,000.25', 'a scholar owes nothing'] as $text) {
+            $this->assertStringContainsString($text, $html);
+        }
+        $this->assertStringNotContainsString('Mistaken charge', $html);
+        $this->assertStringNotContainsString('Training fees', $html);
+        // Still a one-page form.
+        $this->assertSame(1, $this->pageCount($service->render($data)));
+        $this->assertSame((string) $meals->amount, $data['expenses']['rows'][1]['amount']);
+
+        // The academic record does not carry expenses.
+        $this->assertArrayNotHasKey('expenses', $service->data($this->academicAdmin, $this->candidateInA, 'academic'));
+    }
+
+    public function test_many_expenses_are_summed_by_category_and_listed_on_their_own_page(): void
+    {
+        $this->buildGradingFixtures();
+        foreach (['Billing' => '15000.00', 'Uniforms' => '3500.00', 'Meals' => '4500.00', 'Military Fitness' => '1500.00', 'Chargeable Items' => '450.00'] as $category => $amount) {
+            $this->charge($this->candidateInA, $category, $amount, '2026-08-03', "{$category} expense");
+        }
+        $this->charge($this->candidateInA, 'Meals', '4500.00', '2026-09-01', 'Meals, second month');
+        $service = app(CandidatePdfService::class);
+
+        $data = $service->data($this->academicAdmin, $this->candidateInA, 'registration');
+
+        $this->assertFalse($data['expenses']['itemizedInBox']);
+        $this->assertCount(6, $data['expenses']['rows']);
+        $this->assertSame('29450.00', $data['expenses']['total']);
+        // The three largest categories, then the rest as "Other", so the form keeps one page.
+        $this->assertSame(
+            [['Billing', 1, '15000.00'], ['Meals', 2, '9000.00'], ['Uniforms', 1, '3500.00'], ['Other', 2, '1950.00']],
+            array_map(fn (array $group): array => [$group['category'], $group['items'], $group['amount']], $data['expenses']['byCategory']),
+        );
+
+        $html = view('pdf.candidate-record', $data)->render();
+        $this->assertStringContainsString('every expense is listed on the next page', $html);
+        foreach (['Military Fitness expense', 'Chargeable Items expense', 'Meals, second month'] as $line) {
+            $this->assertStringContainsString($line, $html);
+        }
+        $this->assertSame(2, $this->pageCount($service->render($data)));
+    }
+
+    private function charge(Candidate $candidate, string $category, string $amount, string $postedOn, string $description): AccountEntry
+    {
+        return app(AccountService::class)->record($candidate, [
+            'account_category_id' => AccountCategory::query()->where('name', $category)->sole()->id,
+            'entry_type' => 'charge',
+            'amount' => $amount,
+            'posted_on' => $postedOn,
+            'description' => $description,
+            'reference' => null,
+        ], $this->academicAdmin);
+    }
+
+    private function pageCount(string $pdf): int
+    {
+        return preg_match_all('/\/Type\s*\/Page[^s]/', $pdf);
     }
 }

@@ -18,7 +18,7 @@ export default function CandidateProfile({ candidate, background }: { candidate:
             <PortalHeading
                 icon={UserRound}
                 title="My Information"
-                description="Your personal and class details. Contact the academic office to correct anything."
+                description="Your personal and class details. The Registration PDF also lists the expenses the institution provides for you. Contact the academic office to correct anything."
                 actions={<RecordDownloads baseUrl="/portal/profile/documents" />}
             />
             <div className="flex flex-col gap-8">

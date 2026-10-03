@@ -150,15 +150,32 @@
 
     <table class="cols"><tr>
         <td style="width:50%">
+            {{-- What the institution provides for the candidate (owner request, 2026-10-04). Period, campus, class and status are in the general information above. --}}
             <div class="box">
-                <h3>Registration Summary</h3>
+                <h3>Expenses Provided by the Institution <span class="muted">{{ $expenses['itemizedInBox'] ? '' : '· every expense is listed on the next page' }}</span></h3>
+                @if($expenses['itemizedInBox'])
                 <table class="grid">
-                    <tr><td style="width:45%">Academic period</td><td>{{ $period['name'] ?? 'Not assigned' }}</td></tr>
-                    <tr><td>Campus</td><td>{{ $candidate['campus']['name'] ?? 'Not assigned' }}</td></tr>
-                    <tr><td>Class / section</td><td>{{ $candidate['classBatch']['name'] ?? 'Not assigned' }}</td></tr>
-                    <tr><td>Enrolled subjects</td><td>{{ count($subjects) }}</td></tr>
-                    <tr><td>Candidate status</td><td>{{ $candidate['status']['label'] }}</td></tr>
+                    <thead><tr><th style="width:7%">No.</th><th style="width:20%">Date</th><th style="width:51%">Expense</th><th style="width:22%" class="num">Amount ({{ $expenses['currency'] }})</th></tr></thead>
+                    <tbody>
+                    @forelse($expenses['rows'] as $i => $expense)
+                        <tr><td class="num">{{ $i + 1 }}</td><td>{{ $date($expense['postedOn']) }}</td><td>{{ $expense['name'] }}</td><td class="num">{{ $number($expense['amount']) }}</td></tr>
+                    @empty
+                        <tr><td colspan="4">No expenses recorded yet.</td></tr>
+                    @endforelse
+                    <tr class="total"><td colspan="3">Total provided by the institution <span class="muted">(a scholar owes nothing)</span></td><td class="num">{{ $expenses['currency'] }} {{ $number($expenses['total']) }}</td></tr>
+                    </tbody>
                 </table>
+                @else
+                <table class="grid">
+                    <thead><tr><th style="width:56%">Category</th><th style="width:16%" class="num">Items</th><th style="width:28%" class="num">Amount ({{ $expenses['currency'] }})</th></tr></thead>
+                    <tbody>
+                    @foreach($expenses['byCategory'] as $group)
+                        <tr><td>{{ $group['category'] }}</td><td class="num">{{ $group['items'] }}</td><td class="num">{{ $number($group['amount']) }}</td></tr>
+                    @endforeach
+                    <tr class="total"><td colspan="2">Total provided by the institution <span class="muted">(a scholar owes nothing)</span></td><td class="num">{{ $expenses['currency'] }} {{ $number($expenses['total']) }}</td></tr>
+                    </tbody>
+                </table>
+                @endif
             </div>
         </td>
         <td class="gap"></td>
@@ -173,6 +190,21 @@
             </div>
         </td>
     </tr></table>
+
+    @unless($expenses['itemizedInBox'])
+        <div class="page-break"></div>
+        <div class="band">Expenses Provided by the Institution</div>
+        <p class="note">{{ $candidate['name'] }} · Candidate {{ $candidate['candidateNumber'] }} · Every expense the institution has provided, oldest first. The candidate is a scholar and owes nothing.</p>
+        <table class="grid">
+            <thead><tr><th style="width:5%">No.</th><th style="width:13%">Date</th><th style="width:44%">Expense</th><th style="width:22%">Category</th><th style="width:16%" class="num">Amount ({{ $expenses['currency'] }})</th></tr></thead>
+            <tbody>
+            @foreach($expenses['rows'] as $i => $expense)
+                <tr><td class="num">{{ $i + 1 }}</td><td>{{ $date($expense['postedOn']) }}</td><td>{{ $expense['name'] }}</td><td>{{ $expense['category'] }}</td><td class="num">{{ $number($expense['amount']) }}</td></tr>
+            @endforeach
+            <tr class="total"><td colspan="4">Total provided by the institution</td><td class="num">{{ $expenses['currency'] }} {{ $number($expenses['total']) }}</td></tr>
+            </tbody>
+        </table>
+    @endunless
 @else
     @if($page['twoColumns'])
         <table class="cols"><tr>

@@ -346,7 +346,7 @@ The first implementation should primarily support candidate access for:
 - examinations
 - authorized assessments
 
-Owner decision (2026-10-01): candidates see their own grades, examination results, performance areas and qualification checklist, merits/demerits and attendance in the portal (each on its own page), always only their own records. Class rank and other candidates' data are never sent to the portal. Fitness tests are staff only since 2026-10-02 (owner decision); the portal's Physical Fitness page is off unless `PORTAL_SHOW_FITNESS=true`. Candidates upload their own medical documents and see their review status, plus the medical record fields that the administrators share with candidates (read-only), on the portal's Medical page (owner decisions 2026-10-02).
+Owner decision (2026-10-01): candidates see their own grades, examination results, performance areas and qualification checklist, merits/demerits and attendance in the portal (each on its own page), always only their own records. Class rank and other candidates' data are never sent to the portal. Fitness tests are staff only since 2026-10-02 (owner decision); the portal's Physical Fitness page is off unless `PORTAL_SHOW_FITNESS=true`. Candidates upload their own medical documents and see their review status, plus the medical record fields that the administrators share with candidates (read-only), on the portal's Medical page (owner decisions 2026-10-02). The expenses the institution provides for a candidate appear only on their Registration PDF (owner decision 2026-10-04).
 
 Do not automatically expose:
 
@@ -1933,7 +1933,7 @@ Do **not** implement the following unless explicitly requested later:
 - biometric authentication
 - proctoring / webcam monitoring (exception approved by the owner on 2026-10-01: the examination page records when a candidate leaves the exam screen — tab/app switch or another window focused — as an indicator for instructors; no camera, microphone, screen capture, or automatic penalties). The only camera use is the staff QR attendance scanner (owner request 2026-10-02): the browser may use the camera on staff pages only (`Permissions-Policy`), never on candidate pages, examinations included
 - multi-tenant SaaS architecture
-- payment functionality (owner decision 2026-10-01: only the Expenses feature remains — the Admin defines expenses and assign them to a class or chosen candidates; the Statement of Account pages, PDF and candidate view, and the Finance Officer role, were removed; candidates are scholars, no payments)
+- payment functionality (owner decision 2026-10-01: only the Expenses feature remains — the Admin defines expenses and assign them to a class or chosen candidates; the Statement of Account pages, PDF and candidate view, and the Finance Officer role, were removed; candidates are scholars, no payments. Owner decision 2026-10-04: the candidate's Registration PDF (Certificate of Registration, downloaded on the portal's My Information and by staff who view every candidate) lists the expenses the institution has provided for the candidate in a table with the total, so the candidate knows what the school provides; still no balance, statement or payments)
 - public registration
 
 Focus only on the requirements currently needed for the prototype and initial system.
