@@ -6,6 +6,7 @@ use App\Enums\AuditAction;
 use App\Enums\SystemRole;
 use App\Models\AuditLog;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -219,5 +220,40 @@ class LoginTest extends TestCase
         $this->actingAs($this->userWithRole(SystemRole::Instructor))
             ->get('/login')
             ->assertRedirect(route('home'));
+    }
+
+    public function test_a_candidate_signing_in_ends_their_sessions_on_other_devices(): void
+    {
+        $candidate = $this->userWithRole(SystemRole::Candidate, ['username' => 'candidate.test']);
+        $other = $this->userWithRole(SystemRole::Candidate);
+        $this->storeOtherDeviceSession($candidate, 'tablet-a');
+        $this->storeOtherDeviceSession($candidate, 'tablet-b');
+        $this->storeOtherDeviceSession($other, 'someone-else');
+
+        $this->post('/login', ['username' => 'candidate.test', 'password' => 'password'])->assertRedirect(route('home'));
+
+        $this->assertAuthenticatedAs($candidate);
+        $this->assertSame(0, DB::table('sessions')->where('user_id', $candidate->id)->whereIn('id', ['tablet-a', 'tablet-b'])->count());
+        $this->assertSame(1, DB::table('sessions')->where('id', 'someone-else')->count());
+        $login = AuditLog::query()->where('action', AuditAction::Login->value)->where('auditable_id', $candidate->id)->sole();
+        $this->assertSame(['other_sessions_ended' => 2], $login->new_values);
+    }
+
+    public function test_staff_may_stay_signed_in_on_several_devices(): void
+    {
+        $instructor = $this->userWithRole(SystemRole::Instructor, ['username' => 'instructor.test']);
+        $this->storeOtherDeviceSession($instructor, 'office-pc');
+
+        $this->post('/login', ['username' => 'instructor.test', 'password' => 'password'])->assertRedirect(route('home'));
+
+        $this->assertSame(1, DB::table('sessions')->where('id', 'office-pc')->count());
+    }
+
+    private function storeOtherDeviceSession(User $user, string $id): void
+    {
+        DB::table('sessions')->insert([
+            'id' => $id, 'user_id' => $user->id, 'ip_address' => '10.0.0.5', 'user_agent' => 'Tablet',
+            'payload' => base64_encode(serialize([])), 'last_activity' => now()->getTimestamp(),
+        ]);
     }
 }

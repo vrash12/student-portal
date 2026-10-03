@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\UserAccountService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,15 +22,21 @@ class AuthenticatedSessionController extends Controller
         return Inertia::render('auth/login');
     }
 
-    public function store(LoginRequest $request, AuditLogger $audit): RedirectResponse
+    public function store(LoginRequest $request, AuditLogger $audit, UserAccountService $accounts): RedirectResponse
     {
         $user = $request->authenticate($audit);
 
         $request->session()->regenerate();
 
+        // Candidates are signed in on one device at a time (owner request,
+        // 2026-10-03): this sign-in ends their sessions on other devices.
+        $endedSessions = $user->hasPermission(Permission::AccessExamPortal) && ! $user->hasPermission(Permission::AccessStaffArea)
+            ? $accounts->endSessions($user, exceptSessionId: $request->session()->getId())
+            : 0;
+
         User::withoutTimestamps(fn () => $user->forceFill(['last_login_at' => now()])->save());
 
-        $audit->record(AuditAction::Login, $user, actor: $user);
+        $audit->record(AuditAction::Login, $user, newValues: $endedSessions > 0 ? ['other_sessions_ended' => $endedSessions] : [], actor: $user);
 
         return redirect()->to($this->intendedUrlFor($user, $request) ?? route('home'));
     }

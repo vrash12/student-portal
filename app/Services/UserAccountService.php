@@ -111,9 +111,9 @@ final class UserAccountService
     /**
      * Ends every stored session of the user, optionally keeping one.
      */
-    public function endSessions(User $user, ?string $exceptSessionId = null): void
+    public function endSessions(User $user, ?string $exceptSessionId = null): int
     {
-        DB::table('sessions')
+        return DB::table('sessions')
             ->where('user_id', $user->getKey())
             ->when($exceptSessionId !== null, fn ($query) => $query->where('id', '!=', $exceptSessionId))
             ->delete();

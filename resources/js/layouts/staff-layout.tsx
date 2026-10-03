@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown, KeyRound, LogOut, Menu, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
+import { PageHeaderSlot } from '@/components/ui/page-header-slot';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/cn';
 import { activeItemHref, isVisibleItem, staffNavigation } from '@/lib/navigation';
@@ -39,6 +40,7 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
     const { url } = usePage();
     useFocusMainOnNavigate();
     const [navigationOpen, setNavigationOpen] = useState(false);
+    const [headerSlot, setHeaderSlot] = useState<HTMLDivElement | null>(null);
     const [collapsed, setCollapsed] = useState(readCollapsed);
 
     const toggleCollapsed = () => {
@@ -87,8 +89,14 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
                     <UserMenu />
                 </header>
 
-                <main id="main-content" tabIndex={-1} className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-                    <div className="mx-auto w-full max-w-7xl">{children}</div>
+                <main id="main-content" tabIndex={-1}>
+                    {/* The page title banner, edge to edge (PageHeader renders into it). */}
+                    <div ref={setHeaderSlot} />
+                    <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+                        <div className="mx-auto w-full max-w-7xl">
+                            <PageHeaderSlot.Provider value={headerSlot}>{children}</PageHeaderSlot.Provider>
+                        </div>
+                    </div>
                 </main>
             </div>
 
