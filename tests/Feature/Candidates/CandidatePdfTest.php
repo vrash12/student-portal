@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\Candidate;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
+use App\Services\CandidateBackgroundService;
 use App\Services\CandidatePdfService;
 use Illuminate\Support\Facades\Gate;
 use Tests\Feature\Grading\BuildsGradingFixtures;
@@ -99,5 +100,24 @@ class CandidatePdfTest extends TestCase
         $released = $service->data($this->candidateInA->user, $this->candidateInA, 'academic');
         $this->assertEquals(8, $released['examinations'][0]['score']);
         $this->assertEquals(80, $released['examinations'][0]['percentage']);
+    }
+
+    public function test_the_registration_form_carries_the_background_record(): void
+    {
+        $this->buildGradingFixtures();
+        app(CandidateBackgroundService::class)->save($this->candidateInA, [
+            'date_of_birth' => '2001-03-09', 'sex' => 'female', 'civil_status' => 'single', 'mobile_number' => '0917 555 0111',
+            'emergency_contact_name' => 'Ana Example', 'emergency_contact_relationship' => 'Mother', 'eligibility' => 'Civil Service Professional',
+        ], [['level' => 'bachelor', 'degree' => 'BS Criminology', 'school' => 'State University of the North', 'year_graduated' => 2022, 'honors' => 'Cum Laude']]);
+        $service = app(CandidatePdfService::class);
+
+        $html = view('pdf.candidate-record', $service->data($this->candidateInA->user, $this->candidateInA, 'registration'))->render();
+        foreach (['Personal Background', '09 Mar 2001', 'Female / Single', '0917 555 0111', 'Ana Example', 'Civil Service Professional', 'Educational Background', 'BS Criminology', 'Cum Laude'] as $text) {
+            $this->assertStringContainsString($text, $html);
+        }
+        $this->assertStringStartsWith('%PDF-', $service->render($service->data($this->academicAdmin, $this->candidateInA, 'registration')));
+
+        // The academic record does not carry it.
+        $this->assertNull($service->data($this->academicAdmin, $this->candidateInA, 'academic')['background']);
     }
 }

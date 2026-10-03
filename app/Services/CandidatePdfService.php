@@ -6,6 +6,7 @@ use App\Models\Candidate;
 use App\Models\ClassSubject;
 use App\Models\User;
 use App\Services\Monitoring\CandidateProfileRecord;
+use App\Support\CandidateBackgroundPresenter;
 use App\Support\CandidatePresenter;
 use App\Support\PdfDocument;
 use Illuminate\Support\Facades\Gate;
@@ -34,6 +35,8 @@ final class CandidatePdfService
             'type' => $type,
             'title' => $type === 'registration' ? 'Certificate of Registration' : 'Academic Record',
             'candidate' => CandidatePresenter::details($candidate),
+            // The full background record: only the candidate and staff who view every candidate download this.
+            'background' => $type === 'registration' ? CandidateBackgroundPresenter::present($candidate, 'full') : null,
             'organization' => config('institution.organization_name'),
             'systemName' => config('institution.system_name'),
             'generatedAt' => $generated->format('d M Y, h:i A T'),

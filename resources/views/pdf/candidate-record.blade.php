@@ -95,6 +95,44 @@
     </table>
 
 @if($type === 'registration')
+    @php($personal = $background['personal'])
+    @php($service = $background['service'])
+    @php($shown = fn ($value) => $value === null || $value === '' ? '-' : $value)
+    <div class="band">Personal Background</div>
+    <table class="info">
+        <tr>
+            <td><table>
+                <tr><td class="k">Date of Birth:</td><td class="v">{{ $date($personal['dateOfBirth']) }}@if($personal['age'] !== null) <span class="muted">({{ $personal['age'] }} yrs)</span>@endif</td></tr>
+                <tr><td class="k">Place of Birth:</td><td class="v">{{ $shown($personal['placeOfBirth']) }}</td></tr>
+                <tr><td class="k">Sex / Civil Status:</td><td class="v">{{ $shown($personal['sex']) }} / {{ $shown($personal['civilStatus']) }}</td></tr>
+                <tr><td class="k">Home Address:</td><td class="v">{{ $shown($personal['homeAddress']) }}</td></tr>
+            </table></td>
+            <td><table>
+                <tr><td class="k">Mobile Number:</td><td class="v">{{ $shown($personal['mobileNumber']) }}</td></tr>
+                <tr><td class="k">Personal Email:</td><td class="v">{{ $shown($personal['personalEmail']) }}</td></tr>
+                <tr><td class="k">Emergency Contact:</td><td class="v">{{ $shown($personal['emergencyContact']['name']) }}@if($personal['emergencyContact']['relationship']) <span class="muted">({{ $personal['emergencyContact']['relationship'] }})</span>@endif</td></tr>
+                <tr><td class="k">Emergency Phone:</td><td class="v">{{ $shown($personal['emergencyContact']['phone']) }}</td></tr>
+            </table></td>
+            <td><table>
+                <tr><td class="k">Eligibility:</td><td class="v">{{ $shown($service['eligibility']) }}</td></tr>
+                <tr><td class="k">Prior Service:</td><td class="v">{{ $shown($service['priorService']) }}</td></tr>
+                <tr><td class="k">Previous Occupation:</td><td class="v">{{ $shown($service['previousOccupation']) }}</td></tr>
+            </table></td>
+        </tr>
+    </table>
+
+    <div class="section">Educational Background</div>
+    <table class="grid">
+        <thead><tr><th style="width:18%">Level</th><th style="width:30%">Degree / Course</th><th style="width:30%">School</th><th style="width:8%">Year</th><th style="width:14%">Honors</th></tr></thead>
+        <tbody>
+        @forelse($background['education'] as $entry)
+            <tr><td>{{ $entry['levelLabel'] }}</td><td>{{ $entry['degree'] }}</td><td>{{ $entry['school'] }}</td><td class="num">{{ $entry['yearGraduated'] ?? '-' }}</td><td>{{ $entry['honors'] ?? '-' }}</td></tr>
+        @empty
+            <tr><td colspan="5">No education recorded.</td></tr>
+        @endforelse
+        </tbody>
+    </table>
+
     <div class="section">Enrolled Subjects</div>
     <table class="grid">
         <thead><tr><th style="width:4%">No.</th><th style="width:12%">Code</th><th style="width:30%">Subject Title</th><th style="width:15%">Class / Section</th><th style="width:21%">Instructor(s)</th><th style="width:18%">Instructor's Signature</th></tr></thead>
