@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Staff;
 use App\Enums\ExaminationKind;
 use App\Enums\ExaminationStatus;
 use App\Http\Requests\ExaminationRequest;
+use App\Http\Requests\QuestionBank\ExaminationQuestionRequest;
 use App\Models\Assessment;
 use App\Models\ClassSubject;
 use App\Models\Examination;
 use App\Models\Question;
+use App\Models\QuestionTopic;
 use App\Services\Examinations\ExaminationMonitoringService;
 use App\Services\Examinations\ExaminationService;
+use App\Services\QuestionBank\QuestionBankService;
 use App\Services\QuestionBank\QuestionPresenter;
 use App\Support\ListCharts;
 use Illuminate\Http\Request;
@@ -47,9 +50,9 @@ final class ExaminationController
     {
         $exam = $service->create($request->user(), $request->settings());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Draft saved. Next, choose its questions.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Draft saved. Next, write its questions.']);
 
-        // Step 2 of the builder: choosing questions.
+        // Step 2 of the builder: writing or choosing questions.
         return redirect('/examinations/'.$exam->id.'/questions');
     }
 
@@ -90,15 +93,37 @@ final class ExaminationController
     {
         Gate::authorize('view', $examination);
         abort_unless($examination->status === ExaminationStatus::Draft, 422);
-        $examination->load('classSubject', 'examinationQuestions');
-        $questions = Question::with(QuestionPresenter::STAFF_RELATIONS)->where('subject_id', $examination->classSubject->subject_id)->where('is_active', true)->orderByDesc('id')->get()->map(fn ($question) => $presenter->staff($question));
+        $examination->load('classSubject.subject', 'examinationQuestions');
+        $subject = $examination->classSubject->subject;
+        $questions = Question::with(QuestionPresenter::STAFF_RELATIONS)->where('subject_id', $subject->id)->where('is_active', true)->orderByDesc('id')->get()->map(fn ($question) => $presenter->staff($question));
 
-        return Inertia::render('staff/examinations/questions', ['examination' => $examination, 'questions' => $questions])->toResponse($request)->header('Cache-Control', 'no-store, private');
+        return Inertia::render('staff/examinations/questions', [
+            'examination' => $examination,
+            'questions' => $questions,
+            // Write a New Question: the question form for the examination's subject.
+            'subject' => ['id' => $subject->id, 'code' => $subject->code, 'name' => $subject->name],
+            'topics' => QuestionTopic::query()->where('subject_id', $subject->id)->orderBy('name')->pluck('name')->all(),
+            ...QuestionBankService::formOptions(),
+        ])->toResponse($request)->header('Cache-Control', 'no-store, private');
+    }
+
+    /**
+     * Write a New Question from the builder: saved to the question bank of the
+     * examination's subject and added as the draft's last question.
+     */
+    public function storeQuestion(ExaminationQuestionRequest $request, Examination $examination, ExaminationService $service)
+    {
+        $service->addNewQuestion($request->user(), $examination, $request->questionData());
+        $count = $examination->examinationQuestions()->count();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Question saved and added as question {$count}."]);
+
+        return redirect('/examinations/'.$examination->id.'/questions');
     }
 
     public function syncQuestions(Request $request, Examination $examination, ExaminationService $service)
     {
-        $data = $request->validate(['questions' => 'present|array|max:500', 'questions.*.question_id' => 'required|integer|distinct', 'questions.*.points' => 'required|numeric|decimal:0,2|min:.01|max:100']);
+        $data = $request->validate(['questions' => 'present|array|max:'.ExaminationService::MAX_QUESTIONS, 'questions.*.question_id' => 'required|integer|distinct', 'questions.*.points' => 'required|numeric|decimal:0,2|min:.01|max:100']);
         $service->syncQuestions($request->user(), $examination, $data['questions']);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Questions and order saved.']);

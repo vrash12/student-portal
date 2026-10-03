@@ -195,23 +195,11 @@ class QuestionBankController extends Controller
     }
 
     /**
-     * Question types and input limits for the create and edit forms.
-     *
      * @return array{types: list<array{value: string, label: string}>, limits: array<string, int>}
      */
     private function formOptions(): array
     {
-        return [
-            'types' => QuestionType::options(),
-            'limits' => [
-                'minChoices' => QuestionType::MIN_CHOICES,
-                'maxChoices' => QuestionType::MAX_CHOICES,
-                'promptLength' => QuestionBankService::PROMPT_MAX_LENGTH,
-                'choiceLength' => QuestionBankService::CHOICE_MAX_LENGTH,
-                'topicLength' => QuestionBankService::TOPIC_MAX_LENGTH,
-                'explanationLength' => QuestionBankService::EXPLANATION_MAX_LENGTH,
-            ],
-        ];
+        return QuestionBankService::formOptions();
     }
 
     /**

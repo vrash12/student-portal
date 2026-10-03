@@ -71,6 +71,27 @@ final class QuestionBankService
     /**
      * @throws ValidationException
      */
+    /**
+     * Question types and input limits for the question form (Question Bank
+     * pages and the examination builder's Write a New Question).
+     *
+     * @return array{types: list<array{value: string, label: string}>, limits: array<string, int>}
+     */
+    public static function formOptions(): array
+    {
+        return [
+            'types' => QuestionType::options(),
+            'limits' => [
+                'minChoices' => QuestionType::MIN_CHOICES,
+                'maxChoices' => QuestionType::MAX_CHOICES,
+                'promptLength' => self::PROMPT_MAX_LENGTH,
+                'choiceLength' => self::CHOICE_MAX_LENGTH,
+                'topicLength' => self::TOPIC_MAX_LENGTH,
+                'explanationLength' => self::EXPLANATION_MAX_LENGTH,
+            ],
+        ];
+    }
+
     public function create(Subject $subject, QuestionData $data, User $actor): Question
     {
         $content = $data->content ?? throw new InvalidArgumentException('A new question needs its type, prompt, and choices.');

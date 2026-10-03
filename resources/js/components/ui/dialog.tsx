@@ -11,7 +11,8 @@ interface DialogProps {
     footer?: ReactNode;
     /** While true, Escape and the close button are ignored (e.g. during a save). */
     busy?: boolean;
-    size?: 'md' | 'lg';
+    /** xl: a full form with a side preview, e.g. writing a question. */
+    size?: 'md' | 'lg' | 'xl';
     onClose: () => void;
 }
 
@@ -51,7 +52,7 @@ export function Dialog({ open, title, description, children, footer, busy = fals
             }}
             className={cn(
                 'm-auto w-[calc(100%-2rem)] rounded-xl border border-line-box bg-surface p-0 text-ink shadow-lg',
-                size === 'lg' ? 'max-w-2xl' : 'max-w-lg',
+                size === 'xl' ? 'max-w-6xl' : size === 'lg' ? 'max-w-2xl' : 'max-w-lg',
             )}
         >
             {open && (

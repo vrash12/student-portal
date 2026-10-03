@@ -43,6 +43,7 @@ class ExaminationBuilderAccessTest extends TestCase
             ['put', "/examinations/{$id}", $this->updatePayload(['title' => 'Intruder edit'])],
             ['get', "/examinations/{$id}/questions", []],
             ['put', "/examinations/{$id}/questions", ['questions' => [['question_id' => $question->id, 'points' => '1']]]],
+            ['post', "/examinations/{$id}/questions/new", $this->multipleChoicePayload(['prompt' => 'Intruder question'])],
             ['post', "/examinations/{$id}/publish", []],
             ['post', "/examinations/{$id}/archive", ['reason' => 'Intruder archive']],
             ['put', "/examinations/{$id}/results", ['release_results' => true, 'reason' => 'Intruder release']],

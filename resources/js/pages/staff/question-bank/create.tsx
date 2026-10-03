@@ -48,7 +48,7 @@ export default function CreateQuestion({ subjects, selectedSubjectId, types, lim
             <div className="mx-auto max-w-6xl">
                 <PageHeader
                     title="Add Question"
-                    description="Questions can be reused in quizzes and examinations of the same subject. After saving, add images, audio, or video from Edit."
+                    description="Questions are usually written while building a quiz or examination (its Questions step). Questions added here can be reused in any quiz or examination of the subject. After saving, add images, audio, or video from Edit."
                     breadcrumbs={[{ label: 'Question Bank', href: routes.questionBank.index() }, { label: 'Add Question' }]}
                 />
 

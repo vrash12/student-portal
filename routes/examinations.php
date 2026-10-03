@@ -20,6 +20,7 @@ Route::middleware('can:examinations.manage')->group(function () {
     Route::get('examinations/{examination}', [ExaminationController::class, 'show'])->name('examinations.show')->can('view', 'examination');
     Route::get('examinations/{examination}/questions', [ExaminationController::class, 'questions'])->name('examinations.questions')->can('view', 'examination')->middleware('can:question_bank.manage');
     Route::put('examinations/{examination}/questions', [ExaminationController::class, 'syncQuestions'])->name('examinations.questions.update')->can('view', 'examination');
+    Route::post('examinations/{examination}/questions/new', [ExaminationController::class, 'storeQuestion'])->name('examinations.questions.store')->can('view', 'examination')->middleware('can:question_bank.manage');
     Route::post('examinations/{examination}/publish', [ExaminationController::class, 'publish'])->name('examinations.publish')->can('view', 'examination');
     Route::post('examinations/{examination}/archive', [ExaminationController::class, 'archive'])->name('examinations.archive')->can('view', 'examination');
     Route::get('examinations/{examination}/grading', [ExaminationGradingController::class, 'index'])->name('examinations.grading')->can('view', 'examination');

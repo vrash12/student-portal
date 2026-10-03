@@ -12,13 +12,22 @@ use App\Models\ExaminationQuestion;
 use App\Models\Question;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\QuestionBank\QuestionBankService;
+use App\Services\QuestionBank\QuestionData;
 use App\Services\QuestionBank\QuestionLocking;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 final class ExaminationService
 {
-    public function __construct(private readonly AuditLogger $audit, private readonly QuestionLocking $locking) {}
+    /** The most questions one examination may hold (as validated when choosing questions). */
+    public const MAX_QUESTIONS = 500;
+
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly QuestionLocking $locking,
+        private readonly QuestionBankService $questions,
+    ) {}
 
     public function create(User $user, array $data): Examination
     {
@@ -96,6 +105,38 @@ final class ExaminationService
                 $row->save();
             }
             $this->audit->record(AuditAction::ExaminationQuestionsUpdated, $exam, ['items' => $before], ['items' => $exam->examinationQuestions()->get(['question_id', 'position', 'points'])->toArray()], actor: $user);
+        });
+    }
+
+    /**
+     * Writes a new question while building a draft (owner request,
+     * 2026-10-03): the question is saved in the question bank of the
+     * examination's subject, so it can be reused later, and added as the
+     * draft's last question with its points. One transaction.
+     */
+    public function addNewQuestion(User $user, Examination $exam, QuestionData $data): Question
+    {
+        return DB::transaction(function () use ($user, $exam, $data): Question {
+            $exam = Examination::whereKey($exam->id)->with('classSubject.subject')->lockForUpdate()->firstOrFail();
+            $this->authorize($user, $exam->class_subject_id);
+            $this->draft($exam);
+            $before = $exam->examinationQuestions()->get(['question_id', 'position', 'points'])->toArray();
+            if (count($before) >= self::MAX_QUESTIONS) {
+                throw ValidationException::withMessages(['examination' => 'An examination can hold at most '.self::MAX_QUESTIONS.' questions.']);
+            }
+
+            $question = $this->questions->create($exam->classSubject->subject, $data, $user);
+
+            $row = new ExaminationQuestion;
+            $row->examination_id = $exam->id;
+            $row->question_id = $question->id;
+            $row->position = (int) $exam->examinationQuestions()->max('position') + 1;
+            $row->points = $question->points;
+            $row->save();
+
+            $this->audit->record(AuditAction::ExaminationQuestionsUpdated, $exam, ['items' => $before], ['items' => $exam->examinationQuestions()->get(['question_id', 'position', 'points'])->toArray()], actor: $user);
+
+            return $question;
         });
     }
 

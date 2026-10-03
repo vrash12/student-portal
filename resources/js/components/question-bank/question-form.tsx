@@ -32,7 +32,10 @@ interface QuestionFormProps {
     submitLabel: string;
     /** More submit buttons next to the main one, e.g. "Save and Add Another". */
     extraActions?: ReactNode;
-    cancelHref: string;
+    /** Where Cancel leads on a page. */
+    cancelHref?: string;
+    /** Cancel in a dialog (instead of cancelHref). */
+    onCancel?: () => void;
     onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }
 
@@ -56,6 +59,7 @@ export function QuestionForm({
     submitLabel,
     extraActions,
     cancelHref,
+    onCancel,
     onSubmit,
 }: QuestionFormProps) {
     // Server errors include keys that are not form fields, such as content and choices.2.text.
@@ -245,9 +249,17 @@ export function QuestionForm({
                 )}
 
                 <FormActions>
-                    <ButtonLink href={cancelHref} variant="secondary">
-                        Cancel
-                    </ButtonLink>
+                    {onCancel !== undefined ? (
+                        <Button type="button" variant="secondary" onClick={onCancel}>
+                            Cancel
+                        </Button>
+                    ) : (
+                        cancelHref !== undefined && (
+                            <ButtonLink href={cancelHref} variant="secondary">
+                                Cancel
+                            </ButtonLink>
+                        )
+                    )}
                     {extraActions}
                     <Button type="submit" loading={form.processing}>
                         {submitLabel}

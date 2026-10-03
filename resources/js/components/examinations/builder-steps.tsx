@@ -15,7 +15,7 @@ interface BuilderStepsProps {
 
 const STEPS: Array<{ key: BuilderStep; label: string; hint: string }> = [
     { key: 'settings', label: 'Settings', hint: 'Title, time, schedule, rules' },
-    { key: 'questions', label: 'Questions', hint: 'Choose from the Question Bank' },
+    { key: 'questions', label: 'Questions', hint: 'Write new ones or reuse saved ones' },
     { key: 'review', label: 'Review and Publish', hint: 'Check, then publish to candidates' },
 ];
 

@@ -10,6 +10,8 @@ export const examinationRoutes = {
     questions: {
         edit: (id: number) => `/examinations/${id}/questions`,
         update: (id: number) => `/examinations/${id}/questions`,
+        /** Write a New Question: saved to the bank and added to the draft. */
+        store: (id: number) => `/examinations/${id}/questions/new`,
     },
     publish: (id: number) => `/examinations/${id}/publish`,
     archive: (id: number) => `/examinations/${id}/archive`,

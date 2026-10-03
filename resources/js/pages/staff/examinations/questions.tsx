@@ -1,7 +1,8 @@
 import { Head, useForm } from '@inertiajs/react';
-import { ArrowDown, ArrowUp, BookOpenCheck, Check, ListChecks, Plus, SearchX, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, BookOpenCheck, Check, ListChecks, PenLine, Plus, SearchX, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { BuilderSteps } from '@/components/examinations/builder-steps';
+import { WriteQuestionDialog } from '@/components/examinations/write-question-dialog';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -11,8 +12,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { cn } from '@/lib/cn';
 import { examinationRoutes } from '@/lib/examination-routes';
-import { questionBankRoutes } from '@/lib/question-bank-routes';
-import type { StaffQuestion } from '@/types/question-bank';
+import type { QuestionBankSubject, QuestionLimits, QuestionTypeOption, StaffQuestion } from '@/types/question-bank';
 
 interface Exam {
     id: number;
@@ -37,7 +37,24 @@ function excerpt(text: string, length = 60): string {
     return singleLine.length > length ? `${singleLine.slice(0, length)}…` : singleLine;
 }
 
-export default function ExaminationQuestions({ examination, questions }: { examination: Exam; questions: StaffQuestion[] }) {
+interface ExaminationQuestionsProps {
+    examination: Exam;
+    /** Saved (active) questions of the examination's subject, newest first. */
+    questions: StaffQuestion[];
+    /** The examination's subject, for Write a New Question. */
+    subject: QuestionBankSubject;
+    topics: string[];
+    types: QuestionTypeOption[];
+    limits: QuestionLimits;
+}
+
+/**
+ * Step 2 of the builder (owner request, 2026-10-03): questions are written
+ * here (Write a New Question; each is saved to the question bank and added to
+ * this examination), and questions already saved for the subject can be reused.
+ */
+export default function ExaminationQuestions({ examination, questions, subject, topics, types: questionTypes, limits }: ExaminationQuestionsProps) {
+    const [writing, setWriting] = useState(false);
     const form = useForm({ questions: examination.examination_questions.map((item) => ({ question_id: item.question_id, points: item.points })) });
     const [search, setSearch] = useState('');
     const [typeFilter, setTypeFilter] = useState('');
@@ -124,7 +141,28 @@ export default function ExaminationQuestions({ examination, questions }: { exami
     const types = Array.from(new Map(questions.map((question) => [question.type.value, question.type.label])).entries());
     const shown = typeFilter === '' ? matches : matches.filter((question) => question.type.value === typeFilter);
     const addable = shown.filter((question) => !selectedIds.has(question.id));
-    const subjectId = examination.class_subject?.subject_id;
+
+    // A question written in the dialog is already saved and added on the server; add it here too, keeping any unsaved changes.
+    const addWritten = (savedQuestions: StaffQuestion[]) => {
+        const known = new Set(questions.map((question) => question.id));
+        const written = savedQuestions.filter((question) => !known.has(question.id) && !selectedIds.has(question.id));
+        if (written.length === 0) {
+            return;
+        }
+        const wasDirty = form.isDirty;
+        const next = [...selected, ...written.map((question) => ({ question_id: question.id, points: question.points }))];
+        form.setData('questions', next);
+        if (!wasDirty) {
+            form.setDefaults('questions', next);
+        }
+        setAnnouncement(`Question saved and added as question ${next.length}.`);
+    };
+
+    const writeButton = (
+        <Button type="button" onClick={() => setWriting(true)} icon={<PenLine className="size-4" aria-hidden="true" />}>
+            Write a New Question
+        </Button>
+    );
 
     const addAllShown = () => {
         if (addable.length === 0) return;
@@ -134,20 +172,16 @@ export default function ExaminationQuestions({ examination, questions }: { exami
 
     return (
         <>
-            <Head title={`Choose Questions · ${examination.title}`} />
+            <Head title={`Questions · ${examination.title}`} />
             <PageHeader
-                title="Choose Questions"
-                description={examination.title}
+                title="Questions"
+                description={`${examination.title} · ${subject.name}`}
                 breadcrumbs={[
                     { label: 'Examinations', href: examinationRoutes.index() },
                     { label: examination.title, href: examinationRoutes.show(examination.id) },
-                    { label: 'Choose Questions' },
+                    { label: 'Questions' },
                 ]}
-                actions={
-                    <ButtonLink href={questionBankRoutes.create(subjectId === undefined ? {} : { subject: String(subjectId) })} variant="secondary" icon={<Plus className="size-4" aria-hidden="true" />}>
-                        New Question
-                    </ButtonLink>
-                }
+                actions={writeButton}
             />
 
             <BuilderSteps current="questions" examinationId={examination.id} questionCount={selected.length} />
@@ -163,14 +197,13 @@ export default function ExaminationQuestions({ examination, questions }: { exami
                 }}
             >
                 <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-                    <Panel title="Question Bank" description="Active questions of this subject. Add the ones this examination should use.">
+                    <Panel title="Reuse Saved Questions" description={`Questions already written for ${subject.name}, in earlier quizzes and examinations or in the Question Bank. Add any to use it again.`}>
                         {questions.length === 0 ? (
                             <EmptyState
                                 icon={BookOpenCheck}
                                 headingLevel="h3"
-                                title="No active questions for this subject"
-                                description="Write questions for this subject first. Use New Question above, or import many at once from the Question Bank."
-                                action={<ButtonLink href={questionBankRoutes.create(subjectId === undefined ? {} : { subject: String(subjectId) })}>New Question</ButtonLink>}
+                                title="No saved questions yet"
+                                description="Questions you write for this subject are kept here, so later quizzes and examinations can reuse them."
                             />
                         ) : (
                             <>
@@ -248,7 +281,7 @@ export default function ExaminationQuestions({ examination, questions }: { exami
                         </header>
                         <div className="max-h-[60vh] overflow-y-auto p-4">
                             {selected.length === 0 ? (
-                                <EmptyState icon={ListChecks} headingLevel="h3" title="No questions yet" description="Select Add on questions from the Question Bank list." />
+                                <EmptyState icon={ListChecks} headingLevel="h3" title="No questions yet" description="Write a new question, or add saved ones from the list." action={writeButton} />
                             ) : (
                                 <ol className="space-y-2">
                                     {selected.map((item, index) => {
@@ -333,6 +366,18 @@ export default function ExaminationQuestions({ examination, questions }: { exami
                     </div>
                 </div>
             </form>
+
+            {/* Outside the form above: a form cannot contain another form. */}
+            <WriteQuestionDialog
+                open={writing}
+                examinationId={examination.id}
+                subject={subject}
+                topics={topics}
+                types={questionTypes}
+                limits={limits}
+                onSaved={addWritten}
+                onClose={() => setWriting(false)}
+            />
         </>
     );
 }
