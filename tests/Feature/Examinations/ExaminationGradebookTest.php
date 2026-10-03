@@ -40,7 +40,6 @@ class ExaminationGradebookTest extends TestCase
         $exam->title = 'Synthetic grade posting';
         $exam->status = 'published';
         $exam->duration_minutes = 10;
-        $exam->attempt_limit = 2;
         $exam->closes_at = now()->subMinute();
         $exam->release_results = true;
         $exam->save();

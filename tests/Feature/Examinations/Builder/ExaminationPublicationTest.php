@@ -136,7 +136,7 @@ class ExaminationPublicationTest extends TestCase
     public function test_published_examination_settings_and_questions_are_fixed(): void
     {
         $exam = $this->publishedExam();
-        $before = $exam->only(['title', 'duration_minutes', 'attempt_limit', 'access_code', 'randomize_questions']);
+        $before = $exam->only(['title', 'duration_minutes', 'access_code', 'randomize_questions']);
         $rows = $this->questionRows($exam);
 
         $this->actingAs($this->alpha)->put('/examinations/'.$exam->id, $this->updatePayload(['title' => 'Changed after publication', 'duration_minutes' => 5, 'randomize_questions' => true]))
@@ -145,7 +145,7 @@ class ExaminationPublicationTest extends TestCase
             ->assertSessionHasErrors('examination');
         $this->put("/examinations/{$exam->id}/questions", ['questions' => []])->assertSessionHasErrors('examination');
 
-        $this->assertSame($before, $exam->fresh()->only(['title', 'duration_minutes', 'attempt_limit', 'access_code', 'randomize_questions']));
+        $this->assertSame($before, $exam->fresh()->only(['title', 'duration_minutes', 'access_code', 'randomize_questions']));
         $this->assertSame($rows, $this->questionRows($exam));
     }
 

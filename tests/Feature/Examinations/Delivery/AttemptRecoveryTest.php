@@ -69,7 +69,7 @@ class AttemptRecoveryTest extends TestCase
         $queue = [
             ['revision' => 1, 'position' => 1, 'answer' => $falseChoice, 'next_position' => 2],
             ['revision' => 2, 'position' => 2, 'answer' => 'Written offline', 'next_position' => 2],
-            ['revision' => 3, 'position' => 2, 'answer' => 'Written offline, then corrected', 'next_position' => 2, 'flagged' => true],
+            ['revision' => 3, 'position' => 2, 'answer' => 'Written offline, then corrected', 'next_position' => 2],
         ];
 
         // The connection returns four minutes later and the queue is replayed in order.
@@ -85,7 +85,7 @@ class AttemptRecoveryTest extends TestCase
         $this->assertSame(4, $attempt->revision);
         $this->assertSame($choice, $attempt->answers[$attempt->delivery[0]['id']]['value']);
         $this->assertSame($falseChoice, $attempt->answers[$attempt->delivery[1]['id']]['value']);
-        $this->assertSame(['value' => 'Written offline, then corrected', 'flagged' => true], $attempt->answers[$attempt->delivery[2]['id']]);
+        $this->assertSame(['value' => 'Written offline, then corrected'], $attempt->answers[$attempt->delivery[2]['id']]);
     }
 
     public function test_a_queued_save_that_arrives_after_the_deadline_is_not_applied(): void

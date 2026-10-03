@@ -1,4 +1,4 @@
-import { CalendarClock, CircleCheck, Clock3, PlayCircle, Repeat, RotateCcw, type LucideIcon } from 'lucide-react';
+import { CalendarClock, CircleCheck, Clock3, PlayCircle, type LucideIcon } from 'lucide-react';
 import { ButtonLink } from '@/components/ui/button';
 import { StatusBadge, type StatusTone } from '@/components/ui/status-badge';
 import { useDateFormatter } from '@/lib/format';
@@ -13,34 +13,31 @@ export interface PortalExam {
     opensAt: string | null;
     closesAt: string | null;
     attemptsUsed: number;
-    attemptLimit: number;
     resumeId: number | null;
 }
 
 /**
  * One examination with the single action that fits its state: start,
- * continue, try again, or view. The state is always written out with an
- * icon (never colour alone).
+ * continue, or view. Each examination is taken once (no retakes). The state
+ * is always written out with an icon (never colour alone).
  */
 export function ExamCard({ exam, upcoming = false }: { exam: PortalExam; upcoming?: boolean }) {
     const dates = useDateFormatter();
-    const exhausted = exam.attemptsUsed >= exam.attemptLimit;
+    const taken = exam.attemptsUsed > 0;
     const state: { tone: StatusTone; label: string } = upcoming
         ? { tone: 'neutral', label: 'Scheduled' }
         : exam.resumeId
           ? { tone: 'warning', label: 'In progress' }
-          : exhausted
-            ? { tone: 'neutral', label: 'All attempts used' }
+          : taken
+            ? { tone: 'neutral', label: 'Taken' }
             : { tone: 'success', label: 'Open now' };
     const action: { label: string; icon: LucideIcon; href: string; primary: boolean } = upcoming
         ? { label: 'View Details', icon: CalendarClock, href: routes.portal.examination(exam.id), primary: false }
         : exam.resumeId
           ? { label: 'Continue Examination', icon: PlayCircle, href: routes.portal.attempt(exam.resumeId), primary: true }
-          : exhausted
-            ? { label: 'View Attempts', icon: CircleCheck, href: routes.portal.examination(exam.id), primary: false }
-            : exam.attemptsUsed > 0
-              ? { label: 'Try Again', icon: RotateCcw, href: routes.portal.examination(exam.id), primary: true }
-              : { label: 'Start', icon: PlayCircle, href: routes.portal.examination(exam.id), primary: true };
+          : taken
+            ? { label: 'View Details', icon: CircleCheck, href: routes.portal.examination(exam.id), primary: false }
+            : { label: 'Start', icon: PlayCircle, href: routes.portal.examination(exam.id), primary: true };
 
     return (
         <article className="flex flex-col rounded-2xl border border-line-box bg-surface p-6 shadow-sm">
@@ -54,10 +51,6 @@ export function ExamCard({ exam, upcoming = false }: { exam: PortalExam; upcomin
                 <li className="flex items-center gap-2.5">
                     <Clock3 className="size-5 text-primary-600" aria-hidden="true" />
                     {exam.durationMinutes} minutes
-                </li>
-                <li className="flex items-center gap-2.5">
-                    <Repeat className="size-5 text-primary-600" aria-hidden="true" />
-                    {exam.attemptsUsed} of {exam.attemptLimit} {exam.attemptLimit === 1 ? 'attempt' : 'attempts'} used
                 </li>
                 <li className="flex items-center gap-2.5">
                     <CalendarClock className="size-5 text-primary-600" aria-hidden="true" />

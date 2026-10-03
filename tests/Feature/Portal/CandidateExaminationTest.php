@@ -29,7 +29,6 @@ class CandidateExaminationTest extends TestCase
         $exam->title = 'Synthetic exam';
         $exam->status = 'published';
         $exam->duration_minutes = 30;
-        $exam->attempt_limit = 1;
         $exam->opens_at = now()->subMinute();
         $exam->closes_at = now()->addHour();
         $exam->save();
@@ -120,7 +119,7 @@ class CandidateExaminationTest extends TestCase
         $this->actingAs($this->candidateInA->user)->get('/portal/attempts/'.$attempt->id.'/success')->assertNotFound();
     }
 
-    public function test_attempt_limit_and_availability_are_enforced(): void
+    public function test_one_attempt_and_availability_are_enforced(): void
     {
         $attempt = $this->startAttempt();
         $attempt->status = 'submitted';

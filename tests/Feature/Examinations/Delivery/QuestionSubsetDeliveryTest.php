@@ -26,7 +26,7 @@ class QuestionSubsetDeliveryTest extends TestCase
         parent::setUp();
         $this->buildDeliveryFixtures();
 
-        $this->exam = $this->makeExamination(['question_draw_count' => 5, 'attempt_limit' => 3]);
+        $this->exam = $this->makeExamination(['question_draw_count' => 5]);
         for ($i = 1; $i <= 12; $i++) {
             $this->items[] = $this->addItem($this->exam, $this->mcq(($i % 4) + 1), '2.00');
         }

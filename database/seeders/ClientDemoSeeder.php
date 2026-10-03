@@ -227,7 +227,6 @@ class ClientDemoSeeder extends Seeder
             'title' => $title,
             'description' => 'A short online quiz. Answer every question, then submit. Multiple-choice and true/false questions are scored automatically; the essay is graded by your instructor.',
             'duration_minutes' => 20,
-            'attempt_limit' => 3,
             'passing_score' => '60',
             'opens_at' => now()->subMinute(),
             'closes_at' => now()->addDays(7),

@@ -28,7 +28,7 @@ class LiveMonitoringTest extends TestCase
     {
         parent::setUp();
         $this->buildDeliveryFixtures();
-        $this->exam = $this->makeExamination(['attempt_limit' => 2]);
+        $this->exam = $this->makeExamination([]);
         $this->addItem($this->exam, $this->mcq());
         $this->essayItem = $this->addItem($this->exam, $this->essay());
         $this->secondInA = Candidate::query()->where('class_batch_id', $this->batchA->id)->where('last_name', 'A2')->firstOrFail();
@@ -68,11 +68,18 @@ class LiveMonitoringTest extends TestCase
         $expiredAttempt->forceFill(['status' => 'expired'])->save();
 
         // First attempt submitted, the retake in progress: the retake counts.
+        // Retakes are no longer allowed (2026-10-03), but examinations from
+        // before keep theirs: the first attempt is parked on another
+        // examination while the retake is started, then put back.
         $firstAttempt = $this->startFor($this->candidateInA, $this->exam);
         $this->actingAs($this->candidateInA->user)->post('/portal/attempts/'.$firstAttempt->id.'/submit', ['revision' => 0, 'position' => 0])->assertRedirect();
+        $parked = $this->makeExamination([]);
+        $firstAttempt->forceFill(['examination_id' => $parked->id])->save();
 
         $this->travel(3)->minutes();
         $retake = $this->startFor($this->candidateInA, $this->exam);
+        $retake->forceFill(['attempt_number' => 2])->save();
+        $firstAttempt->forceFill(['examination_id' => $this->exam->id])->save();
         $this->saveEssay($this->candidateInA, $retake, 'SENTINEL-ANSWER-ACTIVE');
 
         $monitoring = $this->monitoring();

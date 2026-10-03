@@ -145,7 +145,6 @@ class DemoExaminationSeeder extends Seeder
             'title' => $title,
             'description' => $description,
             'duration_minutes' => 20,
-            'attempt_limit' => 3,
             'passing_score' => '60',
             'opens_at' => now()->subMinute(),
             'closes_at' => now()->addDays(7),

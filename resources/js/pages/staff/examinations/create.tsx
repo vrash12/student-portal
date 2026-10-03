@@ -22,7 +22,6 @@ interface Settings {
     title: string;
     description: string;
     duration_minutes: string;
-    attempt_limit: string;
     passing_score: string;
     access_code: string;
     opens_at: string;
@@ -36,12 +35,11 @@ interface Settings {
     auto_submit: boolean;
 }
 
-interface Exam extends Omit<Settings, 'duration_minutes' | 'attempt_limit' | 'passing_score' | 'question_draw_count'> {
+interface Exam extends Omit<Settings, 'duration_minutes' | 'passing_score' | 'question_draw_count'> {
     question_draw_count: number | null;
     id: number;
     class_subject_id: number;
     duration_minutes: number | null;
-    attempt_limit: number;
     passing_score: string | null;
 }
 
@@ -63,7 +61,6 @@ const FIELD_KEYS = new Set<string>([
     'title',
     'description',
     'duration_minutes',
-    'attempt_limit',
     'passing_score',
     'question_draw_count',
     'access_code',
@@ -80,7 +77,6 @@ export default function ExaminationCreate({ offerings, examination }: { offering
         title: examination?.title ?? '',
         description: examination?.description ?? '',
         duration_minutes: String(examination?.duration_minutes ?? '30'),
-        attempt_limit: String(examination?.attempt_limit ?? 1),
         passing_score: examination?.passing_score ?? '',
         access_code: examination?.access_code ?? '',
         opens_at: examination?.opens_at ?? '',
@@ -184,7 +180,7 @@ export default function ExaminationCreate({ offerings, examination }: { offering
                         </div>
                     </FormSection>
 
-                    <FormSection title="Schedule and Limits" description="When candidates can start, and how long and how often they can take it.">
+                    <FormSection title="Schedule and Limits" description="When candidates can start and how long they have. Each candidate takes it once; there are no retakes.">
                         <div className="grid gap-5 sm:grid-cols-2">
                             <FormField label="Time limit (minutes)" hint="Required before publication." error={form.errors.duration_minutes}>
                                 <TextInput
@@ -193,15 +189,6 @@ export default function ExaminationCreate({ offerings, examination }: { offering
                                     max="1440"
                                     value={form.data.duration_minutes}
                                     onChange={(event) => form.setData('duration_minutes', event.target.value)}
-                                />
-                            </FormField>
-                            <FormField label="Attempt limit" required error={form.errors.attempt_limit}>
-                                <TextInput
-                                    type="number"
-                                    min="1"
-                                    max="100"
-                                    value={form.data.attempt_limit}
-                                    onChange={(event) => form.setData('attempt_limit', event.target.value)}
                                 />
                             </FormField>
                             <FormField label="Passing score (%)" hint="Optional; results have no pass/fail outcome when unset." error={form.errors.passing_score}>

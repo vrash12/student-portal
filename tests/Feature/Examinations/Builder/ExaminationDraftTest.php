@@ -29,7 +29,6 @@ class ExaminationDraftTest extends TestCase
             'kind' => 'examination',
             'title' => 'Synthetic Midterm',
             'duration_minutes' => 90,
-            'attempt_limit' => 2,
             'passing_score' => '60.5',
             'opens_at' => '2026-10-05T08:00',
             'closes_at' => '2026-10-05T12:00',
@@ -49,7 +48,6 @@ class ExaminationDraftTest extends TestCase
         $this->assertSame($this->alphaOffering->id, $exam->class_subject_id);
         $this->assertSame($this->alpha->id, $exam->created_by);
         $this->assertSame(90, $exam->duration_minutes);
-        $this->assertSame(2, $exam->attempt_limit);
         $this->assertSame('60.50', $exam->passing_score);
         // Entered in institution time (UTC+8), stored in UTC.
         $this->assertSame('2026-10-05 00:00:00', $exam->opens_at->utc()->format('Y-m-d H:i:s'));
@@ -95,9 +93,6 @@ class ExaminationDraftTest extends TestCase
             'zero duration' => [['duration_minutes' => 0], 'duration_minutes'],
             'duration over a day' => [['duration_minutes' => 1441], 'duration_minutes'],
             'fractional duration' => [['duration_minutes' => '10.5'], 'duration_minutes'],
-            'zero attempts' => [['attempt_limit' => 0], 'attempt_limit'],
-            'too many attempts' => [['attempt_limit' => 101], 'attempt_limit'],
-            'missing attempts' => [['attempt_limit' => null], 'attempt_limit'],
             'negative passing score' => [['passing_score' => '-1'], 'passing_score'],
             'passing score over 100' => [['passing_score' => '100.01'], 'passing_score'],
             'passing score 3 decimals' => [['passing_score' => '75.125'], 'passing_score'],
@@ -148,7 +143,6 @@ class ExaminationDraftTest extends TestCase
             'title' => 'Renamed synthetic quiz',
             'kind' => 'examination',
             'duration_minutes' => 45,
-            'attempt_limit' => 3,
             'access_code' => 'NEW-SYNTH-CODE',
         ]))->assertRedirect('/examinations/'.$exam->id)->assertSessionHasNoErrors();
 
@@ -156,7 +150,6 @@ class ExaminationDraftTest extends TestCase
         $this->assertSame('Renamed synthetic quiz', $exam->title);
         $this->assertSame(ExaminationKind::Examination, $exam->kind);
         $this->assertSame(45, $exam->duration_minutes);
-        $this->assertSame(3, $exam->attempt_limit);
         $this->assertSame('NEW-SYNTH-CODE', $exam->access_code);
     }
 

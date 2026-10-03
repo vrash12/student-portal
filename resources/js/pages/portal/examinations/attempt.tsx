@@ -1,5 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { Check, ChevronLeft, ChevronRight, CircleAlert, CircleCheck, CircleHelp, Clock, CloudOff, Flag, ListOrdered, LoaderCircle, RefreshCw } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, CircleAlert, CircleCheck, CircleHelp, Clock, CloudOff, ListOrdered, LoaderCircle, RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { QuestionMediaList } from '@/components/question-bank/question-media';
 import { Button } from '@/components/ui/button';
@@ -85,7 +85,7 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
     const focusQueue = useRef<FocusReport[]>([]);
     const focusSending = useRef(false);
     const item = getQuestion(questions, position);
-    const answer = answers[item.id] ?? { value: null, flagged: false };
+    const answer = answers[item.id] ?? { value: null };
 
     function report(next: SaveStatus, message = ''): void {
         setStatus(next);
@@ -362,11 +362,11 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
             queueOnly = outcome === 'offline';
         }
         const currentItem = getQuestion(questions, positionRef.current);
-        const currentAnswer = answersRef.current[currentItem.id] ?? { value: null, flagged: false };
+        const currentAnswer = answersRef.current[currentItem.id] ?? { value: null };
         const tail = pendingRef.current.at(-1);
         const version = editVersion.current;
         const moving = next !== positionRef.current;
-        const payload: RecoveryPayload = { position: positionRef.current, next_position: next, revision: tail ? tail.revision + 1 : revision.current, answer: currentAnswer.value, flagged: currentAnswer.flagged };
+        const payload: RecoveryPayload = { position: positionRef.current, next_position: next, revision: tail ? tail.revision + 1 : revision.current, answer: currentAnswer.value };
         saving.current = true;
         // Background autosaves keep the buttons usable; moving to another question disables them.
         setBusy(moving);
@@ -435,7 +435,6 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
 
     const lowTime = remaining > 0 && remaining <= LOW_TIME_MS;
     const answeredCount = questions.filter((question) => isAnswered(answers[question.id])).length;
-    const flaggedCount = questions.filter((question) => answers[question.id]?.flagged).length;
     const unansweredCount = questions.length - answeredCount;
     const isLast = position === questions.length - 1;
     const canJump = !attempt.oneQuestionAtATime && attempt.allowBackNavigation;
@@ -485,10 +484,6 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
                     <h2 ref={questionHeading} tabIndex={-1} className="text-base font-semibold focus:outline-none">Question {position + 1}</h2>
                     <div className="flex items-center gap-3">
                         <span className="rounded-full bg-surface px-3 py-1 text-sm font-medium text-ink-muted ring-1 ring-line">{plural(Number(item.points), 'point', 'points')}</span>
-                        {attempt.allowBackNavigation && <button type="button" aria-pressed={answer.flagged} onClick={() => edit({ ...answer, flagged: !answer.flagged })} className={'inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 text-sm font-medium ' + (answer.flagged ? 'border-warning-border bg-warning-bg text-warning-fg' : 'border-line-strong bg-surface text-ink hover:bg-surface-muted')}>
-                            <Flag className="size-4" aria-hidden="true" fill={answer.flagged ? 'currentColor' : 'none'} />
-                            {answer.flagged ? 'Flagged for review' : 'Flag for review'}
-                        </button>}
                     </div>
                 </div>
                 <div className="p-5 sm:p-8">
@@ -540,10 +535,9 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
                     <p className="mt-3 text-sm text-ink-muted">Attempt ends: <span className="font-medium text-ink">{dateTime(attempt.expiresAt)}</span></p>
                 </section>
                 <section className="space-y-3 rounded-xl border border-line-box bg-surface p-4 shadow-sm">
-                    <dl className="grid grid-cols-3 gap-2 text-center text-sm">
+                    <dl className="grid grid-cols-2 gap-2 text-center text-sm">
                         <div><dt className="text-ink-muted">Answered</dt><dd className="text-lg font-semibold">{answeredCount}</dd></div>
                         <div><dt className="text-ink-muted">Remaining</dt><dd className="text-lg font-semibold">{unansweredCount}</dd></div>
-                        <div><dt className="text-ink-muted">Flagged</dt><dd className="text-lg font-semibold">{flaggedCount}</dd></div>
                     </dl>
                     {(isLast || canJump) && <Button className="w-full" disabled={!recoveryReady || busy || remaining === 0} onClick={openSubmit}>Submit Examination</Button>}
                 </section>
@@ -553,7 +547,6 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
         <ConfirmDialog open={confirm} title="Submit examination?" description={<div className="space-y-2">
             <p>You have answered {answeredCount} of {questions.length} questions.</p>
             {unansweredCount > 0 && <p className="font-medium">{plural(unansweredCount, 'question is', 'questions are')} unanswered.</p>}
-            {flaggedCount > 0 && <p>{plural(flaggedCount, 'question is', 'questions are')} flagged for review.</p>}
             <p>Your current answer will be saved. You cannot change answers after submitting.</p>
         </div>} confirmLabel="Submit Examination" cancelLabel="Continue Examination" tone="primary" processing={busy} onConfirm={() => void submit()} onCancel={() => setConfirm(false)} />
     </div></>;
@@ -598,7 +591,7 @@ function TimeDisplay({ remaining, lowTime, hidden, onToggle, compact = false }: 
 }
 
 /**
- * Every question with its state: answered, not answered, or flagged. Jumping
+ * Every question with its state: answered or not answered. Jumping
  * is allowed only when the examination permits free navigation.
  */
 function QuestionList({ questions, answers, position, canJump, allowBack, disabled, compact, onJump }: { questions: Item[]; answers: Record<number, Answer>; position: number; canJump: boolean; allowBack: boolean; disabled: boolean; compact: boolean; onJump: (index: number) => void }) {
@@ -606,12 +599,11 @@ function QuestionList({ questions, answers, position, canJump, allowBack, disabl
         <ol className={compact ? 'grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2' : 'space-y-1'}>
             {questions.map((question, index) => {
                 const done = isAnswered(answers[question.id]);
-                const flagged = answers[question.id]?.flagged ?? false;
                 const current = index === position;
-                const Icon = flagged ? Flag : done ? CircleCheck : CircleHelp;
-                const label = `Question ${index + 1}${current ? ', current' : ''}, ${done ? 'answered' : 'not answered'}${flagged ? ', flagged for review' : ''}`;
+                const Icon = done ? CircleCheck : CircleHelp;
+                const label = `Question ${index + 1}${current ? ', current' : ''}, ${done ? 'answered' : 'not answered'}`;
                 const content = <>
-                    <Icon className={'size-5 shrink-0 ' + (flagged ? 'text-warning-fg' : done ? 'text-success-fg' : 'text-ink-subtle')} aria-hidden="true" fill={flagged ? 'currentColor' : 'none'} />
+                    <Icon className={'size-5 shrink-0 ' + (done ? 'text-success-fg' : 'text-ink-subtle')} aria-hidden="true" />
                     <span aria-hidden="true">Question {index + 1}</span>
                 </>;
                 const classes = 'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm ' + (current ? 'bg-primary-50 font-semibold text-primary-900 ring-2 ring-primary-600' : 'text-ink');
@@ -625,7 +617,6 @@ function QuestionList({ questions, answers, position, canJump, allowBack, disabl
         <p className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-muted" aria-hidden="true">
             <span className="flex items-center gap-1"><CircleCheck className="size-3.5 text-success-fg" />Answered</span>
             <span className="flex items-center gap-1"><CircleHelp className="size-3.5" />Not answered</span>
-            <span className="flex items-center gap-1"><Flag className="size-3.5 text-warning-fg" fill="currentColor" />Flagged</span>
         </p>
         {!canJump && <p className="mt-2 text-xs text-ink-muted">{allowBack ? 'Use Previous and Save and Next to move between questions.' : 'Questions are answered in order. You cannot return to earlier questions.'}</p>}
     </>;

@@ -31,6 +31,13 @@ Updated 2026-10-01 by Claude Code (earlier sections by Codex, 2026-09-30). Read 
 - **Open owner decisions** are under "Requirements still needing confirmation" at the end of this file, plus whether to deactivate the "Pay & Allowances" and "Deductions" account categories.
 - Extra test databases `academic_system_{r1,r2,r3,w1,w2,w3,v1…v12,login}_testing` exist from parallel runs and can be dropped.
 
+## Owner requests — one attempt per examination; no review flags (2026-10-03, Claude Code)
+
+- **Request:** "when publishing a quiz or exam, it must not have reattempts since it will be done synchronously and monitored by the instructor physically" and "remove the flag review feature".
+- **One attempt:** migration `2026_10_03_000300_one_attempt_per_examination` drops `examinations.attempt_limit` (`down()` re-adds it as 1). `Examination::ATTEMPTS_ALLOWED = 1`; `CandidateAttemptService::start` refuses a second attempt ("You have already taken this examination.", checked before the access code). An unfinished attempt is still resumed. Attempts recorded earlier are kept, and "latest attempt" handling (monitoring, item analysis, gradebook) still works for them. Removed the Attempt limit field (builder), the Attempts tile (examination page), `attemptLimit` props and "x of y attempts used" / "Try Again" in the portal (cards now say Taken / View Details; the start page lists "You can take this examination once. There are no retakes."). Demo seeders no longer set it.
+- **No review flags:** the exam screen has no Flag for review button, Flagged count, legend or flagged line in the submit confirmation; answers are stored as `{value}` only (`SaveAttemptRequest` no longer reads `flagged`; old stored flags are ignored). Recovery types (`exam-recovery.ts`) dropped `flagged`.
+- **Tests:** retake test replaced by one-attempt test; flag test replaced by "answers carry no review flag"; LiveMonitoring and ItemAnalysis retake scenarios now park the first attempt on another examination to recreate pre-change data. Examinations, Portal, Reporting, Security and Seeder suites: 430 passed. `npm run types`, `npm run build`; migration rolled back and re-applied locally. Not checked in the browser (the owner was using the pane). `docs/demo-script.md` updated.
+
 ## Owner request — write questions while building a quiz or examination (2026-10-03, Claude Code)
 
 - **Request:** "the question bank is not understandable since you need to create questions in a page and later assign it ... it must be supposed during the quiz and exam creation?" Before, questions had to be written on the Question Bank page first and then picked in the examination's Questions step (its New Question button left the builder).

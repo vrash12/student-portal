@@ -92,7 +92,6 @@ class DemoActivitySeeder extends Seeder
             'title' => $title,
             'description' => 'Diagnostic quiz at the start of the semester. Answer every question; the essay is graded by your instructor.',
             'duration_minutes' => 30,
-            'attempt_limit' => 1,
             'passing_score' => '60',
             'opens_at' => Carbon::parse('2026-09-14 08:00', $timezone)->utc()->format('Y-m-d H:i:s'),
             'closes_at' => Carbon::parse('2026-09-14 17:00', $timezone)->utc()->format('Y-m-d H:i:s'),

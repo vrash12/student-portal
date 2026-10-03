@@ -1,5 +1,5 @@
-export interface RecoveryAnswer { value: number | string | null; flagged: boolean }
-export interface RecoveryPayload { revision: number; position: number; next_position: number; answer: number | string | null; flagged: boolean }
+export interface RecoveryAnswer { value: number | string | null }
+export interface RecoveryPayload { revision: number; position: number; next_position: number; answer: number | string | null }
 export interface RecoverySnapshot { attemptId: number; answers: Record<number, RecoveryAnswer>; position: number; revision: number; updatedAt: number; dirty?: boolean }
 interface RecoveryRecord { attemptId: number; userId?: number; savedAt?: number; snapshot?: RecoverySnapshot; pending?: RecoveryPayload[] }
 const DATABASE = 'academic-exam-recovery';

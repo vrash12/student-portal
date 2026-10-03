@@ -118,7 +118,6 @@ class InputHardeningTest extends TestCase
         $exam->created_by = $this->alpha->id;
         $exam->title = 'Picker check';
         $exam->status = 'draft';
-        $exam->attempt_limit = 1;
         $exam->save();
 
         $this->actingAs($this->alpha)->get("/examinations/{$exam->id}/questions")->assertOk();

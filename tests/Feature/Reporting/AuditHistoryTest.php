@@ -274,7 +274,7 @@ class AuditHistoryTest extends TestCase
         // Examination with an access code.
         $this->app->make(ExaminationService::class)->create($this->alpha, [
             'class_subject_id' => $this->offeringA1->id, 'title' => 'Audited Exam', 'kind' => 'examination',
-            'duration_minutes' => 30, 'attempt_limit' => 1, 'access_code' => 'workflow-secret-code',
+            'duration_minutes' => 30, 'access_code' => 'workflow-secret-code',
         ]);
 
         // Finalized score correction with a private comment.

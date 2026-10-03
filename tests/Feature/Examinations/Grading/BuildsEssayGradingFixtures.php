@@ -60,7 +60,6 @@ trait BuildsEssayGradingFixtures
         $exam->title = $title;
         $exam->status = 'published';
         $exam->duration_minutes = 30;
-        $exam->attempt_limit = 1;
         $exam->passing_score = 60;
         $exam->opens_at = now()->subMinute();
         $exam->closes_at = now()->addHours(2);

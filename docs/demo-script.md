@@ -64,10 +64,10 @@ Each step lists what to open and what to point out. Roughly 20–25 minutes in t
 ### 4. Candidate tablet (`student02` on a tablet, or the browser at tablet size)
 
 - **Home:** open examinations as cards with their status; **Examinations**, **My Grades**, **My Performance** pages (own records only, never a rank). Fitness tests are staff only.
-- Open the quiz: rules, time limit, attempts; **Start Examination**.
-- During the attempt: question list with Answered / Not answered / Flagged icons, *Time Running* (Hide/Show), when the attempt ends, autosave status (*Saving… → Saved*), Flag for review, **Save and Next**.
+- Open the quiz: rules (one attempt, no retakes), time limit; **Start Examination**.
+- During the attempt: question list with Answered / Not answered icons, *Time Running* (Hide/Show), when the attempt ends, autosave status (*Saving… → Saved*), **Save and Next**.
 - Resilience (optional): reload the page (answers and the timer come back); switch off Wi-Fi briefly (*Offline – saved on this device*), answer, switch it back on (*Syncing… → Saved*).
-- **Submit Examination:** the confirmation states answered/unanswered/flagged counts; the result page shows the objective score and that essays await review.
+- **Submit Examination:** the confirmation states answered/unanswered counts; the result page shows the objective score and that essays await review.
 
 ### 5. Live monitoring (`instructor1`, while candidates are answering)
 
@@ -86,7 +86,7 @@ Each step lists what to open and what to point out. Roughly 20–25 minutes in t
 | --- | --- |
 | Blank page or "Server Error" | MySQL stopped: start it in XAMPP and reload. |
 | `instructor1` sees "You do not teach any subjects yet" | Re-assign Subject 1 (see *Before the demonstration*, step 3). |
-| A candidate cannot start: "You have used all permitted attempts" | Use another `studentNN` account, or reset the demo database. |
+| A candidate cannot start: "You have already taken this examination" | Each candidate takes a quiz once. Use another `studentNN` account, or reset the demo database. |
 | Attempts do not end at the time limit on their own | Start `php artisan schedule:work`; opening the attempt or the monitoring page also ends overdue attempts. |
 | Tablet cannot reach the server | Same Wi-Fi network; start the server with `--host=0.0.0.0`; allow PHP through the Windows firewall. |
 | Old styles after an update | `npm run build`, then reload the page (Ctrl+F5). |

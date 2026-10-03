@@ -82,7 +82,6 @@ class RouteAccessMatrixTest extends TestCase
         $exam->title = 'Batch B quiz';
         $exam->status = 'published';
         $exam->duration_minutes = 30;
-        $exam->attempt_limit = 1;
         $exam->opens_at = now()->subMinute();
         $exam->closes_at = now()->addHour();
         $exam->save();

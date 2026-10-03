@@ -235,7 +235,7 @@ class ReportsTest extends TestCase
     public function test_date_filters_use_institution_day_boundaries(): void
     {
         config(['institution.timezone' => 'Asia/Manila']);
-        $exam = $this->makeExamination($this->offeringA1, 'Boundary Exam', ['attempt_limit' => 2]);
+        $exam = $this->makeExamination($this->offeringA1, 'Boundary Exam', []);
         // 23:30 on 9 September and 00:30 on 10 September in Manila.
         $this->makeAttempt($exam, $this->candidateInA, ['submitted_at' => '2026-09-09 15:30:00']);
         $this->makeAttempt($exam, $this->secondInA, ['submitted_at' => '2026-09-09 16:30:00']);
@@ -411,7 +411,7 @@ class ReportsTest extends TestCase
      */
     private function buildAttempts(): void
     {
-        $exam = $this->makeExamination($this->offeringA1, 'Subject 1 Online Examination', ['attempt_limit' => 2, 'access_code' => 'EXAM-ACCESS-1']);
+        $exam = $this->makeExamination($this->offeringA1, 'Subject 1 Online Examination', ['access_code' => 'EXAM-ACCESS-1']);
         $this->makeAttempt($exam, $this->candidateInA, ['submitted_at' => now()->subHours(3)]);
         $this->makeAttempt($exam, $this->candidateInA, ['attempt_number' => 2, 'submitted_at' => now()->subHour(), 'result_status' => 'pending_review', 'earned_points' => null, 'total_points' => 10, 'percentage' => null, 'passed' => null]);
         $this->makeAttempt($exam, $this->secondInA, ['status' => 'expired', 'submitted_at' => now()->subHours(4), 'result_status' => null, 'earned_points' => null, 'total_points' => null, 'percentage' => null, 'passed' => null]);

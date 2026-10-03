@@ -25,7 +25,7 @@ final class ExaminationRequest extends FormRequest
             'class_subject_id' => $this->isMethod('post') ? 'required|integer|min:1' : 'prohibited',
             'kind' => 'required|in:quiz,examination', 'title' => 'required|string|max:200',
             'description' => 'nullable|string|max:10000', 'duration_minutes' => 'nullable|integer|min:1|max:1440',
-            'attempt_limit' => 'required|integer|min:1|max:100', 'passing_score' => 'nullable|numeric|decimal:0,2|min:0|max:100',
+            'passing_score' => 'nullable|numeric|decimal:0,2|min:0|max:100',
             'opens_at' => 'nullable|date', 'closes_at' => 'nullable|date|after:opens_at',
             'access_code' => 'nullable|string|min:4|max:100', 'release_results' => 'required|boolean',
             'randomize_questions' => 'required|boolean', 'randomize_choices' => 'required|boolean',

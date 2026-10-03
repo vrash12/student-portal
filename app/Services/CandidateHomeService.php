@@ -140,7 +140,7 @@ final class CandidateHomeService
     {
         $now = now();
 
-        return Examination::query()->select(['id', 'class_subject_id', 'title', 'kind', 'duration_minutes', 'opens_at', 'closes_at', 'attempt_limit'])
+        return Examination::query()->select(['id', 'class_subject_id', 'title', 'kind', 'duration_minutes', 'opens_at', 'closes_at'])
             ->where('status', ExaminationStatus::Published)
             ->whereHas('classSubject', fn (Builder $query) => $query->where('class_batch_id', $this->eligible($candidate) ? $candidate->class_batch_id : 0))
             ->where(fn (Builder $query) => $query->whereNull('closes_at')->orWhere('closes_at', '>', $now))
@@ -243,7 +243,7 @@ final class CandidateHomeService
             'id' => $exam->id, 'title' => $exam->title, 'kind' => $exam->kind->label(),
             'subject' => $exam->classSubject->subject->name, 'durationMinutes' => $exam->duration_minutes,
             'opensAt' => $exam->opens_at?->toIso8601String(), 'closesAt' => $exam->closes_at?->toIso8601String(),
-            'attemptsUsed' => (int) $exam->attempts_used, 'attemptLimit' => $exam->attempt_limit,
+            'attemptsUsed' => (int) $exam->attempts_used,
             'resumeId' => $exam->resume_id === null ? null : (int) $exam->resume_id,
         ];
     }

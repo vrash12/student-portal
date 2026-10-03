@@ -75,7 +75,7 @@ class ExamHardeningTest extends TestCase
         $this->post("/portal/examinations/{$other->id}/start")->assertRedirect();
     }
 
-    public function test_without_attempts_left_the_access_code_is_not_checked(): void
+    public function test_after_the_attempt_the_access_code_is_not_checked(): void
     {
         $exam = $this->makeExamination(['access_code' => 'ROOM-4471']);
         $this->addItem($exam, $this->mcq());
@@ -84,7 +84,7 @@ class ExamHardeningTest extends TestCase
 
         $this->actingAs($this->candidateInA->user)
             ->post("/portal/examinations/{$exam->id}/start", ['access_code' => 'WRONG-GUESS'])
-            ->assertSessionHasErrors(['examination' => 'You have used all permitted attempts.'])
+            ->assertSessionHasErrors(['examination' => 'You have already taken this examination.'])
             ->assertSessionDoesntHaveErrors('access_code');
         $this->assertSame(0, AuditLog::query()->where('action', AuditAction::ExaminationAccessCodeRejected->value)->count());
     }
@@ -94,7 +94,7 @@ class ExamHardeningTest extends TestCase
         $exam = $this->makeExamination(['status' => 'draft']);
 
         $this->actingAs($this->alpha)->put('/examinations/'.$exam->id, [
-            'kind' => 'quiz', 'title' => 'Short code', 'duration_minutes' => 30, 'attempt_limit' => 1, 'access_code' => 'ab1',
+            'kind' => 'quiz', 'title' => 'Short code', 'duration_minutes' => 30, 'access_code' => 'ab1',
             'release_results' => false, 'randomize_questions' => false, 'randomize_choices' => false,
             'one_question_at_a_time' => false, 'allow_back_navigation' => true, 'auto_submit' => true,
         ])->assertSessionHasErrors('access_code');

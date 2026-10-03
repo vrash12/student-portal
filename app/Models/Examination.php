@@ -13,11 +13,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['kind', 'title', 'description', 'opens_at', 'closes_at', 'duration_minutes', 'attempt_limit', 'passing_score', 'release_results', 'randomize_questions', 'randomize_choices', 'question_draw_count', 'one_question_at_a_time', 'allow_back_navigation', 'auto_submit', 'access_code'])]
+#[Fillable(['kind', 'title', 'description', 'opens_at', 'closes_at', 'duration_minutes', 'passing_score', 'release_results', 'randomize_questions', 'randomize_choices', 'question_draw_count', 'one_question_at_a_time', 'allow_back_navigation', 'auto_submit', 'access_code'])]
 #[Hidden(['access_code'])]
 #[UsePolicy(ExaminationPolicy::class)]
 class Examination extends Model
 {
+    /**
+     * Attempts each candidate may take (owner request, 2026-10-03): one, with
+     * no retakes; examinations are taken at the same time under the
+     * instructor's supervision. An unfinished attempt is resumed, not retaken.
+     */
+    public const ATTEMPTS_ALLOWED = 1;
+
     public function lifecycle(): array
     {
         if ($this->status !== ExaminationStatus::Published) {
@@ -35,7 +42,7 @@ class Examination extends Model
 
     protected function casts(): array
     {
-        return ['kind' => ExaminationKind::class, 'status' => ExaminationStatus::class, 'opens_at' => 'datetime', 'closes_at' => 'datetime', 'duration_minutes' => 'integer', 'attempt_limit' => 'integer', 'passing_score' => 'decimal:2', 'release_results' => 'boolean', 'randomize_questions' => 'boolean', 'randomize_choices' => 'boolean', 'question_draw_count' => 'integer', 'one_question_at_a_time' => 'boolean', 'allow_back_navigation' => 'boolean', 'auto_submit' => 'boolean'];
+        return ['kind' => ExaminationKind::class, 'status' => ExaminationStatus::class, 'opens_at' => 'datetime', 'closes_at' => 'datetime', 'duration_minutes' => 'integer', 'passing_score' => 'decimal:2', 'release_results' => 'boolean', 'randomize_questions' => 'boolean', 'randomize_choices' => 'boolean', 'question_draw_count' => 'integer', 'one_question_at_a_time' => 'boolean', 'allow_back_navigation' => 'boolean', 'auto_submit' => 'boolean'];
     }
 
     public function classSubject(): BelongsTo

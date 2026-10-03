@@ -52,11 +52,11 @@ final class CandidateAttemptService
             if (! $exam->isActive() || ! $exam->duration_minutes) {
                 throw ValidationException::withMessages(['examination' => 'This examination is not available to start.']);
             }
-            // The attempt limit is checked first, so a candidate without attempts
-            // left learns nothing about the access code.
+            // One attempt per candidate, checked first, so a candidate who has
+            // taken it learns nothing about the access code.
             $number = ExaminationAttempt::where('candidate_id', $user->candidate->id)->where('examination_id', $exam->id)->count() + 1;
-            if ($number > $exam->attempt_limit) {
-                throw ValidationException::withMessages(['examination' => 'You have used all permitted attempts.']);
+            if ($number > Examination::ATTEMPTS_ALLOWED) {
+                throw ValidationException::withMessages(['examination' => 'You have already taken this examination.']);
             }
             if ($exam->access_code !== null && ! hash_equals($exam->access_code, $code ?? '')) {
                 throw ValidationException::withMessages(['access_code' => 'The access code is incorrect.']);
@@ -182,7 +182,8 @@ final class CandidateAttemptService
                 throw ValidationException::withMessages(['answer' => 'Choose an answer belonging to this question.']);
             }
             $next = (int) ($data['next_position'] ?? $position);
-            $requested = ['value' => $answer, 'flagged' => $attempt->examination->allow_back_navigation && ($data['flagged'] ?? false)];
+            // Answers carry no review flag (removed by owner request, 2026-10-03).
+            $requested = ['value' => $answer];
             // A resend of a save that was applied but whose response was lost
             // (older revision, same answer, already at its destination). It is
             // recognised before the navigation rule: without back navigation

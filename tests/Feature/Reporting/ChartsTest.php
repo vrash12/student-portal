@@ -59,7 +59,7 @@ class ChartsTest extends TestCase
 
     public function test_examination_chart_counts_only_final_scores(): void
     {
-        $exam = $this->makeExamination($this->offeringA1, 'Subject 1 Online Examination', ['attempt_limit' => 2, 'access_code' => 'EXAM-ACCESS-1']);
+        $exam = $this->makeExamination($this->offeringA1, 'Subject 1 Online Examination', ['access_code' => 'EXAM-ACCESS-1']);
         $this->makeAttempt($exam, $this->candidateInA, ['submitted_at' => now()->subHours(3), 'earned_points' => 8, 'total_points' => 10, 'percentage' => 80]);
         $this->makeAttempt($exam, $this->candidateInA, ['attempt_number' => 2, 'result_status' => 'pending_review', 'earned_points' => null, 'percentage' => null, 'passed' => null]);
 

@@ -58,7 +58,6 @@ trait BuildsExaminationBuilderFixtures
             'title' => 'Synthetic Quiz 01',
             'description' => 'Synthetic instructions for the quiz.',
             'duration_minutes' => 30,
-            'attempt_limit' => 1,
             'passing_score' => '75',
             'opens_at' => null,
             'closes_at' => null,

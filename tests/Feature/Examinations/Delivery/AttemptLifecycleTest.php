@@ -188,20 +188,17 @@ class AttemptLifecycleTest extends TestCase
             ->where('examination.attemptsUsed', 1));
     }
 
-    public function test_attempt_limit_allows_numbered_retakes_until_used(): void
+    public function test_each_candidate_takes_an_examination_once_with_no_retakes(): void
     {
-        $this->exam->attempt_limit = 2;
-        $this->exam->save();
         $this->actingAs($this->candidateInA->user);
         $url = '/portal/examinations/'.$this->exam->id.'/start';
-        foreach ([1, 2] as $number) {
-            $this->post($url)->assertRedirect();
-            $attempt = ExaminationAttempt::query()->where('status', 'in_progress')->sole();
-            $this->assertSame($number, $attempt->attempt_number);
-            $this->post('/portal/attempts/'.$attempt->id.'/submit', ['revision' => $attempt->revision, 'position' => 0])->assertRedirect('/portal/attempts/'.$attempt->id.'/success');
-        }
-        $this->post($url)->assertSessionHasErrors('examination');
-        $this->assertSame(2, ExaminationAttempt::count());
+        $this->post($url)->assertRedirect();
+        $attempt = ExaminationAttempt::query()->where('status', 'in_progress')->sole();
+        $this->assertSame(1, $attempt->attempt_number);
+        $this->post('/portal/attempts/'.$attempt->id.'/submit', ['revision' => $attempt->revision, 'position' => 0])->assertRedirect('/portal/attempts/'.$attempt->id.'/success');
+
+        $this->post($url)->assertSessionHasErrors(['examination' => 'You have already taken this examination.']);
+        $this->assertSame(1, ExaminationAttempt::count());
     }
 
     public function test_start_after_an_unfinished_attempt_ran_out_reconciles_it_instead_of_creating_another(): void
@@ -306,7 +303,7 @@ class AttemptLifecycleTest extends TestCase
         $attempt->refresh();
         $this->assertSame(1, $attempt->revision);
         $this->assertSame(1, $attempt->current_position);
-        $this->assertSame(['value' => $choice, 'flagged' => false], $attempt->answers[$attempt->delivery[0]['id']]);
+        $this->assertSame(['value' => $choice], $attempt->answers[$attempt->delivery[0]['id']]);
     }
 
     public function test_stale_revision_with_different_content_is_rejected_without_overwriting(): void
@@ -350,18 +347,12 @@ class AttemptLifecycleTest extends TestCase
         $this->assertNull($attempt->fresh()->answers[$attempt->delivery[2]['id']]['value']);
     }
 
-    public function test_flags_are_kept_only_when_back_navigation_is_allowed(): void
+    public function test_answers_carry_no_review_flag_even_when_one_is_sent(): void
     {
         $attempt = $this->start();
         $this->actingAs($this->candidateInA->user);
         $this->saveAnswer($attempt, 0, null, ['flagged' => true])->assertOk();
-        $this->assertTrue($attempt->fresh()->answers[$attempt->delivery[0]['id']]['flagged']);
-
-        $forwardOnly = $this->makeExamination(['allow_back_navigation' => false]);
-        $this->addItem($forwardOnly, $this->mcq());
-        $second = $this->startFor($this->candidateInA, $forwardOnly);
-        $this->saveAnswer($second, 0, null, ['flagged' => true])->assertOk();
-        $this->assertFalse($second->fresh()->answers[$second->delivery[0]['id']]['flagged']);
+        $this->assertSame(['value' => null], $attempt->fresh()->answers[$attempt->delivery[0]['id']]);
     }
 
     // Navigation -------------------------------------------------------------

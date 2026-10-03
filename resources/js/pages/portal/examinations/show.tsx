@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { Clock, ListOrdered, RotateCcw, type LucideIcon } from 'lucide-react';
+import { Clock, ListOrdered, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FormField, PasswordInput } from '@/components/ui/form-field';
 import { PageHeader } from '@/components/ui/page-header';
@@ -19,7 +19,6 @@ interface Exam {
     description: string | null;
     durationMinutes: number;
     questionCount: number;
-    attemptLimit: number;
     attemptsUsed: number;
     requiresCode: boolean;
     available: boolean;
@@ -45,14 +44,14 @@ const ATTEMPT_STATUS: Record<string, string> = {
 export default function ExamStart({ examination: e }: { examination: Exam }) {
     const { dateTime } = useDateFormatter();
     const form = useForm({ access_code: '' });
-    // Starting can also fail for the examination as a whole (closed, no attempts left).
+    // Starting can also fail for the examination as a whole (closed, already taken).
     const examinationError = (form.errors as Record<string, string | undefined>).examination;
-    const noAttemptsLeft = e.attemptsUsed >= e.attemptLimit;
+    const alreadyTaken = e.attemptsUsed > 0;
     const notYetOpen = !e.available && e.opensAt !== null && Date.parse(e.opensAt) > Date.now();
     const unavailableReason = e.resumeId
         ? null
-        : noAttemptsLeft
-          ? 'You have used all permitted attempts for this examination.'
+        : alreadyTaken
+          ? 'You have already taken this examination.'
           : !e.available
             ? notYetOpen
                 ? `This examination opens ${dateTime(e.opensAt)}.`
@@ -74,18 +73,18 @@ export default function ExamStart({ examination: e }: { examination: Exam }) {
             >
                 {e.description && <p className="whitespace-pre-wrap break-words">{e.description}</p>}
 
-                <dl className="grid gap-3 sm:grid-cols-3">
+                <dl className="grid gap-3 sm:grid-cols-2">
                     <Fact icon={ListOrdered} label="Questions" value={String(e.questionCount)} />
                     <Fact icon={Clock} label="Time limit" value={`${e.durationMinutes} minutes`} />
-                    <Fact icon={RotateCcw} label="Attempts used" value={`${e.attemptsUsed} of ${e.attemptLimit}`} />
                 </dl>
 
                 <h2 className="text-base font-semibold">Rules</h2>
                 <ul className="-mt-3 list-disc space-y-1.5 pl-5">
+                    <li>You can take this examination once. There are no retakes.</li>
                     <li>The timer starts when you begin and keeps running if you leave this page.</li>
                     <li>
                         {e.allowBackNavigation
-                            ? 'You may return to earlier questions and flag them for review.'
+                            ? 'You may return to earlier questions before you submit.'
                             : 'You cannot return to a question after you select Save and Next.'}
                     </li>
                     <li>

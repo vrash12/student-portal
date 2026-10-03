@@ -70,7 +70,7 @@ class CandidatePortalPagesTest extends TestCase
         // Closing soonest first; no closing time last.
         $this->assertSame([$open->id, $unscheduled->id], array_column($props['available']['data'], 'id'));
         $this->assertSame([$upcoming->id], array_column($props['upcoming']['data'], 'id'));
-        $this->assertSame(['id', 'title', 'kind', 'subject', 'durationMinutes', 'opensAt', 'closesAt', 'attemptsUsed', 'attemptLimit', 'resumeId'], array_keys($props['available']['data'][0]));
+        $this->assertSame(['id', 'title', 'kind', 'subject', 'durationMinutes', 'opensAt', 'closesAt', 'attemptsUsed', 'resumeId'], array_keys($props['available']['data'][0]));
         $this->assertStringNotContainsString('PORTAL-SECRET-CODE', json_encode($props));
         $this->assertTrue($props['summary']['eligible']);
         $this->assertSame('Sample Batch A', $props['summary']['className']);
@@ -80,7 +80,7 @@ class CandidatePortalPagesTest extends TestCase
     public function test_home_counts_own_attempts_and_offers_resume_only_for_unexpired_attempts(): void
     {
         $this->buildReportingFixtures();
-        $resumable = $this->makeExamination($this->offeringA1, 'Resumable Exam', ['attempt_limit' => 2]);
+        $resumable = $this->makeExamination($this->offeringA1, 'Resumable Exam', []);
         $stale = $this->makeExamination($this->offeringA2, 'Stale Exam');
         $attempt = $this->makeAttempt($resumable, $this->candidateInA, ['status' => 'in_progress', 'submitted_at' => null, 'result_status' => null]);
         $this->makeAttempt($stale, $this->candidateInA, ['status' => 'in_progress', 'submitted_at' => null, 'result_status' => null, 'expires_at' => now()->subMinute()]);
@@ -113,7 +113,7 @@ class CandidatePortalPagesTest extends TestCase
     public function test_score_chart_shows_only_released_graded_results_of_the_candidate(): void
     {
         $this->buildReportingFixtures();
-        $released = $this->makeExamination($this->offeringA1, 'Released Exam', ['release_results' => true, 'attempt_limit' => 2]);
+        $released = $this->makeExamination($this->offeringA1, 'Released Exam', ['release_results' => true]);
         $unreleased = $this->makeExamination($this->offeringA2, 'Unreleased Exam');
         $this->makeAttempt($released, $this->candidateInA, ['submitted_at' => now()->subHour()]);
         $this->makeAttempt($released, $this->candidateInA, ['attempt_number' => 2, 'result_status' => 'pending_review', 'earned_points' => null, 'percentage' => null, 'passed' => null]);
@@ -135,7 +135,7 @@ class CandidatePortalPagesTest extends TestCase
     public function test_score_chart_shows_the_latest_ten_results_oldest_first(): void
     {
         $this->buildReportingFixtures();
-        $exam = $this->makeExamination($this->offeringA1, 'Practice Exam', ['release_results' => true, 'attempt_limit' => 12]);
+        $exam = $this->makeExamination($this->offeringA1, 'Practice Exam', ['release_results' => true]);
         for ($number = 1; $number <= 12; $number++) {
             $this->makeAttempt($exam, $this->candidateInA, ['attempt_number' => $number, 'submitted_at' => now()->subMinutes(100 - $number)]);
         }

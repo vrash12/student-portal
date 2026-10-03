@@ -78,7 +78,6 @@ trait BuildsReportingFixtures
             'kind' => 'examination',
             'status' => 'published',
             'duration_minutes' => 30,
-            'attempt_limit' => 1,
             'release_results' => false,
             ...$attributes,
         ])->save();

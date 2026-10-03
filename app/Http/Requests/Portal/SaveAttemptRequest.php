@@ -20,6 +20,6 @@ class SaveAttemptRequest extends FormRequest
             if (is_string($value) && mb_strlen($value) > 20000) {
                 $fail('Answers may contain at most 20,000 characters.');
             }
-        }], 'flagged' => 'sometimes|boolean'];
+        }]];
     }
 }

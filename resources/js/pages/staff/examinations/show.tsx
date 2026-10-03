@@ -30,7 +30,6 @@ interface Examination {
     status: string;
     lifecycle: { value: LifecycleValue; label: string; tone: StatusTone };
     duration_minutes: number | null;
-    attempt_limit: number;
     passing_score: string | null;
     release_results: boolean;
     opens_at: string | null;
@@ -204,12 +203,11 @@ export default function ExaminationShow({ examination: exam, monitoring }: { exa
 
 function SummaryTiles({ exam }: { exam: Examination }) {
     return (
-        <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="grid gap-4 sm:grid-cols-3">
             <SummaryTile label="Status">
                 <StatusBadge tone={exam.lifecycle.tone}>{exam.lifecycle.label}</StatusBadge>
             </SummaryTile>
             <SummaryTile label="Time limit">{exam.duration_minutes ? `${exam.duration_minutes} minutes` : 'Not set'}</SummaryTile>
-            <SummaryTile label="Attempts">{exam.attempt_limit}</SummaryTile>
             <SummaryTile label="Passing score">{exam.passing_score !== null ? `${exam.passing_score}%` : 'Not configured'}</SummaryTile>
         </dl>
     );

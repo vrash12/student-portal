@@ -225,6 +225,6 @@ final class ExaminationService
 
     private function snapshot(Examination $exam): array
     {
-        return $exam->only(['class_subject_id', 'kind', 'title', 'status', 'duration_minutes', 'attempt_limit', 'passing_score', 'opens_at', 'closes_at', 'randomize_questions', 'randomize_choices', 'question_draw_count', 'one_question_at_a_time', 'allow_back_navigation', 'auto_submit', 'release_results']) + ['has_access_code' => $exam->access_code !== null];
+        return $exam->only(['class_subject_id', 'kind', 'title', 'status', 'duration_minutes', 'passing_score', 'opens_at', 'closes_at', 'randomize_questions', 'randomize_choices', 'question_draw_count', 'one_question_at_a_time', 'allow_back_navigation', 'auto_submit', 'release_results']) + ['has_access_code' => $exam->access_code !== null];
     }
 }

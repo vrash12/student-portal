@@ -327,13 +327,19 @@ class ItemAnalysisTest extends TestCase
 
     public function test_latest_attempt_per_candidate_is_the_default_and_all_attempts_can_be_chosen(): void
     {
-        $exam = $this->makeExamination(['attempt_limit' => 2]);
+        $exam = $this->makeExamination([]);
         $item = $this->addItem($exam, $this->mcq(1));
         [$correct, $wrong] = $this->choices($item);
         [$retaker, $single] = $this->candidates(2);
 
-        $this->submitWith($retaker, $exam, [$item->id => $wrong]);
-        $this->submitWith($retaker, $exam, [$item->id => $correct]);
+        // Retakes are no longer allowed (2026-10-03), but examinations from
+        // before keep theirs: the first attempt is parked on another
+        // examination while the retake is taken, then put back.
+        $first = $this->submitWith($retaker, $exam, [$item->id => $wrong]);
+        $parked = $this->makeExamination([]);
+        $first->forceFill(['examination_id' => $parked->id])->save();
+        $this->submitWith($retaker, $exam, [$item->id => $correct])->forceFill(['attempt_number' => 2])->save();
+        $first->forceFill(['examination_id' => $exam->id])->save();
         $this->submitWith($single, $exam, [$item->id => $correct]);
 
         $latest = $this->analysis($exam);
