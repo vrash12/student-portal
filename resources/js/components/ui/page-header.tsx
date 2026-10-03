@@ -21,10 +21,10 @@ interface PageHeaderProps {
 }
 
 /**
- * The section of the staff navigation the current page belongs to (its
- * sidebar item and group), used for the header's icon and eyebrow.
+ * The icon of the staff navigation item the current page belongs to, shown
+ * in the header. The section name above the title was removed (owner request, 2026-10-03).
  */
-function useSection(): { icon: LucideIcon | null; group: string | null; item: string | null } {
+function useSectionIcon(): LucideIcon | null {
     const { url } = usePage();
     const { can } = usePermissions();
     for (const matcher of [
@@ -34,24 +34,22 @@ function useSection(): { icon: LucideIcon | null; group: string | null; item: st
         for (const section of staffNavigation) {
             const item = section.items.find((candidate) => isVisibleItem(candidate, can) && matcher(candidate.href, candidate.activeFor));
             if (item !== undefined) {
-                return { icon: item.icon, group: section.label, item: item.label };
+                return item.icon;
             }
         }
     }
 
-    return { icon: null, group: null, item: null };
+    return null;
 }
 
 /**
  * Page title banner (UI_UX_DESIGN.md §15): navy-to-green band with gold
- * accents, the section icon and name, breadcrumbs, description and actions.
+ * accents, the section icon, breadcrumbs, description and actions.
  * In the staff area it runs edge to edge across the top of the content area
  * (PageHeaderSlot); elsewhere it is a rounded card in the page. Prints as plain text.
  */
 export function PageHeader({ title, description, actions, breadcrumbs }: PageHeaderProps) {
-    const section = useSection();
-    const Icon = section.icon;
-    const eyebrow = [section.group, section.item].filter((part): part is string => part !== null && part !== title).join(' · ');
+    const Icon = useSectionIcon();
     const slot = useContext(PageHeaderSlot);
     const fullWidth = slot !== null;
 
@@ -80,11 +78,7 @@ export function PageHeader({ title, description, actions, breadcrumbs }: PageHea
                             </span>
                         )}
                         <div className="min-w-0">
-                            {breadcrumbs && breadcrumbs.length > 0 ? (
-                                <Breadcrumbs items={breadcrumbs} />
-                            ) : (
-                                eyebrow !== '' && <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-accent-300 print:text-ink-muted">{eyebrow}</p>
-                            )}
+                            {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumbs items={breadcrumbs} />}
                             <h1 className="font-serif text-2xl font-bold tracking-tight text-white sm:text-[1.7rem] print:text-ink">{title}</h1>
                             {description && <div className="mt-1.5 max-w-3xl text-sm leading-relaxed text-primary-100 print:text-ink-muted [&_a]:text-accent-200! [&_a]:underline [&_a:hover]:text-white!">{description}</div>}
                         </div>
