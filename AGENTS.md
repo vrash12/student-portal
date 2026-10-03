@@ -406,6 +406,8 @@ Keep candidate records concise and focused on requirements.
 
 Do not introduce unnecessary personal-data fields.
 
+Owner decision (2026-10-03): each candidate also has a background record (Edit Background on the profile, candidates.manage): date and place of birth, sex, civil status, home address, mobile number, personal email, emergency contact, education entries (bachelor's degree and others: level, degree or course, school, year graduated, honors), eligibility/licenses, prior military or reserve service and previous occupation. Every field is optional. Personal and contact details are for administrators (view all candidates) and the candidate's own portal only; instructors of the class see only education and service background. Contact details are audited as fingerprints, never their values. No religion, ethnicity or medical details here (medical stays in the medical record).
+
 ---
 
 # 14. Grade Management

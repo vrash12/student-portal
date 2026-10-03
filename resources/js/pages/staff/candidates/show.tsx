@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { ChartColumn, Pencil } from 'lucide-react';
+import { CandidateBackgroundPanels } from '@/components/candidates/candidate-background';
 import { CandidateInformationPanels } from '@/components/candidates/candidate-information';
 import { RecordDownloads } from '@/components/candidates/record-downloads';
 import { CandidateExaminationResults } from '@/components/candidates/examination-results';
@@ -10,7 +11,7 @@ import { CandidateMedicalPanel } from '@/components/medical/medical-record-panel
 import type { ProfileMedical } from '@/types/medical';
 import type { ProfileAttendance, ProfileConduct, ProfileQualification } from '@/types/candidate-performance';
 import type { CandidateFitnessTest } from '@/types/fitness';
-import type { CandidateInformation, CandidateExaminationResult } from '@/types/candidates';
+import type { CandidateBackground, CandidateInformation, CandidateExaminationResult } from '@/types/candidates';
 import type { Paginated } from '@/types';
 import { GradeStatusBadge, StandingCell, ThresholdSummary } from '@/components/grading/standing';
 import {
@@ -88,6 +89,10 @@ interface CandidateShowProps {
     canBrowseCandidates: boolean;
     /** Where to issue a new QR code (candidates.manage); null for everyone else. */
     qrReissueUrl: string | null;
+    /** Background record: personal details only for those who view every candidate. */
+    background: CandidateBackground;
+    /** The Edit Background page (candidates.manage); null for everyone else. */
+    backgroundEditUrl: string | null;
 }
 
 export default function CandidateShow({
@@ -108,6 +113,8 @@ export default function CandidateShow({
     canEdit,
     canBrowseCandidates,
     qrReissueUrl,
+    background,
+    backgroundEditUrl,
 }: CandidateShowProps) {
 
     const classTerm = terms.classBatch.singular;
@@ -174,6 +181,7 @@ export default function CandidateShow({
                 {/* The long record starts closed; each section opens from its header. */}
                 <StartCollapsed.Provider value>
                 <CandidateInformationPanels candidate={candidate} qrReissueUrl={qrReissueUrl} />
+                <CandidateBackgroundPanels background={background} editUrl={backgroundEditUrl} />
 
                 {medical !== null && <CandidateMedicalPanel medical={medical} candidateId={candidate.id} />}
 

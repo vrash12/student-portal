@@ -222,6 +222,10 @@ export const routes = {
         show: (candidateId: number) => `/candidates/${candidateId}`,
         edit: (candidateId: number) => `/candidates/${candidateId}/edit`,
         update: (candidateId: number) => `/candidates/${candidateId}`,
+        background: {
+            edit: (candidateId: number) => `/candidates/${candidateId}/background/edit`,
+            update: (candidateId: number) => `/candidates/${candidateId}/background`,
+        },
     },
     portal: {
         home: () => '/portal',

@@ -25,6 +25,7 @@ use App\Http\Controllers\Staff\AttendanceScanController;
 use App\Http\Controllers\Staff\AttendanceSessionController;
 use App\Http\Controllers\Staff\AuditHistoryController;
 use App\Http\Controllers\Staff\BackupController;
+use App\Http\Controllers\Staff\CandidateBackgroundController;
 use App\Http\Controllers\Staff\CandidateController;
 use App\Http\Controllers\Staff\ClassBatchController;
 use App\Http\Controllers\Staff\ClassSubjectController;
@@ -335,6 +336,9 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::post('candidates', [CandidateController::class, 'store'])->name('candidates.store')->can('create', Candidate::class);
         Route::get('candidates/{candidate}', [CandidateController::class, 'show'])->name('candidates.show')->can('view', 'candidate');
         Route::get('candidates/{candidate}/edit', [CandidateController::class, 'edit'])->name('candidates.edit')->can('update', 'candidate');
+        // Personal details, emergency contact, education and service background (owner request, 2026-10-03).
+        Route::get('candidates/{candidate}/background/edit', [CandidateBackgroundController::class, 'edit'])->name('candidates.background.edit')->can('update', 'candidate');
+        Route::put('candidates/{candidate}/background', [CandidateBackgroundController::class, 'update'])->name('candidates.background.update')->can('update', 'candidate');
         Route::get('candidates/{candidate}/photo', [CandidatePhotoController::class, 'show'])->name('candidates.photo')->can('view', 'candidate');
         Route::get('candidates/{candidate}/qr', [CandidateQrController::class, 'show'])->name('candidates.qr')->can('view', 'candidate');
         Route::get('candidates/{candidate}/qr/pdf', [CandidateQrController::class, 'pdf'])->name('candidates.qr.pdf')->can('view', 'candidate')->middleware('throttle:pdf-downloads');

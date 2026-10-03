@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Candidate record. The linked user account (Candidate role) signs in with
@@ -107,6 +108,26 @@ class Candidate extends Model
     public function medicalDocuments(): HasMany
     {
         return $this->hasMany(CandidateMedicalDocument::class);
+    }
+
+    /**
+     * Personal details, contacts and service background (owner request, 2026-10-03).
+     *
+     * @return HasOne<CandidateBackground, $this>
+     */
+    public function background(): HasOne
+    {
+        return $this->hasOne(CandidateBackground::class);
+    }
+
+    /**
+     * Education attained, in the order entered.
+     *
+     * @return HasMany<CandidateEducation, $this>
+     */
+    public function education(): HasMany
+    {
+        return $this->hasMany(CandidateEducation::class)->orderBy('position');
     }
 
     /**

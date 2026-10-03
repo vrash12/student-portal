@@ -60,3 +60,36 @@ export interface CandidateAssessmentResult {
     maxScore: string;
     percentage: number | null;
 }
+
+/** One education entry of a candidate (CandidateBackgroundPresenter). */
+export interface CandidateEducationEntry {
+    level: string;
+    levelLabel: string;
+    degree: string;
+    school: string;
+    yearGraduated: number | null;
+    honors: string | null;
+}
+
+/**
+ * The candidate's background record (owner request, 2026-10-03). "full":
+ * administrators and the candidate; "service": instructors of the class,
+ * without personal or contact details (personal is null).
+ */
+export interface CandidateBackground {
+    scope: 'full' | 'service';
+    personal: {
+        /** Y-m-d. */
+        dateOfBirth: string | null;
+        age: number | null;
+        placeOfBirth: string | null;
+        sex: string | null;
+        civilStatus: string | null;
+        homeAddress: string | null;
+        mobileNumber: string | null;
+        personalEmail: string | null;
+        emergencyContact: { name: string | null; relationship: string | null; phone: string | null };
+    } | null;
+    service: { eligibility: string | null; priorService: string | null; previousOccupation: string | null };
+    education: CandidateEducationEntry[];
+}

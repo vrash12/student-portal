@@ -23,6 +23,7 @@ use App\Services\Monitoring\CandidateAcademicRecord;
 use App\Services\Monitoring\CandidateProfileRecord;
 use App\Services\Performance\CandidatePerformanceRecord;
 use App\Support\AcademicOptions;
+use App\Support\CandidateBackgroundPresenter;
 use App\Support\CandidateGroups;
 use App\Support\CandidatePresenter;
 use App\Support\DecimalValue;
@@ -226,6 +227,9 @@ class CandidateController extends Controller
             'canEdit' => $canManage,
             // Instructors return to the class they teach, not the full candidate list.
             'canBrowseCandidates' => $viewer->can('viewAny', Candidate::class),
+            // Background record: everything for those who view every candidate, education and service only otherwise.
+            'background' => CandidateBackgroundPresenter::present($candidate, $seesAllSubjects ? 'full' : 'service'),
+            'backgroundEditUrl' => $canManage ? route('candidates.background.edit', $candidate) : null,
             // A new QR code for a lost or shared card (candidates.manage).
             'qrReissueUrl' => $viewer->can('update', $candidate) ? route('candidates.qr.reissue', $candidate) : null,
         ]);

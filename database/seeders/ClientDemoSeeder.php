@@ -118,6 +118,9 @@ class ClientDemoSeeder extends Seeder
 
         // The subjects in the placeholder training phases, with units.
         $this->call(DemoTrainingPhasesSeeder::class);
+
+        // Synthetic background records (birth, contacts, education, service).
+        $this->call(DemoBackgroundsSeeder::class);
     }
 
     private function staff(string $username, string $name, SystemRole $role): User
