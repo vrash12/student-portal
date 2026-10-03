@@ -43,11 +43,17 @@ abstract class CandidateRequest extends FormRequest
             'campus_id' => $campusId === '' ? null : $campusId,
         ]);
 
-        // A candidate in a class is on the class's campus. Without a class,
-        // the only campus the user may choose is filled in for them.
-        $assignable = $this->campusScope()->assignableIds();
-        if ($this->input('class_batch_id') === null && $this->input('campus_id') === null && count($assignable) === 1) {
-            $this->merge(['campus_id' => $assignable[0]]);
+        // A candidate in a class is on the class's campus. Without a class and
+        // without a campus chosen, an edited candidate stays on their campus,
+        // and the only campus the user may choose is filled in for them.
+        if ($this->input('class_batch_id') === null && $this->input('campus_id') === null) {
+            $assignable = $this->campusScope()->assignableIds();
+            $current = $this->editedCandidate()?->campusId();
+            if ($current !== null) {
+                $this->merge(['campus_id' => $current]);
+            } elseif (count($assignable) === 1) {
+                $this->merge(['campus_id' => $assignable[0]]);
+            }
         }
 
         // Company and platoon names group candidates in filters, so "Alpha

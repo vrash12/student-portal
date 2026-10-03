@@ -139,14 +139,13 @@ export default function PortalHome({ summary, available, upcoming, performance, 
                         </PortalTile>
 
                         <PortalTile href={routes.portal.examinations()} icon={ClipboardList} title="Examinations" cta="View Examinations">
+                            {/* Open and coming-up examinations are listed above; the tile leads to the results. */}
                             <span className="flex flex-col gap-1">
                                 <span>
-                                    <span className="text-2xl font-bold tabular-nums">{sections.examinations.openCount}</span> open now
+                                    <span className="text-2xl font-bold tabular-nums">{sections.examinations.releasedCount}</span>{' '}
+                                    {sections.examinations.releasedCount === 1 ? 'result' : 'results'} released
                                 </span>
-                                <span className="text-ink-muted">
-                                    {sections.examinations.upcomingCount} coming up · {sections.examinations.releasedCount}{' '}
-                                    {sections.examinations.releasedCount === 1 ? 'result' : 'results'}
-                                </span>
+                                <span className="text-ink-muted">Scores and past examinations</span>
                             </span>
                         </PortalTile>
 

@@ -60,7 +60,7 @@ export default function AttendanceIndex({ sessions, trend, filters, campusOption
                         ? `Training sessions of every ${singular.toLowerCase()}. Open a session to take the roll call.`
                         : `Training sessions of the ${plural.toLowerCase()} you teach. Open a session to take the roll call.`
                 }
-                actions={newSessionAction}
+                actions={sessions.data.length > 0 && newSessionAction}
             />
 
             {hasAttendance(trend) && (

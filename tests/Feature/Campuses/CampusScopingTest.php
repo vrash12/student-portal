@@ -3,6 +3,7 @@
 namespace Tests\Feature\Campuses;
 
 use App\Enums\AuditAction;
+use App\Enums\CampusCode;
 use App\Enums\SystemRole;
 use App\Models\AcademicPeriod;
 use App\Models\AuditLog;
@@ -16,6 +17,7 @@ use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\InstructorAssignmentService;
 use App\Support\CampusScope;
+use Database\Factories\CampusFactory;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -51,8 +53,8 @@ class CampusScopingTest extends TestCase
     {
         parent::setUp();
 
-        $this->main = Campus::factory()->create(['name' => 'Main Campus', 'code' => 'MAIN']);
-        $this->north = Campus::factory()->create(['name' => 'North Campus', 'code' => 'NORTH']);
+        $this->main = CampusFactory::fixed(CampusCode::South);
+        $this->north = CampusFactory::fixed(CampusCode::North);
         $period = AcademicPeriod::factory()->active()->create(['name' => '2026-2027']);
 
         // The same class name on both campuses (allowed since 2026-10-03).
@@ -90,7 +92,7 @@ class CampusScopingTest extends TestCase
                 ->where('filters.campus', ''));
 
         $this->actingAs($this->institutionAdmin)->get('/candidates')
-            ->assertInertia(fn (Assert $page) => $page->has('candidates.data', 2)->has('campusOptions', 2));
+            ->assertInertia(fn (Assert $page) => $page->has('candidates.data', 2)->has('campusOptions', 4));
 
         $this->actingAs($this->institutionAdmin)->get('/candidates?campus='.$this->north->id)
             ->assertInertia(fn (Assert $page) => $page
@@ -154,7 +156,7 @@ class CampusScopingTest extends TestCase
 
         $this->actingAs($this->institutionAdmin)->get('/dashboard')
             ->assertInertia(fn (Assert $page) => $page
-                ->has('campusFilter.options', 2)
+                ->has('campusFilter.options', 4)
                 ->where('administratorOverview.totalCandidates', 2));
 
         $this->actingAs($this->institutionAdmin)->get('/dashboard?campus='.$this->main->id)
@@ -171,7 +173,7 @@ class CampusScopingTest extends TestCase
 
         $this->actingAs($this->institutionAdmin)->get('/dashboard')
             ->assertInertia(fn (Assert $page) => $page
-                ->where('administratorOverview.instructors', fn ($instructors): bool => $classesOf($instructors->all()) === ['Class A · MAIN', 'Class A · NORTH'])
+                ->where('administratorOverview.instructors', fn ($instructors): bool => $classesOf($instructors->all()) === ['Class A · NORTH', 'Class A · SOUTH'])
                 ->where('accountSummary', fn ($roles): bool => ! collect($roles)->pluck('code')->contains('finance_officer')));
 
         // One campus at a time (narrowed, or a campus administrator): plain names.
@@ -198,7 +200,7 @@ class CampusScopingTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->has('rows.data', 1)
                 ->where('rows.data.0.number', 'MAIN-001')
-                ->where('campusLabel', 'Main Campus'));
+                ->where('campusLabel', 'South Campus'));
     }
 
     public function test_audit_history_shows_entries_about_the_viewers_campus(): void

@@ -232,15 +232,13 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('account/password', [AccountPasswordController::class, 'edit'])->name('account.password.edit');
         Route::put('account/password', [AccountPasswordController::class, 'update'])->name('account.password.update')->middleware('throttle:password-change');
 
-        // Campuses of the institution (owner decision 2026-10-03; Admin only,
-        // and only accounts not limited to a campus).
+        // The four fixed campuses (owner decisions 2026-10-03 and 2026-10-04;
+        // Admin only, and only accounts not limited to a campus): listed and
+        // edited (address, on/off), never added or removed.
         Route::middleware(['can:'.Permission::ManageCampuses->value, 'institution'])->group(function (): void {
             Route::get('campuses', [CampusController::class, 'index'])->name('campuses.index');
-            Route::get('campuses/create', [CampusController::class, 'create'])->name('campuses.create');
-            Route::post('campuses', [CampusController::class, 'store'])->name('campuses.store');
             Route::get('campuses/{campus}/edit', [CampusController::class, 'edit'])->name('campuses.edit')->whereNumber('campus');
             Route::put('campuses/{campus}', [CampusController::class, 'update'])->name('campuses.update')->whereNumber('campus');
-            Route::delete('campuses/{campus}', [CampusController::class, 'destroy'])->name('campuses.destroy')->whereNumber('campus');
         });
 
         // Academic structure. Academic years, training phases and subjects are

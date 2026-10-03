@@ -65,12 +65,12 @@ class CandidateProfileTest extends TestCase
     {
         Storage::fake('local');
         $admin = $this->userWithRole(SystemRole::AcademicAdministrator);
-        // A candidate without a class goes to the institution's only campus.
+        // A candidate without a class is placed on a campus directly.
         $campusId = CampusFactory::defaultCampusId();
         $payload = [
             'candidate_number' => 'SYNTHETIC-001', 'first_name' => 'Candidate', 'middle_name' => 'Sample',
             'last_name' => 'Example', 'suffix' => 'Jr.', 'training_group' => 'Section A',
-            'class_batch_id' => null, 'password' => 'tablet-password-1', 'password_confirmation' => 'tablet-password-1',
+            'class_batch_id' => null, 'campus_id' => $campusId, 'password' => 'tablet-password-1', 'password_confirmation' => 'tablet-password-1',
             'profile_photo' => UploadedFile::fake()->image('profile.png'),
         ];
         $this->actingAs($admin)->post('/candidates', $payload)->assertRedirect();

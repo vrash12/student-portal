@@ -51,7 +51,7 @@ export default function AccountExpenses({ expenses, charts, canEditDefinitions }
                             <ButtonLink href={routes.accounts.categories.index()} icon={<Tags className="size-4" aria-hidden="true" />}>
                                 Account Categories
                             </ButtonLink>
-                            {addAction}
+                            {expenses.length > 0 && addAction}
                         </>
                     )
                 }

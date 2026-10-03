@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\CampusCode;
 use App\Enums\CandidateStatus;
 use App\Enums\SystemRole;
 use App\Models\AcademicPeriod;
@@ -18,8 +19,8 @@ use Illuminate\Database\Seeder;
 use RuntimeException;
 
 /**
- * A second, fictional campus for demonstrations of campus scoping (owner
- * request, 2026-10-03): "North Campus" with Class B, an instructor, five
+ * Demo data on a second campus for demonstrations of campus scoping (owner
+ * request, 2026-10-03): the North Campus with Class B, an instructor, five
  * candidates and an administrator limited to the campus:
  *
  *   north.admin          Admin, North Campus only
@@ -33,8 +34,6 @@ use RuntimeException;
  */
 class DemoCampusSeeder extends Seeder
 {
-    public const CODE = 'NORTH';
-
     /**
      * Fictional candidates: number => [first, middle, last, female]
      * (DemoPeopleSeeder draws their pictures).
@@ -50,14 +49,19 @@ class DemoCampusSeeder extends Seeder
     ];
 
     /**
-     * The campus the main demo data belongs to: the "Main Campus" the
-     * campuses migration creates for existing data, created here on an
-     * empty database.
+     * One of the four campuses (owner decision 2026-10-04). The migrations
+     * create them; this only recreates one that is missing.
      */
-    public static function mainCampus(): Campus
+    public static function campus(CampusCode $code): Campus
     {
-        return Campus::query()->where('code', 'MAIN')->first()
-            ?? Campus::query()->create(['name' => 'Main Campus', 'code' => 'MAIN', 'address' => null]);
+        return Campus::query()->where('code', $code->value)->first()
+            ?? Campus::query()->create(['name' => $code->label(), 'code' => $code->value, 'address' => null]);
+    }
+
+    /** The campus the main demo data (Class A) belongs to. */
+    public static function southCampus(): Campus
+    {
+        return self::campus(CampusCode::South);
     }
 
     public function run(): void
@@ -71,8 +75,7 @@ class DemoCampusSeeder extends Seeder
             return;
         }
 
-        $campus = Campus::query()->where('code', self::CODE)->first()
-            ?? Campus::query()->create(['name' => 'North Campus', 'code' => self::CODE, 'address' => null]);
+        $campus = self::campus(CampusCode::North);
 
         $this->account('north.admin', 'Rosario T. Valdez', SystemRole::SuperAdministrator, $campus);
         $instructor = $this->account('instructor3', 'Dennis R. Aquino', SystemRole::Instructor, $campus);

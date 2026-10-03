@@ -72,14 +72,14 @@ On 2026-10-01 the local database was reset to a small set for client demonstrati
 | Username | Role |
 | --- | --- |
 | `admin` | Admin of every campus (Teresita P. Vergara) |
-| `instructor1` | Instructor, Subject 1, Main Campus (Ramon S. Estrada) |
-| `instructor2` | Instructor, Subject 2, Main Campus (Liza M. Tan) |
-| `student01` … `student20` | Candidates in Class A, Main Campus (fictional Filipino names, e.g. `student01` Mark Anthony Dizon Villanueva) |
+| `instructor1` | Instructor, Subject 1, South Campus (Ramon S. Estrada) |
+| `instructor2` | Instructor, Subject 2, South Campus (Liza M. Tan) |
+| `student01` … `student20` | Candidates in Class A, South Campus (fictional Filipino names, e.g. `student01` Mark Anthony Dizon Villanueva) |
 | `north.admin` | Admin limited to North Campus (Rosario T. Valdez) |
 | `instructor3` | Instructor, Subjects 1 and 2 of Class B, North Campus (Dennis R. Aquino) |
 | `north01` … `north05` | Candidates in Class B, North Campus |
 
-Campuses (2026-10-03): Class A and its people are on the **Main Campus**; `DemoCampusSeeder` (run by `ClientDemoSeeder`) adds a fictional **North Campus** with Class B, so campus scoping can be tried: `north.admin` sees only North Campus, `admin` sees both and can narrow lists, the dashboard and reports with the Campus filter. It is safe to run again on an existing demo database:
+Campuses (2026-10-03, fixed on 2026-10-04): the institution has exactly four campuses, **South, North, East and West**, created by the migrations; none can be added or removed (an administrator may change a campus's address and switch it off). Class A and its people are on the **South Campus**; `DemoCampusSeeder` (run by `ClientDemoSeeder`) adds Class B on the **North Campus**, so campus scoping can be tried: `north.admin` sees only North Campus, `admin` sees every campus and can narrow lists, the dashboard and reports with the Campus filter. It is safe to run again on an existing demo database:
 
 ```bash
 php artisan db:seed --class=DemoCampusSeeder

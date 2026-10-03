@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CampusCode;
 use Database\Factories\CampusFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -17,8 +18,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * campus (App\Support\CampusScope). Academic years, training phases and the
  * other settings are shared by all campuses.
  *
- * A campus in use is deactivated (no new classes or people go there) and
- * never deleted. Change it through App\Services\CampusService.
+ * There are exactly four campuses, South, North, East and West (owner
+ * decision 2026-10-04, App\Enums\CampusCode): none is added or removed;
+ * an administrator may change the address and switch one off. Change them
+ * through App\Services\CampusService.
  */
 #[Fillable(['name', 'code', 'address'])]
 class Campus extends Model
@@ -69,16 +72,16 @@ class Campus extends Model
         return $this->hasMany(User::class);
     }
 
-    /**
-     * Whether anything refers to the campus, in which case it can only be
-     * deactivated. Audit entries count: history must keep pointing at it.
-     */
-    public function isInUse(): bool
+    /** The fixed campus this is (null only for a stray campus left by an old database). */
+    public function fixedCode(): ?CampusCode
     {
-        return $this->classBatches()->exists()
-            || $this->candidates()->exists()
-            || $this->users()->exists()
-            || AuditLog::query()->where('campus_id', $this->id)->exists();
+        return CampusCode::tryFrom($this->code);
+    }
+
+    /** Position in lists: South, North, East, West, then anything else. */
+    public function position(): int
+    {
+        return $this->fixedCode()?->position() ?? count(CampusCode::cases());
     }
 
     /**

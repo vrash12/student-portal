@@ -54,11 +54,11 @@ export default function CreateClass({ periods, campusOptions }: CreateClassProps
                     <Alert tone="warning" title="No active campus" className="mb-6">
                         Every {singular.toLowerCase()} belongs to a campus.{' '}
                         {can(Permission.ManageCampuses) ? (
-                            <Link href={routes.campuses.create()} className="text-primary-700 underline">
-                                Create a campus first.
+                            <Link href={routes.campuses.index()} className="text-primary-700 underline">
+                                Switch a campus on first.
                             </Link>
                         ) : (
-                            'Ask an administrator to create or reactivate a campus first.'
+                            'Ask an administrator to switch a campus on first.'
                         )}
                     </Alert>
                 )}

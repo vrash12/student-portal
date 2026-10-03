@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Security;
 
+use App\Enums\CampusCode;
 use App\Enums\CorrectionIncidentType;
 use App\Enums\Permission;
 use App\Enums\SystemRole;
@@ -28,6 +29,7 @@ use App\Services\Grading\GradeCorrectionService;
 use App\Services\Medical\MedicalRecordService;
 use App\Services\Performance\PerformanceAreaService;
 use App\Services\TrainingPhaseService;
+use Database\Factories\CampusFactory;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as Router;
 use Illuminate\Support\Str;
@@ -365,7 +367,7 @@ class RouteAccessMatrixTest extends TestCase
 
     public function test_an_administrator_of_another_campus_cannot_reach_any_record_of_this_campus(): void
     {
-        $north = Campus::factory()->create(['name' => 'North Campus', 'code' => 'NORTH']);
+        $north = CampusFactory::fixed(CampusCode::North);
         $users = [
             'North Admin' => $this->userWithRole(SystemRole::SuperAdministrator, ['campus_id' => $north->id]),
             'North Academic Administrator' => $this->userWithRole(SystemRole::AcademicAdministrator, ['campus_id' => $north->id]),

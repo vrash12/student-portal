@@ -34,6 +34,8 @@ export default function MyPerformance({ candidate, areas, result, staffAssessedA
     const sources = showFitness ? 'your grades, fitness tests, conduct and attendance' : `your grades, conduct and attendance${staffAssessedAreas > 0 ? ', and requirements assessed by staff' : ''}`;
     const evaluated = result !== null && areas.length > 0;
     const resultsByArea = new Map((result?.areas ?? []).map((areaResult) => [areaResult.areaId, areaResult]));
+    // Must-pass areas are in the checklist; cards are for the other areas only.
+    const otherAreas = areas.filter((area) => !area.mustPass);
     const conductPages = useClientPagination(conduct.entries);
 
     return (
@@ -85,15 +87,15 @@ export default function MyPerformance({ candidate, areas, result, staffAssessedA
                 </PortalSection>
 
                 {evaluated && (
-                    <PortalSection icon={ChartColumn} title="My Areas" description="Your grade in each area, out of 100, against that area's passing grade.">
+                    <PortalSection icon={ChartColumn} title="My Areas" description="Your grade in each area, out of 100, against that area's passing grade. Required areas are in the checklist above.">
                         <div className="flex flex-col gap-8">
                             <BarList
                                 bars={areas.map((area) => ({ label: area.name, value: resultsByArea.get(area.id)?.grade ?? null, marker: area.passingGrade }))}
                                 markerLabel="Passing grade of each area"
                                 emptyValue="No results yet"
                             />
-                            <ul className="grid gap-5 md:grid-cols-2">
-                                {areas.map((area) => {
+                            {otherAreas.length > 0 && <ul className="grid gap-5 md:grid-cols-2">
+                                {otherAreas.map((area) => {
                                     const areaResult = resultsByArea.get(area.id);
 
                                     return (
@@ -110,7 +112,7 @@ export default function MyPerformance({ candidate, areas, result, staffAssessedA
                                         </li>
                                     );
                                 })}
-                            </ul>
+                            </ul>}
                         </div>
                     </PortalSection>
                 )}

@@ -103,10 +103,8 @@ export default function PortalFitness({ tests }: FitnessProps) {
                                                     {formatCalendarDate(test.testedOn)}
                                                 </p>
                                             </div>
-                                            <div className="flex items-center gap-4">
-                                                {test.outcome.points !== null && <span className="text-lg font-bold text-ink tabular-nums">{points(test.outcome.points)}</span>}
-                                                <StatusBadge tone={test.outcome.status.tone as StatusTone}>{test.outcome.status.label}</StatusBadge>
-                                            </div>
+                                            {/* The score of each test is in the chart above. */}
+                                            <StatusBadge tone={test.outcome.status.tone as StatusTone}>{test.outcome.status.label}</StatusBadge>
                                         </li>
                                     ))}
                                 </ul>

@@ -73,7 +73,7 @@ export default function AccountExpenseShow({ expense, charges, filters, picker, 
                 title={expense.name}
                 description={
                     <>
-                        {expense.category.name} · {money(expense.amount)} per candidate
+                        {expense.category.name}
                         {!expense.isActive && (
                             <>
                                 {' '}

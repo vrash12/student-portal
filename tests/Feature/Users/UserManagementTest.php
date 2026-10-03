@@ -22,7 +22,7 @@ class UserManagementTest extends TestCase
     {
         parent::setUp();
 
-        // The institution's only campus: a new instructor goes there without choosing it.
+        // The campus new instructors are placed on (one of the four fixed campuses).
         $this->campusId = CampusFactory::defaultCampusId();
     }
 
@@ -383,7 +383,7 @@ class UserManagementTest extends TestCase
      */
     private function validPayload(array $overrides = []): array
     {
-        return [
+        $payload = [
             'name' => 'New Instructor',
             'username' => 'new.instructor',
             'email' => '',
@@ -393,6 +393,13 @@ class UserManagementTest extends TestCase
             'password_confirmation' => 'correct-horse-battery',
             ...$overrides,
         ];
+
+        // Instructors teach at one of the four campuses, chosen on the form.
+        if ($payload['role_id'] === $this->role(SystemRole::Instructor)->id && ! array_key_exists('campus_id', $overrides)) {
+            $payload['campus_id'] = $this->campusId;
+        }
+
+        return $payload;
     }
 
     /**

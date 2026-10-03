@@ -274,10 +274,6 @@ export default function ExaminationQuestions({ examination, questions, subject, 
                                 </h2>
                                 <p className="mt-0.5 text-sm text-ink-muted">Candidates get them in this order unless question order is randomized.</p>
                             </div>
-                            <p className="text-right text-sm">
-                                <span className="block text-lg font-bold tabular-nums text-primary-900">{selected.length}</span>
-                                <span className="text-ink-muted">{selected.length === 1 ? 'question' : 'questions'} · {formatPoints(totalPoints)}</span>
-                            </p>
                         </header>
                         <div className="max-h-[60vh] overflow-y-auto p-4">
                             {selected.length === 0 ? (

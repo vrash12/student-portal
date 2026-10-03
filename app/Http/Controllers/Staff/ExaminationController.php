@@ -16,6 +16,7 @@ use App\Services\Examinations\ExaminationService;
 use App\Services\QuestionBank\QuestionBankService;
 use App\Services\QuestionBank\QuestionPresenter;
 use App\Support\ListCharts;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -59,7 +60,9 @@ final class ExaminationController
     public function edit(Examination $examination, Request $request)
     {
         Gate::authorize('view', $examination);
-        abort_unless($examination->status === ExaminationStatus::Draft, 422);
+        if ($examination->status !== ExaminationStatus::Draft) {
+            return $this->onlyDrafts($examination, 'settings');
+        }
         $examination->load('classSubject.subject', 'classSubject.classBatch');
 
         // Access codes are shown only to this assigned instructor in the settings form.
@@ -92,7 +95,9 @@ final class ExaminationController
     public function questions(Examination $examination, Request $request, QuestionPresenter $presenter)
     {
         Gate::authorize('view', $examination);
-        abort_unless($examination->status === ExaminationStatus::Draft, 422);
+        if ($examination->status !== ExaminationStatus::Draft) {
+            return $this->onlyDrafts($examination, 'questions');
+        }
         $examination->load('classSubject.subject', 'examinationQuestions');
         $subject = $examination->classSubject->subject;
         $questions = Question::with(QuestionPresenter::STAFF_RELATIONS)->where('subject_id', $subject->id)->where('is_active', true)->orderByDesc('id')->get()->map(fn ($question) => $presenter->staff($question));
@@ -158,5 +163,17 @@ final class ExaminationController
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Result visibility updated.']);
 
         return back();
+    }
+
+    /**
+     * The settings and questions of an examination change only while it is a
+     * draft. An old link or the Back button leads to the examination itself
+     * with an explanation, never to an error page.
+     */
+    private function onlyDrafts(Examination $examination, string $part): RedirectResponse
+    {
+        Inertia::flash('toast', ['type' => 'warning', 'message' => "This examination is no longer a draft, so its {$part} cannot be changed."]);
+
+        return redirect('/examinations/'.$examination->id);
     }
 }

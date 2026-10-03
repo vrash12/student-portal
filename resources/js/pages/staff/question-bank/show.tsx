@@ -37,10 +37,10 @@ export default function ShowQuestion({ question, record }: ShowQuestionProps) {
 
             <PageHeader
                 title="Question Preview"
-                description={`${question.subject.name} · ${question.topic === null ? 'No topic' : question.topic.name}`}
+                description={question.topic === null ? 'No topic' : `Topic: ${question.topic.name}`}
                 breadcrumbs={[
                     { label: 'Examinations', href: examinationRoutes.index() },
-                        { label: 'Question Bank', href: routes.questionBank.index() },
+                    { label: 'Question Bank', href: routes.questionBank.index() },
                     { label: question.subject.name, href: routes.questionBank.index({ subject: String(question.subject.id) }) },
                     { label: 'Preview' },
                 ]}

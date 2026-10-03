@@ -1,4 +1,4 @@
-import { Download, QrCode, UserRound } from 'lucide-react';
+import { Download, UserRound } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { buttonClasses } from '@/components/ui/button';
 import { ConfirmAction } from '@/components/ui/confirm-action';
@@ -65,13 +65,10 @@ function QrCodePanel({ candidate, reissueUrl, audience }: { candidate: Candidate
             title="QR Code"
             description={audience === 'candidate' ? 'Show this code to your instructor to record your attendance. It is yours only: do not share a picture of it.' : 'For attendance: instructors scan it on a session’s scanner.'}
         >
-            <figure className="flex flex-col items-center gap-3">
+            {/* The name and number are beside the photo in Candidate Information; the image's text names the candidate for screen readers. */}
+            <div className="flex justify-center">
                 <img src={candidate.qrCodeUrl} alt={`QR code of ${candidate.name}, candidate ${candidate.candidateNumber}`} width={224} height={224} className="size-56 rounded-lg border border-line-box bg-white p-1" />
-                <figcaption className="text-center text-sm">
-                    <span className="block font-semibold text-ink">{candidate.name}</span>
-                    <span className="flex items-center justify-center gap-1.5 text-ink-muted"><QrCode className="size-4" aria-hidden="true" />Candidate {candidate.candidateNumber}</span>
-                </figcaption>
-            </figure>
+            </div>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
                 <a href={candidate.qrCardUrl} className={buttonClasses('secondary', 'sm')}>
                     <Download className="size-4" aria-hidden="true" />

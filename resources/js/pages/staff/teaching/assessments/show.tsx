@@ -152,9 +152,6 @@ export default function AssessmentShow({ offering, assessment, roster, history, 
                 {assessment.sourceExaminationId !== null && <Alert tone="info" title="Posted Examination Results">From examination #{assessment.sourceExaminationId} ({assessment.examAttemptRule} submitted attempt). Regrading the examination later does not change these scores.</Alert>}
                 <Panel title="Details">
                     <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <Detail label="Status">
-                            <StatusBadge tone={assessment.status.tone}>{assessment.status.label}</StatusBadge>
-                        </Detail>
                         <Detail label="Component">
                             {assessment.category.name} <span className="font-normal text-ink-muted">({assessment.category.weight}%)</span>
                         </Detail>

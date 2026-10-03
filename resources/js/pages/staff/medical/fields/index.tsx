@@ -29,7 +29,7 @@ export default function MedicalFields({ fields }: { fields: FieldRow[] }) {
                 title="Medical Record Fields"
                 description="The questions every candidate's medical record answers, in order. Choose for each field whether the candidate sees it. Instructors of the candidate's class see the whole record, view only. Fields in use are deactivated, never deleted."
                 breadcrumbs={[{ label: 'Medical Records', href: routes.medical.records.index() }, { label: 'Fields' }]}
-                actions={addAction}
+                actions={fields.length > 0 && addAction}
             />
 
             <div className="rounded-lg border border-line-box bg-surface">

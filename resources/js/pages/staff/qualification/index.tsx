@@ -192,7 +192,7 @@ export default function Qualification({
                                 {classBatch.period}
                                 {classBatch.isActivePeriod ? ' (active period)' : ''} · <span className="tabular-nums">{classSize}</span>{' '}
                                 {classSize === 1 ? 'candidate' : 'candidates'} ranked together
-                                {scopeParts.length > 0 ? ` · Showing: ${scopeParts.join(', ')}` : ''}
+                                {scopeParts.length > 0 && <span className="hidden print:inline"> · Showing: {scopeParts.join(', ')}</span>}
                             </p>
                             <p className="mt-1 text-sm text-ink-muted">
                                 Generated <time dateTime={generatedAt}>{dates.dateTime(generatedAt)}</time> ({app.timezone})

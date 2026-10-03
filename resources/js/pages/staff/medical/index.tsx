@@ -84,7 +84,7 @@ export default function MedicalRecords({ candidates, fieldCount, filters, campus
                                 )}
                             </ButtonLink>
                         )}
-                        {configureAction}
+                        {fieldCount > 0 && configureAction}
                     </>
                 }
             />

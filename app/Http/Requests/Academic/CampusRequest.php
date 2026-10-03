@@ -3,13 +3,13 @@
 namespace App\Http\Requests\Academic;
 
 use App\Http\Requests\Concerns\NormalizesTextInput;
-use App\Models\Campus;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 /**
- * Create or update a campus. Authorization: route middleware
- * `can:campuses.manage` and `institution` (accounts not limited to a campus).
+ * Edit one of the four fixed campuses (owner decision 2026-10-04): only the
+ * address and whether it is active change; the name and code never do.
+ * Authorization: route middleware `can:campuses.manage` and `institution`
+ * (accounts not limited to a campus).
  */
 class CampusRequest extends FormRequest
 {
@@ -22,13 +22,7 @@ class CampusRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $code = $this->trimmedInput('code');
-
-        $this->merge([
-            'name' => $this->trimmedInput('name'),
-            'code' => is_string($code) ? strtoupper($code) : $code,
-            'address' => $this->optionalInput('address'),
-        ]);
+        $this->merge(['address' => $this->optionalInput('address')]);
     }
 
     /**
@@ -36,13 +30,11 @@ class CampusRequest extends FormRequest
      */
     public function rules(): array
     {
-        $campus = $this->editedCampus();
-
         return [
-            'name' => ['required', 'string', 'max:100', Rule::unique('campuses', 'name')->ignore($campus?->id)],
-            'code' => ['required', 'string', 'max:20', 'regex:/^[A-Z0-9_-]+$/', Rule::unique('campuses', 'code')->ignore($campus?->id)],
+            'name' => ['prohibited'],
+            'code' => ['prohibited'],
             'address' => ['nullable', 'string', 'max:255'],
-            'is_active' => [$campus === null ? 'prohibited' : 'required', 'boolean'],
+            'is_active' => ['required', 'boolean'],
         ];
     }
 
@@ -52,29 +44,19 @@ class CampusRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.unique' => 'Another campus already uses this name.',
-            'code.unique' => 'Another campus already uses this code.',
-            'code.regex' => 'Use only letters, numbers, hyphens and underscores.',
+            'name.prohibited' => 'The names of the four campuses are fixed.',
+            'code.prohibited' => 'The codes of the four campuses are fixed.',
         ];
     }
 
     /**
-     * @return array{name: string, code: string, address: ?string, is_active: bool}
+     * @return array{address: ?string, is_active: bool}
      */
     public function campusData(): array
     {
         return [
-            'name' => (string) $this->validated('name'),
-            'code' => (string) $this->validated('code'),
             'address' => $this->validated('address'),
-            'is_active' => $this->boolean('is_active', true),
+            'is_active' => $this->boolean('is_active'),
         ];
-    }
-
-    private function editedCampus(): ?Campus
-    {
-        $campus = $this->route('campus');
-
-        return $campus instanceof Campus ? $campus : null;
     }
 }

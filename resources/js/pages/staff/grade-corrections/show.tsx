@@ -50,7 +50,7 @@ export default function GradeCorrectionShow({ correction, can }: GradeCorrection
 
             <PageHeader
                 title={`Correction Request #${correction.id}`}
-                description={`${correction.candidate.name} · ${correction.assessment.title} · ${correction.assessment.subject} · ${correction.assessment.className}`}
+                description={`${correction.candidate.name} · ${correction.assessment.title}`}
                 breadcrumbs={[{ label: 'Grade Corrections', href: routes.gradeCorrections.index() }, { label: `Request #${correction.id}` }]}
                 actions={
                     <>
@@ -126,9 +126,6 @@ export default function GradeCorrectionShow({ correction, can }: GradeCorrection
                             <Detail label={correction.status.value === 'cancelled' ? 'Cancelled By' : 'Decided By'}>
                                 {correction.decidedBy ?? '—'}
                                 <span className="block text-sm font-normal text-ink-muted">{formatDate.dateTime(correction.decidedAt)}</span>
-                            </Detail>
-                            <Detail label="Result">
-                                <StatusBadge tone={correction.status.tone}>{correction.status.label}</StatusBadge>
                             </Detail>
                             {correction.decisionNote !== null && (
                                 <div className="sm:col-span-2">

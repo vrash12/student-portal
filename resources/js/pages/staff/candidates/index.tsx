@@ -72,7 +72,7 @@ export default function CandidatesIndex({ candidates, filters, campusOptions, cl
             <PageHeader
                 title="Candidates"
                 description={`Candidate records, ${classTerm.toLowerCase()} assignments, and sign-in accounts.`}
-                actions={createAction}
+                actions={(candidates.data.length > 0 || isFiltered) && createAction}
             />
 
             <ListCharts charts={charts} />

@@ -60,11 +60,6 @@ function PostingForm({ review }: { review: Review }) {
                     { label: review.exam.title, href: examinationRoutes.show(review.exam.id) },
                     { label: 'Post Grades' },
                 ]}
-                actions={
-                    <ButtonLink href={examinationRoutes.show(review.exam.id)} variant="secondary">
-                        Back to Examination
-                    </ButtonLink>
-                }
             />
             {review.posted ? (
                 <Alert tone="success" title="Already posted">

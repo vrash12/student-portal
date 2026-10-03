@@ -534,13 +534,8 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
                     <TimeDisplay remaining={remaining} lowTime={lowTime} hidden={timeHidden} onToggle={() => setTimeHidden((value) => !value)} />
                     <p className="mt-3 text-sm text-ink-muted">Attempt ends: <span className="font-medium text-ink">{dateTime(attempt.expiresAt)}</span></p>
                 </section>
-                <section className="space-y-3 rounded-xl border border-line-box bg-surface p-4 shadow-sm">
-                    <dl className="grid grid-cols-2 gap-2 text-center text-sm">
-                        <div><dt className="text-ink-muted">Answered</dt><dd className="text-lg font-semibold">{answeredCount}</dd></div>
-                        <div><dt className="text-ink-muted">Remaining</dt><dd className="text-lg font-semibold">{unansweredCount}</dd></div>
-                    </dl>
-                    {(isLast || canJump) && <Button className="w-full" disabled={!recoveryReady || busy || remaining === 0} onClick={openSubmit}>Submit Examination</Button>}
-                </section>
+                {/* The answered count is in the header; on the last question Submit is beside Previous. */}
+                {canJump && !isLast && <Button className="w-full" disabled={!recoveryReady || busy || remaining === 0} onClick={openSubmit}>Submit Examination</Button>}
             </div>
         </aside>
 

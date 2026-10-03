@@ -67,7 +67,7 @@ export default function AcademicPeriodsIndex({ periods, can }: AcademicPeriodsIn
             <PageHeader
                 title="Academic Periods"
                 description={`Terms or cycles that group ${terms.classBatch.plural.toLowerCase()}. One period is active at a time.`}
-                actions={createAction}
+                actions={periods.length > 0 && createAction}
             />
 
             <div className="rounded-lg border border-line-box bg-surface">

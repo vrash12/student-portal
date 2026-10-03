@@ -52,9 +52,9 @@ export default function ExamSuccess({ title, status, submissionKind, submittedAt
                     <span className={'flex size-12 items-center justify-center rounded-full ' + (submitted ? 'bg-success-bg text-success-fg' : 'bg-warning-bg text-warning-fg')}>
                         <Icon className="size-7" aria-hidden="true" />
                     </span>
-                    {submitted ? 'Submission received' : status === 'expired' ? 'Not submitted' : 'Closed'}
+                    {/* The header already says it was received; the card gives the time. */}
+                    {submittedAt ? `Submitted ${dateTime(submittedAt)}` : status === 'expired' ? 'Not submitted' : 'Closed'}
                 </p>
-                {submittedAt && <p className="mt-2 text-sm text-ink-muted">Submitted: {dateTime(submittedAt)}</p>}
 
                 {submitted && releaseResults && (
                     <div className="mt-4 border-t border-line pt-4">

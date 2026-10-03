@@ -25,7 +25,7 @@ export default function AccountCategories({ categories }: { categories: AccountC
                 title="Account Categories"
                 description="The categories expenses belong to, such as billing, uniforms and meals. Categories in use are deactivated, never deleted."
                 breadcrumbs={[{ label: 'Expenses', href: routes.accounts.expenses.index() }, { label: 'Categories' }]}
-                actions={addAction}
+                actions={categories.length > 0 && addAction}
             />
 
             <div className="rounded-lg border border-line-box bg-surface">

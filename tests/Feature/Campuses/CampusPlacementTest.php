@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Campuses;
 
+use App\Enums\CampusCode;
 use App\Enums\SystemRole;
 use App\Models\AcademicPeriod;
 use App\Models\Campus;
@@ -13,6 +14,7 @@ use App\Models\Role;
 use App\Models\Subject;
 use App\Models\User;
 use App\Services\InstructorAssignmentService;
+use Database\Factories\CampusFactory;
 use Illuminate\Database\QueryException;
 use Tests\TestCase;
 
@@ -38,8 +40,8 @@ class CampusPlacementTest extends TestCase
     {
         parent::setUp();
 
-        $this->main = Campus::factory()->create(['name' => 'Main Campus', 'code' => 'MAIN']);
-        $this->north = Campus::factory()->create(['name' => 'North Campus', 'code' => 'NORTH']);
+        $this->main = CampusFactory::fixed(CampusCode::South);
+        $this->north = CampusFactory::fixed(CampusCode::North);
         $this->period = AcademicPeriod::factory()->active()->create();
         $this->institutionAdmin = $this->userWithRole(SystemRole::SuperAdministrator);
         $this->northAdmin = $this->userWithRole(SystemRole::SuperAdministrator, ['campus_id' => $this->north->id]);
@@ -152,7 +154,7 @@ class CampusPlacementTest extends TestCase
 
         $this->actingAs($this->institutionAdmin)
             ->post('/instructor-assignments', ['class_subject_id' => $offering->id, 'instructor_id' => $mainInstructor->id])
-            ->assertSessionHasErrors(['instructor_id' => 'Main Instructor teaches at Main Campus, not at this class\'s campus.']);
+            ->assertSessionHasErrors(['instructor_id' => 'Main Instructor teaches at South Campus, not at this class\'s campus.']);
         $this->actingAs($this->institutionAdmin)
             ->post('/instructor-assignments', ['class_subject_id' => $offering->id, 'instructor_id' => $northInstructor->id])
             ->assertSessionHasNoErrors();

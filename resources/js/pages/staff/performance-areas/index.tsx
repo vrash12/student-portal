@@ -50,7 +50,7 @@ export default function PerformanceAreas({ areas, activeWeightTotal, hasActiveMu
                 title="Performance Areas"
                 description="Area passing grades decide qualification only. Subject standing uses Passing and Warning Grades (Grading Setup)."
                 breadcrumbs={[{ label: 'Qualification', href: routes.qualification.index() }, { label: 'Performance Areas' }]}
-                actions={addAction}
+                actions={areas.length > 0 && addAction}
             />
 
             <div className="flex flex-col gap-6">

@@ -43,21 +43,24 @@ export default function PortalGrades({ summary, academics, thresholds, outstandi
             />
 
             <div className="flex flex-col gap-10">
-                <dl className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                {/* The CGPA is in Phase Averages when phases are set up, and assessments awaiting a score have their own list below. */}
+                <dl className="grid gap-5 md:grid-cols-3">
                     <div className="rounded-2xl border border-line-box bg-surface p-6 shadow-sm">
                         <dt className="text-sm font-medium text-ink-muted">Overall Standing</dt>
                         <dd className="mt-3">
                             {academics.overall.standing === null ? <span className="text-base text-ink-muted">Not available yet</span> : <OverallStandingValue overall={academics.overall} />}
                         </dd>
                     </div>
-                    <StatTile
-                        icon={Sigma}
-                        label="CGPA"
-                        value={formatGrade(course.cgpa.grade)}
-                        hint={course.cgpa.grade === null ? 'No grades yet.' : course.cgpa.complete ? 'Final.' : 'In progress; it changes as grades come in.'}
-                    />
+                    {!phased && (
+                        <StatTile
+                            icon={Sigma}
+                            label="CGPA"
+                            value={formatGrade(course.cgpa.grade)}
+                            hint={course.cgpa.grade === null ? 'No grades yet.' : course.cgpa.complete ? 'Final.' : 'In progress; it changes as grades come in.'}
+                        />
+                    )}
                     <StatTile icon={BookOpen} label="Subjects" value={subjects.length} />
-                    <StatTile icon={Hourglass} label="Awaiting a Score" value={outstanding.total} hint={outstanding.total > 0 ? 'Ask your instructor about these.' : 'Nothing missing.'} />
+                    {outstanding.total === 0 && <StatTile icon={Hourglass} label="Awaiting a Score" value={0} hint="Nothing missing." />}
                 </dl>
 
                 {phased && (

@@ -36,7 +36,7 @@ export default function ExaminationIndex({ examinations, charts }: { examination
             <PageHeader
                 title="Quizzes & Examinations"
                 description="Build, review, and monitor assessments for your assigned subjects."
-                actions={createAction}
+                actions={examinations.total > 0 && createAction}
             />
 
             <ExaminationSectionTabs current="examinations" />

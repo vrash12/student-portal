@@ -126,12 +126,7 @@ export default function ExaminationShow({ examination: exam, monitoring }: { exa
                 breadcrumbs={[{ label: 'Examinations', href: examinationRoutes.index() }, { label: exam.title }]}
                 actions={
                     <>
-                        {draft && (
-                            <>
-                                <ButtonLink href={examinationRoutes.edit(exam.id)}>Edit Settings</ButtonLink>
-                                <ButtonLink href={examinationRoutes.questions.edit(exam.id)}>Choose Questions</ButtonLink>
-                            </>
-                        )}
+                        {/* A draft's settings and questions are opened from the builder steps below. */}
                         {!draft && (
                             <>
                                 <ButtonLink href={examinationRoutes.grading(exam.id)}>Essay Grading</ButtonLink>

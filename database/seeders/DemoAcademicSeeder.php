@@ -19,7 +19,7 @@ use RuntimeException;
 /**
  * Synthetic academic structure for local development: one active period,
  * generic subjects, two sample batches, instructor assignments, and ten
- * candidates with sign-in accounts, all on the Main Campus. Idempotent.
+ * candidates with sign-in accounts, all on the South Campus. Idempotent.
  * Never runs in production.
  *
  * Requires DemoAccountsSeeder (instructor accounts) to have run first.
@@ -109,7 +109,7 @@ class DemoAcademicSeeder extends Seeder
 
         $classBatch = new ClassBatch(['name' => $name]);
         $classBatch->academicPeriod()->associate($period);
-        $classBatch->campus()->associate(DemoCampusSeeder::mainCampus());
+        $classBatch->campus()->associate(DemoCampusSeeder::southCampus());
         $classBatch->save();
 
         return $classBatch;

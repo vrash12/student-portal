@@ -82,7 +82,6 @@ export default function GradeAttempt({ examination, attempt, questions, history,
                 ]}
                 actions={
                     <>
-                        <ButtonLink href={examinationRoutes.grading(examination.id)}>Back to Queue</ButtonLink>
                         {nextAttemptId && (
                             <ButtonLink href={examinationRoutes.gradeAttempt(nextAttemptId)} variant="primary">
                                 Next Pending Attempt

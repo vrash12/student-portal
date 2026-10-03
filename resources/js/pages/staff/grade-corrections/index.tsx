@@ -86,7 +86,8 @@ export default function GradeCorrectionsIndex({ requests, status, counts, status
                             <Th>Assessment</Th>
                             <Th align="right">Score Change</Th>
                             <Th>What Happened</Th>
-                            <Th>Status</Th>
+                            {/* A status tab shows one status; the column is for All. */}
+                            {status === 'all' && <Th>Status</Th>}
                             <Th align="right">
                                 <span className="sr-only">Actions</span>
                             </Th>
@@ -115,9 +116,11 @@ export default function GradeCorrectionsIndex({ requests, status, counts, status
                                         <span className="block text-xs text-ink-muted">of {request.assessment.maxScore}</span>
                                     </Td>
                                     <Td className="text-ink">{request.incidentType.label}</Td>
-                                    <Td>
-                                        <StatusBadge tone={request.status.tone}>{request.status.label}</StatusBadge>
-                                    </Td>
+                                    {status === 'all' && (
+                                        <Td>
+                                            <StatusBadge tone={request.status.tone}>{request.status.label}</StatusBadge>
+                                        </Td>
+                                    )}
                                     <Td align="right">
                                         <RowAction href={routes.gradeCorrections.show(request.id)} label={`Open correction request #${request.id}`}>
                                             {scope === 'all' && request.status.value === 'pending' ? 'Review' : 'Open'}

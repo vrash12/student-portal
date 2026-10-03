@@ -16,6 +16,8 @@ use Tests\TestCase;
  * live server: everything is attached to a new "Main Campus", teaching
  * staff join it, administrators keep seeing every campus, and running the
  * migration again (after a deploy that stopped half-way) changes nothing.
+ * The next migration turns the Main Campus into the South Campus and adds
+ * North, East and West: the four fixed campuses (owner decision 2026-10-04).
  *
  * Runs on its own scratch database: the migration changes tables, which
  * MariaDB cannot roll back inside the test transaction.
@@ -100,9 +102,22 @@ class CampusMigrationTest extends TestCase
         $migration->up();
         $this->assertSame(1, DB::table('campuses')->count());
         $this->assertSame((int) $main->id, (int) DB::table('candidates')->where('id', $ids['candidate'])->value('campus_id'));
+
+        // Then the four fixed campuses (owner decision 2026-10-04): the Main
+        // Campus becomes the South Campus with all its records, and North,
+        // East and West are added. Running it again changes nothing.
+        $fourCampuses = $this->fourCampusesMigration();
+        $fourCampuses->up();
+        $fourCampuses->up();
+
+        $this->assertSame(['SOUTH' => 'South Campus', 'NORTH' => 'North Campus', 'EAST' => 'East Campus', 'WEST' => 'West Campus'], $this->campuses());
+        $this->assertSame('SOUTH', DB::table('campuses')->where('id', $main->id)->value('code'));
+        $this->assertSame((int) $main->id, (int) DB::table('candidates')->where('id', $ids['candidate'])->value('campus_id'));
+        $this->assertSame((int) $main->id, (int) DB::table('users')->where('id', $ids['instructor'])->value('campus_id'));
+        $this->assertTrue($this->hasCodeCheck());
     }
 
-    public function test_a_new_installation_gets_no_campus(): void
+    public function test_a_new_installation_gets_the_four_campuses(): void
     {
         $migration = $this->campusMigration();
         $migration->down();
@@ -110,11 +125,67 @@ class CampusMigrationTest extends TestCase
 
         $this->assertTrue(Schema::hasTable('campuses'));
         $this->assertSame(0, DB::table('campuses')->count());
+
+        $this->fourCampusesMigration()->up();
+
+        $this->assertSame(['SOUTH' => 'South Campus', 'NORTH' => 'North Campus', 'EAST' => 'East Campus', 'WEST' => 'West Campus'], $this->campuses());
+        $this->assertTrue($this->hasCodeCheck());
+    }
+
+    public function test_an_unused_extra_campus_is_removed_and_one_in_use_is_kept(): void
+    {
+        $migration = $this->campusMigration();
+        $migration->down();
+        $migration->up();
+
+        $now = now();
+        DB::table('campuses')->insert([
+            ['name' => 'Spare Campus', 'code' => 'SPARE', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'Annex', 'code' => 'ANNEX', 'is_active' => true, 'created_at' => $now, 'updated_at' => $now],
+        ]);
+        $annex = (int) DB::table('campuses')->where('code', 'ANNEX')->value('id');
+        $period = DB::table('academic_periods')->insertGetId(['name' => '2026-2027', 'starts_on' => '2026-06-01', 'ends_on' => '2027-05-31', 'is_active' => false, 'created_at' => $now, 'updated_at' => $now]);
+        DB::table('class_batches')->insert(['academic_period_id' => $period, 'campus_id' => $annex, 'name' => 'Class A', 'created_at' => $now, 'updated_at' => $now]);
+
+        $this->fourCampusesMigration()->up();
+
+        // The spare campus is gone; the annex has a class, so it stays and the rule waits.
+        $this->assertSame(['SOUTH', 'NORTH', 'EAST', 'WEST', 'ANNEX'], array_keys($this->campuses()));
+        $this->assertFalse($this->hasCodeCheck());
     }
 
     private function campusMigration(): Migration
     {
         return require database_path('migrations/2026_10_03_000700_create_campuses.php');
+    }
+
+    private function fourCampusesMigration(): Migration
+    {
+        return require database_path('migrations/2026_10_04_000100_fix_the_four_campuses.php');
+    }
+
+    /**
+     * Campus names by code, the four in their fixed order first.
+     *
+     * @return array<string, string>
+     */
+    private function campuses(): array
+    {
+        $order = ['SOUTH', 'NORTH', 'EAST', 'WEST'];
+
+        return DB::table('campuses')->get(['code', 'name'])
+            ->sortBy(fn (object $campus): int => ($index = array_search($campus->code, $order, true)) === false ? 99 : $index)
+            ->mapWithKeys(fn (object $campus): array => [$campus->code => $campus->name])
+            ->all();
+    }
+
+    private function hasCodeCheck(): bool
+    {
+        return DB::table('information_schema.table_constraints')
+            ->where('constraint_schema', DB::getDatabaseName())
+            ->where('table_name', 'campuses')
+            ->where('constraint_name', 'campuses_code_check')
+            ->exists();
     }
 
     /**

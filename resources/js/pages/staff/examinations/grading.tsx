@@ -4,7 +4,6 @@ import { ButtonLink, buttonClasses } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { Pagination } from '@/components/ui/pagination';
-import { StatusBadge } from '@/components/ui/status-badge';
 import { Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
 import { examinationRoutes } from '@/lib/examination-routes';
 import { useDateFormatter } from '@/lib/format';
@@ -57,7 +56,6 @@ export default function ExaminationGrading({ examination, attempts, status = 'pe
                     { label: examination.title, href: examinationRoutes.show(examination.id) },
                     { label: 'Essay Grading' },
                 ]}
-                actions={<ButtonLink href={examinationRoutes.show(examination.id)}>Back to Examination</ButtonLink>}
             />
 
             <nav aria-label="Grading status" className="mb-4">
@@ -89,7 +87,6 @@ export default function ExaminationGrading({ examination, attempts, status = 'pe
                             <Th>Candidate</Th>
                             <Th align="right">Attempt</Th>
                             <Th>Submitted</Th>
-                            <Th>Status</Th>
                             <Th align="right">Result</Th>
                             <Th>
                                 <span className="sr-only">Actions</span>
@@ -109,9 +106,6 @@ export default function ExaminationGrading({ examination, attempts, status = 'pe
                                             {attempt.number}
                                         </Td>
                                         <Td>{dateTime(attempt.submittedAt)}</Td>
-                                        <Td>
-                                            <StatusBadge tone={pending ? 'warning' : 'success'}>{pending ? 'Pending review' : 'Graded'}</StatusBadge>
-                                        </Td>
                                         <Td numeric align="right">
                                             {!pending && attempt.percentage !== null ? `${attempt.percentage}%` : '—'}
                                         </Td>

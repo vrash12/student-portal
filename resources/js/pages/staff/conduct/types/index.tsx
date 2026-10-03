@@ -26,7 +26,7 @@ export default function ConductTypes({ types }: { types: ConductTypeRow[] }) {
                 title="Merit & Demerit Types"
                 description="The kinds of merits and demerits that can be recorded, with their usual points. The values are placeholders until the institution confirms its conduct rules. Types in use are deactivated, never deleted."
                 breadcrumbs={[{ label: 'Merits & Demerits', href: routes.conduct.index() }, { label: 'Types' }]}
-                actions={addAction}
+                actions={types.length > 0 && addAction}
             />
 
             <div className="rounded-lg border border-line-box bg-surface">

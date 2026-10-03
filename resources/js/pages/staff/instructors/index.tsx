@@ -46,7 +46,7 @@ export default function InstructorsIndex({ instructors, filters, campusOptions, 
             <PageHeader
                 title="Instructors"
                 description="Teaching staff and the subjects they are assigned to. Accounts are created in Users with the Instructor role."
-                actions={createAction}
+                actions={(instructors.data.length > 0 || isFiltered) && createAction}
             />
 
             <div className="rounded-lg border border-line-box bg-surface">

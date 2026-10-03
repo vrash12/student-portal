@@ -65,7 +65,7 @@ export default function FitnessIndex({ tests, filters, campusOptions, periods, c
                                     Events and Points
                                 </ButtonLink>
                             )}
-                            {newTestAction}
+                            {tests.data.length > 0 && newTestAction}
                         </>
                     )
                 }

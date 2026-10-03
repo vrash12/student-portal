@@ -111,7 +111,7 @@ export default function GradingThresholds({ period, thresholds, suggestion, requ
                     )}
 
                     <FormSection
-                        title="Passing and Warning Grades"
+                        title="Grades"
                         description={`Decide subject standing in ${period.classCount} ${classNoun} (scale 0–100). Qualification uses each performance area’s own passing grade.`}
                     >
                         <div className="grid gap-5 sm:grid-cols-2">

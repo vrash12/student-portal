@@ -139,15 +139,15 @@ export function UserForm({
                         error={form.errors.campus_id}
                         hint={
                             selectedRole?.requiresCampus && campusOptions.length === 0 ? (
-                                // Nothing to choose yet (a fresh installation has no campus).
+                                // Nothing to choose: every campus is switched off.
                                 <>
-                                    Instructors teach at one campus, and there is no active campus yet.{' '}
+                                    Instructors teach at one campus, and no campus is active.{' '}
                                     {can(Permission.ManageCampuses) ? (
-                                        <Link href={routes.campuses.create()} className="text-primary-700 underline">
-                                            Create a campus first.
+                                        <Link href={routes.campuses.index()} className="text-primary-700 underline">
+                                            Switch a campus on first.
                                         </Link>
                                     ) : (
-                                        'Ask an administrator to create or reactivate a campus first.'
+                                        'Ask an administrator to switch a campus on first.'
                                     )}
                                 </>
                             ) : selectedRole?.requiresCampus ? (

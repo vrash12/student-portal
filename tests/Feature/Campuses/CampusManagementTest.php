@@ -3,19 +3,24 @@
 namespace Tests\Feature\Campuses;
 
 use App\Enums\AuditAction;
+use App\Enums\CampusCode;
 use App\Enums\Permission;
 use App\Enums\SystemRole;
 use App\Models\AuditLog;
 use App\Models\Campus;
 use App\Models\ClassBatch;
 use App\Models\User;
+use Database\Factories\CampusFactory;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 /**
- * Academics → Campuses (owner decision 2026-10-03): the institution-wide
- * Admin adds, renames and deactivates campuses; a campus is removed only
- * when nothing ever used it.
+ * Academics → Campuses: the institution has exactly four campuses, South,
+ * North, East and West (owner decision 2026-10-04). None is added or
+ * removed; the institution-wide Admin changes a campus's address and
+ * switches it on or off.
  */
 class CampusManagementTest extends TestCase
 {
@@ -28,87 +33,74 @@ class CampusManagementTest extends TestCase
         $this->admin = $this->userWithRole(SystemRole::SuperAdministrator);
     }
 
-    public function test_the_admin_creates_a_campus_and_it_is_audited(): void
+    public function test_the_four_campuses_exist_and_are_listed_in_the_fixed_order(): void
     {
-        $this->actingAs($this->admin)
-            ->post('/campuses', ['name' => ' North Campus ', 'code' => 'north', 'address' => ''])
-            ->assertRedirect(route('campuses.index'));
-
-        $campus = Campus::query()->where('code', 'NORTH')->sole();
-        $this->assertSame('North Campus', $campus->name);
-        $this->assertNull($campus->address);
-        $this->assertTrue($campus->is_active);
-
-        $entry = AuditLog::query()->where('action', AuditAction::CampusCreated->value)->sole();
-        $this->assertSame($this->admin->id, $entry->actor_id);
-        $this->assertSame($campus->id, $entry->auditable_id);
-    }
-
-    public function test_names_and_codes_are_unique(): void
-    {
-        Campus::factory()->create(['name' => 'North Campus', 'code' => 'NORTH']);
-
-        $this->actingAs($this->admin)
-            ->post('/campuses', ['name' => 'North Campus', 'code' => 'north'])
-            ->assertSessionHasErrors(['name' => 'Another campus already uses this name.', 'code' => 'Another campus already uses this code.']);
-
-        $this->actingAs($this->admin)
-            ->post('/campuses', ['name' => 'South Campus', 'code' => 'SOUTH CAMPUS'])
-            ->assertSessionHasErrors(['code' => 'Use only letters, numbers, hyphens and underscores.']);
-
-        $this->assertSame(1, Campus::query()->count());
-    }
-
-    public function test_the_list_counts_classes_candidates_and_staff(): void
-    {
-        $campus = Campus::factory()->create(['name' => 'North Campus', 'code' => 'NORTH']);
-        ClassBatch::factory()->onCampus($campus)->create();
-        User::factory()->withRole(SystemRole::Instructor)->onCampus($campus)->create();
+        $north = CampusFactory::fixed(CampusCode::North);
+        ClassBatch::factory()->onCampus($north)->create();
+        User::factory()->withRole(SystemRole::Instructor)->onCampus($north)->create();
 
         $this->actingAs($this->admin)->get('/campuses')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('staff/campuses/index')
-                ->where('campuses.0.code', 'NORTH')
-                ->where('campuses.0.classCount', 1)
-                ->where('campuses.0.staffCount', 1));
+                ->has('campuses', 4)
+                ->where('campuses.0.name', 'South Campus')
+                ->where('campuses.1.code', 'NORTH')
+                ->where('campuses.1.classCount', 1)
+                ->where('campuses.1.staffCount', 1)
+                ->where('campuses.2.code', 'EAST')
+                ->where('campuses.3.code', 'WEST'));
     }
 
-    public function test_a_campus_in_use_is_deactivated_not_removed(): void
+    public function test_no_campus_can_be_added_or_removed(): void
     {
-        $campus = Campus::factory()->create(['name' => 'North Campus', 'code' => 'NORTH']);
-        ClassBatch::factory()->onCampus($campus)->create();
+        $south = CampusFactory::fixed(CampusCode::South);
+
+        $this->actingAs($this->admin)->get('/campuses/create')->assertNotFound();
+        $this->actingAs($this->admin)->post('/campuses', ['name' => 'Central Campus', 'code' => 'CENTRAL'])->assertMethodNotAllowed();
+        $this->actingAs($this->admin)->delete("/campuses/{$south->id}")->assertMethodNotAllowed();
+
+        // The database refuses a fifth campus too.
+        $this->assertThrows(
+            fn () => DB::table('campuses')->insert(['name' => 'Central Campus', 'code' => 'CENTRAL', 'is_active' => true]),
+            QueryException::class,
+        );
+        $this->assertSame(4, Campus::query()->count());
+        $this->assertModelExists($south);
+    }
+
+    public function test_the_admin_changes_the_address_and_switches_a_campus_off(): void
+    {
+        $campus = CampusFactory::fixed(CampusCode::East);
 
         $this->actingAs($this->admin)
-            ->delete("/campuses/{$campus->id}")
-            ->assertRedirect(route('campuses.edit', $campus));
-        $this->assertModelExists($campus);
-
-        $this->actingAs($this->admin)
-            ->put("/campuses/{$campus->id}", ['name' => 'North Campus', 'code' => 'NORTH', 'address' => 'Sample Road', 'is_active' => false])
+            ->put("/campuses/{$campus->id}", ['address' => ' Sample Road ', 'is_active' => false])
             ->assertRedirect(route('campuses.index'));
-        $this->assertFalse($campus->fresh()->is_active);
+
+        $campus->refresh();
+        $this->assertSame('Sample Road', $campus->address);
+        $this->assertFalse($campus->is_active);
+        $this->assertSame(['East Campus', 'EAST'], [$campus->name, $campus->code]);
         $this->assertSame(1, AuditLog::query()->where('action', AuditAction::CampusUpdated->value)->count());
 
-        // An inactive campus takes no new classes.
+        // A campus switched off takes no new classes.
         $this->assertNotContains($campus->id, $this->admin->campusScope()->assignableIds());
     }
 
-    public function test_an_unused_campus_can_be_removed(): void
+    public function test_names_and_codes_are_fixed(): void
     {
-        $campus = Campus::factory()->create(['name' => 'Spare Campus', 'code' => 'SPARE']);
+        $campus = CampusFactory::fixed(CampusCode::West);
 
         $this->actingAs($this->admin)
-            ->delete("/campuses/{$campus->id}")
-            ->assertRedirect(route('campuses.index'));
+            ->put("/campuses/{$campus->id}", ['name' => 'Renamed', 'code' => 'RENAMED', 'address' => '', 'is_active' => true])
+            ->assertSessionHasErrors(['name' => 'The names of the four campuses are fixed.', 'code' => 'The codes of the four campuses are fixed.']);
 
-        $this->assertModelMissing($campus);
-        $this->assertSame(1, AuditLog::query()->where('action', AuditAction::CampusDeleted->value)->count());
+        $this->assertSame(['West Campus', 'WEST'], [$campus->fresh()->name, $campus->fresh()->code]);
     }
 
     public function test_only_the_institution_wide_admin_manages_campuses(): void
     {
-        $campus = Campus::factory()->create(['code' => 'NORTH']);
+        $campus = CampusFactory::fixed(CampusCode::North);
         $campusAdmin = $this->userWithRole(SystemRole::SuperAdministrator, ['campus_id' => $campus->id]);
         $academicAdmin = $this->userWithRole(SystemRole::AcademicAdministrator);
 
@@ -118,12 +110,11 @@ class CampusManagementTest extends TestCase
 
         foreach ([$campusAdmin, $academicAdmin] as $user) {
             $this->actingAs($user)->get('/campuses')->assertForbidden();
-            $this->actingAs($user)->post('/campuses', ['name' => 'South Campus', 'code' => 'SOUTH'])->assertForbidden();
-            $this->actingAs($user)->put("/campuses/{$campus->id}", ['name' => 'Renamed', 'code' => 'NORTH', 'is_active' => true])->assertForbidden();
-            $this->actingAs($user)->delete("/campuses/{$campus->id}")->assertForbidden();
+            $this->actingAs($user)->get("/campuses/{$campus->id}/edit")->assertForbidden();
+            $this->actingAs($user)->put("/campuses/{$campus->id}", ['address' => 'Changed', 'is_active' => false])->assertForbidden();
         }
 
-        $this->assertSame(1, Campus::query()->count());
-        $this->assertNotSame('Renamed', $campus->fresh()->name);
+        $this->assertNull($campus->fresh()->address);
+        $this->assertTrue($campus->fresh()->is_active);
     }
 }

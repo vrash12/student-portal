@@ -5,9 +5,8 @@ import { CheckboxField, FormField, TextInput } from '@/components/ui/form-field'
 import { FormActions, FormSection } from '@/components/ui/form-section';
 import { routes } from '@/lib/routes';
 
+/** What may change on one of the four fixed campuses (owner decision 2026-10-04). */
 export interface CampusFormData {
-    name: string;
-    code: string;
     address: string;
     is_active: boolean;
 }
@@ -23,37 +22,17 @@ export interface CampusRow {
 
 interface CampusFormProps {
     form: InertiaForm<CampusFormData>;
-    mode: 'create' | 'edit';
-    submitLabel: string;
     onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }
 
-export function CampusForm({ form, mode, submitLabel, onSubmit }: CampusFormProps) {
+/**
+ * The address and the on/off switch of a campus. The name and code of the
+ * four campuses are fixed, so the page header shows them as text.
+ */
+export function CampusForm({ form, onSubmit }: CampusFormProps) {
     return (
         <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
-            <FormSection title="Campus">
-                <FormField label="Name" required error={form.errors.name}>
-                    <TextInput
-                        name="name"
-                        value={form.data.name}
-                        onChange={(event) => form.setData('name', event.target.value)}
-                        maxLength={100}
-                        autoComplete="off"
-                        placeholder="e.g. North Campus"
-                    />
-                </FormField>
-
-                <FormField label="Code" required error={form.errors.code} hint="A short code shown in lists, such as NORTH. Letters, numbers, hyphens and underscores.">
-                    <TextInput
-                        name="code"
-                        value={form.data.code}
-                        onChange={(event) => form.setData('code', event.target.value.toUpperCase())}
-                        maxLength={20}
-                        autoComplete="off"
-                        className="uppercase"
-                    />
-                </FormField>
-
+            <FormSection title="Campus Details">
                 <FormField label="Address" error={form.errors.address} hint="Optional. Up to 255 characters.">
                     <TextInput
                         name="address"
@@ -64,15 +43,13 @@ export function CampusForm({ form, mode, submitLabel, onSubmit }: CampusFormProp
                     />
                 </FormField>
 
-                {mode === 'edit' && (
-                    <CheckboxField
-                        label="Campus is active"
-                        description="New classes, candidates and staff can only be placed on an active campus. Existing records stay where they are."
-                        checked={form.data.is_active}
-                        onChange={(event) => form.setData('is_active', event.target.checked)}
-                        error={form.errors.is_active}
-                    />
-                )}
+                <CheckboxField
+                    label="Campus is active"
+                    description="New classes, candidates and staff can only be placed on an active campus. Existing records stay where they are."
+                    checked={form.data.is_active}
+                    onChange={(event) => form.setData('is_active', event.target.checked)}
+                    error={form.errors.is_active}
+                />
             </FormSection>
 
             <FormActions>
@@ -80,7 +57,7 @@ export function CampusForm({ form, mode, submitLabel, onSubmit }: CampusFormProp
                     Cancel
                 </ButtonLink>
                 <Button type="submit" loading={form.processing}>
-                    {submitLabel}
+                    Save Changes
                 </Button>
             </FormActions>
         </form>

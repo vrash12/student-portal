@@ -189,7 +189,7 @@ export default function Backups({ status, backups, pending, running, history, sc
                     <Summary label="Free space" value={size(status.freeBytes)} hint={`Kept: ${schedule.keep.daily} daily, ${schedule.keep.weekly} weekly, ${schedule.keep.monthly} monthly`} />
                 </dl>
 
-                <Panel title="Backups" description={`Stored in ${status.path}${status.copyPath ? `, copied to ${status.copyPath}` : ''}. Each file is encrypted with the backup passphrase kept by IT.`} bodyClassName={backups.length === 0 ? undefined : 'p-0'}>
+                <Panel title="Stored Backups" description={`Stored in ${status.path}${status.copyPath ? `, copied to ${status.copyPath}` : ''}. Each file is encrypted with the backup passphrase kept by IT.`} bodyClassName={backups.length === 0 ? undefined : 'p-0'}>
                     {backups.length === 0 ? (
                         <EmptyState icon={DatabaseBackup} headingLevel="h3" title="No backups yet" description="The first nightly backup runs tonight, or use Back Up Now." />
                     ) : (

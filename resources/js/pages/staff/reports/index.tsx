@@ -240,14 +240,15 @@ export default function Reports({
                     <h2 id="report-title" className="text-lg font-semibold text-primary-900">
                         {types[filters.type]}
                     </h2>
-                    <p className="mt-1 text-sm text-ink-muted">
+                    {/* The filters above already show these on screen; the printout needs them. */}
+                    <p className="mt-1 hidden text-sm text-ink-muted print:block">
                         {periodName} · {campusOptions.length > 1 ? `${campusLabel} · ` : ''}
                         {className} · {subjectName}
                     </p>
                     <p className="mt-1 text-sm text-ink-muted">
                         Generated <time dateTime={generatedAt}>{dates.dateTime(generatedAt)}</time> ({app.timezone}) ·{' '}
                         <span className="tabular-nums">{rows.total}</span> {rows.total === 1 ? 'record' : 'records'}
-                        {filters.search ? ` · Search: ${filters.search}` : ''}
+                        {filters.search ? <span className="hidden print:inline"> · Search: {filters.search}</span> : null}
                     </p>
                     <p className="mt-2 text-sm text-ink-muted">
                         {results

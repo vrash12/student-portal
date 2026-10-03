@@ -56,7 +56,7 @@ export default function ClassesIndex({ classes, filters, campusOptions, periods,
             <PageHeader
                 title={plural}
                 description={`Each ${singular.toLowerCase()} belongs to one academic period and one campus, and takes a set of subjects.`}
-                actions={periods.length > 0 && createAction}
+                actions={periods.length > 0 && classes.data.length > 0 && createAction}
             />
 
             <ListCharts charts={charts} />
@@ -100,7 +100,8 @@ export default function ClassesIndex({ classes, filters, campusOptions, periods,
                     <Table caption={plural}>
                         <TableHead>
                             <Th>{singular}</Th>
-                            <Th>Academic Period</Th>
+                            {/* Every row is of the chosen academic period; the column only shows when none is chosen. */}
+                            {values.period === '' && <Th>Academic Period</Th>}
                             {showCampus && <Th>Campus</Th>}
                             <Th align="right">Candidates</Th>
                             <Th align="right">Subjects</Th>
@@ -112,7 +113,7 @@ export default function ClassesIndex({ classes, filters, campusOptions, periods,
                             {classes.data.map((classBatch) => (
                                 <Tr key={classBatch.id}>
                                     <Td className="font-medium text-ink">{classBatch.name}</Td>
-                                    <Td className="text-ink-muted">{classBatch.period}</Td>
+                                    {values.period === '' && <Td className="text-ink-muted">{classBatch.period}</Td>}
                                     {showCampus && <Td className="text-ink-muted">{classBatch.campus.name}</Td>}
                                     <Td align="right" numeric>
                                         {classBatch.candidateCount}

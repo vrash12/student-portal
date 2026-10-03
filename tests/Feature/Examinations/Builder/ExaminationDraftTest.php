@@ -274,8 +274,13 @@ class ExaminationDraftTest extends TestCase
     public function test_questions_page_and_sync_are_refused_for_non_drafts(): void
     {
         $exam = $this->publishedExam();
-        $this->actingAs($this->alpha)->get("/examinations/{$exam->id}/questions")->assertStatus(422);
-        $this->get("/examinations/{$exam->id}/edit")->assertStatus(422);
+        // An old link or the Back button leads back to the examination with an explanation.
+        $this->actingAs($this->alpha)->get("/examinations/{$exam->id}/questions")
+            ->assertRedirect("/examinations/{$exam->id}")
+            ->assertInertiaFlash('toast.message', 'This examination is no longer a draft, so its questions cannot be changed.');
+        $this->get("/examinations/{$exam->id}/edit")
+            ->assertRedirect("/examinations/{$exam->id}")
+            ->assertInertiaFlash('toast.message', 'This examination is no longer a draft, so its settings cannot be changed.');
     }
 
     public function test_audit_entries_for_drafts_contain_no_confidential_content(): void

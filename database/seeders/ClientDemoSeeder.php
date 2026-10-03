@@ -31,7 +31,7 @@ use RuntimeException;
  *   instructor1, instructor2   Instructors (Subject 1 and Subject 2)
  *   student01 … student20      Candidates in Class A
  *
- * Class A and its instructors are on the Main Campus. DemoCampusSeeder adds
+ * Class A and its instructors are on the South Campus. DemoCampusSeeder adds
  * a second campus (North Campus) with its own class, instructor, candidates
  * and campus administrator.
  *
@@ -67,7 +67,7 @@ class ClientDemoSeeder extends Seeder
             throw new RuntimeException('Client demo data must not be seeded in production.');
         }
 
-        $campus = DemoCampusSeeder::mainCampus();
+        $campus = DemoCampusSeeder::southCampus();
         $this->staff('admin', DemoPeopleSeeder::STAFF['admin'], SystemRole::SuperAdministrator, null);
         $instructors = [
             1 => $this->staff('instructor1', DemoPeopleSeeder::STAFF['instructor1'], SystemRole::Instructor, $campus),

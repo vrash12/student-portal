@@ -24,13 +24,15 @@ export interface PortalExam {
 export function ExamCard({ exam, upcoming = false }: { exam: PortalExam; upcoming?: boolean }) {
     const dates = useDateFormatter();
     const taken = exam.attemptsUsed > 0;
-    const state: { tone: StatusTone; label: string } = upcoming
-        ? { tone: 'neutral', label: 'Scheduled' }
+    // "Open now" and "Scheduled" are already the titles of the sections the
+    // cards sit in; only the states that differ from the section get a badge.
+    const state: { tone: StatusTone; label: string } | null = upcoming
+        ? null
         : exam.resumeId
           ? { tone: 'warning', label: 'In progress' }
           : taken
             ? { tone: 'neutral', label: 'Taken' }
-            : { tone: 'success', label: 'Open now' };
+            : null;
     const action: { label: string; icon: LucideIcon; href: string; primary: boolean } = upcoming
         ? { label: 'View Details', icon: CalendarClock, href: routes.portal.examination(exam.id), primary: false }
         : exam.resumeId
@@ -43,7 +45,7 @@ export function ExamCard({ exam, upcoming = false }: { exam: PortalExam; upcomin
         <article className="flex flex-col rounded-2xl border border-line-box bg-surface p-6 shadow-sm">
             <div className="flex items-center justify-between gap-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-ink-muted">{exam.kind}</span>
-                <StatusBadge tone={state.tone}>{state.label}</StatusBadge>
+                {state !== null && <StatusBadge tone={state.tone}>{state.label}</StatusBadge>}
             </div>
             <h3 className="mt-3 text-xl font-semibold leading-snug text-primary-900">{exam.title}</h3>
             <p className="mt-1 text-base text-ink-muted">{exam.subject}</p>

@@ -143,7 +143,7 @@ export function CandidateMedicalPanel({ medical, candidateId }: { medical: Profi
                         )}
                     </div>
                     {!full && (
-                        <p className="text-sm text-ink-muted">View only. Printing and screenshots are not allowed. To keep a copy, request a download; the medical staff decide. Each document you open is recorded.</p>
+                        <p className="text-sm text-ink-muted">To keep a copy of a document, request a download; an administrator decides.</p>
                     )}
                     <MedicalDocumentList
                         documents={medical.documents}

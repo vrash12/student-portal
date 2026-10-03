@@ -2,10 +2,18 @@
 
 namespace Database\Factories;
 
+use App\Enums\CampusCode;
 use App\Models\Campus;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use RuntimeException;
 
 /**
+ * The institution has exactly four campuses (owner decision 2026-10-04),
+ * created by the migrations; the database refuses any other code. Tests use
+ * the existing ones through fixed() and defaultCampusId() instead of making
+ * new campuses. The definition only recreates one of the four that a test
+ * removed.
+ *
  * @extends Factory<Campus>
  */
 class CampusFactory extends Factory
@@ -15,31 +23,31 @@ class CampusFactory extends Factory
      */
     public function definition(): array
     {
-        $number = fake()->unique()->numberBetween(100, 999);
+        $existing = Campus::query()->pluck('code')->all();
 
-        return [
-            'name' => "Campus {$number}",
-            'code' => "C{$number}",
-            'address' => null,
-            'is_active' => true,
-        ];
+        foreach (CampusCode::cases() as $campus) {
+            if (! in_array($campus->value, $existing, true)) {
+                return ['name' => $campus->label(), 'code' => $campus->value, 'address' => null, 'is_active' => true];
+            }
+        }
+
+        throw new RuntimeException('The four campuses already exist; use CampusFactory::fixed() instead of creating one.');
     }
 
-    public function inactive(): static
+    /** One of the four campuses, created again if a test removed it. */
+    public static function fixed(CampusCode $code): Campus
     {
-        return $this->state(fn (): array => ['is_active' => false]);
+        return Campus::query()->where('code', $code->value)->first()
+            ?? Campus::factory()->create(['name' => $code->label(), 'code' => $code->value]);
     }
 
     /**
      * The campus records are attached to when a test does not choose one:
-     * the first campus, created as "Main Campus" when there is none. Using
-     * one shared campus keeps instructors and the classes they teach on the
-     * same campus (a database rule).
+     * the South Campus. Using one shared campus keeps instructors and the
+     * classes they teach on the same campus (a database rule).
      */
     public static function defaultCampusId(): int
     {
-        $id = Campus::query()->orderBy('id')->value('id');
-
-        return $id !== null ? (int) $id : Campus::factory()->create(['name' => 'Main Campus', 'code' => 'MAIN'])->id;
+        return self::fixed(CampusCode::South)->id;
     }
 }

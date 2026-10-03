@@ -88,12 +88,13 @@ final readonly class CampusScope
 
     /**
      * Whether class names in this scope need their campus beside them: the
-     * scope spans several campuses, which may each have a class of the same
-     * name in one academic year.
+     * scope spans several campuses that have classes, and those may each
+     * have a class of the same name in one academic year. (All four
+     * campuses always exist; one without classes changes nothing.)
      */
     public function labelsCampuses(): bool
     {
-        return $this->campusId === null && Campus::query()->count() > 1;
+        return $this->campusId === null && ClassBatch::query()->distinct()->count('campus_id') > 1;
     }
 
     /** A class's name, with its campus code when the scope spans several campuses. */
@@ -236,7 +237,8 @@ final readonly class CampusScope
 
     /**
      * Campuses that can be chosen in a list filter: every campus for an
-     * institution-wide account (the filter is hidden otherwise), active first.
+     * institution-wide account (the filter is hidden otherwise), in the fixed
+     * order South, North, East, West.
      *
      * @return list<array{id: int, name: string, code: string, isActive: bool}>
      */
@@ -276,9 +278,8 @@ final readonly class CampusScope
     private static function options(Builder $campuses): array
     {
         return $campuses
-            ->orderByDesc('is_active')
-            ->orderBy('name')
             ->get(['id', 'name', 'code', 'is_active'])
+            ->sortBy(fn (Campus $campus): int => $campus->position())
             ->map(fn (Campus $campus): array => [
                 'id' => $campus->id,
                 'name' => $campus->name,

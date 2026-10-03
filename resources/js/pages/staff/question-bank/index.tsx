@@ -69,7 +69,7 @@ export default function QuestionBankIndex({ questions, filters, subjects, topics
                             >
                                 Import Questions
                             </ButtonLink>
-                            {addQuestion}
+                            {(questions.data.length > 0 || (isFiltered && !onlySubjectFiltered)) && addQuestion}
                         </>
                     ) : undefined
                 }

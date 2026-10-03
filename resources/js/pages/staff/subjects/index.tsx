@@ -48,7 +48,7 @@ export default function SubjectsIndex({ subjects, filters, activePeriod }: Subje
         <>
             <Head title="Subjects" />
 
-            <PageHeader title="Subjects" description={`Subjects that ${terms.classBatch.plural.toLowerCase()} can take. Deactivate subjects that are no longer offered.`} actions={createAction} />
+            <PageHeader title="Subjects" description={`Subjects that ${terms.classBatch.plural.toLowerCase()} can take. Deactivate subjects that are no longer offered.`} actions={(subjects.data.length > 0 || isFiltered) && createAction} />
 
             <div className="rounded-lg border border-line-box bg-surface">
                 <FilterBar onReset={reset} canReset={isFiltered}>

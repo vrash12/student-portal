@@ -43,7 +43,7 @@ export default function FitnessStandards({ events }: { events: FitnessEventRow[]
                 title="Fitness Events and Points"
                 description="The events of a fitness test and the points each result earns: a points table, or a scale between a passing and a maximum standard. A candidate passes an event with at least its passing points; failing any event fails the test."
                 breadcrumbs={[{ label: 'Military Fitness', href: routes.fitness.index() }, { label: 'Events and Points' }]}
-                actions={addAction}
+                actions={events.length > 0 && addAction}
             />
 
             <div className="rounded-lg border border-line-box bg-surface">
