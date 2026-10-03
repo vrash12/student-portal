@@ -16,7 +16,6 @@ export default function EditAccountExpense({ expense, categories }: EditAccountE
         name: expense.name,
         account_category_id: String(expense.category.id),
         amount: expense.amount,
-        due_on: expense.dueOn ?? '',
         description: expense.description ?? '',
         is_active: expense.isActive,
     });
@@ -41,7 +40,7 @@ export default function EditAccountExpense({ expense, categories }: EditAccountE
                 />
                 {expense.isAssigned && (
                     <Alert title="Already charged to candidates">
-                        The amount and category are fixed because candidates are charged this expense. A new name or due date applies to every charge of it. To change the amount, void the charges and create a new expense.
+                        The amount and category are fixed because candidates are charged this expense. A new name applies to every charge of it. To change the amount, void the charges and create a new expense.
                     </Alert>
                 )}
                 <AccountExpenseForm

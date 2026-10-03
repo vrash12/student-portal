@@ -69,7 +69,6 @@ class AccountExpenseTest extends TestCase
                 'name' => 'Uniform set',
                 'account_category_id' => (string) $this->uniforms->id,
                 'amount' => '3,500.00',
-                'due_on' => '2026-09-15',
                 'description' => '',
                 ...$overrides,
             ])
@@ -92,16 +91,16 @@ class AccountExpenseTest extends TestCase
     {
         $this->actingAs($this->admin)->get('/account-expenses/create')->assertOk()
             ->assertInertia(fn (Assert $page) => $page->component('staff/accounts/expenses/create')
-                // Only charge categories: an expense is always a charge.
-                ->where('categories', fn ($categories) => collect($categories)->pluck('name')->doesntContain('Meal Allowance')));
+                // Every active category: categories are always for charges.
+                ->where('categories', fn ($categories) => collect($categories)->pluck('name')->contains('Meal Allowance')));
 
-        $allowance = AccountCategory::query()->where('name', 'Meal Allowance')->sole();
-        $this->actingAs($this->admin)->post('/account-expenses', ['name' => '', 'account_category_id' => (string) $allowance->id, 'amount' => '0', 'due_on' => 'soon'])
-            ->assertSessionHasErrors(['name', 'account_category_id', 'amount', 'due_on']);
+        $this->actingAs($this->admin)->post('/account-expenses', ['name' => '', 'account_category_id' => '999999', 'amount' => '0'])
+            ->assertSessionHasErrors(['name', 'account_category_id', 'amount']);
 
-        $expense = $this->createExpense();
+        $expense = $this->createExpense(['due_on' => '2026-09-15']);
         $this->assertSame('3500.00', $expense->amount);
-        $this->assertSame('2026-09-15', $expense->due_on->toDateString());
+        // There is no due date any more; a sent one is ignored.
+        $this->assertArrayNotHasKey('due_on', $expense->getAttributes());
         $this->assertNull($expense->description);
         $this->assertSame($this->admin->id, $expense->created_by);
         $this->assertSame(1, AuditLog::query()->where('action', AuditAction::AccountExpenseCreated->value)->count());
@@ -199,11 +198,11 @@ class AccountExpenseTest extends TestCase
         $this->assertSame(1, AccountEntry::query()->where('account_expense_id', $expense->id)->standing()->count());
     }
 
-    public function test_once_assigned_the_amount_and_category_are_fixed_but_the_name_and_due_date_follow(): void
+    public function test_once_assigned_the_amount_and_category_are_fixed_but_the_name_follows(): void
     {
         $expense = $this->createExpense();
         $update = fn (array $overrides) => $this->actingAs($this->admin)->put("/account-expenses/{$expense->id}", [
-            'name' => 'Uniform set', 'account_category_id' => (string) $this->uniforms->id, 'amount' => '3500', 'due_on' => '2026-09-15', 'description' => '', 'is_active' => true,
+            'name' => 'Uniform set', 'account_category_id' => (string) $this->uniforms->id, 'amount' => '3500', 'description' => '', 'is_active' => true,
             ...$overrides,
         ]);
 
@@ -217,13 +216,12 @@ class AccountExpenseTest extends TestCase
         $update(['amount' => '3600', 'account_category_id' => (string) $billing->id])->assertSessionHasErrors('account_category_id');
         $this->assertSame('3600.00', $expense->refresh()->amount);
 
-        $update(['amount' => '3,600.00', 'name' => 'Uniform set (two pieces)', 'due_on' => '2026-09-30'])->assertSessionHasNoErrors();
+        $update(['amount' => '3,600.00', 'name' => 'Uniform set (two pieces)'])->assertSessionHasNoErrors();
         $this->assertSame(1, AuditLog::query()->where('action', AuditAction::AccountExpenseUpdated->value)->where('new_values->name', 'Uniform set (two pieces)')->count());
 
         $charge = AccountEntry::query()->where('account_expense_id', $expense->id)->with('expense')->sole();
-        // The charge shows the expense's current name and due date; its amount is unchanged.
+        // The charge shows the expense's current name; its amount is unchanged.
         $this->assertSame('Uniform set (two pieces)', $charge->label());
-        $this->assertSame('2026-09-30', $charge->dueDate());
         $this->assertSame('3600.00', $charge->amount);
     }
 

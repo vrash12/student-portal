@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Accounts;
 
-use App\Enums\AccountEntryType;
 use App\Http\Requests\Concerns\NormalizesTextInput;
 use App\Models\AccountCategory;
 use Illuminate\Foundation\Http\FormRequest;
@@ -39,9 +38,7 @@ class AccountCategoryRequest extends FormRequest
 
         return [
             'name' => ['required', 'string', 'max:100', Rule::unique('account_categories', 'name')->ignore($category?->id)],
-            'entry_type' => ['required', Rule::enum(AccountEntryType::class)],
             'description' => ['nullable', 'string', 'max:255'],
-            'sort_order' => ['required', 'integer', 'min:0', 'max:999'],
             'is_active' => [$category === null ? 'prohibited' : 'required', 'boolean'],
         ];
     }
@@ -55,15 +52,13 @@ class AccountCategoryRequest extends FormRequest
     }
 
     /**
-     * @return array{name: string, entry_type: string, description: ?string, sort_order: int, is_active: bool}
+     * @return array{name: string, description: ?string, is_active: bool}
      */
     public function categoryData(): array
     {
         return [
             'name' => (string) $this->validated('name'),
-            'entry_type' => (string) $this->validated('entry_type'),
             'description' => $this->validated('description'),
-            'sort_order' => (int) $this->validated('sort_order'),
             'is_active' => $this->boolean('is_active', true),
         ];
     }

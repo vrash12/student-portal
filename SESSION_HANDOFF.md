@@ -31,6 +31,13 @@ Updated 2026-10-01 by Claude Code (earlier sections by Codex, 2026-09-30). Read 
 - **Open owner decisions** are under "Requirements still needing confirmation" at the end of this file, plus whether to deactivate the "Pay & Allowances" and "Deductions" account categories.
 - Extra test databases `academic_system_{r1,r2,r3,w1,w2,w3,v1…v12,login}_testing` exist from parallel runs and can be dropped.
 
+## Owner request — simpler expense categories, no due dates (2026-10-03, Claude Code)
+
+- **Request:** remove the categories' "usual type" (always charge), the Entries and Order columns of the categories table, and the expense due date.
+- **Schema:** migration `2026_10_03_000200_simplify_expense_categories_and_due_dates` drops `account_categories.entry_type` and `sort_order` (and the `account_categories_entry_type_check`), `account_expenses.due_on` and `account_entries.due_on` (and `account_entries_due_check`); `down()` re-adds the columns empty. Recorded entries keep their own `entry_type`. Categories are listed by name (`AccountCategory::ordered`); every active category may be used for an expense. `AccountEntry::dueDate()` was removed. This also settles the earlier open question about the "Pay & Allowances" and "Deductions" categories: they are now ordinary (charge) categories, deactivate them if unwanted.
+- **Pages:** category form = Name, Description (and Active on edit); categories table = Category, Status; expense form, list and detail without a due date.
+- **Tests:** `AccountEntriesTest`, `AccountExpenseTest`, `ServiceAccountCategoriesTest` (no longer re-runs migration 000810, whose columns are gone), `RouteAccessMatrixTest`: 33 passed with `SeederTest`. Migration rolled back and re-applied on the local database.
+
 ## Owner requests — one signed-in device per candidate; full-width page banner (2026-10-03, Claude Code)
 
 - **One session per candidate:** `AuthenticatedSessionController::store` ends the candidate's other sessions when they sign in (`UserAccountService::endSessions`, now returning the count); the earlier device is signed out on its next request. Only accounts with the portal permission and without staff access; staff may stay signed in on several devices. The Login audit entry records `other_sessions_ended` when any were ended. This relies on the database session driver and on "Remember me" keeping only the username (no remember-me cookie). An attempt open on the old tablet keeps its unsent answers on that device; the candidate can continue the attempt on the new one. Tests: `LoginTest` (candidate's other sessions ended, others' kept, audit; staff sessions kept).

@@ -54,14 +54,14 @@ class DemoAccountStatementsSeeder extends Seeder
             return;
         }
 
-        // [name, category, amount, assessed on (days after the start), due (days after the start)]
+        // [name, category, amount, assessed on (days after the start)]
         $expenses = [
-            ['Training Fees, '.$period->name, 'Billing', '15000.00', 0, 30],
-            ['Uniform Set (two pieces)', 'Uniforms', '3500.00', 7, 14],
-            ['Meals, First Month', 'Meals', '4500.00', 28, 30],
-            ['Fitness Test Kit', 'Military Fitness', '1500.00', 14, 45],
+            ['Training Fees, '.$period->name, 'Billing', '15000.00', 0],
+            ['Uniform Set (two pieces)', 'Uniforms', '3500.00', 7],
+            ['Meals, First Month', 'Meals', '4500.00', 28],
+            ['Fitness Test Kit', 'Military Fitness', '1500.00', 14],
         ];
-        foreach ($expenses as [$name, $category, $amount, $assessedAfter, $dueAfter]) {
+        foreach ($expenses as [$name, $category, $amount, $assessedAfter]) {
             if (! isset($categories[$category])) {
                 continue;
             }
@@ -70,7 +70,6 @@ class DemoAccountStatementsSeeder extends Seeder
                 'name' => $name,
                 'account_category_id' => (int) $categories[$category],
                 'amount' => $amount,
-                'due_on' => $start->copy()->addDays($dueAfter)->toDateString(),
                 'description' => null,
             ], $actor);
             if ($expense->is_active) {
@@ -90,7 +89,6 @@ class DemoAccountStatementsSeeder extends Seeder
                 'entry_type' => 'charge',
                 'amount' => '250.00',
                 'posted_on' => $start->copy()->addDays(21)->toDateString(),
-                'due_on' => $start->copy()->addDays(45)->toDateString(),
                 'description' => 'Replacement ID card',
                 'reference' => null,
             ];

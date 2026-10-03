@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Accounts;
 
-use App\Enums\AccountEntryType;
 use App\Enums\SystemRole;
 use App\Models\AccountCategory;
 use App\Models\Candidate;
@@ -14,6 +13,8 @@ use Tests\TestCase;
  * Statement of Account categories for a service school (owner request,
  * 2026-10-01): pay and allowances, deductions and issued-item
  * accountability, added after the first defaults. No amounts are seeded.
+ * Since 2026-10-03 categories have no usual type or order (always charges,
+ * listed by name), so the migration is no longer re-run here.
  */
 class ServiceAccountCategoriesTest extends TestCase
 {
@@ -24,35 +25,12 @@ class ServiceAccountCategoriesTest extends TestCase
         return require database_path('migrations/2026_10_01_000810_add_service_account_categories.php');
     }
 
-    public function test_the_service_categories_exist_after_the_first_defaults(): void
+    public function test_the_service_categories_exist_and_are_listed_by_name(): void
     {
         $categories = AccountCategory::query()->whereIn('name', self::NAMES)->ordered()->get();
 
-        $this->assertSame(self::NAMES, $categories->pluck('name')->all());
-        $this->assertSame([AccountEntryType::Credit, AccountEntryType::Charge, AccountEntryType::Charge], $categories->pluck('entry_type')->all());
+        $this->assertSame(['Deductions', 'Issued Items / Accountability', 'Pay & Allowances'], $categories->pluck('name')->all());
         $this->assertTrue($categories->every(fn (AccountCategory $category): bool => $category->is_active && $category->description !== null));
-
-        $firstDefaults = AccountCategory::query()->whereNotIn('name', self::NAMES)->max('sort_order');
-        $this->assertSame([$firstDefaults + 1, $firstDefaults + 2, $firstDefaults + 3], $categories->pluck('sort_order')->all());
-    }
-
-    public function test_running_again_adds_only_the_missing_categories(): void
-    {
-        AccountCategory::query()->where('name', 'Pay & Allowances')->delete();
-        // An administrator's own changes to an existing category are kept.
-        AccountCategory::query()->where('name', 'Deductions')->update(['description' => 'Mess and quarters', 'is_active' => false]);
-        $before = (int) AccountCategory::query()->max('sort_order');
-
-        $this->migration()->up();
-        $this->migration()->up();
-
-        foreach (self::NAMES as $name) {
-            $this->assertSame(1, AccountCategory::query()->where('name', $name)->count(), $name);
-        }
-        $deductions = AccountCategory::query()->where('name', 'Deductions')->sole();
-        $this->assertSame('Mess and quarters', $deductions->description);
-        $this->assertFalse($deductions->is_active);
-        $this->assertSame($before + 1, AccountCategory::query()->where('name', 'Pay & Allowances')->value('sort_order'));
     }
 
     public function test_rolling_back_keeps_categories_that_entries_use(): void

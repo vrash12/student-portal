@@ -16,7 +16,6 @@ export default function CreateAccountExpense({ categories }: CreateAccountExpens
         name: '',
         account_category_id: '',
         amount: '',
-        due_on: '',
         description: '',
         is_active: true,
     });

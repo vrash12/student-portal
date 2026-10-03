@@ -8,7 +8,6 @@ export interface AccountExpenseFormData {
     name: string;
     account_category_id: string;
     amount: string;
-    due_on: string;
     description: string;
     is_active: boolean;
 }
@@ -40,7 +39,7 @@ export function AccountExpenseForm({ form, mode, categories, locked, cancelHref,
                     />
                 </FormField>
 
-                <div className="grid gap-5 sm:grid-cols-3">
+                <div className="grid gap-5 sm:grid-cols-2">
                     <FormField label="Category" required error={form.errors.account_category_id} className="sm:col-span-1">
                         <SelectInput
                             name="account_category_id"
@@ -66,9 +65,6 @@ export function AccountExpenseForm({ form, mode, categories, locked, cancelHref,
                             className="tabular-nums"
                             disabled={locked}
                         />
-                    </FormField>
-                    <FormField label="Due date" error={form.errors.due_on} hint="Optional. Empty: due upon assessment.">
-                        <TextInput type="date" name="due_on" value={form.data.due_on} onChange={(event) => form.setData('due_on', event.target.value)} />
                     </FormField>
                 </div>
 

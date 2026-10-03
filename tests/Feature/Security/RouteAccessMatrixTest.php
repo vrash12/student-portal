@@ -122,7 +122,7 @@ class RouteAccessMatrixTest extends TestCase
         ], $this->userWithRole(SystemRole::SuperAdministrator));
         $accountExpense = app(AccountService::class)->createExpense([
             'name' => 'Uniform set', 'account_category_id' => (int) $accountEntry->account_category_id,
-            'amount' => '100.00', 'due_on' => null, 'description' => null,
+            'amount' => '100.00', 'description' => null,
         ], $this->userWithRole(SystemRole::SuperAdministrator));
 
         // A merit of candidate B1 and an attendance session of Batch B (in scope for

@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * An expense defined once by finance staff (e.g. "Uniform set", 3,500.00,
- * due 15 Sep) and assigned to candidates. Each assignment is a charge entry
+ * An expense defined once by finance staff (e.g. "Uniform set", 3,500.00)
+ * and assigned to candidates. Each assignment is a charge entry
  * linked to the expense. Once assigned, its amount and category are fixed;
  * expenses are deactivated, never deleted. Change through AccountService.
  */
@@ -30,7 +30,6 @@ class AccountExpense extends Model
     {
         return [
             'amount' => 'decimal:2',
-            'due_on' => 'date',
             'is_active' => 'boolean',
         ];
     }

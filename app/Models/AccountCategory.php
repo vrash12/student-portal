@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\AccountEntryType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,11 +9,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * A configurable Statement of Account category (e.g. Uniforms, Meal
- * Allowance) with the side its entries usually take. Categories in use are
- * deactivated, never deleted. Change through AccountService.
+ * A configurable expense category (e.g. Uniforms, Meals). Categories are
+ * always for charges and are listed by name (owner request, 2026-10-03).
+ * Categories in use are deactivated, never deleted. Change through AccountService.
  */
-#[Fillable(['name', 'entry_type', 'description', 'sort_order'])]
+#[Fillable(['name', 'description'])]
 class AccountCategory extends Model
 {
     /**
@@ -22,7 +21,6 @@ class AccountCategory extends Model
      */
     protected $attributes = [
         'is_active' => true,
-        'sort_order' => 0,
     ];
 
     /**
@@ -31,8 +29,6 @@ class AccountCategory extends Model
     protected function casts(): array
     {
         return [
-            'entry_type' => AccountEntryType::class,
-            'sort_order' => 'integer',
             'is_active' => 'boolean',
         ];
     }
@@ -68,6 +64,6 @@ class AccountCategory extends Model
     #[Scope]
     protected function ordered(Builder $query): void
     {
-        $query->orderBy('sort_order')->orderBy('name');
+        $query->orderBy('name');
     }
 }

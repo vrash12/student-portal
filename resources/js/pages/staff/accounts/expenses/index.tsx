@@ -8,7 +8,6 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
-import { formatCalendarDate } from '@/lib/format';
 import { useMoney } from '@/lib/money';
 import { routes } from '@/lib/routes';
 
@@ -60,7 +59,6 @@ export default function AccountExpenses({ expenses, charts }: { expenses: Expens
                         <TableHead>
                             <Th>Expense</Th>
                             <Th>Category</Th>
-                            <Th>Due Date</Th>
                             <Th align="right">Amount</Th>
                             <Th align="right">Candidates Charged</Th>
                             <Th align="right">Total Assessed</Th>
@@ -77,7 +75,6 @@ export default function AccountExpenses({ expenses, charts }: { expenses: Expens
                                         {expense.description && <span className="block text-xs text-ink-muted">{expense.description}</span>}
                                     </Td>
                                     <Td className="text-ink">{expense.category.name}</Td>
-                                    <Td className="whitespace-nowrap text-ink">{expense.dueOn === null ? 'Upon assessment' : formatCalendarDate(expense.dueOn)}</Td>
                                     <Td align="right" numeric className="whitespace-nowrap text-ink">
                                         {money(expense.amount)}
                                     </Td>

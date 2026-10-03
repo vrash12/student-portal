@@ -24,7 +24,6 @@ class AccountEntry extends Model
             'entry_type' => AccountEntryType::class,
             'amount' => 'decimal:2',
             'posted_on' => 'date',
-            'due_on' => 'date',
             'voided_at' => 'datetime',
         ];
     }
@@ -53,17 +52,6 @@ class AccountEntry extends Model
     public function expense(): BelongsTo
     {
         return $this->belongsTo(AccountExpense::class, 'account_expense_id');
-    }
-
-    /**
-     * When the charge is due: the expense's due date for an assigned expense,
-     * otherwise the charge's own (null for credits and charges without one).
-     */
-    public function dueDate(): ?string
-    {
-        $due = $this->account_expense_id !== null ? $this->expense?->due_on : $this->due_on;
-
-        return $due?->toDateString();
     }
 
     /** The line's description: an assigned expense shows the expense's current name. */

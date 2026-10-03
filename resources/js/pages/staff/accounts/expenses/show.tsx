@@ -71,8 +71,7 @@ export default function AccountExpenseShow({ expense, charges, filters, picker, 
                 title={expense.name}
                 description={
                     <>
-                        {expense.category.name} · {money(expense.amount)} per candidate · Due{' '}
-                        {expense.dueOn === null ? 'upon assessment' : formatCalendarDate(expense.dueOn)}
+                        {expense.category.name} · {money(expense.amount)} per candidate
                         {!expense.isActive && (
                             <>
                                 {' '}

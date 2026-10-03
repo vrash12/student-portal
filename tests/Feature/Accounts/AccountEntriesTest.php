@@ -62,10 +62,10 @@ class AccountEntriesTest extends TestCase
 
     public function test_the_migration_seeds_the_default_categories(): void
     {
-        // The service-school categories (migration 2026_10_01_000810) follow the first defaults.
+        // The first defaults and the service-school categories (migration 2026_10_01_000810), listed by name.
         $this->assertSame(
-            ['Billing', 'Chargeable Items', 'Uniforms', 'Meals', 'Military Fitness', 'Meal Allowance', 'Allowance', 'Bank Deposit', 'Payment Received',
-                'Pay & Allowances', 'Deductions', 'Issued Items / Accountability'],
+            ['Allowance', 'Bank Deposit', 'Billing', 'Chargeable Items', 'Deductions', 'Issued Items / Accountability', 'Meal Allowance', 'Meals',
+                'Military Fitness', 'Pay & Allowances', 'Payment Received', 'Uniforms'],
             AccountCategory::query()->ordered()->pluck('name')->all(),
         );
     }
@@ -141,7 +141,7 @@ class AccountEntriesTest extends TestCase
                 $this->actingAs($user)->get($url)->assertForbidden();
             }
             $this->actingAs($user)->post("/account-entries/{$entry->id}/void", ['reason' => 'Not allowed'])->assertForbidden();
-            $this->actingAs($user)->post('/account-categories', ['name' => 'Laundry', 'entry_type' => 'charge', 'sort_order' => '10'])->assertForbidden();
+            $this->actingAs($user)->post('/account-categories', ['name' => 'Laundry'])->assertForbidden();
         }
 
         $this->assertNull($entry->fresh()->voided_at);
@@ -206,19 +206,22 @@ class AccountEntriesTest extends TestCase
     public function test_categories_can_be_created_updated_and_deactivated(): void
     {
         $this->actingAs($this->admin)->get('/account-categories')->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->component('staff/accounts/categories/index')->has('categories', 12));
+            ->assertInertia(fn (Assert $page) => $page->component('staff/accounts/categories/index')->has('categories', 12)
+                // Listed by name, without a usual type, order or entry count.
+                ->where('categories.0.name', 'Allowance')
+                ->missing('categories.0.entryType')->missing('categories.0.sortOrder')->missing('categories.0.entryCount'));
 
-        $this->actingAs($this->admin)->post('/account-categories', ['name' => '  Laundry  ', 'entry_type' => 'charge', 'description' => '', 'sort_order' => '10'])
+        $this->actingAs($this->admin)->post('/account-categories', ['name' => '  Laundry  ', 'description' => ''])
             ->assertRedirect('/account-categories')->assertSessionHasNoErrors();
         $laundry = AccountCategory::query()->where('name', 'Laundry')->sole();
         $this->assertTrue($laundry->is_active);
         $this->assertSame(1, AuditLog::query()->where('action', AuditAction::AccountCategoryCreated->value)->count());
 
-        $this->actingAs($this->admin)->post('/account-categories', ['name' => 'uniforms', 'entry_type' => 'charge', 'sort_order' => '11'])
+        $this->actingAs($this->admin)->post('/account-categories', ['name' => 'uniforms'])
             ->assertSessionHasErrors(['name' => 'Another category already uses this name.']);
 
         $this->actingAs($this->admin)->put("/account-categories/{$laundry->id}", [
-            'name' => 'Laundry Service', 'entry_type' => 'charge', 'description' => 'Weekly laundry', 'sort_order' => '12', 'is_active' => false,
+            'name' => 'Laundry Service', 'description' => 'Weekly laundry', 'is_active' => false,
         ])->assertRedirect('/account-categories')->assertSessionHasNoErrors();
 
         $laundry->refresh();

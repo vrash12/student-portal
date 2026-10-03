@@ -1,21 +1,13 @@
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { AccountCategoryForm, type AccountCategoryFormData } from '@/components/accounts/category-form';
-import type { AccountEntryTypeOption } from '@/components/accounts/types';
 import { PageHeader } from '@/components/ui/page-header';
 import { routes } from '@/lib/routes';
 
-interface CreateAccountCategoryProps {
-    entryTypes: AccountEntryTypeOption[];
-    nextSortOrder: number;
-}
-
-export default function CreateAccountCategory({ entryTypes, nextSortOrder }: CreateAccountCategoryProps) {
+export default function CreateAccountCategory() {
     const form = useForm<AccountCategoryFormData>({
         name: '',
-        entry_type: 'charge',
         description: '',
-        sort_order: String(nextSortOrder),
         is_active: true,
     });
 
@@ -33,14 +25,14 @@ export default function CreateAccountCategory({ entryTypes, nextSortOrder }: Cre
             <div className="mx-auto max-w-3xl">
                 <PageHeader
                     title="Add Account Category"
-                    description="A category of expenses and other charges."
+                    description="A category of expenses."
                     breadcrumbs={[
                         { label: 'Expenses', href: routes.accounts.expenses.index() },
                         { label: 'Categories', href: routes.accounts.categories.index() },
                         { label: 'Add Category' },
                     ]}
                 />
-                <AccountCategoryForm form={form} mode="create" entryTypes={entryTypes} submitLabel="Add Category" onSubmit={submit} />
+                <AccountCategoryForm form={form} mode="create" submitLabel="Add Category" onSubmit={submit} />
             </div>
         </>
     );

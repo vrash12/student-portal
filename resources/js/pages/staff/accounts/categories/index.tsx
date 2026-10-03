@@ -33,17 +33,14 @@ export default function AccountCategories({ categories }: { categories: AccountC
                     <EmptyState
                         icon={Tags}
                         title="No account categories yet"
-                        description="Add the categories entries are recorded under, such as billing, uniforms, meals, allowances and payments received."
+                        description="Add the categories expenses belong to, such as billing, uniforms and meals."
                         action={addAction}
                     />
                 ) : (
-                    <Table caption="Account categories" className="min-w-[44rem]">
+                    <Table caption="Account categories" className="min-w-[32rem]">
                         <TableHead>
-                            <Th align="right">Order</Th>
                             <Th>Category</Th>
-                            <Th>Usual Type</Th>
                             <Th>Status</Th>
-                            <Th align="right">Entries</Th>
                             <Th align="right">
                                 <span className="sr-only">Actions</span>
                             </Th>
@@ -51,19 +48,12 @@ export default function AccountCategories({ categories }: { categories: AccountC
                         <TableBody>
                             {pagination.rows.map((category) => (
                                 <Tr key={category.id}>
-                                    <Td align="right" numeric>
-                                        {category.sortOrder}
-                                    </Td>
                                     <Td className="text-ink">
                                         <span className="font-medium">{category.name}</span>
                                         {category.description && <span className="block text-xs text-ink-muted">{category.description}</span>}
                                     </Td>
-                                    <Td className="text-ink">{category.entryType.label}</Td>
                                     <Td>
                                         {category.isActive ? <StatusBadge tone="success">Active</StatusBadge> : <StatusBadge tone="neutral">Inactive</StatusBadge>}
-                                    </Td>
-                                    <Td align="right" numeric>
-                                        {category.entryCount}
                                     </Td>
                                     <Td align="right">
                                         <RowAction href={routes.accounts.categories.edit(category.id)} label={`Edit ${category.name}`}>

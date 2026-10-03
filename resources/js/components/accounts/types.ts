@@ -3,12 +3,6 @@
  * in whole cents by the server ("1250.50"); the browser only formats them.
  */
 
-export interface AccountEntryTypeOption {
-    value: string;
-    label: string;
-    description: string;
-}
-
 /** A charge entry as shown when voiding it. */
 export interface ChargeEntry {
     id: number;
@@ -24,7 +18,6 @@ export interface AccountExpense {
     name: string;
     category: { id: number; name: string };
     amount: string;
-    dueOn: string | null;
     description: string | null;
     isActive: boolean;
 }
@@ -32,9 +25,6 @@ export interface AccountExpense {
 export interface AccountCategoryRow {
     id: number;
     name: string;
-    entryType: { value: string; label: string };
     description: string | null;
-    sortOrder: number;
     isActive: boolean;
-    entryCount: number;
 }

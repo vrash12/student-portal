@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Staff;
 
-use App\Enums\AccountEntryType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Accounts\AccountCategoryRequest;
 use App\Models\AccountCategory;
@@ -12,7 +11,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Statement of Account categories (route middleware: accounts.manage).
+ * Expense categories (route middleware: accounts.manage). Every category is
+ * for charges; categories are listed by name.
  */
 class AccountCategoryController extends Controller
 {
@@ -21,20 +21,14 @@ class AccountCategoryController extends Controller
     public function index(): Response
     {
         return Inertia::render('staff/accounts/categories/index', [
-            'categories' => AccountCategory::query()->withCount('entries')->ordered()->get()
-                ->map(fn (AccountCategory $category): array => [
-                    ...$this->present($category),
-                    'entryCount' => (int) $category->entries_count,
-                ])->all(),
+            'categories' => AccountCategory::query()->ordered()->get()
+                ->map(fn (AccountCategory $category): array => $this->present($category))->all(),
         ]);
     }
 
     public function create(): Response
     {
-        return Inertia::render('staff/accounts/categories/create', [
-            'entryTypes' => AccountEntryType::options(),
-            'nextSortOrder' => (int) AccountCategory::query()->max('sort_order') + 1,
-        ]);
+        return Inertia::render('staff/accounts/categories/create');
     }
 
     public function store(AccountCategoryRequest $request): RedirectResponse
@@ -51,8 +45,7 @@ class AccountCategoryController extends Controller
     public function edit(AccountCategory $accountCategory): Response
     {
         return Inertia::render('staff/accounts/categories/edit', [
-            'category' => [...$this->present($accountCategory), 'entryCount' => $accountCategory->entries()->count()],
-            'entryTypes' => AccountEntryType::options(),
+            'category' => $this->present($accountCategory),
         ]);
     }
 
@@ -73,9 +66,7 @@ class AccountCategoryController extends Controller
         return [
             'id' => $category->id,
             'name' => $category->name,
-            'entryType' => ['value' => $category->entry_type->value, 'label' => $category->entry_type->label()],
             'description' => $category->description,
-            'sortOrder' => $category->sort_order,
             'isActive' => $category->is_active,
         ];
     }

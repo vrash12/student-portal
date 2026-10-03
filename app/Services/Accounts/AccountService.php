@@ -27,7 +27,7 @@ final class AccountService
     public function __construct(private readonly AuditLogger $audit) {}
 
     /**
-     * @param  array{account_category_id: int, entry_type: string, amount: string, posted_on: string, due_on?: ?string, description: string, reference: ?string}  $data
+     * @param  array{account_category_id: int, entry_type: string, amount: string, posted_on: string, description: string, reference: ?string}  $data
      */
     public function record(Candidate $candidate, array $data, User $actor): AccountEntry
     {
@@ -42,8 +42,6 @@ final class AccountService
                 'entry_type' => $data['entry_type'],
                 'amount' => Money::decimal(Money::toCents($data['amount'])),
                 'posted_on' => $data['posted_on'],
-                // Only charges fall due.
-                'due_on' => $data['entry_type'] === AccountEntryType::Charge->value ? ($data['due_on'] ?? null) : null,
                 'description' => $data['description'],
                 'reference' => $data['reference'],
                 'recorded_by' => $actor->id,
@@ -76,7 +74,7 @@ final class AccountService
     }
 
     /**
-     * @param  array{name: string, account_category_id: int, amount: string, due_on: ?string, description: ?string}  $data
+     * @param  array{name: string, account_category_id: int, amount: string, description: ?string}  $data
      */
     public function createExpense(array $data, User $actor): AccountExpense
     {
@@ -96,10 +94,10 @@ final class AccountService
 
     /**
      * Updates an expense. Once it is charged to a candidate, its amount and
-     * category are fixed (the charges already carry them); the name, due date
-     * and description still apply to every charge of the expense.
+     * category are fixed (the charges already carry them); the name and
+     * description still apply to every charge of the expense.
      *
-     * @param  array{name: string, account_category_id: int, amount: string, due_on: ?string, description: ?string, is_active: bool}  $data
+     * @param  array{name: string, account_category_id: int, amount: string, description: ?string, is_active: bool}  $data
      */
     public function updateExpense(AccountExpense $expense, array $data, User $actor): AccountExpense
     {
@@ -180,7 +178,7 @@ final class AccountService
     }
 
     /**
-     * @param  array{name: string, entry_type: string, description: ?string, sort_order: int}  $data
+     * @param  array{name: string, description: ?string}  $data
      */
     public function createCategory(array $data): AccountCategory
     {
@@ -193,7 +191,7 @@ final class AccountService
     }
 
     /**
-     * @param  array{name: string, entry_type: string, description: ?string, sort_order: int, is_active: bool}  $data
+     * @param  array{name: string, description: ?string, is_active: bool}  $data
      */
     public function updateCategory(AccountCategory $category, array $data): AccountCategory
     {
@@ -218,7 +216,6 @@ final class AccountService
             'entry_type' => $entry->entry_type->value,
             'amount' => (string) $entry->amount,
             'posted_on' => $entry->posted_on->toDateString(),
-            'due_on' => $entry->due_on?->toDateString(),
             'expense_id' => $entry->account_expense_id,
             'description' => $entry->description,
             'reference' => $entry->reference,
@@ -234,7 +231,6 @@ final class AccountService
             'name' => $expense->name,
             'account_category_id' => $expense->account_category_id,
             'amount' => (string) $expense->amount,
-            'due_on' => $expense->due_on?->toDateString(),
             'description' => $expense->description,
             'is_active' => $expense->is_active,
         ];
@@ -247,9 +243,7 @@ final class AccountService
     {
         return [
             'name' => $category->name,
-            'entry_type' => $category->entry_type->value,
             'description' => $category->description,
-            'sort_order' => $category->sort_order,
             'is_active' => $category->is_active,
         ];
     }

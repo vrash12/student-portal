@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Staff;
 
-use App\Enums\AccountEntryType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Accounts\AccountExpenseRequest;
 use App\Http\Requests\Accounts\AssignAccountExpenseRequest;
@@ -43,8 +42,6 @@ class AccountExpenseController extends Controller
             ->withCount(['entries as assigned_count' => fn (Builder $entries) => $entries->standing()])
             ->withSum(['entries as assigned_total' => fn (Builder $entries) => $entries->standing()], 'amount')
             ->orderByDesc('is_active')
-            ->orderByRaw('due_on is null')
-            ->orderBy('due_on')
             ->orderBy('name')
             ->get();
 
@@ -222,7 +219,7 @@ class AccountExpenseController extends Controller
     }
 
     /**
-     * Active charge categories, plus the expense's current one if it is no
+     * Active categories, plus the expense's current one if it is no
      * longer active.
      *
      * @return list<array{id: int, name: string}>
@@ -230,7 +227,6 @@ class AccountExpenseController extends Controller
     private function categoryOptions(?int $currentId = null): array
     {
         return AccountCategory::query()
-            ->where('entry_type', AccountEntryType::Charge->value)
             ->where(fn (Builder $query) => $query->where('is_active', true)->when($currentId !== null, fn (Builder $query) => $query->orWhere('id', $currentId)))
             ->ordered()
             ->get(['id', 'name'])
@@ -248,7 +244,6 @@ class AccountExpenseController extends Controller
             'name' => $expense->name,
             'category' => ['id' => $expense->account_category_id, 'name' => $expense->category->name],
             'amount' => Money::decimal(Money::toCents($expense->amount)),
-            'dueOn' => $expense->due_on?->toDateString(),
             'description' => $expense->description,
             'isActive' => $expense->is_active,
         ];
