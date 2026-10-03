@@ -22,6 +22,19 @@ const PORTAL_SECTIONS: Array<{ href: string; label: string; icon: LucideIcon; is
     { href: routes.portal.profile(), label: 'My Information', icon: UserRound, isActive: (component) => component === 'portal/profile' },
 ];
 
+/** The candidate's picture, or their initial when there is none; decorative (the name is shown beside it). */
+function CandidateAvatar({ name, photoUrl }: { name: string; photoUrl: string | null }) {
+    const [failed, setFailed] = useState(false);
+
+    return photoUrl !== null && !failed ? (
+        <img src={photoUrl} alt="" onError={() => setFailed(true)} className="size-9 shrink-0 rounded-full object-cover ring-2 ring-accent-300 sm:size-10" />
+    ) : (
+        <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-300 text-sm font-bold text-primary-900 sm:size-10">
+            {name.trim().charAt(0).toUpperCase() || '?'}
+        </span>
+    );
+}
+
 /** Remembers on this device whether the candidate folded the phone menu. */
 const NAV_COLLAPSED_KEY = 'portal-nav-collapsed';
 
@@ -79,15 +92,19 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
             <header className="brand-dark border-b-4 border-accent-300 bg-primary-900 text-white shadow-sm">
                 <div className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between gap-2 px-3 py-2 sm:min-h-20 sm:gap-4 sm:px-6">
                     <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+                        {/* Phones: the logo alone; the space goes to the candidate's name. */}
                         <BrandMark className="size-10 shrink-0 sm:size-12" />
-                        <p className="line-clamp-2 min-w-0 text-xs font-semibold leading-snug text-white sm:truncate sm:text-sm">{app.organizationName}</p>
+                        <p className="hidden min-w-0 truncate text-sm font-semibold text-white sm:block">{app.organizationName}</p>
                     </div>
 
                     <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-4">
                         {auth.user && (
-                            <div className="hidden min-w-0 text-right sm:block">
-                                <p className="truncate text-sm font-semibold text-white">{auth.user.name}</p>
-                                <p className="truncate text-xs text-primary-100">{auth.user.username}</p>
+                            <div className="flex min-w-0 items-center gap-2 pr-1 sm:gap-3">
+                                <div className="min-w-0 text-right">
+                                    <p className="max-w-36 truncate text-sm font-semibold text-white sm:max-w-48">{auth.user.candidate?.firstName ?? auth.user.name}</p>
+                                    <p className="hidden truncate text-xs text-primary-100 sm:block">{auth.user.username}</p>
+                                </div>
+                                <CandidateAvatar name={auth.user.candidate?.firstName ?? auth.user.name} photoUrl={auth.user.candidate?.photoUrl ?? null} />
                             </div>
                         )}
                         {/* Phones: a small button folds or shows the page icons below (owner request, 2026-10-03). Hidden from tablet width and during an attempt. */}

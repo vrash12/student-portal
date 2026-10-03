@@ -113,4 +113,21 @@ class CandidateProfileTest extends TestCase
             ...$payload, 'profile_photo' => UploadedFile::fake()->image('profile.png')->size(2049),
         ])->assertSessionHasErrors('profile_photo');
     }
+
+    public function test_the_portal_header_gets_only_the_candidates_first_name_and_own_picture(): void
+    {
+        $candidate = Candidate::factory()->create(['first_name' => 'Juana', 'profile_photo_path' => null]);
+
+        $this->actingAs($candidate->user)->get('/portal')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('auth.user.candidate', ['firstName' => 'Juana', 'photoUrl' => null]));
+
+        $candidate->forceFill(['profile_photo_path' => 'candidate-photos/juana.png'])->save();
+        $this->get('/portal')->assertInertia(fn (Assert $page) => $page
+            ->where('auth.user.candidate.photoUrl', route('portal.profile.photo'))
+            ->missing('auth.user.candidate.profile_photo_path'));
+
+        // Staff accounts carry no candidate data.
+        $this->actingAs($this->userWithRole(SystemRole::AcademicAdministrator))->get('/dashboard')->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->missing('auth.user.candidate'));
+    }
 }

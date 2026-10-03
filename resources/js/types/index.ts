@@ -10,6 +10,8 @@ export interface AuthUser {
         code: string;
         name: string;
     };
+    /** Candidate accounts only: shown in the portal header. */
+    candidate?: { firstName: string; photoUrl: string | null } | null;
 }
 
 export interface Auth {

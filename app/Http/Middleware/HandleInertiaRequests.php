@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\Permission;
 use App\Models\User;
 use App\Support\PublicAsset;
 use Illuminate\Http\Request;
@@ -74,7 +75,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array{user: array{id: int, name: string, username: string, role: array{code: string, name: string}}|null, permissions: list<string>}
+     * @return array{user: array{id: int, name: string, username: string, role: array{code: string, name: string}, candidate?: array{firstName: string, photoUrl: ?string}|null}|null, permissions: list<string>}
      */
     private function authPayload(?User $user): array
     {
@@ -83,17 +84,27 @@ class HandleInertiaRequests extends Middleware
         }
 
         $user->loadMissing('role.permissions');
+        $payload = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'username' => $user->username,
+            'role' => [
+                'code' => $user->role->code,
+                'name' => $user->role->name,
+            ],
+        ];
+        // The portal header shows the candidate's first name and picture
+        // (owner request, 2026-10-03); only for candidate accounts.
+        if ($user->hasPermission(Permission::AccessExamPortal)) {
+            $candidate = $user->candidate()->first(['id', 'user_id', 'first_name', 'profile_photo_path']);
+            $payload['candidate'] = $candidate === null ? null : [
+                'firstName' => $candidate->first_name,
+                'photoUrl' => $candidate->profile_photo_path === null ? null : route('portal.profile.photo'),
+            ];
+        }
 
         return [
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'username' => $user->username,
-                'role' => [
-                    'code' => $user->role->code,
-                    'name' => $user->role->name,
-                ],
-            ],
+            'user' => $payload,
             'permissions' => $user->permissionCodes(),
         ];
     }
