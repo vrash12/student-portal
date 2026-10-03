@@ -19,6 +19,8 @@ export interface CandidateInformation {
     qrCardUrl: string;
     status: StatusValue;
     classBatch: { id: number; name: string; period: string; periodId: number } | null;
+    /** The campus the candidate trains at (the class's campus when in a class). */
+    campus: { id: number; name: string; code: string } | null;
     account: { username: string; isActive: boolean; lastLoginAt: string | null } | null;
     createdAt: string | null;
     updatedAt: string | null;

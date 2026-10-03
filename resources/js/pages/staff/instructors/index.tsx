@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { Plus, SearchX, UserRoundCog } from 'lucide-react';
+import { CampusFilter, showsCampuses } from '@/components/academic/campus-filter';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FilterBar, SearchField } from '@/components/ui/filter-bar';
@@ -9,24 +10,28 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
 import { routes } from '@/lib/routes';
 import { useQueryFilters } from '@/lib/use-query-filters';
-import type { Paginated } from '@/types';
+import type { CampusOption, CampusSummary, Paginated } from '@/types';
 
 interface InstructorRow {
     id: number;
     name: string;
     username: string;
     isActive: boolean;
+    campus: CampusSummary | null;
     assignmentCount: number;
 }
 
 interface InstructorsIndexProps {
     instructors: Paginated<InstructorRow>;
-    filters: { search: string; [key: string]: string };
+    filters: { search: string; campus: string; [key: string]: string };
+    /** Campuses to filter by (accounts that see every campus only). */
+    campusOptions: CampusOption[];
     canCreateAccounts: boolean;
 }
 
-export default function InstructorsIndex({ instructors, filters, canCreateAccounts }: InstructorsIndexProps) {
+export default function InstructorsIndex({ instructors, filters, campusOptions, canCreateAccounts }: InstructorsIndexProps) {
     const { values, update, reset, isFiltered } = useQueryFilters(routes.instructors.index(), filters);
+    const showCampus = showsCampuses(campusOptions);
 
     const createAction = canCreateAccounts && (
         <ButtonLink href={routes.users.create()} variant="primary" icon={<Plus className="size-4" aria-hidden="true" />}>
@@ -51,14 +56,15 @@ export default function InstructorsIndex({ instructors, filters, canCreateAccoun
                         value={values.search}
                         onChange={(value) => update('search', value, { debounce: true })}
                     />
+                    <CampusFilter options={campusOptions} value={values.campus} onChange={(campus) => update('campus', campus)} />
                 </FilterBar>
 
                 {instructors.data.length === 0 ? (
                     isFiltered ? (
                         <EmptyState
                             icon={SearchX}
-                            title="No instructors match this search"
-                            description="Try a different name or username."
+                            title="No instructors match these filters"
+                            description="Try a different name or username, or reset the filters."
                             action={
                                 <Button variant="secondary" onClick={reset}>
                                     Reset Filters
@@ -77,6 +83,7 @@ export default function InstructorsIndex({ instructors, filters, canCreateAccoun
                     <Table caption="Instructors">
                         <TableHead>
                             <Th>Name</Th>
+                            {showCampus && <Th>Campus</Th>}
                             <Th>Status</Th>
                             <Th align="right">Assignments</Th>
                             <Th align="right">
@@ -90,6 +97,7 @@ export default function InstructorsIndex({ instructors, filters, canCreateAccoun
                                         <p className="font-medium text-ink">{instructor.name}</p>
                                         <p className="text-ink-muted">{instructor.username}</p>
                                     </Td>
+                                    {showCampus && <Td className="text-ink-muted">{instructor.campus?.name ?? 'No campus'}</Td>}
                                     <Td>
                                         {instructor.isActive ? (
                                             <StatusBadge tone="success">Active</StatusBadge>

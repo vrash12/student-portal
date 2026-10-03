@@ -29,13 +29,16 @@ class SubjectController extends Controller
         ];
 
         $activePeriod = AcademicPeriod::query()->active()->first(['id', 'name']);
+        // Subjects are shared by every campus; with several campuses each class shows its campus.
+        $campus = $request->user()->campusScope();
+        $labelsCampuses = $campus->labelsCampuses();
 
         $subjects = Subject::query()
             ->withCount('classSubjects')
             // Where each subject is taught in the active period, and by whom.
             ->with(['classSubjects' => fn ($offerings) => $offerings
                 ->whereHas('classBatch', fn (Builder $classes) => $classes->where('academic_period_id', $activePeriod?->id ?? 0))
-                ->with(['classBatch:id,name', 'instructorAssignments.instructor:id,name'])])
+                ->with(['classBatch:id,name,campus_id', 'classBatch.campus:id,code', 'instructorAssignments.instructor:id,name'])])
             ->when($filters['search'] !== '', fn (Builder $query) => $query->where(function (Builder $match) use ($filters): void {
                 $term = QueryFilters::likeTerm($filters['search']);
                 $match->where('code', 'like', $term)->orWhere('name', 'like', $term);
@@ -55,7 +58,7 @@ class SubjectController extends Controller
                     ->sortBy(fn (ClassSubject $offering): string => $offering->classBatch->name)
                     ->map(fn (ClassSubject $offering): array => [
                         'classId' => $offering->classBatch->id,
-                        'className' => $offering->classBatch->name,
+                        'className' => $campus->classLabel($offering->classBatch->name, $offering->classBatch->campus?->code, $labelsCampuses),
                         'instructors' => $offering->instructorAssignments->map(fn ($assignment): string => $assignment->instructor->name)->sort()->values()->all(),
                     ])
                     ->values()

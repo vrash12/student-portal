@@ -414,6 +414,8 @@ Use section labels sparingly.
 
 Navigation icons should support recognition but should never replace labels.
 
+Campuses (owner decision 2026-10-03): **Academics → Campuses** sits after Classes and is shown only to the institution-wide Admin (`campuses.manage`). Campus-limited accounts never see it.
+
 ---
 
 # 12. Active Navigation
@@ -441,6 +443,8 @@ The application header may contain:
 - profile menu
 
 Avoid filling the header with unnecessary controls.
+
+An account limited to one campus shows it beside the role in the profile menu ("Admin · North Campus"). Institution-wide accounts show the role only.
 
 The sidebar should remain the main navigation mechanism on desktop.
 
@@ -1327,6 +1331,10 @@ Subject
 ```
 
 Allow users to reset filters easily.
+
+**Campus filter** (owner decision 2026-10-03). Accounts that see every campus get a `Campus` select ("All campuses" first, inactive campuses marked "(inactive)") on candidate, class, instructor, user, monitoring, attendance, fitness, merit/demerit, medical record and audit history lists, on the dashboard header and on Reports. It is hidden for campus-limited accounts and when only one campus exists (`CampusFilter`, `resources/js/components/academic/campus-filter.tsx`). Changing the campus clears filters that depend on it (class, subject, actor). Lists show a Campus column under the same condition. Class names may repeat across campuses, so pickers that span campuses label classes "Class A · NORTH".
+
+Forms: a new class chooses its campus (shown as text when there is only one choice) and keeps it; a candidate follows the class's campus and chooses a campus only when no class is selected; a staff account chooses a campus, with "All campuses" offered only to institution-wide administrators creating administrator accounts. Candidates see their campus as text on the portal home, My Information and their PDFs.
 
 ---
 

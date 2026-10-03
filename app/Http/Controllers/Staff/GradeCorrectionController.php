@@ -191,8 +191,9 @@ class GradeCorrectionController extends Controller
     }
 
     /**
-     * Every request for approvers; otherwise the user's own requests and
-     * those of the subjects they teach.
+     * Every request of the approver's campus (every campus when not limited
+     * to one); otherwise the user's own requests and those of the subjects
+     * they teach.
      *
      * @return Builder<GradeCorrectionRequest>
      */
@@ -200,7 +201,7 @@ class GradeCorrectionController extends Controller
     {
         $query = GradeCorrectionRequest::query();
         if ($canApprove) {
-            return $query;
+            return $query->whereIn('assessment_id', $user->campusScope()->constrainByOffering(Assessment::query()->select('id')));
         }
 
         $taught = $user->teachingAssignments()->pluck('class_subject_id')->all();

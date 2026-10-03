@@ -2,7 +2,7 @@ import { Head, useForm } from '@inertiajs/react';
 import { useState, type FormEvent } from 'react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { PageHeader } from '@/components/ui/page-header';
-import { UserForm, type RoleOption, type UserFormData } from '@/components/users/user-form';
+import { UserForm, type CampusChoices, type RoleOption, type UserFormData } from '@/components/users/user-form';
 import { useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
 
@@ -12,18 +12,21 @@ interface EditableAccount {
     username: string;
     email: string | null;
     roleId: number;
+    /** Null: the account sees every campus. */
+    campusId: number | null;
     isActive: boolean;
     lastLoginAt: string | null;
     createdAt: string | null;
 }
 
-interface EditUserProps {
+interface EditUserProps extends CampusChoices {
     account: EditableAccount;
     roles: RoleOption[];
     isOwnAccount: boolean;
+    canChangeCampus: boolean;
 }
 
-export default function EditUser({ account, roles, isOwnAccount }: EditUserProps) {
+export default function EditUser({ account, roles, isOwnAccount, campusOptions, canChooseEveryCampus, canChangeCampus }: EditUserProps) {
     const formatDate = useDateFormatter();
     const [confirmingDeactivation, setConfirmingDeactivation] = useState(false);
 
@@ -32,12 +35,15 @@ export default function EditUser({ account, roles, isOwnAccount }: EditUserProps
         username: account.username,
         email: account.email ?? '',
         role_id: String(account.roleId),
+        campus_id: account.campusId === null ? '' : String(account.campusId),
         is_active: account.isActive,
         password: '',
         password_confirmation: '',
     });
 
     const save = () => {
+        // Without the right to move the account, the campus is not sent and stays as it is.
+        form.transform(({ campus_id: campusId, ...data }) => (canChangeCampus ? { ...data, campus_id: campusId } : data));
         form.put(routes.users.update(account.id), {
             preserveScroll: true,
             onError: () => form.reset('password', 'password_confirmation'),
@@ -74,6 +80,9 @@ export default function EditUser({ account, roles, isOwnAccount }: EditUserProps
                 <UserForm
                     form={form}
                     roles={roles}
+                    campusOptions={campusOptions}
+                    canChooseEveryCampus={canChooseEveryCampus}
+                    canChangeCampus={canChangeCampus}
                     mode="edit"
                     isOwnAccount={isOwnAccount}
                     submitLabel="Save Changes"

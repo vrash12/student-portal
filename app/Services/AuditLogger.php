@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AuditAction;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Support\AuditCampus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -36,6 +37,10 @@ final class AuditLogger
     public function __construct(private readonly Request $request) {}
 
     /**
+     * The entry's campus (which campus it is about) comes from the subject,
+     * or from a campus-limited actor (AuditCampus); pass $campusId when the
+     * subject is shared but the action concerns one campus.
+     *
      * @param  array<string, mixed>  $oldValues
      * @param  array<string, mixed>  $newValues
      */
@@ -46,12 +51,14 @@ final class AuditLogger
         array $newValues = [],
         ?string $reason = null,
         ?User $actor = null,
+        ?int $campusId = null,
     ): AuditLog {
         $actor ??= $this->request->user();
 
         $entry = new AuditLog;
         $entry->forceFill([
             'actor_id' => $actor?->getKey(),
+            'campus_id' => $campusId ?? AuditCampus::resolve($subject, $actor),
             'action' => $action->value,
             'auditable_type' => $subject?->getMorphClass(),
             'auditable_id' => $subject?->getKey(),

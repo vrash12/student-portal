@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { Medal, SearchX, Tags } from 'lucide-react';
+import { CampusFilter } from '@/components/academic/campus-filter';
 import { formatNetPoints } from '@/components/conduct/conduct-totals';
 import type { ClassOptionGroup } from '@/components/candidates/candidate-form';
 import { Button, ButtonLink } from '@/components/ui/button';
@@ -12,11 +13,12 @@ import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import { useQueryFilters } from '@/lib/use-query-filters';
-import type { Paginated } from '@/types';
+import type { CampusOption, Paginated } from '@/types';
 import type { ConductCandidateRow, ConductScopeKind } from '@/types/conduct';
 
 interface ConductFilters {
     search: string;
+    campus: string;
     class: string;
     [key: string]: string;
 }
@@ -24,14 +26,16 @@ interface ConductFilters {
 interface ConductIndexProps {
     candidates: Paginated<ConductCandidateRow>;
     filters: ConductFilters;
+    /** Campuses to filter by (accounts that see every campus only). */
+    campusOptions: CampusOption[];
     /** Classes within the user's scope, active period first. */
     classOptions: ClassOptionGroup[];
     scope: ConductScopeKind;
     can: { configureTypes: boolean };
 }
 
-export default function ConductIndex({ candidates, filters, classOptions, scope, can }: ConductIndexProps) {
-    const { values, update, reset, isFiltered } = useQueryFilters(routes.conduct.index(), filters);
+export default function ConductIndex({ candidates, filters, campusOptions, classOptions, scope, can }: ConductIndexProps) {
+    const { values, update, updateMany, reset, isFiltered } = useQueryFilters(routes.conduct.index(), filters);
     const classTerm = terms.classBatch.singular;
 
     return (
@@ -62,6 +66,7 @@ export default function ConductIndex({ candidates, filters, classOptions, scope,
                             value={values.search}
                             onChange={(value) => update('search', value, { debounce: true })}
                         />
+                        <CampusFilter options={campusOptions} value={values.campus} onChange={(campus) => updateMany({ campus, class: '' })} />
                         <FormField label={classTerm} className="sm:w-56">
                             <SelectInput value={values.class} onChange={(event) => update('class', event.target.value)}>
                                 <option value="">{`All ${scope === 'all' ? '' : 'my '}${terms.classBatch.plural.toLowerCase()}`}</option>

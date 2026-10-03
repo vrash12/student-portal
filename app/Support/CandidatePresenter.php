@@ -9,7 +9,7 @@ final class CandidatePresenter
     /** Explicit whitelist shared by authorized staff and the candidate's own profile. */
     public static function details(Candidate $candidate, bool $portal = false): array
     {
-        $candidate->loadMissing('classBatch.academicPeriod');
+        $candidate->loadMissing(['classBatch.academicPeriod', 'campus']);
 
         return [
             'id' => $candidate->id,
@@ -28,6 +28,8 @@ final class CandidatePresenter
             'qrCardUrl' => $portal ? route('portal.profile.qr.pdf') : route('candidates.qr.pdf', $candidate),
             'name' => $candidate->full_name,
             'status' => ['value' => $candidate->status->value, 'label' => $candidate->status->label(), 'tone' => $candidate->status->tone()],
+            // The candidate's campus, also shown to the candidate (owner decision 2026-10-03).
+            'campus' => $candidate->campus?->summary(),
             'classBatch' => $candidate->classBatch === null ? null : [
                 'id' => $candidate->classBatch->id,
                 'name' => $candidate->classBatch->name,

@@ -37,6 +37,20 @@ class ClassSubject extends Model
     }
 
     /**
+     * campus_id is a copy of the class's campus, kept so a composite foreign
+     * key can require instructors of this subject to be on the same campus.
+     * It is filled in here for every write path; the database checks it.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (ClassSubject $offering): void {
+            if ($offering->getAttribute('campus_id') === null && $offering->getAttribute('class_batch_id') !== null) {
+                $offering->setAttribute('campus_id', ClassBatch::query()->whereKey($offering->getAttribute('class_batch_id'))->value('campus_id'));
+            }
+        });
+    }
+
+    /**
      * @return BelongsTo<TrainingPhase, $this>
      */
     public function trainingPhase(): BelongsTo

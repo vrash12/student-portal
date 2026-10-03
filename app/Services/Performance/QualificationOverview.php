@@ -4,6 +4,7 @@ namespace App\Services\Performance;
 
 use App\Models\AcademicPeriod;
 use App\Models\ClassBatch;
+use App\Support\CampusScope;
 
 /**
  * Qualification across every class of the active academic period, for the
@@ -21,14 +22,16 @@ final class QualificationOverview
      *
      * @return array{period: array{id: int, name: string}, configured: bool, classCount: int, counts: array{total: int, qualified: int, notQualified: int, pending: int}, mostCommonUnmet: array{areaId: int, name: string, count: int}|null}|null
      */
-    public function activePeriod(): ?array
+    public function activePeriod(?CampusScope $campus = null): ?array
     {
+        $campus ??= CampusScope::everyCampus();
         $period = AcademicPeriod::query()->active()->first();
         if ($period === null) {
             return null;
         }
 
-        $classes = ClassBatch::query()->where('academic_period_id', $period->id)->orderBy('name')->orderBy('id')->get();
+        // Classes of the campus scope; ranks stay within each class.
+        $classes = $campus->constrain(ClassBatch::query(), 'class_batches.campus_id')->where('academic_period_id', $period->id)->orderBy('name')->orderBy('id')->get();
         $areas = $this->engine->activeAreas();
 
         $qualifications = [];

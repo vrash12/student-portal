@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\AuditAction;
 use App\Models\AcademicPeriod;
+use App\Models\Campus;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
 use App\Models\Subject;
@@ -19,16 +20,25 @@ final class ClassBatchService
 {
     public function __construct(private readonly AuditLogger $audit) {}
 
-    public function create(AcademicPeriod $period, string $name): ClassBatch
+    /** The academic period and the campus are fixed for the life of the class. */
+    public function create(AcademicPeriod $period, Campus $campus, string $name): ClassBatch
     {
-        return DB::transaction(function () use ($period, $name): ClassBatch {
+        return DB::transaction(function () use ($period, $campus, $name): ClassBatch {
+            // Locked so a campus being deactivated or removed at the same moment waits.
+            $campus = Campus::query()->lockForUpdate()->findOrFail($campus->getKey());
+            if (! $campus->is_active) {
+                throw ValidationException::withMessages(['campus_id' => "{$campus->name} is inactive. Choose an active campus."]);
+            }
+
             $classBatch = new ClassBatch(['name' => $name]);
             $classBatch->academicPeriod()->associate($period);
+            $classBatch->campus()->associate($campus);
             $classBatch->save();
 
             $this->audit->record(AuditAction::ClassBatchCreated, $classBatch, newValues: [
                 'name' => $classBatch->name,
                 'academic_period' => $period->name,
+                'campus' => $campus->name,
             ]);
 
             return $classBatch;

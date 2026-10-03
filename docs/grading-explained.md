@@ -93,7 +93,9 @@ Nothing is stored: every grade, standing, area result and rank is calculated whe
 
 - **Final course grade** (the "overall score" in the code) = Σ (weight × area grade) ÷ Σ (weights of the areas that have a grade); *Partial* while some weighted area has no grade.
 - **Not Qualified** when a must-pass area is failed; **Pending** while a must-pass area has no result or is incomplete; otherwise **Qualified**.
-- **Class rank**: within each class by final course grade (ties share a rank). Staff only; never sent to the portal.
+- **Class rank**: within each class by final course grade (ties share a rank). Staff only; never sent to the portal. A class belongs to one campus, so a rank never compares candidates of two campuses (owner decision 2026-10-03).
+
+**Campuses** (owner decision 2026-10-03): the passing and warning grades, performance areas, fitness events, merit/demerit types and subjects are shared by every campus and changed only by administrators of every campus. Weights are per class subject, so each campus sets its own; Grading Setup, Copy Weights and the dashboards of a campus-limited account show and copy only its campus's class subjects.
 
 ## The three "passing" settings
 
@@ -110,7 +112,7 @@ They are independent on purpose; Grading Setup shows them side by side.
 1. **Academic Periods → Create Period**, then **Set Active**.
 2. **Grading Setup → Step 3**: set the passing and warning grades (prefilled from the previous period).
 3. **Training Phases**: add the phases of the new year, with their dates (Phase 1, 2, 3 …).
-4. **Classes → Create Class**, then **Add Subject** for each subject with its **phase** and **units**, and assign instructors.
+4. **Classes → Create Class** (on its campus), then **Add Subject** for each subject with its **phase** and **units**, and assign instructors.
 5. **Grading Setup → Step 2**: set one subject's weights, then **Copy Weights** to the rest (the table also shows each subject's phase and units).
 6. Check **Steps 4–5** once (areas are global): every subject belongs to an area, weights and must-pass are right.
 

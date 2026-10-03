@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { ListCharts, type ListChart } from '@/components/charts/list-charts';
 import { Plus, UsersRound } from 'lucide-react';
+import { CampusFilter, showsCampuses } from '@/components/academic/campus-filter';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FormField, SelectInput } from '@/components/ui/form-field';
@@ -10,12 +11,13 @@ import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import { useQueryFilters } from '@/lib/use-query-filters';
-import type { Paginated } from '@/types';
+import type { CampusOption, CampusSummary, Paginated } from '@/types';
 
 interface ClassRow {
     id: number;
     name: string;
     period: string;
+    campus: CampusSummary;
     candidateCount: number;
     subjectCount: number;
 }
@@ -30,12 +32,15 @@ interface ClassesIndexProps {
     /** Charts computed by the server from the filtered list. */
     charts: ListChart[];
     classes: Paginated<ClassRow>;
-    filters: { period: string; [key: string]: string };
+    filters: { period: string; campus: string; [key: string]: string };
+    /** Campuses to filter by (accounts that see every campus only). */
+    campusOptions: CampusOption[];
     periods: PeriodOption[];
 }
 
-export default function ClassesIndex({ classes, filters, periods, charts }: ClassesIndexProps) {
+export default function ClassesIndex({ classes, filters, campusOptions, periods, charts }: ClassesIndexProps) {
     const { values, update } = useQueryFilters(routes.classes.index(), filters);
+    const showCampus = showsCampuses(campusOptions);
     const { singular, plural } = terms.classBatch;
 
     const createAction = (
@@ -50,7 +55,7 @@ export default function ClassesIndex({ classes, filters, periods, charts }: Clas
 
             <PageHeader
                 title={plural}
-                description={`Each ${singular.toLowerCase()} belongs to one academic period and takes a set of subjects.`}
+                description={`Each ${singular.toLowerCase()} belongs to one academic period and one campus, and takes a set of subjects.`}
                 actions={periods.length > 0 && createAction}
             />
 
@@ -58,7 +63,7 @@ export default function ClassesIndex({ classes, filters, periods, charts }: Clas
 
             <div className="rounded-lg border border-line-box bg-surface">
                 {periods.length > 0 && (
-                    <div className="border-b border-line p-4">
+                    <div className="flex flex-col gap-4 border-b border-line p-4 sm:flex-row sm:items-end">
                         <FormField label="Academic Period" className="sm:w-80">
                             <SelectInput value={values.period} onChange={(event) => update('period', event.target.value)}>
                                 {periods.map((period) => (
@@ -69,6 +74,7 @@ export default function ClassesIndex({ classes, filters, periods, charts }: Clas
                                 ))}
                             </SelectInput>
                         </FormField>
+                        <CampusFilter options={campusOptions} value={values.campus} onChange={(campus) => update('campus', campus)} className="sm:w-56" />
                     </div>
                 )}
 
@@ -95,6 +101,7 @@ export default function ClassesIndex({ classes, filters, periods, charts }: Clas
                         <TableHead>
                             <Th>{singular}</Th>
                             <Th>Academic Period</Th>
+                            {showCampus && <Th>Campus</Th>}
                             <Th align="right">Candidates</Th>
                             <Th align="right">Subjects</Th>
                             <Th align="right">
@@ -106,6 +113,7 @@ export default function ClassesIndex({ classes, filters, periods, charts }: Clas
                                 <Tr key={classBatch.id}>
                                     <Td className="font-medium text-ink">{classBatch.name}</Td>
                                     <Td className="text-ink-muted">{classBatch.period}</Td>
+                                    {showCampus && <Td className="text-ink-muted">{classBatch.campus.name}</Td>}
                                     <Td align="right" numeric>
                                         {classBatch.candidateCount}
                                     </Td>

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Grading;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Input shape of "Copy Weights" on the Grading Setup page: one subject that
@@ -24,10 +25,14 @@ class CopyGradingWeightsRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Only class subjects of a campus the user may work with.
+        $campus = $this->user()->campusScope();
+        $inCampus = fn () => Rule::exists('class_subjects', 'id')->where(fn ($offerings) => $campus->constrain($offerings, 'campus_id'));
+
         return [
-            'source' => ['required', 'integer', 'exists:class_subjects,id'],
+            'source' => ['required', 'integer', $inCampus()],
             'targets' => ['required', 'array', 'min:1', 'max:'.self::MAX_TARGETS],
-            'targets.*' => ['required', 'integer', 'distinct', 'exists:class_subjects,id'],
+            'targets.*' => ['required', 'integer', 'distinct', $inCampus()],
             'period' => ['nullable', 'integer'],
         ];
     }

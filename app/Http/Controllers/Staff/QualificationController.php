@@ -120,7 +120,8 @@ class QualificationController extends Controller
      */
     private function build(Request $request): array
     {
-        $classOptions = AcademicOptions::classBatchesByPeriod();
+        // Classes of the user's campus (every campus when not limited to one); ranks stay within a class.
+        $classOptions = AcademicOptions::classBatchesByPeriod($request->user()->campusScope());
         $classIds = [];
         foreach ($classOptions as $group) {
             foreach ($group['classes'] as $option) {

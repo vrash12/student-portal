@@ -12,6 +12,7 @@ use App\Models\AccountExpense;
 use App\Models\Candidate;
 use App\Services\Accounts\AccountService;
 use App\Support\AcademicOptions;
+use App\Support\CampusScope;
 use App\Support\ListCharts;
 use App\Support\Money;
 use App\Support\QueryFilters;
@@ -35,12 +36,15 @@ class AccountExpenseController extends Controller
 
     public function __construct(private readonly AccountService $accounts) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        // Expense definitions are shared; the charges counted are those of the
+        // user's campus (every campus when not limited to one).
+        $campus = $request->user()->campusScope();
         $expenses = AccountExpense::query()
             ->with('category:id,name')
-            ->withCount(['entries as assigned_count' => fn (Builder $entries) => $entries->standing()])
-            ->withSum(['entries as assigned_total' => fn (Builder $entries) => $entries->standing()], 'amount')
+            ->withCount(['entries as assigned_count' => fn (Builder $entries) => $campus->constrainByCandidate($entries->standing(), 'account_entries.candidate_id')])
+            ->withSum(['entries as assigned_total' => fn (Builder $entries) => $campus->constrainByCandidate($entries->standing(), 'account_entries.candidate_id')], 'amount')
             ->orderByDesc('is_active')
             ->orderBy('name')
             ->get();
@@ -60,6 +64,8 @@ class AccountExpenseController extends Controller
                 'assignedCount' => (int) $expense->getAttribute('assigned_count'),
                 'assignedTotal' => Money::decimal(Money::toCents((string) $expense->getAttribute('assigned_total'))),
             ])->all(),
+            // Definitions and categories are changed only by accounts that see every campus.
+            'canEditDefinitions' => $campus->isInstitutionWide(),
         ]);
     }
 
@@ -87,8 +93,10 @@ class AccountExpenseController extends Controller
             'class' => QueryFilters::id($request, 'class'),
             'search' => QueryFilters::search($request),
         ];
+        // Charges and candidates of the user's campus (every campus when not limited to one).
+        $campus = $request->user()->campusScope();
 
-        $charges = $accountExpense->entries()
+        $charges = $campus->constrainByCandidate($accountExpense->entries(), 'account_entries.candidate_id')
             ->with(['candidate:id,candidate_number,first_name,middle_name,last_name,suffix,class_batch_id', 'candidate.classBatch:id,name', 'category:id,name', 'voider:id,name'])
             ->join('candidates', 'candidates.id', '=', 'account_entries.candidate_id')
             ->select('account_entries.*')
@@ -114,7 +122,7 @@ class AccountExpenseController extends Controller
                 'voided' => $entry->isVoided() ? ['at' => $entry->voided_at->toIso8601String(), 'by' => $entry->voider?->name, 'reason' => $entry->void_reason] : null,
             ]);
 
-        $standing = $accountExpense->entries()->standing();
+        $standing = $campus->constrainByCandidate($accountExpense->entries()->standing(), 'account_entries.candidate_id');
 
         return Inertia::render('staff/accounts/expenses/show', [
             'expense' => [
@@ -125,8 +133,9 @@ class AccountExpenseController extends Controller
             ],
             'charges' => $charges,
             'filters' => $filters,
-            'picker' => $this->picker($accountExpense, $filters),
-            'classOptions' => AcademicOptions::classBatchesByPeriod(),
+            'picker' => $this->picker($accountExpense, $filters, $campus),
+            'classOptions' => AcademicOptions::classBatchesByPeriod($campus),
+            'canEditDefinitions' => $campus->isInstitutionWide(),
             'today' => now()->timezone(config('institution.timezone'))->toDateString(),
             'maxCandidates' => AssignAccountExpenseRequest::MAX_CANDIDATES,
         ]);
@@ -188,13 +197,13 @@ class AccountExpenseController extends Controller
      * @param  array{class: string, search: string}  $filters
      * @return array{candidates: list<array<string, mixed>>, truncated: bool}
      */
-    private function picker(AccountExpense $expense, array $filters): array
+    private function picker(AccountExpense $expense, array $filters, CampusScope $campus): array
     {
         if ($filters['class'] === '' && $filters['search'] === '') {
             return ['candidates' => [], 'truncated' => false];
         }
 
-        $candidates = Candidate::query()
+        $candidates = $campus->constrain(Candidate::query(), 'candidates.campus_id')
             ->with('classBatch:id,name')
             ->when($filters['class'] !== '', fn (Builder $query) => $query->where('class_batch_id', (int) $filters['class']))
             ->when($filters['search'] !== '', fn (Builder $query) => $query->matching($filters['search']))

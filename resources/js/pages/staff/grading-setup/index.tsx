@@ -155,14 +155,17 @@ export default function GradingSetup(props: GradingSetupProps) {
                         title="Step 3 · Passing and Warning Grades"
                         description={`Set once for ${period.name}. They decide each subject’s standing.`}
                         actions={
-                            <ButtonLink href={routes.academicPeriods.thresholds(period.id, { return: 'setup' })} variant="secondary">
-                                {thresholds === null ? 'Set Passing and Warning Grades' : 'Change Passing and Warning Grades'}
-                            </ButtonLink>
+                            can.setThresholds && (
+                                <ButtonLink href={routes.academicPeriods.thresholds(period.id, { return: 'setup' })} variant="secondary">
+                                    {thresholds === null ? 'Set Passing and Warning Grades' : 'Change Passing and Warning Grades'}
+                                </ButtonLink>
+                            )
                         }
                     >
                         {thresholds === null ? (
                             <Alert tone="warning" title="Not set yet">
                                 Grades are calculated, but no standing is shown.
+                                {!can.setThresholds && ' They apply to every campus and are set by the institution administrator.'}
                             </Alert>
                         ) : (
                             <StandingRanges passingHundredths={Math.round(thresholds.passingGrade * 100)} warningHundredths={Math.round(thresholds.warningGrade * 100)} />

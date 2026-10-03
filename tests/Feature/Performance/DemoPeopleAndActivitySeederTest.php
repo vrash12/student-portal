@@ -44,8 +44,9 @@ class DemoPeopleAndActivitySeederTest extends TestCase
 
     public function test_every_demo_candidate_has_an_illustrated_picture(): void
     {
+        // student01 … student20 and the North Campus's north01 … north05.
         $candidates = Candidate::query()->get();
-        $this->assertCount(20, $candidates);
+        $this->assertCount(25, $candidates);
 
         foreach ($candidates as $candidate) {
             $this->assertNotNull($candidate->profile_photo_path);

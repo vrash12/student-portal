@@ -73,5 +73,13 @@ export interface GradingSetupProps {
     areas: AreasOverview;
     sources: { fitnessEvents: number; conductTypes: number };
     example: WorkedExample;
-    can: { manageClasses: boolean; managePeriods: boolean; configurePerformance: boolean; configureFitness: boolean; manageAttendance: boolean };
+    can: {
+        manageClasses: boolean;
+        managePeriods: boolean;
+        /** Passing and warning grades apply to every campus: set by accounts that see every campus. */
+        setThresholds: boolean;
+        configurePerformance: boolean;
+        configureFitness: boolean;
+        manageAttendance: boolean;
+    };
 }

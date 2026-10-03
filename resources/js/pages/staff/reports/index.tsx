@@ -1,5 +1,6 @@
 import { Head, usePage } from '@inertiajs/react';
 import { Download, FileChartColumn, SearchX } from 'lucide-react';
+import { CampusFilter } from '@/components/academic/campus-filter';
 import { ReportCharts } from '@/components/reports/report-charts';
 import { ReportTable } from '@/components/reports/report-table';
 import { Button, buttonClasses } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { useDateFormatter } from '@/lib/format';
 import { terms } from '@/lib/terminology';
 import { useQueryFilters } from '@/lib/use-query-filters';
-import type { Paginated } from '@/types';
+import type { CampusOption, Paginated } from '@/types';
 import type { ReportChart } from '@/types/charts';
 
 type Row = Record<string, string | number | null>;
@@ -22,6 +23,7 @@ interface Option {
 interface Filters {
     type: string;
     period: number | string;
+    campus: string;
     class: number | string;
     subject: number | string;
     search: string;
@@ -31,6 +33,7 @@ interface Filters {
 interface ReportFilterValues {
     type: string;
     period: string;
+    campus: string;
     class: string;
     subject: string;
     search: string;
@@ -46,6 +49,10 @@ interface Props {
     /** Charts over every row of the filtered report; empty when a chart would add nothing. */
     charts: ReportChart[];
     filters: Filters;
+    /** Campuses to filter by (accounts that see every campus only). */
+    campusOptions: CampusOption[];
+    /** The campus the report covers ("All campuses" when not narrowed). */
+    campusLabel: string;
     periods: Option[];
     classes: Option[];
     subjects: Option[];
@@ -89,6 +96,8 @@ export default function Reports({
     rows,
     charts,
     filters,
+    campusOptions,
+    campusLabel,
     periods,
     classes,
     subjects,
@@ -102,6 +111,7 @@ export default function Reports({
     const { values, update, updateMany } = useQueryFilters<ReportFilterValues>(REPORTS_URL, {
         type: String(filters.type ?? ''),
         period: String(filters.period ?? ''),
+        campus: String(filters.campus ?? ''),
         class: String(filters.class ?? ''),
         subject: String(filters.subject ?? ''),
         search: String(filters.search ?? ''),
@@ -115,9 +125,9 @@ export default function Reports({
     // The server opens the first available period when none is chosen.
     const defaultPeriod = String(periods[0]?.id ?? '');
     const canReset =
-        values.period !== defaultPeriod || [values.class, values.subject, values.search, values.from, values.to].some((value) => value !== '');
+        values.period !== defaultPeriod || [values.campus, values.class, values.subject, values.search, values.from, values.to].some((value) => value !== '');
     // Reset keeps the chosen report type and returns every other filter to its default.
-    const resetFilters = () => updateMany({ period: defaultPeriod, class: '', subject: '', search: '', from: '', to: '' });
+    const resetFilters = () => updateMany({ period: defaultPeriod, campus: '', class: '', subject: '', search: '', from: '', to: '' });
 
     const periodName = periods.find((period) => period.id === Number(filters.period))?.name ?? 'No academic period';
     const className = filters.class ? classes.find((option) => option.id === Number(filters.class))?.name : allClassesLabel;
@@ -168,6 +178,13 @@ export default function Reports({
                                 ))}
                             </SelectInput>
                         </FormField>
+                        {/* Classes and subjects depend on the campus, so a new campus clears them. */}
+                        <CampusFilter
+                            options={campusOptions}
+                            value={values.campus}
+                            onChange={(campus) => updateMany({ campus, class: '', subject: '' })}
+                            className="sm:w-52"
+                        />
                         <FormField label={classTerm.singular} className="sm:w-52">
                             <SelectInput value={values.class} onChange={(event) => update('class', event.target.value)}>
                                 <option value="">{allClassesLabel}</option>
@@ -224,7 +241,8 @@ export default function Reports({
                         {types[filters.type]}
                     </h2>
                     <p className="mt-1 text-sm text-ink-muted">
-                        {periodName} · {className} · {subjectName}
+                        {periodName} · {campusOptions.length > 1 ? `${campusLabel} · ` : ''}
+                        {className} · {subjectName}
                     </p>
                     <p className="mt-1 text-sm text-ink-muted">
                         Generated <time dateTime={generatedAt}>{dates.dateTime(generatedAt)}</time> ({app.timezone}) ·{' '}

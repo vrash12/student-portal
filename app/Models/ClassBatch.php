@@ -14,7 +14,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * A class / batch of candidates within one academic period. Named ClassBatch
  * because `Class` is reserved in PHP and `Batch` clashes with job batches.
- * The academic period is set when the class is created and does not change.
+ * The academic period and the campus are set when the class is created and
+ * do not change (owner decision 2026-10-03: a class belongs to one campus).
  */
 #[Fillable(['name'])]
 #[UsePolicy(ClassBatchPolicy::class)]
@@ -29,6 +30,14 @@ class ClassBatch extends Model
     public function academicPeriod(): BelongsTo
     {
         return $this->belongsTo(AcademicPeriod::class);
+    }
+
+    /**
+     * @return BelongsTo<Campus, $this>
+     */
+    public function campus(): BelongsTo
+    {
+        return $this->belongsTo(Campus::class);
     }
 
     /**

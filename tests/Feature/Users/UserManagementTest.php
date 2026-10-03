@@ -7,6 +7,7 @@ use App\Enums\SystemRole;
 use App\Models\AuditLog;
 use App\Models\Role;
 use App\Models\User;
+use Database\Factories\CampusFactory;
 use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -15,6 +16,16 @@ use Tests\TestCase;
 
 class UserManagementTest extends TestCase
 {
+    private int $campusId;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // The institution's only campus: a new instructor goes there without choosing it.
+        $this->campusId = CampusFactory::defaultCampusId();
+    }
+
     public function test_index_lists_staff_accounts_only(): void
     {
         $admin = $this->userWithRole(SystemRole::SuperAdministrator, ['name' => 'Admin Person']);
@@ -82,6 +93,7 @@ class UserManagementTest extends TestCase
         $created = User::query()->where('username', 'new.instructor')->sole();
         $this->assertSame('New Instructor', $created->name);
         $this->assertSame($instructorRole->id, $created->role_id);
+        $this->assertSame($this->campusId, $created->campus_id);
         $this->assertTrue($created->is_active);
         $this->assertTrue(Hash::check('correct-horse-battery', $created->password));
 

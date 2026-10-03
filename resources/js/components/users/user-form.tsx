@@ -1,15 +1,26 @@
 import { Link, type InertiaForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { Button, ButtonLink } from '@/components/ui/button';
-import { CheckboxField, FormField, PasswordInput, TextInput } from '@/components/ui/form-field';
+import { CheckboxField, FormField, PasswordInput, SelectInput, TextInput } from '@/components/ui/form-field';
 import { FormActions, FormSection } from '@/components/ui/form-section';
 import { RadioCards } from '@/components/ui/radio-cards';
+import { Permission, usePermissions } from '@/lib/permissions';
 import { routes } from '@/lib/routes';
+import type { CampusOption } from '@/types';
 
 export interface RoleOption {
     id: number;
     name: string;
     description: string | null;
+    /** Teaching roles: the account must belong to one campus. */
+    requiresCampus: boolean;
+}
+
+/** Where an account may be placed (App\Http\Controllers\Staff\UserController::campusChoices). */
+export interface CampusChoices {
+    campusOptions: CampusOption[];
+    /** Whether "All campuses" can be chosen (only by accounts that see every campus). */
+    canChooseEveryCampus: boolean;
 }
 
 export interface UserFormData {
@@ -17,22 +28,42 @@ export interface UserFormData {
     username: string;
     email: string;
     role_id: string;
+    /** '' = every campus (administrator roles only). */
+    campus_id: string;
     is_active: boolean;
     password: string;
     password_confirmation: string;
 }
 
-interface UserFormProps {
+interface UserFormProps extends CampusChoices {
     form: InertiaForm<UserFormData>;
     roles: RoleOption[];
     mode: 'create' | 'edit';
     isOwnAccount?: boolean;
+    /** Edit only: whether the campus can be changed here (institution-wide administrators, not on their own account). */
+    canChangeCampus?: boolean;
     submitLabel: string;
     onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }
 
-export function UserForm({ form, roles, mode, isOwnAccount = false, submitLabel, onSubmit }: UserFormProps) {
+export function UserForm({
+    form,
+    roles,
+    campusOptions,
+    canChooseEveryCampus,
+    mode,
+    isOwnAccount = false,
+    canChangeCampus = true,
+    submitLabel,
+    onSubmit,
+}: UserFormProps) {
+    const { can } = usePermissions();
     const roleOptions = roles.map((role) => ({ value: String(role.id), label: role.name, description: role.description }));
+    const selectedRole = roles.find((role) => String(role.id) === form.data.role_id);
+    const offersEveryCampus = canChooseEveryCampus && !selectedRole?.requiresCampus;
+    const currentCampus = campusOptions.find((campus) => String(campus.id) === form.data.campus_id);
+    // A campus administrator's accounts are always on their own campus: nothing to choose.
+    const choosesCampus = canChangeCampus && (offersEveryCampus || campusOptions.length > 1 || form.data.campus_id === '');
 
     return (
         <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
@@ -98,6 +129,53 @@ export function UserForm({ form, roles, mode, isOwnAccount = false, submitLabel,
                         {roles[0]?.description && <p className="text-sm text-ink-muted">{roles[0].description}</p>}
                         <p className="mt-2 text-sm text-ink-muted">The role is set when the account is created and cannot be changed.</p>
                         {form.errors.role_id && <p role="alert" className="mt-1 text-sm text-danger-fg">{form.errors.role_id}</p>}
+                    </div>
+                )}
+
+                {choosesCampus ? (
+                    <FormField
+                        label="Campus"
+                        required={selectedRole?.requiresCampus}
+                        error={form.errors.campus_id}
+                        hint={
+                            selectedRole?.requiresCampus && campusOptions.length === 0 ? (
+                                // Nothing to choose yet (a fresh installation has no campus).
+                                <>
+                                    Instructors teach at one campus, and there is no active campus yet.{' '}
+                                    {can(Permission.ManageCampuses) ? (
+                                        <Link href={routes.campuses.create()} className="text-primary-700 underline">
+                                            Create a campus first.
+                                        </Link>
+                                    ) : (
+                                        'Ask an administrator to create or reactivate a campus first.'
+                                    )}
+                                </>
+                            ) : selectedRole?.requiresCampus ? (
+                                'Instructors teach only at their own campus.'
+                            ) : canChooseEveryCampus ? (
+                                'Accounts limited to a campus see only its classes, candidates and records. All campuses is for administrators of the whole institution.'
+                            ) : undefined
+                        }
+                    >
+                        <SelectInput name="campus_id" value={form.data.campus_id} onChange={(event) => form.setData('campus_id', event.target.value)}>
+                            {offersEveryCampus ? <option value="">All campuses</option> : <option value="">Choose a campus</option>}
+                            {campusOptions.map((campus) => (
+                                <option key={campus.id} value={String(campus.id)}>
+                                    {campus.isActive ? campus.name : `${campus.name} (inactive)`}
+                                </option>
+                            ))}
+                        </SelectInput>
+                    </FormField>
+                ) : (
+                    <div>
+                        <p className="text-sm font-medium text-ink">Campus</p>
+                        <p className="mt-1 text-ink">{currentCampus?.name ?? 'All campuses'}</p>
+                        {mode === 'edit' && (
+                            <p className="mt-1 text-sm text-ink-muted">
+                                {isOwnAccount ? 'You cannot change the campus of your own account.' : 'Only an administrator of every campus can move an account to another campus.'}
+                            </p>
+                        )}
+                        {form.errors.campus_id && <p role="alert" className="mt-1 text-sm text-danger-fg">{form.errors.campus_id}</p>}
                     </div>
                 )}
 

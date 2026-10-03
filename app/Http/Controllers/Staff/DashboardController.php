@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Enums\Permission;
+use App\Enums\SystemRole;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicPeriod;
+use App\Models\Candidate;
 use App\Models\ClassSubject;
 use App\Models\Role;
 use App\Models\User;
@@ -19,6 +21,7 @@ use App\Services\Monitoring\MonitoringPresenter;
 use App\Services\Monitoring\MonitoringScope;
 use App\Services\Performance\QualificationOverview;
 use App\Services\TeachingOverview;
+use App\Support\CampusScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -47,28 +50,33 @@ class DashboardController extends Controller
         $showAcademicAlerts = $canMonitor && $user->canTeach();
         // The qualification of every candidate: the permission of /qualification.
         $showQualification = $user->hasPermission(Permission::ViewPerformance);
+        // The user's campus, or every campus narrowed by the campus filter (CampusScope).
+        $campus = $user->campusScope()->filteredBy($request);
 
         return Inertia::render('staff/dashboard', [
             'teaching' => $user->canTeach() ? $teaching->dashboard($user) : null,
+            // Accounts that see every campus may look at one campus at a time.
+            'campusFilter' => ['value' => $campus->filterValue(), 'options' => $campus->filterOptions()],
             'showAcademicOverview' => $showAcademicOverview,
-            // Institution-wide standings of the active period (null: no active period).
-            'academicOverview' => $showAcademicOverview ? $this->monitoringSummary(MonitoringScope::for($user), $user) : null,
+            // Standings of the active period on the campus scope (null: no active period).
+            'academicOverview' => $showAcademicOverview ? $this->monitoringSummary(MonitoringScope::for($user)->filteredBy($request), $user, campus: $campus) : null,
             'showAcademicAlerts' => $showAcademicAlerts,
             // Standings over the subjects the user teaches in the active period.
             'academicAlerts' => $showAcademicAlerts ? $this->monitoringSummary(MonitoringScope::teaching($user), $user, withSubjects: true) : null,
-            'thresholdSetup' => $user->hasPermission(Permission::ConfigureGrading) ? $this->missingThresholds() : null,
+            // Passing grades apply to every campus: only accounts that see every campus set them.
+            'thresholdSetup' => $user->hasPermission(Permission::ConfigureGrading) && $campus->isInstitutionWide() ? $this->missingThresholds() : null,
             // Subjects of the active period without weights: instructors cannot grade them yet.
-            'missingWeights' => $user->hasPermission(Permission::ConfigureGrading) ? $this->missingWeights() : null,
-            'accountSummary' => $user->can('viewAny', User::class) ? $this->accountSummary() : null,
-            'administratorOverview' => $showAcademicOverview ? $administratorDashboard->overview() : null,
+            'missingWeights' => $user->hasPermission(Permission::ConfigureGrading) ? $this->missingWeights($campus) : null,
+            'accountSummary' => $user->can('viewAny', User::class) ? $this->accountSummary($campus) : null,
+            'administratorOverview' => $showAcademicOverview ? $administratorDashboard->overview($campus) : null,
             'showQualification' => $showQualification,
             // Backup problems, for whoever looks after backups (the Admin).
             'backupWarnings' => $user->hasPermission(Permission::ManageBackups) ? app(BackupManager::class)->status()['warnings'] : [],
             // Qualification across the active period's classes (null: no active period).
-            'qualificationOverview' => $showQualification ? $qualification->activePeriod() : null,
+            'qualificationOverview' => $showQualification ? $qualification->activePeriod($campus) : null,
             'canConfigurePerformance' => $user->hasPermission(Permission::ConfigurePerformance),
             // Attendance of the active period in the user's attendance scope (null: nothing recorded or no scope).
-            'attendanceTrend' => $this->attendanceTrend($user, $attendance),
+            'attendanceTrend' => $this->attendanceTrend($user, $attendance, $request),
         ]);
     }
 
@@ -80,9 +88,9 @@ class DashboardController extends Controller
      *
      * @return array<string, mixed>|null
      */
-    private function attendanceTrend(User $user, AttendanceLedger $attendance): ?array
+    private function attendanceTrend(User $user, AttendanceLedger $attendance, Request $request): ?array
     {
-        $scope = AttendanceScope::for($user);
+        $scope = AttendanceScope::for($user)->filteredBy($request);
         $period = $scope->isEmpty() ? null : AcademicPeriod::query()->active()->first();
         if ($period === null) {
             return null;
@@ -110,12 +118,15 @@ class DashboardController extends Controller
      *
      * @return array<string, mixed>|null
      */
-    private function monitoringSummary(MonitoringScope $scope, User $viewer, bool $withSubjects = false): ?array
+    private function monitoringSummary(MonitoringScope $scope, User $viewer, bool $withSubjects = false, ?CampusScope $campus = null): ?array
     {
         $summary = $this->monitoring->activePeriodSummary($scope, self::ATTENTION_LIMIT, $withSubjects);
         if ($summary === null) {
             return null;
         }
+
+        // Class names with the campus code when the overview spans several campuses.
+        $classLabels = $campus?->classLabels($summary['period']['id']) ?? [];
 
         if ($withSubjects) {
             $summary['subjects'] = array_map(fn (array $row): array => [
@@ -137,10 +148,12 @@ class DashboardController extends Controller
 
         return [
             ...$summary,
-            'requiringAttention' => array_map(
-                fn (MonitoredCandidate $entry): array => $this->presenter->summary($entry, $taught),
-                $summary['requiringAttention'],
-            ),
+            'requiringAttention' => array_map(function (MonitoredCandidate $entry) use ($taught, $classLabels): array {
+                $row = $this->presenter->summary($entry, $taught);
+                $row['classBatch']['name'] = $classLabels[$row['classBatch']['id']] ?? $row['classBatch']['name'];
+
+                return $row;
+            }, $summary['requiringAttention']),
         ];
     }
 
@@ -166,14 +179,14 @@ class DashboardController extends Controller
      *
      * @return array{count: int, periodId: int, periodName: string}|null
      */
-    private function missingWeights(): ?array
+    private function missingWeights(CampusScope $campus): ?array
     {
         $period = AcademicPeriod::query()->active()->first();
         if ($period === null) {
             return null;
         }
 
-        $count = ClassSubject::query()
+        $count = $campus->constrain(ClassSubject::query(), 'class_subjects.campus_id')
             ->whereHas('classBatch', fn (Builder $classes) => $classes->where('academic_period_id', $period->id))
             ->whereDoesntHave('assessmentCategories')
             ->count();
@@ -182,16 +195,24 @@ class DashboardController extends Controller
     }
 
     /**
-     * Active accounts per role, from the database.
+     * Active accounts per role on the campus scope: staff of the campus and
+     * candidates of the campus. Accounts that see every campus are counted
+     * only when the scope is every campus.
      *
      * @return list<array{code: string, name: string, activeUsers: int}>
      */
-    private function accountSummary(): array
+    private function accountSummary(CampusScope $campus): array
     {
         return Role::query()
-            ->withCount(['users as active_users_count' => fn (Builder $users) => $users->where('is_active', true)])
+            ->withCount(['users as active_users_count' => fn (Builder $users) => $users
+                ->where('is_active', true)
+                ->when($campus->campusId !== null, fn (Builder $inCampus) => $inCampus->where(fn (Builder $either) => $either
+                    ->where('users.campus_id', $campus->campusId)
+                    ->orWhereIn('users.id', Candidate::query()->select('user_id')->where('campus_id', $campus->campusId))))])
             ->orderByDesc('rank')
             ->get()
+            // Retired roles (Finance Officer) are left out once nobody has them.
+            ->filter(fn (Role $role): bool => SystemRole::tryFrom($role->code) !== null || (int) $role->active_users_count > 0)
             ->map(fn (Role $role): array => [
                 'code' => $role->code,
                 'name' => $role->name,

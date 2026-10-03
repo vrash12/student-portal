@@ -8,7 +8,8 @@ use App\Models\User;
 
 /**
  * Candidate records are sensitive. Administrators with "view all" may open
- * any record; teaching staff may open only candidates in classes they are
+ * any record of their campus (every campus when not limited to one;
+ * CampusScope); teaching staff may open only candidates in classes they are
  * assigned to teach. Knowing a URL never grants access.
  */
 class CandidatePolicy
@@ -25,7 +26,7 @@ class CandidatePolicy
     public function view(User $actor, Candidate $candidate): bool
     {
         if ($actor->hasPermission(Permission::ViewAllCandidates)) {
-            return true;
+            return $actor->campusScope()->allows($candidate->campusId());
         }
 
         return $candidate->class_batch_id !== null && $actor->teachesClass($candidate->class_batch_id);
@@ -39,13 +40,14 @@ class CandidatePolicy
     /** Full-record exports are available to administrators and the record owner. */
     public function downloadRecord(User $actor, Candidate $candidate): bool
     {
-        return ($actor->hasPermission(Permission::AccessStaffArea) && $actor->hasPermission(Permission::ViewAllCandidates))
+        return ($actor->hasPermission(Permission::AccessStaffArea) && $actor->hasPermission(Permission::ViewAllCandidates)
+                && $actor->campusScope()->allows($candidate->campusId()))
             || ($actor->hasPermission(Permission::AccessExamPortal) && (int) $candidate->user_id === (int) $actor->id);
     }
 
     public function update(User $actor, Candidate $candidate): bool
     {
-        return $actor->hasPermission(Permission::ManageCandidates);
+        return $actor->hasPermission(Permission::ManageCandidates) && $actor->campusScope()->allows($candidate->campusId());
     }
 
     /**
@@ -54,7 +56,8 @@ class CandidatePolicy
      */
     public function manageMedical(User $actor, Candidate $candidate): bool
     {
-        return $actor->hasPermission(Permission::ManageMedical) && $actor->hasPermission(Permission::ViewMedical);
+        return $actor->hasPermission(Permission::ManageMedical) && $actor->hasPermission(Permission::ViewMedical)
+            && $actor->campusScope()->allows($candidate->campusId());
     }
 
     /**

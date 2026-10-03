@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AuditAction;
+use App\Models\Campus;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,7 @@ final class UserAccountService
     public function __construct(private readonly AuditLogger $audit) {}
 
     /**
-     * @param  array{name: string, username: string, email: ?string, password: string, role_id: int, is_active: bool}  $data
+     * @param  array{name: string, username: string, email: ?string, password: string, role_id: int, campus_id?: ?int, is_active: bool}  $data
      */
     public function create(array $data): User
     {
@@ -30,6 +31,8 @@ final class UserAccountService
                 'password' => $data['password'],
             ]);
             $user->role()->associate(Role::query()->findOrFail($data['role_id']));
+            // The campus the account is limited to, or none for every campus (CampusScope).
+            $user->campus_id = $data['campus_id'] ?? null;
             $user->is_active = $data['is_active'];
             // The administrator chose this password: the owner replaces it at sign-in.
             $user->password_change_required = true;
@@ -46,7 +49,7 @@ final class UserAccountService
     }
 
     /**
-     * @param  array{name: string, username: string, email: ?string, password: ?string, role_id: int, is_active: bool}  $data
+     * @param  array{name: string, username: string, email: ?string, password: ?string, role_id: int, campus_id?: ?int, is_active: bool}  $data
      */
     public function update(User $user, array $data): User
     {
@@ -61,6 +64,9 @@ final class UserAccountService
             ]);
 
             // The role is fixed once the account exists (UpdateUserRequest); $data['role_id'] is the current role.
+            if (array_key_exists('campus_id', $data)) {
+                $user->campus_id = $data['campus_id'];
+            }
             $user->is_active = $data['is_active'];
 
             $passwordReset = $data['password'] !== null && $data['password'] !== '';
@@ -120,14 +126,17 @@ final class UserAccountService
     }
 
     /**
-     * @return array{name: string, username: string, email: ?string}
+     * @return array{name: string, username: string, email: ?string, campus: string}
      */
     private function profileSnapshot(User $user): array
     {
+        $campusId = $user->getAttribute('campus_id');
+
         return [
             'name' => $user->name,
             'username' => $user->username,
             'email' => $user->email,
+            'campus' => $campusId === null ? 'All campuses' : (string) Campus::query()->whereKey($campusId)->value('name'),
         ];
     }
 }

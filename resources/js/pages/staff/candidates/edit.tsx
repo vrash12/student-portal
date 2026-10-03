@@ -9,6 +9,7 @@ import {
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { PageHeader } from '@/components/ui/page-header';
 import { routes } from '@/lib/routes';
+import type { CampusOption, CampusSummary } from '@/types';
 import type { CandidateGroupOptions } from '@/types/candidates';
 
 interface EditCandidateProps extends CandidateGroupOptions {
@@ -26,14 +27,21 @@ interface EditCandidateProps extends CandidateGroupOptions {
         name: string;
         status: { value: string };
         classBatch: { id: number } | null;
+        campus: CampusSummary | null;
         accountActive: boolean;
         username: string;
     };
     classOptions: ClassOptionGroup[];
+    campusOptions: CampusOption[];
     statusOptions: StatusOption[];
 }
 
-export default function EditCandidate({ candidate, classOptions, statusOptions, companyOptions, platoonOptions }: EditCandidateProps) {
+export default function EditCandidate({ candidate, classOptions, campusOptions, statusOptions, companyOptions, platoonOptions }: EditCandidateProps) {
+    // The candidate's current campus stays choosable even when it is no longer active.
+    const campusChoices =
+        candidate.campus === null || campusOptions.some((campus) => campus.id === candidate.campus?.id)
+            ? campusOptions
+            : [...campusOptions, { ...candidate.campus, isActive: false }];
     const [confirmingDeactivation, setConfirmingDeactivation] = useState(false);
 
     const form = useForm<CandidateFormData>({
@@ -48,6 +56,7 @@ export default function EditCandidate({ candidate, classOptions, statusOptions, 
         profile_photo: null,
         remove_photo: false,
         class_batch_id: candidate.classBatch ? String(candidate.classBatch.id) : '',
+        campus_id: candidate.campus ? String(candidate.campus.id) : '',
         status: candidate.status.value,
         account_active: candidate.accountActive,
         password: '',
@@ -55,7 +64,7 @@ export default function EditCandidate({ candidate, classOptions, statusOptions, 
     });
 
     const save = () => {
-        form.transform((data) => ({ ...data, _method: 'put' }));
+        form.transform((data) => ({ ...data, campus_id: data.class_batch_id === '' ? data.campus_id : '', _method: 'put' }));
         form.post(routes.candidates.update(candidate.id), {
             preserveScroll: true,
             onError: () => form.reset('password', 'password_confirmation'),
@@ -93,6 +102,7 @@ export default function EditCandidate({ candidate, classOptions, statusOptions, 
                     form={form}
                     mode="edit"
                     classOptions={classOptions}
+                    campusOptions={campusChoices}
                     statusOptions={statusOptions}
                     companyOptions={companyOptions}
                     platoonOptions={platoonOptions}

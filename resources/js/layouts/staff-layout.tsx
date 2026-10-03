@@ -307,6 +307,9 @@ function UserMenu() {
         return null;
     }
 
+    // An account limited to one campus shows it beside the role.
+    const roleAndCampus = user.campus ? `${user.role.name} · ${user.campus.name}` : user.role.name;
+
     return (
         <div ref={containerRef} className="relative">
             <button
@@ -326,7 +329,7 @@ function UserMenu() {
                 </span>
                 <span className="hidden min-w-0 text-left sm:block">
                     <span className="block max-w-48 truncate text-sm font-medium text-ink">{user.name}</span>
-                    <span className="block max-w-48 truncate text-xs text-ink-muted">{user.role.name}</span>
+                    <span className="block max-w-48 truncate text-xs text-ink-muted">{roleAndCampus}</span>
                 </span>
                 <ChevronDown className="size-4 text-ink-muted" aria-hidden="true" />
             </button>
@@ -338,7 +341,7 @@ function UserMenu() {
                 >
                     <div className="border-b border-line px-4 py-3 sm:hidden">
                         <p className="truncate text-sm font-medium text-ink">{user.name}</p>
-                        <p className="truncate text-xs text-ink-muted">{user.role.name}</p>
+                        <p className="truncate text-xs text-ink-muted">{roleAndCampus}</p>
                     </div>
                     <Link
                         href={routes.account.password()}

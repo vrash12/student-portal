@@ -30,6 +30,9 @@ enum AuditAction: string
     case TrainingPhaseCreated = 'training_phase.created';
     case TrainingPhaseUpdated = 'training_phase.updated';
     case TrainingPhaseDeleted = 'training_phase.deleted';
+    case CampusCreated = 'campus.created';
+    case CampusUpdated = 'campus.updated';
+    case CampusDeleted = 'campus.deleted';
     case InstructorAssigned = 'instructor_assignment.created';
     case InstructorUnassigned = 'instructor_assignment.removed';
     case CandidateCreated = 'candidate.created';
@@ -148,6 +151,9 @@ enum AuditAction: string
             self::TrainingPhaseCreated => 'Created training phase',
             self::TrainingPhaseUpdated => 'Updated training phase',
             self::TrainingPhaseDeleted => 'Deleted training phase',
+            self::CampusCreated => 'Created campus',
+            self::CampusUpdated => 'Updated campus',
+            self::CampusDeleted => 'Removed campus',
             self::InstructorAssigned => 'Assigned instructor',
             self::InstructorUnassigned => 'Removed instructor assignment',
             self::CandidateCreated => 'Created candidate',

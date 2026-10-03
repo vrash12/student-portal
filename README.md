@@ -71,10 +71,19 @@ On 2026-10-01 the local database was reset to a small set for client demonstrati
 
 | Username | Role |
 | --- | --- |
-| `admin` | Admin (Teresita P. Vergara) |
-| `instructor1` | Instructor, Subject 1 (Ramon S. Estrada) |
-| `instructor2` | Instructor, Subject 2 (Liza M. Tan) |
-| `student01` … `student20` | Candidates in Class A (fictional Filipino names, e.g. `student01` Mark Anthony Dizon Villanueva) |
+| `admin` | Admin of every campus (Teresita P. Vergara) |
+| `instructor1` | Instructor, Subject 1, Main Campus (Ramon S. Estrada) |
+| `instructor2` | Instructor, Subject 2, Main Campus (Liza M. Tan) |
+| `student01` … `student20` | Candidates in Class A, Main Campus (fictional Filipino names, e.g. `student01` Mark Anthony Dizon Villanueva) |
+| `north.admin` | Admin limited to North Campus (Rosario T. Valdez) |
+| `instructor3` | Instructor, Subjects 1 and 2 of Class B, North Campus (Dennis R. Aquino) |
+| `north01` … `north05` | Candidates in Class B, North Campus |
+
+Campuses (2026-10-03): Class A and its people are on the **Main Campus**; `DemoCampusSeeder` (run by `ClientDemoSeeder`) adds a fictional **North Campus** with Class B, so campus scoping can be tried: `north.admin` sees only North Campus, `admin` sees both and can narrow lists, the dashboard and reports with the Campus filter. It is safe to run again on an existing demo database:
+
+```bash
+php artisan db:seed --class=DemoCampusSeeder
+```
 
 It includes grading weights, passing/warning grades (75/80), finalized scores (a mix of Passing, At Risk, Failing and Incomplete), five questions per subject and one published online quiz per subject, open for 7 days, plus three sample fitness events (placeholder standards) and a "Diagnostic Fitness Test" with synthetic results for Class A (`DemoFitnessSeeder`, also runnable on its own), plus sample expenses (`DemoAccountStatementsSeeder`: four expenses assigned to every class of the active period and a few one-off charges; no payments, since candidates are scholars). To rebuild it on an empty database (this deletes all data):
 

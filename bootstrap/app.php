@@ -2,7 +2,9 @@
 
 use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\EnsureAccountIsActive;
+use App\Http\Middleware\EnsureInstitutionWide;
 use App\Http\Middleware\EnsurePasswordIsCurrent;
+use App\Http\Middleware\EnsureRecordsInCampus;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ReplaceInvalidUtf8;
 use Illuminate\Foundation\Application;
@@ -29,6 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'active' => EnsureAccountIsActive::class,
             'password.current' => EnsurePasswordIsCurrent::class,
+            'institution' => EnsureInstitutionWide::class,
+            'campus' => EnsureRecordsInCampus::class,
         ]);
 
         $middleware->redirectGuestsTo(fn () => route('login'));

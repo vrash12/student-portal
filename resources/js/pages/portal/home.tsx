@@ -1,5 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
-import { Award, CalendarClock, CalendarDays, ClipboardList, Dumbbell, GraduationCap, HeartPulse, IdCard, PartyPopper, Users } from 'lucide-react';
+import { Award, CalendarClock, CalendarDays, ClipboardList, Dumbbell, GraduationCap, HeartPulse, IdCard, MapPin, PartyPopper, Users } from 'lucide-react';
 import { QualificationBadge } from '@/components/performance/area-status';
 import { ExamCard, type PortalExam } from '@/components/portal/exam-card';
 import { PortalEmpty, PortalSection, PortalTile } from '@/components/portal/portal-ui';
@@ -13,7 +13,7 @@ import type { PortalPerformanceCard } from '@/types/candidate-performance';
 import type { OverallStanding, StatusValue } from '@/types/grading';
 
 interface HomeProps {
-    summary: { name: string; number: string; className: string | null; period: string | null; eligible: boolean; subjectCount: number; overall: OverallStanding };
+    summary: { name: string; number: string; className: string | null; campus: string | null; period: string | null; eligible: boolean; subjectCount: number; overall: OverallStanding };
     /** Open now (the first few; the Examinations page lists all). */
     available: Paginated<PortalExam>;
     /** The next scheduled examinations. */
@@ -57,6 +57,12 @@ export default function PortalHome({ summary, available, upcoming, performance, 
                         <Users className="size-4 text-accent-300" aria-hidden="true" />
                         {summary.className ?? 'Class not assigned'}
                     </li>
+                    {summary.campus && (
+                        <li className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2">
+                            <MapPin className="size-4 text-accent-300" aria-hidden="true" />
+                            {summary.campus}
+                        </li>
+                    )}
                     {summary.period && (
                         <li className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2">
                             <CalendarDays className="size-4 text-accent-300" aria-hidden="true" />

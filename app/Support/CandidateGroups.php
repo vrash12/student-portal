@@ -20,9 +20,9 @@ final class CandidateGroups
      *
      * @return list<string>
      */
-    public static function companies(?int $classBatchId = null): array
+    public static function companies(?int $classBatchId = null, ?CampusScope $campus = null): array
     {
-        return self::distinct('company', $classBatchId);
+        return self::distinct('company', $classBatchId, $campus);
     }
 
     /**
@@ -30,18 +30,19 @@ final class CandidateGroups
      *
      * @return list<string>
      */
-    public static function platoons(?int $classBatchId = null): array
+    public static function platoons(?int $classBatchId = null, ?CampusScope $campus = null): array
     {
-        return self::distinct('platoon', $classBatchId);
+        return self::distinct('platoon', $classBatchId, $campus);
     }
 
     /**
      * @return list<string>
      */
-    private static function distinct(string $column, ?int $classBatchId): array
+    private static function distinct(string $column, ?int $classBatchId, ?CampusScope $campus): array
     {
         $values = Candidate::query()
             ->when($classBatchId !== null, fn (Builder $query) => $query->where('class_batch_id', $classBatchId))
+            ->when($campus !== null, fn (Builder $query) => $campus->constrain($query, 'campus_id'))
             ->whereNotNull($column)
             ->where($column, '!=', '')
             ->distinct()

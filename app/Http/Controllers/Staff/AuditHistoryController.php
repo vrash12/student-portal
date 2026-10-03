@@ -24,8 +24,13 @@ final class AuditHistoryController
             'entity' => ['nullable', Rule::in(array_keys(Relation::morphMap()))],
             'entity_id' => 'nullable|integer|min:1', 'from' => 'nullable|date_format:Y-m-d',
             'to' => 'nullable|date_format:Y-m-d|after_or_equal:from', 'page' => 'sometimes|integer|min:1',
+            'campus' => 'nullable|integer|min:1',
         ]);
-        $query = AuditLog::query()->with('actor:id,name')
+        // Entries about the viewer's campus (audit_logs.campus_id); accounts that
+        // see every campus see every entry and may narrow it to one campus.
+        $campus = $request->user()->campusScope()->filteredBy($request);
+        $filters['campus'] = $campus->filterValue();
+        $query = $campus->constrain(AuditLog::query(), 'audit_logs.campus_id')->with('actor:id,name')
             ->when($filters['actor'] ?? null, fn ($query, $value) => $query->where('actor_id', $value))
             ->when($filters['action'] ?? null, fn ($query, $value) => $query->where('action', $value))
             ->when($filters['entity'] ?? null, fn ($query, $value) => $query->where('auditable_type', $value))
@@ -44,7 +49,8 @@ final class AuditHistoryController
 
         return Inertia::render('staff/audit-history/index', [
             'entries' => $entries, 'filters' => $filters, 'charts' => $charts,
-            'actors' => User::whereIn('id', AuditLog::select('actor_id')->whereNotNull('actor_id')->distinct())->orderBy('name')->get(['id', 'name']),
+            'actors' => User::whereIn('id', $campus->constrain(AuditLog::select('actor_id'), 'audit_logs.campus_id')->whereNotNull('actor_id')->distinct())->orderBy('name')->get(['id', 'name']),
+            'campusOptions' => $campus->filterOptions(),
             'actions' => collect(AuditAction::cases())->map(fn ($action) => ['value' => $action->value, 'label' => $action->label()]),
             'entities' => array_keys(Relation::morphMap()),
         ])->toResponse($request)->header('Cache-Control', 'no-store, private');

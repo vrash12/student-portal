@@ -8,7 +8,7 @@ import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 
 interface EditClassProps {
-    classBatch: { id: number; name: string; period: string };
+    classBatch: { id: number; name: string; period: string; campus: string };
 }
 
 export default function EditClass({ classBatch }: EditClassProps) {
@@ -27,7 +27,7 @@ export default function EditClass({ classBatch }: EditClassProps) {
             <div className="mx-auto max-w-3xl">
                 <PageHeader
                     title={`Edit ${singular}`}
-                    description={`Academic period: ${classBatch.period}`}
+                    description={`Academic period: ${classBatch.period} · Campus: ${classBatch.campus}`}
                     breadcrumbs={[
                         { label: plural, href: routes.classes.index() },
                         { label: classBatch.name, href: routes.classes.show(classBatch.id) },

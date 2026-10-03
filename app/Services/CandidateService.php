@@ -47,7 +47,7 @@ final class CandidateService
                 $account->save();
 
                 $candidate->user()->associate($account);
-                $candidate->classBatch()->associate($this->classBatch($data['class_batch_id']));
+                $this->place($candidate, $data);
                 $candidate->status = CandidateStatus::Enrolled;
                 $candidate->profile_photo_path = $photoPath;
                 $candidate->save();
@@ -69,7 +69,7 @@ final class CandidateService
                 $oldPhoto = $candidate->profile_photo_path;
 
                 $candidate->fill($this->identity($data));
-                $candidate->classBatch()->associate($this->classBatch($data['class_batch_id']));
+                $this->place($candidate, $data);
                 $candidate->status = $data['status'];
                 if ($photoPath !== null || ($data['remove_photo'] ?? false)) {
                     $candidate->profile_photo_path = $photoPath;
@@ -182,10 +182,39 @@ final class CandidateService
         return $classBatchId === null ? null : ClassBatch::query()->findOrFail($classBatchId);
     }
 
+    /**
+     * Class and campus (owner decision 2026-10-03): a candidate in a class is
+     * on the class's campus; without a class, on the campus given (or the
+     * one they are already on). A database key checks the pair.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function place(Candidate $candidate, array $data): void
+    {
+        $classBatch = $this->classBatch($data['class_batch_id']);
+        $candidate->classBatch()->associate($classBatch);
+
+        if ($classBatch !== null) {
+            $candidate->campus_id = $classBatch->campus_id;
+
+            return;
+        }
+
+        $campusId = $data['campus_id'] ?? null;
+        if ($campusId !== null) {
+            $candidate->campus_id = (int) $campusId;
+        }
+
+        if ($candidate->getAttribute('campus_id') === null) {
+            throw ValidationException::withMessages(['campus_id' => 'Choose the campus of a candidate without a class.']);
+        }
+    }
+
     /** @return array<string, mixed> */
     private function snapshot(Candidate $candidate): array
     {
         $candidate->loadMissing(['user', 'classBatch']);
+        $candidate->load('campus');
 
         return [
             'candidate_number' => $candidate->candidate_number,
@@ -198,6 +227,7 @@ final class CandidateService
             'platoon' => $candidate->platoon,
             'has_profile_photo' => $candidate->profile_photo_path !== null,
             'class' => $candidate->classBatch?->name,
+            'campus' => $candidate->campus?->name,
             'status' => $candidate->status->value,
             'account_active' => $candidate->user->is_active,
         ];

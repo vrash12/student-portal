@@ -10,8 +10,24 @@ export interface AuthUser {
         code: string;
         name: string;
     };
+    /**
+     * The campus a staff account is limited to; null for accounts that see
+     * every campus (and candidates, whose campus is on their record).
+     */
+    campus: CampusSummary | null;
     /** Candidate accounts only: shown in the portal header. */
     candidate?: { firstName: string; photoUrl: string | null } | null;
+}
+
+export interface CampusSummary {
+    id: number;
+    name: string;
+    code: string;
+}
+
+/** A campus in a filter or picker (App\Support\CampusScope options). */
+export interface CampusOption extends CampusSummary {
+    isActive: boolean;
 }
 
 export interface Auth {

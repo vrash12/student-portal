@@ -39,9 +39,11 @@ class ConductController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $scope = ConductScope::for($user);
+        // The user's scope, narrowed by the campus filter for accounts that see every campus.
+        $scope = ConductScope::for($user)->filteredBy($request);
         $filters = [
             'search' => QueryFilters::search($request),
+            'campus' => $scope->campus->filterValue(),
             'class' => QueryFilters::id($request, 'class'),
         ];
 
@@ -71,6 +73,7 @@ class ConductController extends Controller
                 'totals' => $totals[$candidate->id],
             ]),
             'filters' => $filters,
+            'campusOptions' => $scope->campus->filterOptions(),
             'classOptions' => $scope->classOptions(),
             'scope' => $scope->kind(),
             'can' => ['configureTypes' => $user->hasPermission(Permission::ConfigurePerformance)],

@@ -9,6 +9,7 @@ use App\Models\Examination;
 use App\Models\ExaminationAttempt;
 use App\Models\Subject;
 use App\Services\ClassBatchService;
+use Database\Factories\CampusFactory;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -64,6 +65,8 @@ class CandidateProfileTest extends TestCase
     {
         Storage::fake('local');
         $admin = $this->userWithRole(SystemRole::AcademicAdministrator);
+        // A candidate without a class goes to the institution's only campus.
+        $campusId = CampusFactory::defaultCampusId();
         $payload = [
             'candidate_number' => 'SYNTHETIC-001', 'first_name' => 'Candidate', 'middle_name' => 'Sample',
             'last_name' => 'Example', 'suffix' => 'Jr.', 'training_group' => 'Section A',
@@ -72,6 +75,7 @@ class CandidateProfileTest extends TestCase
         ];
         $this->actingAs($admin)->post('/candidates', $payload)->assertRedirect();
         $candidate = Candidate::where('candidate_number', 'SYNTHETIC-001')->sole();
+        $this->assertSame($campusId, $candidate->campus_id);
         $this->assertSame('Candidate Sample Example Jr.', $candidate->user->name);
         Storage::disk('local')->assertExists($candidate->profile_photo_path);
         $this->get("/candidates/{$candidate->id}/photo")->assertOk()->assertHeader('Cache-Control', 'no-store, private');

@@ -7,6 +7,7 @@ use App\Enums\Permission;
 use App\Enums\SystemRole;
 use App\Models\AccountCategory;
 use App\Models\Assessment;
+use App\Models\Campus;
 use App\Models\CandidateMedicalDocument;
 use App\Models\ConductType;
 use App\Models\Examination;
@@ -41,6 +42,11 @@ use Tests\TestCase;
  * automatically. Route parameters point to records that belong to
  * Instructor Bravo (Batch B / Subject 1, Subject 2) and to candidate B1, so
  * Instructor Alpha and candidate A1 must be refused everywhere.
+ *
+ * Campuses (owner decision 2026-10-03): every record above is on Batch B's
+ * campus, so administrators limited to another campus must be refused on
+ * every route that names one of them, and campus-limited administrators on
+ * every route that changes settings shared by all campuses.
  */
 class RouteAccessMatrixTest extends TestCase
 {
@@ -48,6 +54,18 @@ class RouteAccessMatrixTest extends TestCase
 
     /** Public or guest-only routes. */
     private const UNPROTECTED = ['login', 'up', '{fallbackPlaceholder}'];
+
+    /**
+     * Route parameters naming a record that belongs to a campus (directly,
+     * or through its candidate, class or class subject). The others name
+     * records shared by every campus (subjects, the question bank, academic
+     * years, settings) or the campus itself.
+     */
+    private const CAMPUS_PARAMETERS = [
+        'accountEntry', 'assessment', 'attempt', 'attendanceSession', 'candidate', 'classBatch', 'classSubject',
+        'conductEntry', 'examination', 'fitnessTest', 'gradeCorrectionRequest', 'instructor', 'instructorAssignment',
+        'medicalDocument', 'medicalDownloadRequest', 'token', 'user',
+    ];
 
     /** @var array<string, string> route parameter => value */
     private array $parameters = [];
@@ -175,6 +193,8 @@ class RouteAccessMatrixTest extends TestCase
             'assessment' => (string) $assessment->id,
             'attempt' => (string) $this->attemptOfB1->id,
             'attendanceSession' => (string) $attendanceSession->id,
+            // Batch B's campus; only institution-wide Admins reach campus routes.
+            'campus' => (string) $this->batchB->campus_id,
             // A backup name (files, not records); only the Admin reaches backup routes.
             'backup' => '20261002-010000-daily',
             // Candidate B1's QR code: only staff who may see B1 (and B1) reach anything with it.
@@ -269,6 +289,8 @@ class RouteAccessMatrixTest extends TestCase
             'instructor' => $this->alpha,
             'academic administrator' => $this->userWithRole(SystemRole::AcademicAdministrator),
             'super administrator' => $this->userWithRole(SystemRole::SuperAdministrator),
+            // Never holds the permissions of settings shared by every campus.
+            'campus administrator' => $this->userWithRole(SystemRole::SuperAdministrator, ['campus_id' => $this->batchB->campus_id]),
         ];
         $checked = 0;
 
@@ -339,6 +361,80 @@ class RouteAccessMatrixTest extends TestCase
         }
 
         $this->actingAs($this->candidateInB->user)->get('/portal/attempts/'.$this->parameters['attempt'])->assertOk();
+    }
+
+    public function test_an_administrator_of_another_campus_cannot_reach_any_record_of_this_campus(): void
+    {
+        $north = Campus::factory()->create(['name' => 'North Campus', 'code' => 'NORTH']);
+        $users = [
+            'North Admin' => $this->userWithRole(SystemRole::SuperAdministrator, ['campus_id' => $north->id]),
+            'North Academic Administrator' => $this->userWithRole(SystemRole::AcademicAdministrator, ['campus_id' => $north->id]),
+        ];
+        $checked = 0;
+
+        foreach ($users as $who => $user) {
+            foreach ($this->protectedRoutes() as $route) {
+                if (! $this->namesCampusRecord($route)) {
+                    continue;
+                }
+                $this->actingAs($user);
+                $this->assertDenied($this->requestRoute($route), $route, $who);
+                $checked++;
+            }
+        }
+
+        $this->assertGreaterThan(150, $checked);
+        // Nothing was changed on the way.
+        $this->assertSame('Quiz B', Assessment::query()->where('class_subject_id', $this->offeringB1->id)->value('title'));
+        $this->assertSame('published', Examination::query()->where('class_subject_id', $this->offeringB1->id)->value('status')->value);
+        $this->assertSame('in_progress', $this->attemptOfB1->fresh()->status);
+        $this->assertSame($this->batchB->campus_id, $this->bravo->fresh()->campus_id);
+    }
+
+    public function test_campus_limited_accounts_cannot_change_what_every_campus_shares(): void
+    {
+        // An Admin of Batch B's own campus: still limited to one campus.
+        $administrator = $this->userWithRole(SystemRole::SuperAdministrator, ['campus_id' => $this->batchB->campus_id]);
+        $checked = 0;
+
+        foreach ($this->protectedRoutes() as $route) {
+            $sharedSetting = in_array('institution', $route->gatherMiddleware(), true)
+                || collect($this->requiredPermissions($route))->contains(fn (string $code): bool => Permission::from($code)->isInstitutionWide());
+            if (! $sharedSetting) {
+                continue;
+            }
+            $this->actingAs($administrator);
+            $this->assertDenied($this->requestRoute($route), $route, 'Campus Admin');
+            $checked++;
+        }
+
+        $this->assertGreaterThan(40, $checked);
+    }
+
+    public function test_an_administrator_of_the_same_campus_can_open_its_records(): void
+    {
+        // Control: the campus rule refuses other campuses, not the records themselves.
+        $this->actingAs($this->userWithRole(SystemRole::SuperAdministrator, ['campus_id' => $this->batchB->campus_id]));
+        foreach ([
+            '/candidates/'.$this->parameters['candidate'],
+            '/classes/'.$this->parameters['classBatch'],
+            '/instructors/'.$this->parameters['instructor'],
+            '/users/'.$this->parameters['user'].'/edit',
+            '/conduct/candidates/'.$this->parameters['candidate'],
+            '/attendance/sessions/'.$this->parameters['attendanceSession'],
+            '/fitness/tests/'.$this->parameters['fitnessTest'],
+            '/grade-corrections/'.$this->parameters['gradeCorrectionRequest'],
+            '/medical-records/'.$this->parameters['candidate'].'/edit',
+        ] as $url) {
+            $this->get($url)->assertOk();
+        }
+    }
+
+    private function namesCampusRecord(Route $route): bool
+    {
+        preg_match_all('/\{(\w+)\??\}/', $route->uri(), $matches);
+
+        return array_intersect($matches[1], self::CAMPUS_PARAMETERS) !== [];
     }
 
     public function test_the_private_storage_route_is_not_registered(): void

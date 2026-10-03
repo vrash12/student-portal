@@ -13,7 +13,8 @@ use RuntimeException;
  * Fictional Filipino names and illustrated profile pictures for the client
  * demo set (owner request, 2026-10-02). Usernames and candidate numbers do
  * not change (student01 … student20, instructor1, instructor2, admin), so
- * demo sign-ins keep working.
+ * demo sign-ins keep working. The North Campus candidates (DemoCampusSeeder)
+ * get pictures too.
  *
  * Only placeholder records are changed: candidates still named "Student NN"
  * and staff still named "Instructor One/Two" or "Administrator"; names
@@ -89,13 +90,27 @@ class DemoPeopleSeeder extends Seeder
                     $candidate->user?->forceFill(['name' => $candidate->full_name])->save();
                 }
 
-                if ($candidate->profile_photo_path === null) {
-                    $path = 'candidate-photos/demo-'.$candidate->candidate_number.'.png';
-                    Storage::disk('local')->put($path, self::portrait($candidate->candidate_number, $female));
-                    $candidate->forceFill(['profile_photo_path' => $path])->save();
-                }
+                self::addPortrait($candidate, $female);
             });
         }
+
+        // The second demo campus's candidates already have their names.
+        $northCandidates = Candidate::query()->whereIn('candidate_number', array_keys(DemoCampusSeeder::CANDIDATES))->get();
+        foreach ($northCandidates as $candidate) {
+            self::addPortrait($candidate, DemoCampusSeeder::CANDIDATES[$candidate->candidate_number][3]);
+        }
+    }
+
+    /** A drawn picture for a candidate without one (an uploaded photo is never replaced). */
+    private static function addPortrait(Candidate $candidate, bool $female): void
+    {
+        if ($candidate->profile_photo_path !== null) {
+            return;
+        }
+
+        $path = 'candidate-photos/demo-'.$candidate->candidate_number.'.png';
+        Storage::disk('local')->put($path, self::portrait($candidate->candidate_number, $female));
+        $candidate->forceFill(['profile_photo_path' => $path])->save();
     }
 
     /**

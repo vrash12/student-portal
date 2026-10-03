@@ -6,6 +6,7 @@ use App\Http\Requests\Concerns\NormalizesTextInput;
 use App\Models\Candidate;
 use App\Models\User;
 use App\Services\CandidateService;
+use App\Support\CampusScope;
 use App\Support\CandidateGroups;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -32,13 +33,22 @@ abstract class CandidateRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $classBatchId = $this->input('class_batch_id');
+        $campusId = $this->input('campus_id');
 
         $this->merge([
             'candidate_number' => $this->trimmedInput('candidate_number'),
             'first_name' => $this->trimmedInput('first_name'),
             'last_name' => $this->trimmedInput('last_name'),
             'class_batch_id' => $classBatchId === '' ? null : $classBatchId,
+            'campus_id' => $campusId === '' ? null : $campusId,
         ]);
+
+        // A candidate in a class is on the class's campus. Without a class,
+        // the only campus the user may choose is filled in for them.
+        $assignable = $this->campusScope()->assignableIds();
+        if ($this->input('class_batch_id') === null && $this->input('campus_id') === null && count($assignable) === 1) {
+            $this->merge(['campus_id' => $assignable[0]]);
+        }
 
         // Company and platoon names group candidates in filters, so "Alpha
         // Company" and "Alpha  Company " are stored as the same value.
@@ -72,7 +82,11 @@ abstract class CandidateRequest extends FormRequest
             'platoon' => ['nullable', 'string', 'max:'.CandidateGroups::MAX_LENGTH],
             'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=4096,max_height=4096', 'prohibited_if:remove_photo,1,true'],
             'remove_photo' => ['sometimes', 'boolean'],
-            'class_batch_id' => ['nullable', 'integer', Rule::exists('class_batches', 'id')],
+            // Only classes of a campus the user may work with (owner decision 2026-10-03).
+            'class_batch_id' => ['nullable', 'integer', Rule::exists('class_batches', 'id')->where(fn ($classes) => $this->campusScope()->constrain($classes, 'campus_id'))],
+            // Candidates without a class are placed on a campus directly: an
+            // active campus in the user's scope, or the one they are already on.
+            'campus_id' => ['nullable', 'required_without:class_batch_id', 'integer', Rule::in([...$this->campusScope()->assignableIds(), ...$this->currentCampusIds($candidate)])],
             'password' => [
                 $candidate === null ? 'required' : 'nullable',
                 'string', 'confirmed', Password::defaults(),
@@ -97,7 +111,37 @@ abstract class CandidateRequest extends FormRequest
      */
     public function attributes(): array
     {
-        return ['class_batch_id' => 'class'];
+        return ['class_batch_id' => 'class', 'campus_id' => 'campus'];
+    }
+
+    protected function campusScope(): CampusScope
+    {
+        return $this->user()->campusScope();
+    }
+
+    /**
+     * The campus an edited candidate is on stays valid even if that campus
+     * was deactivated meanwhile.
+     *
+     * @return list<int>
+     */
+    private function currentCampusIds(?Candidate $candidate): array
+    {
+        $campusId = $candidate?->campusId();
+
+        return $campusId === null ? [] : [$campusId];
+    }
+
+    /** The campus of a candidate without a class (ignored when the class decides it). */
+    protected function campusId(): ?int
+    {
+        if ($this->classBatchId() !== null) {
+            return null;
+        }
+
+        $value = $this->input('campus_id');
+
+        return $value === null ? null : (int) $value;
     }
 
     /**

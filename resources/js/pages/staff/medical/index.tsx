@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { FileDown, FileStack, HeartPulse, Settings2 } from 'lucide-react';
+import { CampusFilter } from '@/components/academic/campus-filter';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FilterBar } from '@/components/ui/filter-bar';
@@ -12,7 +13,7 @@ import { useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import { useQueryFilters } from '@/lib/use-query-filters';
-import type { Paginated } from '@/types';
+import type { CampusOption, Paginated } from '@/types';
 
 interface MedicalCandidateRow {
     id: number;
@@ -31,7 +32,9 @@ interface MedicalRecordsProps {
     candidates: Paginated<MedicalCandidateRow>;
     /** Active fields of the medical record. */
     fieldCount: number;
-    filters: { search: string; class: string };
+    filters: { search: string; campus: string; class: string };
+    /** Campuses to filter by (accounts that see every campus only). */
+    campusOptions: CampusOption[];
     classes: Array<{ id: number; name: string }>;
     /** Uploaded documents waiting for review. */
     waitingDocuments: number;
@@ -41,7 +44,7 @@ interface MedicalRecordsProps {
 }
 
 /** Candidates and how much of their medical record is filled in. Medical staff only. */
-export default function MedicalRecords({ candidates, fieldCount, filters, classes, waitingDocuments, pendingDownloadRequests, can }: MedicalRecordsProps) {
+export default function MedicalRecords({ candidates, fieldCount, filters, campusOptions, classes, waitingDocuments, pendingDownloadRequests, can }: MedicalRecordsProps) {
     const formatDate = useDateFormatter();
     const { values, update, updateMany } = useQueryFilters(routes.medical.records.index(), filters);
     const configureAction = can.configure && (
@@ -87,10 +90,11 @@ export default function MedicalRecords({ candidates, fieldCount, filters, classe
             />
 
             <section className="rounded-lg border border-line-box bg-surface" aria-label="Candidate medical records">
-                <FilterBar onReset={() => updateMany({ search: '', class: '' })} canReset={values.search !== '' || values.class !== ''}>
+                <FilterBar onReset={() => updateMany({ search: '', campus: '', class: '' })} canReset={values.search !== '' || values.campus !== '' || values.class !== ''}>
                     <FormField label="Search" className="sm:w-72">
                         <TextInput type="search" value={values.search} onChange={(event) => update('search', event.target.value)} placeholder="Candidate number or name" />
                     </FormField>
+                    <CampusFilter options={campusOptions} value={values.campus} onChange={(campus) => updateMany({ campus, class: '' })} />
                     <FormField label={terms.classBatch.singular} className="sm:w-60">
                         <SelectInput value={values.class} onChange={(event) => update('class', event.target.value)}>
                             <option value="">All {terms.classBatch.plural.toLowerCase()}</option>

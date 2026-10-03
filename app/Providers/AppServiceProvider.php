@@ -11,6 +11,7 @@ use App\Models\Assessment;
 use App\Models\AssessmentCategory;
 use App\Models\AssessmentScore;
 use App\Models\AttendanceSession;
+use App\Models\Campus;
 use App\Models\Candidate;
 use App\Models\CandidateMedicalDocument;
 use App\Models\ClassBatch;
@@ -142,6 +143,7 @@ class AppServiceProvider extends ServiceProvider
             'attendance_session' => AttendanceSession::class,
             'performance_area' => PerformanceArea::class,
             'training_phase' => TrainingPhase::class,
+            'campus' => Campus::class,
         ]);
     }
 

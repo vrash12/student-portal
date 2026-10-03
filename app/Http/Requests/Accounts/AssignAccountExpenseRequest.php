@@ -32,11 +32,14 @@ class AssignAccountExpenseRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Only classes and candidates of a campus the user may work with.
+        $campus = $this->user()->campusScope();
+
         return [
             'mode' => ['required', Rule::in([self::MODE_CLASS, self::MODE_CANDIDATES])],
-            'class_batch_id' => ['exclude_unless:mode,'.self::MODE_CLASS, 'required', 'integer', Rule::exists('class_batches', 'id')],
+            'class_batch_id' => ['exclude_unless:mode,'.self::MODE_CLASS, 'required', 'integer', Rule::exists('class_batches', 'id')->where(fn ($classes) => $campus->constrain($classes, 'campus_id'))],
             'candidate_ids' => ['exclude_unless:mode,'.self::MODE_CANDIDATES, 'required', 'array', 'min:1', 'max:'.self::MAX_CANDIDATES],
-            'candidate_ids.*' => ['integer', 'distinct', Rule::exists('candidates', 'id')],
+            'candidate_ids.*' => ['integer', 'distinct', Rule::exists('candidates', 'id')->where(fn ($candidates) => $campus->constrain($candidates, 'campus_id'))],
             'posted_on' => ['required', 'date_format:Y-m-d', 'after_or_equal:2000-01-01', 'before_or_equal:2100-12-31'],
         ];
     }

@@ -56,9 +56,11 @@ interface ExpenseShowProps {
     /** Today in the institution's timezone (Y-m-d). */
     today: string;
     maxCandidates: number;
+    /** Expenses are shared by every campus: only accounts that see every campus edit them. */
+    canEditDefinitions: boolean;
 }
 
-export default function AccountExpenseShow({ expense, charges, filters, picker, classOptions, today, maxCandidates }: ExpenseShowProps) {
+export default function AccountExpenseShow({ expense, charges, filters, picker, classOptions, today, maxCandidates, canEditDefinitions }: ExpenseShowProps) {
     const money = useMoney();
     const formatDate = useDateFormatter();
     const [voiding, setVoiding] = useState<ExpenseCharge | null>(null);
@@ -85,9 +87,11 @@ export default function AccountExpenseShow({ expense, charges, filters, picker, 
                     { label: expense.name },
                 ]}
                 actions={
-                    <ButtonLink href={routes.accounts.expenses.edit(expense.id)} icon={<Pencil className="size-4" aria-hidden="true" />}>
-                        Edit Expense
-                    </ButtonLink>
+                    canEditDefinitions && (
+                        <ButtonLink href={routes.accounts.expenses.edit(expense.id)} icon={<Pencil className="size-4" aria-hidden="true" />}>
+                            Edit Expense
+                        </ButtonLink>
+                    )
                 }
             />
 

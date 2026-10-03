@@ -22,7 +22,7 @@ class StoreUserRequest extends UserAccountRequest
     }
 
     /**
-     * @return array{name: string, username: string, email: ?string, password: string, role_id: int, is_active: bool}
+     * @return array{name: string, username: string, email: ?string, password: string, role_id: int, campus_id: ?int, is_active: bool}
      */
     public function newAccountData(): array
     {

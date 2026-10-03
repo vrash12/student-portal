@@ -298,6 +298,16 @@ Owner decision (2026-10-03): the read-only Roles & Permissions page and its `rol
 
 Owner decision (2026-10-03): an account's role is chosen only when the account is created and cannot be changed afterwards (the Edit page shows it as text; the server rejects a different role). An instructor can never be turned into an administrator from Edit.
 
+Owner decision (2026-10-03): **multiple campuses**. The institution is one organization with several campuses in one database (not multi-tenancy):
+
+- A campus has a name, a code, an optional address and an active flag (Academics → Campuses, `campuses.manage`, institution-wide Admin only). A campus in use is deactivated (no new classes or people go there), never deleted; one that was never used can be removed.
+- Every class belongs to one campus, chosen when it is created and never changed. Two campuses may each have a class of the same name in one academic year. A candidate is on the campus of their class (a candidate without a class is placed on a campus directly). Instructors belong to one campus and teach only classes of that campus (enforced by composite foreign keys).
+- Administrators are either **institution-wide** (no campus: they see every campus and may narrow lists, the dashboard and reports with a Campus filter) or **campus-limited** (they see and change only their campus; any other campus's record is "not found", even by URL). Only administrator roles may be institution-wide.
+- Subjects, the question bank, academic years and training phases, performance areas, fitness events, merit/demerit types, medical record fields, expense definitions and categories, and passing/warning grades are **shared by every campus**; only institution-wide administrators change them (`Permission::isInstitutionWide` and the `institution` route middleware). Backups are institution-wide too.
+- Class rank stays within the class.
+- Candidates see their campus as text on the portal and on their PDFs (record, QR card).
+- The single campus rule lives in `App\Support\CampusScope`; URLs naming a record of another campus are refused by `EnsureRecordsInCampus` (the `campus` middleware). Audit entries carry the campus they are about (`audit_logs.campus_id`, null for institution-wide changes).
+
 Administration interfaces should prioritize clarity and efficiency.
 
 ---
@@ -386,6 +396,8 @@ Subjects must ultimately be configurable through the application.
 Owner decision (2026-10-03): the grading format is Training Phase → subjects under each phase → individual grades → phase average → Cumulative General Point Average (CGPA) → class standing/rank → final course grade. A class keeps its candidates for the whole course; each subject of a class belongs to a configurable training phase (Academics → Training Phases) and carries units (default 1). Phase averages and the CGPA are unit-weighted averages of the subject grades (`GradeCalculationService::weightedAverage`, `CourseRecordService`), on the 0–100 grade scale. The final course grade is the weighted performance areas (the overall score), and class rank (staff only) is by it. See `docs/grading-explained.md`.
 
 Owner decision (2026-10-03): the whole course lasts one year. An academic period is that year (named like 2026-2027, 2027-2028) and lasts at most one year; every training phase belongs to one academic year, with dates inside it, in phase order and without overlapping. A class's subjects use only the phases of the class's year.
+
+Owner decision (2026-10-03): every class belongs to one campus (see §9, multiple campuses); academic years, training phases and subjects are shared by every campus.
 
 ---
 
@@ -1730,6 +1742,8 @@ Prefer configurable rules.
 This leaves room for the software to evolve into a reusable ServLife product.
 
 Do not implement full multi-tenancy prematurely unless explicitly required.
+
+Campuses (owner decision 2026-10-03, see §9) are a scoping dimension inside one organization and one database, not tenants.
 
 ---
 

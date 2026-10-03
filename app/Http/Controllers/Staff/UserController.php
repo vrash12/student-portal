@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Users\StoreUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
@@ -35,9 +36,12 @@ class UserController extends Controller
             'status' => QueryFilters::oneOf($request, 'status', ['active', 'inactive']),
         ];
         $actor = $request->user();
+        // The user's campus, or every campus narrowed by the campus filter (CampusScope).
+        $campus = $actor->campusScope()->filteredBy($request);
+        $filters['campus'] = $campus->filterValue();
 
-        $query = User::query()
-            ->with('role.permissions')
+        $query = $campus->constrain(User::query(), 'users.campus_id')
+            ->with(['role.permissions', 'campus'])
             ->whereHas('role', fn (Builder $roles) => $roles->staff())
             ->when($filters['search'] !== '', function (Builder $query) use ($filters): void {
                 $term = QueryFilters::likeTerm($filters['search']);
@@ -66,6 +70,8 @@ class UserController extends Controller
                 'name' => $user->name,
                 'username' => $user->username,
                 'role' => $user->role->name,
+                // Null: the account sees every campus.
+                'campus' => $user->campus?->summary(),
                 'isActive' => $user->is_active,
                 'lastLoginAt' => $user->last_login_at?->toIso8601String(),
                 'canEdit' => $actor->can('update', $user),
@@ -75,6 +81,7 @@ class UserController extends Controller
             'users' => $users,
             'charts' => $charts,
             'filters' => $filters,
+            'campusOptions' => $campus->filterOptions(),
             'roles' => $staffRoles->map(fn (Role $role): array => ['code' => $role->code, 'name' => $role->name])->all(),
             'canCreate' => $actor->can('create', User::class),
         ]);
@@ -82,8 +89,11 @@ class UserController extends Controller
 
     public function create(Request $request): Response
     {
+        $actor = $request->user();
+
         return Inertia::render('staff/users/create', [
-            'roles' => $this->assignableRoles($request->user()),
+            'roles' => $this->assignableRoles($actor),
+            ...$this->campusChoices($actor),
         ]);
     }
 
@@ -98,6 +108,14 @@ class UserController extends Controller
 
     public function edit(Request $request, User $user): Response
     {
+        $actor = $request->user();
+        $user->loadMissing('campus');
+        $campusChoices = $this->campusChoices($actor);
+        // The campus the account is on stays listed even if it was deactivated.
+        if ($user->campus !== null && ! in_array($user->campus_id, array_column($campusChoices['campusOptions'], 'id'), true)) {
+            $campusChoices['campusOptions'][] = [...$user->campus->summary(), 'isActive' => $user->campus->is_active];
+        }
+
         return Inertia::render('staff/users/edit', [
             'account' => [
                 'id' => $user->id,
@@ -105,13 +123,17 @@ class UserController extends Controller
                 'username' => $user->username,
                 'email' => $user->email,
                 'roleId' => $user->role_id,
+                'campusId' => $user->campus_id,
                 'isActive' => $user->is_active,
                 'lastLoginAt' => $user->last_login_at?->toIso8601String(),
                 'createdAt' => $user->created_at?->toIso8601String(),
             ],
             // The role is fixed once the account exists; the form shows it, not a choice.
-            'roles' => [['id' => $user->role->id, 'name' => $user->role->name, 'description' => $user->role->description]],
-            'isOwnAccount' => $request->user()->is($user),
+            'roles' => [['id' => $user->role->id, 'name' => $user->role->name, 'description' => $user->role->description, 'requiresCampus' => $user->role->grants(Permission::TeachClasses)]],
+            'isOwnAccount' => $actor->is($user),
+            ...$campusChoices,
+            // Only an administrator of every campus moves another account between campuses.
+            'canChangeCampus' => ! $actor->is($user) && $actor->campusScope()->isInstitutionWide(),
         ]);
     }
 
@@ -125,14 +147,16 @@ class UserController extends Controller
     }
 
     /**
-     * Staff roles the acting user may give a new account.
+     * Staff roles the acting user may give a new account. Teaching roles
+     * require a campus (instructors teach on one campus).
      *
-     * @return list<array{id: int, name: string, description: ?string}>
+     * @return list<array{id: int, name: string, description: ?string, requiresCampus: bool}>
      */
     private function assignableRoles(User $actor): array
     {
         return Role::query()
             ->staff()
+            ->with('permissions')
             ->orderByDesc('rank')
             ->get()
             ->filter(fn (Role $role): bool => $actor->canAssignRole($role))
@@ -140,8 +164,22 @@ class UserController extends Controller
                 'id' => $role->id,
                 'name' => $role->name,
                 'description' => $role->description,
+                'requiresCampus' => $role->grants(Permission::TeachClasses),
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * Campuses a new or edited account may be placed on, and whether
+     * "every campus" can be chosen (only by accounts that see every campus).
+     *
+     * @return array{campusOptions: list<array{id: int, name: string, code: string, isActive: bool}>, canChooseEveryCampus: bool}
+     */
+    private function campusChoices(User $actor): array
+    {
+        $scope = $actor->campusScope();
+
+        return ['campusOptions' => $scope->assignableOptions(), 'canChooseEveryCampus' => $scope->isInstitutionWide()];
     }
 }

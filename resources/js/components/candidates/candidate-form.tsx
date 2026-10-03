@@ -4,6 +4,7 @@ import { Button, ButtonLink } from '@/components/ui/button';
 import { CheckboxField, FormField, PasswordInput, SelectInput, TextInput } from '@/components/ui/form-field';
 import { FormActions, FormSection } from '@/components/ui/form-section';
 import { terms } from '@/lib/terminology';
+import type { CampusOption } from '@/types';
 
 export interface ClassOptionGroup {
     period: string;
@@ -28,6 +29,8 @@ export interface CandidateFormData {
     profile_photo: File | null;
     remove_photo: boolean;
     class_batch_id: string;
+    /** Used only while the candidate has no class: a class decides the campus. */
+    campus_id: string;
     status: string;
     account_active: boolean;
     password: string;
@@ -38,6 +41,8 @@ interface CandidateFormProps {
     form: InertiaForm<CandidateFormData>;
     mode: 'create' | 'edit';
     classOptions: ClassOptionGroup[];
+    /** Campuses a candidate without a class may be placed on. */
+    campusOptions?: CampusOption[];
     statusOptions?: StatusOption[];
     /** Company and platoon names already in use, suggested while typing. */
     companyOptions?: string[];
@@ -54,6 +59,7 @@ export function CandidateForm({
     form,
     mode,
     classOptions,
+    campusOptions = [],
     statusOptions = [],
     companyOptions = [],
     platoonOptions = [],
@@ -148,6 +154,20 @@ export function CandidateForm({
                             ))}
                         </SelectInput>
                     </FormField>
+
+                    {/* With one campus to choose from, the server places the candidate there. */}
+                    {form.data.class_batch_id === '' && campusOptions.length > 1 && (
+                        <FormField label="Campus" required error={form.errors.campus_id} hint={`Choosing a ${classTerm.toLowerCase()} places the candidate on its campus.`}>
+                            <SelectInput name="campus_id" value={form.data.campus_id} onChange={(event) => form.setData('campus_id', event.target.value)}>
+                                <option value="">Choose a campus</option>
+                                {campusOptions.map((campus) => (
+                                    <option key={campus.id} value={String(campus.id)}>
+                                        {campus.isActive ? campus.name : `${campus.name} (inactive)`}
+                                    </option>
+                                ))}
+                            </SelectInput>
+                        </FormField>
+                    )}
 
                     {mode === 'edit' && (
                         <FormField label="Status" required error={form.errors.status}>

@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Users;
 
+use App\Enums\Permission;
 use App\Http\Requests\Concerns\NormalizesTextInput;
+use App\Models\Role;
 use App\Models\User;
 use App\Rules\GrantableStaffRole;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Validator;
 
 /**
  * Shared normalization and rules for creating and updating staff accounts.
@@ -30,6 +33,33 @@ abstract class UserAccountRequest extends FormRequest
             'username' => $this->lowercaseInput('username'),
             'email' => $this->optionalInput('email', lowercase: true),
         ]);
+
+        // An edit that does not mention the campus keeps the current one.
+        if ($this->exists('campus_id')) {
+            $campusId = $this->input('campus_id');
+            $this->merge(['campus_id' => $campusId === '' ? null : $campusId]);
+        } else {
+            $this->merge(['campus_id' => $this->targetUser()?->campus_id]);
+        }
+
+        // A campus administrator's new staff are on their campus.
+        $actorCampus = $this->user()->campusScope();
+        if ($this->targetUser() === null && ! $actorCampus->isInstitutionWide() && $this->input('campus_id') === null) {
+            $this->merge(['campus_id' => $actorCampus->campusId]);
+        }
+
+        // A new teaching account goes to the only campus there is to choose (as classes and candidates do).
+        if ($this->targetUser() === null && $this->input('campus_id') === null && $this->roleTeaches((int) $this->input('role_id'))) {
+            $assignable = $actorCampus->assignableIds();
+            if (count($assignable) === 1) {
+                $this->merge(['campus_id' => $assignable[0]]);
+            }
+        }
+    }
+
+    private function roleTeaches(int $roleId): bool
+    {
+        return $roleId > 0 && (bool) Role::query()->with('permissions')->find($roleId)?->grants(Permission::TeachClasses);
     }
 
     /**
@@ -50,6 +80,9 @@ abstract class UserAccountRequest extends FormRequest
                 Rule::unique('users', 'email')->ignore($target),
             ],
             'role_id' => ['bail', 'required', 'integer', new GrantableStaffRole($this->user(), $target?->role)],
+            // The campus the account is limited to (an active campus the actor
+            // manages, or the one it is already on), or none for every campus.
+            'campus_id' => ['nullable', 'integer', Rule::in([...$this->user()->campusScope()->assignableIds(), ...($target?->campus_id === null ? [] : [$target->campus_id])])],
             'is_active' => ['required', 'boolean'],
             'password' => [
                 $this->passwordIsRequired() ? 'required' : 'nullable',
@@ -78,12 +111,42 @@ abstract class UserAccountRequest extends FormRequest
     {
         return [
             'role_id' => 'role',
+            'campus_id' => 'campus',
             'is_active' => 'status',
         ];
     }
 
     /**
-     * @return array{name: string, username: string, email: ?string, password: ?string, role_id: int, is_active: bool}
+     * Campus rules (owner decision 2026-10-03): instructors always belong to
+     * one campus; "every campus" is only for administrator roles and only an
+     * account that sees every campus may give it.
+     *
+     * @return array<int, callable(Validator): void>
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                if ($validator->errors()->hasAny(['role_id', 'campus_id'])) {
+                    return;
+                }
+
+                $campusId = $this->input('campus_id');
+                $role = Role::query()->with('permissions')->find($this->targetUser()?->role_id ?? $this->integer('role_id'));
+
+                if ($campusId === null && $role?->grants(Permission::TeachClasses)) {
+                    $validator->errors()->add('campus_id', 'Instructors belong to one campus. Choose the campus they teach at.');
+                }
+
+                if ($campusId === null && ! $this->user()->campusScope()->isInstitutionWide()) {
+                    $validator->errors()->add('campus_id', 'Accounts you create are on your campus.');
+                }
+            },
+        ];
+    }
+
+    /**
+     * @return array{name: string, username: string, email: ?string, password: ?string, role_id: int, campus_id: ?int, is_active: bool}
      */
     public function accountData(): array
     {
@@ -96,6 +159,7 @@ abstract class UserAccountRequest extends FormRequest
             'email' => is_string($email) ? $email : null,
             'password' => $password === '' ? null : $password,
             'role_id' => $this->integer('role_id'),
+            'campus_id' => $this->input('campus_id') === null ? null : $this->integer('campus_id'),
             'is_active' => $this->boolean('is_active'),
         ];
     }

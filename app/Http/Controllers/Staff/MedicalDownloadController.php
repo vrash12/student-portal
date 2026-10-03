@@ -36,8 +36,10 @@ class MedicalDownloadController extends Controller
         $requested = (string) $request->query('status', 'pending');
         $status = in_array($requested, self::FILTERS, true) ? $requested : 'pending';
         $user = $request->user();
+        // Requests about candidates on the user's campus (every campus when not limited).
+        $campus = $user->campusScope();
 
-        $requests = MedicalDownloadRequest::query()
+        $requests = $campus->constrainByCandidate(MedicalDownloadRequest::query())
             ->when($status === 'pending', fn (Builder $query) => $query->where('status', MedicalDownloadStatus::Pending->value))
             ->when($status === 'active', fn (Builder $query) => $query->active())
             ->with(['document:id,candidate_id,title,category,mime_type', 'candidate.classBatch:id,name', 'requester:id,name', 'decider:id,name', 'revoker:id,name'])
@@ -78,9 +80,9 @@ class MedicalDownloadController extends Controller
             ]),
             'status' => $status,
             'counts' => [
-                'pending' => MedicalDownloadRequest::query()->where('status', MedicalDownloadStatus::Pending->value)->count(),
-                'active' => MedicalDownloadRequest::query()->active()->count(),
-                'all' => MedicalDownloadRequest::query()->count(),
+                'pending' => $campus->constrainByCandidate(MedicalDownloadRequest::query()->where('status', MedicalDownloadStatus::Pending->value))->count(),
+                'active' => $campus->constrainByCandidate(MedicalDownloadRequest::query()->active())->count(),
+                'all' => $campus->constrainByCandidate(MedicalDownloadRequest::query())->count(),
             ],
             'days' => MedicalDownloadService::DAYS,
         ]);

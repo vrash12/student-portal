@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { CalendarCheck, Plus } from 'lucide-react';
+import { CampusFilter } from '@/components/academic/campus-filter';
 import { formatHours } from '@/components/attendance/attendance-status';
 import { AttendanceTrendCharts, hasAttendance } from '@/components/attendance/attendance-trend';
 import { ButtonLink } from '@/components/ui/button';
@@ -15,14 +16,16 @@ import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import { withQuery } from '@/lib/url';
 import { useQueryFilters } from '@/lib/use-query-filters';
-import type { Paginated } from '@/types';
+import type { CampusOption, Paginated } from '@/types';
 import type { AttendanceSessionListItem, AttendanceTrend } from '@/types/attendance';
 
 interface AttendanceIndexProps {
     sessions: Paginated<AttendanceSessionListItem>;
     /** Every session of the filtered classes (not only this page), for the charts. */
     trend: AttendanceTrend;
-    filters: { period: string; class: string };
+    filters: { period: string; campus: string; class: string };
+    /** Campuses to filter by (accounts that see every campus only). */
+    campusOptions: CampusOption[];
     /** Periods with classes the user keeps attendance for, active first. */
     periods: Array<{ id: number; name: string; isActive: boolean }>;
     /** Those classes in the selected period. */
@@ -32,11 +35,11 @@ interface AttendanceIndexProps {
     can: { create: boolean };
 }
 
-export default function AttendanceIndex({ sessions, trend, filters, periods, classes, scope, can }: AttendanceIndexProps) {
+export default function AttendanceIndex({ sessions, trend, filters, campusOptions, periods, classes, scope, can }: AttendanceIndexProps) {
     const { singular, plural } = terms.classBatch;
     const defaultPeriod = String(periods[0]?.id ?? '');
-    const { values, update, updateMany } = useQueryFilters(routes.attendance.index(), { period: filters.period, class: filters.class });
-    const canReset = values.period !== defaultPeriod || values.class !== '';
+    const { values, update, updateMany } = useQueryFilters(routes.attendance.index(), { period: filters.period, campus: filters.campus, class: filters.class });
+    const canReset = values.period !== defaultPeriod || values.campus !== '' || values.class !== '';
     // Pre-selects the filtered class on the new session form.
     const createHref = withQuery(routes.attendance.sessions.create(), { class: values.class });
 
@@ -71,7 +74,7 @@ export default function AttendanceIndex({ sessions, trend, filters, periods, cla
             )}
 
             <section className="rounded-lg border border-line-box bg-surface" aria-label="Training sessions">
-                <FilterBar onReset={() => updateMany({ period: defaultPeriod, class: '' })} canReset={canReset}>
+                <FilterBar onReset={() => updateMany({ period: defaultPeriod, campus: '', class: '' })} canReset={canReset}>
                     <FormField label="Academic period" className="sm:w-60">
                         <SelectInput value={values.period} onChange={(event) => updateMany({ period: event.target.value, class: '' })}>
                             {periods.length === 0 && <option value="">No academic periods</option>}
@@ -83,6 +86,7 @@ export default function AttendanceIndex({ sessions, trend, filters, periods, cla
                             ))}
                         </SelectInput>
                     </FormField>
+                    <CampusFilter options={campusOptions} value={values.campus} onChange={(campus) => updateMany({ campus, class: '' })} />
                     <FormField label={singular} className="sm:w-60">
                         <SelectInput value={values.class} onChange={(event) => update('class', event.target.value)}>
                             <option value="">All {plural.toLowerCase()}</option>

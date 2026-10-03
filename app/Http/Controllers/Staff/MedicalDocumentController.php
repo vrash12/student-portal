@@ -36,8 +36,10 @@ class MedicalDocumentController extends Controller
     {
         $tab = QueryFilters::oneOf($request, 'tab', ['waiting', 'returned', 'accepted', 'all']) ?: 'waiting';
         $search = QueryFilters::search($request);
+        // Documents of candidates on the user's campus (every campus when not limited).
+        $campus = $request->user()->campusScope();
 
-        $query = CandidateMedicalDocument::query()
+        $query = $campus->constrainByCandidate(CandidateMedicalDocument::query())
             ->with(['candidate:id,candidate_number,first_name,middle_name,last_name,suffix,class_batch_id', 'candidate.classBatch:id,name', 'reviewer:id,name'])
             ->when($tab === 'waiting', fn (Builder $documents) => $documents->where('status', MedicalDocumentStatus::Submitted->value))
             ->when($tab === 'returned', fn (Builder $documents) => $documents->where('status', MedicalDocumentStatus::Returned->value))
@@ -63,7 +65,7 @@ class MedicalDocumentController extends Controller
             'documents' => $documents,
             'filters' => ['tab' => $tab, 'search' => $search],
             'counts' => [
-                'waiting' => CandidateMedicalDocument::query()->waiting()->count(),
+                'waiting' => $campus->constrainByCandidate(CandidateMedicalDocument::query()->waiting())->count(),
             ],
         ]);
     }

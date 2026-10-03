@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\CandidateStatus;
 use App\Enums\SystemRole;
 use App\Models\AcademicPeriod;
+use App\Models\Campus;
 use App\Models\Candidate;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
@@ -26,9 +27,13 @@ use RuntimeException;
  * Small, simple data set for client demonstrations (requested by the owner
  * on 2026-10-01), meant for an otherwise empty database:
  *
- *   admin                      Admin
+ *   admin                      Admin (every campus)
  *   instructor1, instructor2   Instructors (Subject 1 and Subject 2)
  *   student01 … student20      Candidates in Class A
+ *
+ * Class A and its instructors are on the Main Campus. DemoCampusSeeder adds
+ * a second campus (North Campus) with its own class, instructor, candidates
+ * and campus administrator.
  *
  * Display names are fictional Filipino names (DemoPeopleSeeder).
  *
@@ -62,10 +67,11 @@ class ClientDemoSeeder extends Seeder
             throw new RuntimeException('Client demo data must not be seeded in production.');
         }
 
-        $this->staff('admin', DemoPeopleSeeder::STAFF['admin'], SystemRole::SuperAdministrator);
+        $campus = DemoCampusSeeder::mainCampus();
+        $this->staff('admin', DemoPeopleSeeder::STAFF['admin'], SystemRole::SuperAdministrator, null);
         $instructors = [
-            1 => $this->staff('instructor1', DemoPeopleSeeder::STAFF['instructor1'], SystemRole::Instructor),
-            2 => $this->staff('instructor2', DemoPeopleSeeder::STAFF['instructor2'], SystemRole::Instructor),
+            1 => $this->staff('instructor1', DemoPeopleSeeder::STAFF['instructor1'], SystemRole::Instructor, $campus),
+            2 => $this->staff('instructor2', DemoPeopleSeeder::STAFF['instructor2'], SystemRole::Instructor, $campus),
         ];
 
         // The course lasts one year, named after its years (owner request, 2026-10-03). Demo
@@ -80,6 +86,7 @@ class ClientDemoSeeder extends Seeder
         if ($class === null) {
             $class = new ClassBatch(['name' => 'Class A']);
             $class->academicPeriod()->associate($period);
+            $class->campus()->associate($campus);
             $class->save();
         }
 
@@ -90,6 +97,9 @@ class ClientDemoSeeder extends Seeder
         }
 
         $this->students($class);
+
+        // A second campus with its own class, instructor, candidates and administrator.
+        $this->call(DemoCampusSeeder::class);
 
         // Grading weights, 75/80 thresholds and finalized scores for every taught subject.
         $this->call(DemoGradingSeeder::class);
@@ -123,11 +133,13 @@ class ClientDemoSeeder extends Seeder
         $this->call(DemoBackgroundsSeeder::class);
     }
 
-    private function staff(string $username, string $name, SystemRole $role): User
+    /** A staff account; $campus null = every campus (administrators only). */
+    private function staff(string $username, string $name, SystemRole $role, ?Campus $campus): User
     {
         $user = User::query()->where('username', $username)->first() ?? new User(['username' => $username, 'email' => null]);
         $user->fill(['name' => $name, 'password' => self::PASSWORD]);
         $user->role()->associate(Role::query()->where('code', $role->value)->firstOrFail());
+        $user->campus()->associate($campus);
         $user->is_active = true;
         $user->password_change_required = false;
         $user->save();

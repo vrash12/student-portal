@@ -32,6 +32,8 @@ class GradingSetupController extends Controller
     public function index(Request $request): Response
     {
         $viewer = $request->user();
+        // The class subjects of the viewer's campus (every campus when not limited to one).
+        $campus = $viewer->campusScope();
         $periods = $this->overview->periods();
         $periodIds = array_column($periods, 'id');
         $requested = QueryFilters::id($request, 'period');
@@ -43,14 +45,16 @@ class GradingSetupController extends Controller
             'period' => $period === null ? null : ['id' => $period->id, 'name' => $period->name, 'isActive' => $period->is_active],
             'periods' => $periods,
             'thresholds' => $period === null ? null : GradingThresholds::forPeriod($period)?->toArray(),
-            'subjectWeights' => $period === null ? [] : $this->overview->subjectWeights($period),
-            'copySources' => $this->overview->copySources($period?->id),
-            'areas' => $this->overview->areas($period),
+            'subjectWeights' => $period === null ? [] : $this->overview->subjectWeights($period, $campus),
+            'copySources' => $this->overview->copySources($period?->id, campus: $campus),
+            'areas' => $this->overview->areas($period, $campus),
             'sources' => $this->overview->sources(),
-            'example' => $this->overview->workedExample($period),
+            'example' => $this->overview->workedExample($period, $campus),
             'can' => [
                 'manageClasses' => $viewer->hasPermission(Permission::ManageClassBatches),
                 'managePeriods' => $viewer->hasPermission(Permission::ManageAcademicPeriods),
+                // Passing grades apply to every campus: set by accounts that see every campus.
+                'setThresholds' => $campus->isInstitutionWide(),
                 'configurePerformance' => $viewer->hasPermission(Permission::ConfigurePerformance),
                 'configureFitness' => $viewer->hasPermission(Permission::ConfigureFitness),
                 'manageAttendance' => $viewer->hasPermission(Permission::ManageAttendance),

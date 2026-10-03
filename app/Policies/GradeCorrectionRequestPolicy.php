@@ -10,7 +10,7 @@ use App\Models\User;
  * Grade correction requests: instructors file them for the subjects they
  * teach (AssessmentPolicy::manage on the assessment) and see their own and
  * their subjects' requests; administrators with the approval permission see
- * every request and decide them, never their own. Whether a request is still
+ * every request of their campus (CampusScope) and decide them, never their own. Whether a request is still
  * pending is checked by GradeCorrectionService.
  */
 class GradeCorrectionRequestPolicy
@@ -22,7 +22,7 @@ class GradeCorrectionRequestPolicy
 
     public function view(User $actor, GradeCorrectionRequest $request): bool
     {
-        if ($actor->hasPermission(Permission::ApproveGradeCorrections)) {
+        if ($actor->hasPermission(Permission::ApproveGradeCorrections) && $actor->campusScope()->allowsRecord($request)) {
             return true;
         }
 
@@ -37,7 +37,8 @@ class GradeCorrectionRequestPolicy
     public function decide(User $actor, GradeCorrectionRequest $request): bool
     {
         return $actor->hasPermission(Permission::ApproveGradeCorrections)
-            && (int) $request->requested_by !== (int) $actor->getKey();
+            && (int) $request->requested_by !== (int) $actor->getKey()
+            && $actor->campusScope()->allowsRecord($request);
     }
 
     public function cancel(User $actor, GradeCorrectionRequest $request): bool

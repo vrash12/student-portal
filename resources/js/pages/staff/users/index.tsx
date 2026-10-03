@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { ListCharts, type ListChart } from '@/components/charts/list-charts';
 import { Plus, UserRoundX, Users as UsersIcon } from 'lucide-react';
+import { CampusFilter, showsCampuses } from '@/components/academic/campus-filter';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FilterBar, SearchField } from '@/components/ui/filter-bar';
@@ -12,13 +13,15 @@ import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components
 import { useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { useQueryFilters } from '@/lib/use-query-filters';
-import type { Paginated } from '@/types';
+import type { CampusOption, CampusSummary, Paginated } from '@/types';
 
 interface UserRow {
     id: number;
     name: string;
     username: string;
     role: string;
+    /** Null: the account sees every campus. */
+    campus: CampusSummary | null;
     isActive: boolean;
     lastLoginAt: string | null;
     canEdit: boolean;
@@ -26,6 +29,7 @@ interface UserRow {
 
 interface UserFilters {
     search: string;
+    campus: string;
     role: string;
     status: string;
     [key: string]: string;
@@ -36,12 +40,15 @@ interface UsersIndexProps {
     charts: ListChart[];
     users: Paginated<UserRow>;
     filters: UserFilters;
+    /** Campuses to filter by (accounts that see every campus only). */
+    campusOptions: CampusOption[];
     roles: Array<{ code: string; name: string }>;
     canCreate: boolean;
 }
 
-export default function UsersIndex({ users, filters, roles, canCreate, charts }: UsersIndexProps) {
+export default function UsersIndex({ users, filters, campusOptions, roles, canCreate, charts }: UsersIndexProps) {
     const { values, update, reset, isFiltered } = useQueryFilters(routes.users.index(), filters);
+    const showCampus = showsCampuses(campusOptions);
     const formatDate = useDateFormatter();
 
     return (
@@ -69,6 +76,8 @@ export default function UsersIndex({ users, filters, roles, canCreate, charts }:
                         value={values.search}
                         onChange={(value) => update('search', value, { debounce: true })}
                     />
+
+                    <CampusFilter options={campusOptions} value={values.campus} onChange={(campus) => update('campus', campus)} />
 
                     <FormField label="Role" className="sm:w-52">
                         <SelectInput value={values.role} onChange={(event) => update('role', event.target.value)}>
@@ -114,6 +123,7 @@ export default function UsersIndex({ users, filters, roles, canCreate, charts }:
                         <TableHead>
                             <Th>Name</Th>
                             <Th>Role</Th>
+                            {showCampus && <Th>Campus</Th>}
                             <Th>Status</Th>
                             <Th className="hidden md:table-cell">Last Sign-In</Th>
                             <Th align="right">
@@ -128,6 +138,7 @@ export default function UsersIndex({ users, filters, roles, canCreate, charts }:
                                         <p className="text-ink-muted">{user.username}</p>
                                     </Td>
                                     <Td className="text-ink">{user.role}</Td>
+                                    {showCampus && <Td className="text-ink-muted">{user.campus?.name ?? 'All campuses'}</Td>}
                                     <Td>
                                         {user.isActive ? (
                                             <StatusBadge tone="success">Active</StatusBadge>

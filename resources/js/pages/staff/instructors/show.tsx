@@ -21,7 +21,7 @@ interface Assignment {
 }
 
 interface InstructorShowProps {
-    instructor: { id: number; name: string; username: string; isActive: boolean };
+    instructor: { id: number; name: string; username: string; isActive: boolean; campus: { id: number; name: string; code: string } | null };
     assignments: Assignment[];
     offeringOptions: Array<{ id: number; label: string }>;
     canEditAccount: boolean;
@@ -39,7 +39,9 @@ export default function InstructorShow({ instructor, assignments, offeringOption
                 title={instructor.name}
                 description={
                     <>
-                        {instructor.username}{' '}
+                        {instructor.username}
+                        <span className="mx-2 text-ink-muted" aria-hidden="true">·</span>
+                        {instructor.campus?.name ?? 'No campus'}{' '}
                         {instructor.isActive ? (
                             <StatusBadge tone="success">Active</StatusBadge>
                         ) : (
@@ -61,11 +63,13 @@ export default function InstructorShow({ instructor, assignments, offeringOption
                 <div className="border-b border-line p-5">
                     {!instructor.isActive ? (
                         <Alert tone="warning">This account is deactivated and cannot receive new assignments.</Alert>
+                    ) : instructor.campus === null ? (
+                        <Alert tone="warning">This account has no campus. Instructors teach only on their own campus: set a campus on the account first.</Alert>
                     ) : offeringOptions.length > 0 ? (
                         <AddAssignmentForm instructorId={instructor.id} options={offeringOptions} />
                     ) : (
                         <p className="text-sm text-ink-muted">
-                            Every subject in the active academic period already has this instructor, or no subjects have been added to classes yet.
+                            Every subject of {instructor.campus.name} in the active academic period already has this instructor, or no subjects have been added to its classes yet.
                         </p>
                     )}
                 </div>

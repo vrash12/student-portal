@@ -38,7 +38,7 @@ class UpdateUserRequest extends UserAccountRequest
     }
 
     /**
-     * @return array{name: string, username: string, email: ?string, password: ?string, role_id: int, is_active: bool}
+     * @return array{name: string, username: string, email: ?string, password: ?string, role_id: int, campus_id: ?int, is_active: bool}
      */
     public function accountData(): array
     {
@@ -53,12 +53,26 @@ class UpdateUserRequest extends UserAccountRequest
     public function after(): array
     {
         return [
+            ...parent::after(),
             function (Validator $validator): void {
                 if ($this->filled('role_id') && $this->integer('role_id') !== $this->targetUser()->role_id) {
                     $validator->errors()->add('role_id', 'The role of an existing account cannot be changed.');
                 }
 
-                if (! $this->user()->is($this->targetUser())) {
+                $target = $this->targetUser();
+                $newCampus = $this->input('campus_id') === null ? null : $this->integer('campus_id');
+                if ($newCampus !== $target->campus_id) {
+                    if ($this->user()->is($target)) {
+                        $validator->errors()->add('campus_id', 'You cannot change your own campus.');
+                    } elseif (! $this->user()->campusScope()->isInstitutionWide()) {
+                        $validator->errors()->add('campus_id', 'Only an administrator of every campus can move an account to another campus.');
+                    } elseif ($target->teachingAssignments()->exists()) {
+                        // Instructors teach only on their campus: assignments would be left on the old one.
+                        $validator->errors()->add('campus_id', "{$target->name} still teaches subjects on the current campus. Remove those assignments first.");
+                    }
+                }
+
+                if (! $this->user()->is($target)) {
                     return;
                 }
 

@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { ChartColumn, Pencil } from 'lucide-react';
 import { CandidateBackgroundPanels } from '@/components/candidates/candidate-background';
 import { CandidateInformationPanels } from '@/components/candidates/candidate-information';
@@ -118,6 +118,8 @@ export default function CandidateShow({
 }: CandidateShowProps) {
 
     const classTerm = terms.classBatch.singular;
+    // Accounts that see every campus are told which campus the candidate is on.
+    const showsCampus = usePage().props.auth.user?.campus === null && candidate.campus !== null;
     const overallLabel = standing.scope === 'all' ? 'Overall Standing' : 'Standing in Your Subjects';
     const showsStanding = standing.monitored && standing.thresholds !== null;
     // Why no standing is shown, when it is not.
@@ -154,7 +156,9 @@ export default function CandidateShow({
                 title={candidate.name}
                 description={
                     <>
-                        Candidate {candidate.candidateNumber} <StatusBadge tone={candidate.status.tone}>{candidate.status.label}</StatusBadge>
+                        Candidate {candidate.candidateNumber}
+                        {candidate.classBatch && ` · ${candidate.classBatch.name}`}
+                        {showsCampus && ` · ${candidate.campus?.name}`} <StatusBadge tone={candidate.status.tone}>{candidate.status.label}</StatusBadge>
                     </>
                 }
                 breadcrumbs={breadcrumbs}

@@ -28,7 +28,7 @@
     <img class="qr" src="{{ $qr }}" alt="QR code">
     <div class="name">{{ $name }}</div>
     <div class="number">Candidate {{ $candidateNumber }}</div>
-    @if($className)<div class="class">{{ $className }}</div>@endif
+    @if($className || $campusName)<div class="class">{{ implode(' · ', array_filter([$className, $campusName])) }}</div>@endif
     <div class="note">For attendance only. Do not share a picture of this code. A lost card can be replaced; the old code then stops working.</div>
 </div>
 <div class="footer">System-generated from {{ $systemName }} on {{ $generatedAt }}</div>

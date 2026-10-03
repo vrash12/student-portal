@@ -75,7 +75,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array{user: array{id: int, name: string, username: string, role: array{code: string, name: string}, candidate?: array{firstName: string, photoUrl: ?string}|null}|null, permissions: list<string>}
+     * @return array{user: array{id: int, name: string, username: string, role: array{code: string, name: string}, campus: array{id: int, name: string, code: string}|null, candidate?: array{firstName: string, photoUrl: ?string}|null}|null, permissions: list<string>}
      */
     private function authPayload(?User $user): array
     {
@@ -83,7 +83,7 @@ class HandleInertiaRequests extends Middleware
             return ['user' => null, 'permissions' => []];
         }
 
-        $user->loadMissing('role.permissions');
+        $user->loadMissing('role.permissions', 'campus');
         $payload = [
             'id' => $user->id,
             'name' => $user->name,
@@ -92,6 +92,9 @@ class HandleInertiaRequests extends Middleware
                 'code' => $user->role->code,
                 'name' => $user->role->name,
             ],
+            // Staff accounts limited to a campus see only that campus; the
+            // others see every campus and get campus filters (CampusScope).
+            'campus' => $user->campus?->summary(),
         ];
         // The portal header shows the candidate's first name and picture
         // (owner request, 2026-10-03); only for candidate accounts.

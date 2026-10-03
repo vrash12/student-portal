@@ -17,10 +17,17 @@ interface ExpenseRow extends AccountExpense {
     assignedTotal: string;
 }
 
-export default function AccountExpenses({ expenses, charts }: { expenses: ExpenseRow[]; charts: ListChart[] }) {
+interface AccountExpensesProps {
+    expenses: ExpenseRow[];
+    charts: ListChart[];
+    /** Expenses and categories are shared by every campus: only accounts that see every campus define them. */
+    canEditDefinitions: boolean;
+}
+
+export default function AccountExpenses({ expenses, charts, canEditDefinitions }: AccountExpensesProps) {
     const money = useMoney();
     const pagination = useClientPagination(expenses);
-    const addAction = (
+    const addAction = canEditDefinitions && (
         <ButtonLink href={routes.accounts.expenses.create()} variant="primary" icon={<Plus className="size-4" aria-hidden="true" />}>
             New Expense
         </ButtonLink>
@@ -32,15 +39,21 @@ export default function AccountExpenses({ expenses, charts }: { expenses: Expens
 
             <PageHeader
                 title="Expenses"
-                description="Define an expense once, such as a uniform set or a month of meals, then assign it to a whole class or to chosen candidates. Each candidate is charged once."
+                description={
+                    canEditDefinitions
+                        ? 'Define an expense once, such as a uniform set or a month of meals, then assign it to a whole class or to chosen candidates. Each candidate is charged once.'
+                        : 'Expenses are defined for every campus by the institution administrator. Open one to charge the candidates of your campus. Each candidate is charged once.'
+                }
                 breadcrumbs={[{ label: 'Expenses' }]}
                 actions={
-                    <>
-                        <ButtonLink href={routes.accounts.categories.index()} icon={<Tags className="size-4" aria-hidden="true" />}>
-                            Account Categories
-                        </ButtonLink>
-                        {addAction}
-                    </>
+                    canEditDefinitions && (
+                        <>
+                            <ButtonLink href={routes.accounts.categories.index()} icon={<Tags className="size-4" aria-hidden="true" />}>
+                                Account Categories
+                            </ButtonLink>
+                            {addAction}
+                        </>
+                    )
                 }
             />
 
@@ -51,8 +64,12 @@ export default function AccountExpenses({ expenses, charts }: { expenses: Expens
                     <EmptyState
                         icon={WalletCards}
                         title="No expenses yet"
-                        description="Create the first expense, then assign it to the candidates who should be charged."
-                        action={addAction}
+                        description={
+                            canEditDefinitions
+                                ? 'Create the first expense, then assign it to the candidates who should be charged.'
+                                : 'No expenses have been defined yet. The institution administrator defines them for every campus.'
+                        }
+                        action={addAction || undefined}
                     />
                 ) : (
                     <Table caption="Expenses" className="min-w-[56rem]">

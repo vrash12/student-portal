@@ -116,7 +116,7 @@ class GradingSetupTest extends TestCase
             ->get('/grading-setup')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->where('can', ['manageClasses' => false, 'managePeriods' => false, 'configurePerformance' => false, 'configureFitness' => false, 'manageAttendance' => false]));
+                ->where('can', ['manageClasses' => false, 'managePeriods' => false, 'setThresholds' => false, 'configurePerformance' => false, 'configureFitness' => false, 'manageAttendance' => false]));
     }
 
     // ------------------------------------------------------------------

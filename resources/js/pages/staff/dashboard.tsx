@@ -1,5 +1,6 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Award, BellRing, CalendarClock, ChartColumn, ClipboardList } from 'lucide-react';
+import { CampusFilter } from '@/components/academic/campus-filter';
 import { AttendanceTrendCharts } from '@/components/attendance/attendance-trend';
 import { BarList } from '@/components/charts/bar-list';
 import { ChartFigure } from '@/components/charts/chart-figure';
@@ -20,6 +21,7 @@ import { RowAction } from '@/components/ui/table';
 import { formatCalendarDate, formatGrade, useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
+import type { CampusOption } from '@/types';
 import type { AttendanceTrend } from '@/types/attendance';
 import type { QualificationOverviewData } from '@/types/candidate-performance';
 import type { ChartColumn as DistributionColumn } from '@/types/charts';
@@ -59,6 +61,8 @@ interface TeachingOverview {
 }
 
 interface DashboardProps {
+    /** Narrows every section to one campus; options only for accounts that see every campus. */
+    campusFilter: { value: string; options: CampusOption[] };
     /** Present only for teaching staff (classes.teach). */
     teaching: TeachingOverview | null;
     /** Institution-wide academic overview: academic monitoring plus "view all candidates". */
@@ -100,6 +104,7 @@ interface AdministratorOverviewData {
 }
 
 export default function Dashboard({
+    campusFilter,
     teaching,
     showAcademicOverview,
     academicOverview,
@@ -125,6 +130,13 @@ export default function Dashboard({
             <PageHeader title="Dashboard" description={`${greeting(app.timezone)}, ${userName}.`} />
 
             <div className="flex flex-col gap-6">
+                {/* Narrows every section below to one campus (accounts that see every campus). */}
+                <CampusFilter
+                    options={campusFilter.options}
+                    value={campusFilter.value}
+                    onChange={(campus) => router.get(routes.dashboard(), campus === '' ? {} : { campus }, { preserveScroll: true })}
+                    className="sm:w-64"
+                />
                 {backupWarnings.length > 0 && (
                     <Alert tone="warning" title="Backups need attention">
                         <p>{backupWarnings[0]}</p>
@@ -575,7 +587,9 @@ function AlertsBody({ summary }: { summary: MonitoringSummary }) {
                                 className="flex min-h-11 items-center gap-2 px-3 py-2 text-sm hover:bg-surface-muted"
                                 aria-label={`${entry.candidate.name}${entry.mostSerious ? `, ${entry.mostSerious.subject}` : ''}`}
                             >
-                                <span className="min-w-0 flex-1 truncate font-medium text-ink">{entry.candidate.name}</span>
+                                <span className="min-w-0 flex-1 truncate font-medium text-ink" title={entry.candidate.name}>
+                                    {entry.candidate.name}
+                                </span>
                                 <StandingBadge standing={entry.standing} />
                                 {entry.mostSerious?.grade != null && <span className="w-12 text-right tabular-nums text-ink-muted">{formatGrade(entry.mostSerious.grade)}</span>}
                             </Link>
@@ -639,58 +653,60 @@ function TeachingSection({ teaching, alerts }: { teaching: TeachingOverview; ale
                 <MetricCard label="Enrolled Candidates" value={teaching.totals.enrolledCandidates} />
             </dl>
 
+            {/* Alerts beside the subjects; upcoming assessments under them, so neither column runs long. */}
             <div className="grid gap-6 lg:grid-cols-3">
-                <Panel
-                    title="My Subjects"
-                    description={`Subjects you teach this period, by ${singular.toLowerCase()}.`}
-                    className="lg:col-span-2 lg:self-start"
-                    bodyClassName="p-0"
-                    headingLevel="h3"
-                >
-                    {teaching.assignments.length === 0 ? (
-                        <EmptyState
-                            icon={ClipboardList}
-                            headingLevel="h4"
-                            title="No teaching assignments"
-                            description={`You are not assigned to teach any subjects in ${teaching.period.name}. Contact an academic administrator if this is unexpected.`}
-                        />
-                    ) : (
-                        <ul className="divide-y divide-line">
-                            {teaching.assignments.map((assignment) => (
-                                <li key={assignment.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-                                    <div className="min-w-0">
-                                        <p className="font-medium text-ink">
-                                            {assignment.subject.name}{' '}
-                                            <span className="font-normal text-ink-muted">({assignment.subject.code})</span>
-                                        </p>
-                                        <p className="text-sm text-ink-muted">
-                                            {assignment.classBatch.name} ·{' '}
-                                            <span className="tabular-nums">{assignment.enrolledCount}</span> enrolled
-                                        </p>
-                                    </div>
-                                    <div className="flex flex-wrap gap-1">
-                                        <RowAction
-                                            href={routes.teaching.gradebook(assignment.classBatch.id, assignment.classSubjectId)}
-                                            label={`Gradebook for ${assignment.subject.name}, ${assignment.classBatch.name}`}
-                                        >
-                                            Gradebook
-                                        </RowAction>
-                                        <RowAction
-                                            href={routes.teaching.classes.show(assignment.classBatch.id)}
-                                            label={`View ${singular} ${assignment.classBatch.name}`}
-                                        >
-                                            View {singular}
-                                        </RowAction>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </Panel>
+                <div className="flex flex-col gap-6 lg:col-span-2">
+                    <Panel
+                        title="My Subjects"
+                        description={`Subjects you teach this period, by ${singular.toLowerCase()}.`}
+                        bodyClassName="p-0"
+                        headingLevel="h3"
+                    >
+                        {teaching.assignments.length === 0 ? (
+                            <EmptyState
+                                icon={ClipboardList}
+                                headingLevel="h4"
+                                title="No teaching assignments"
+                                description={`You are not assigned to teach any subjects in ${teaching.period.name}. Contact an academic administrator if this is unexpected.`}
+                            />
+                        ) : (
+                            <ul className="divide-y divide-line">
+                                {teaching.assignments.map((assignment) => (
+                                    <li key={assignment.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+                                        <div className="min-w-0">
+                                            <p className="font-medium text-ink">
+                                                {assignment.subject.name}{' '}
+                                                <span className="font-normal text-ink-muted">({assignment.subject.code})</span>
+                                            </p>
+                                            <p className="text-sm text-ink-muted">
+                                                {assignment.classBatch.name} ·{' '}
+                                                <span className="tabular-nums">{assignment.enrolledCount}</span> enrolled
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1">
+                                            <RowAction
+                                                href={routes.teaching.gradebook(assignment.classBatch.id, assignment.classSubjectId)}
+                                                label={`Gradebook for ${assignment.subject.name}, ${assignment.classBatch.name}`}
+                                            >
+                                                Gradebook
+                                            </RowAction>
+                                            <RowAction
+                                                href={routes.teaching.classes.show(assignment.classBatch.id)}
+                                                label={`View ${singular} ${assignment.classBatch.name}`}
+                                            >
+                                                View {singular}
+                                            </RowAction>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </Panel>
+                    {alerts !== undefined && <UpcomingAssessments assessments={teaching.upcomingAssessments} />}
+                </div>
 
-                <div className="flex flex-col gap-6">
-                    {alerts !== undefined && <AcademicAlerts summary={alerts} period={teaching.period} />}
-                    <UpcomingAssessments assessments={teaching.upcomingAssessments} />
+                <div className="flex flex-col gap-6 lg:self-start">
+                    {alerts !== undefined ? <AcademicAlerts summary={alerts} period={teaching.period} /> : <UpcomingAssessments assessments={teaching.upcomingAssessments} />}
                 </div>
             </div>
 

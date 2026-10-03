@@ -87,7 +87,8 @@ enum SystemRole: string
             // Expenses: the Admin charges candidates (there is
             // no finance role; owner decision 2026-10-01).
             // Backups and restores: the Admin only (owner request, 2026-10-02).
-            self::SuperAdministrator => [...$academicAdministration, Permission::ViewAccounts, Permission::ManageAccounts, Permission::ManageBackups],
+            // Campuses: the Admin only, and only accounts not limited to a campus (owner decision 2026-10-03).
+            self::SuperAdministrator => [...$academicAdministration, Permission::ViewAccounts, Permission::ManageAccounts, Permission::ManageBackups, Permission::ManageCampuses],
             self::AcademicAdministrator => [...$academicAdministration, Permission::ViewAccounts],
             self::Instructor => [
                 Permission::AccessStaffArea,

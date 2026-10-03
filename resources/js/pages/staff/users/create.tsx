@@ -1,19 +1,22 @@
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { PageHeader } from '@/components/ui/page-header';
-import { UserForm, type RoleOption, type UserFormData } from '@/components/users/user-form';
+import { UserForm, type CampusChoices, type RoleOption, type UserFormData } from '@/components/users/user-form';
 import { routes } from '@/lib/routes';
 
-interface CreateUserProps {
+interface CreateUserProps extends CampusChoices {
     roles: RoleOption[];
 }
 
-export default function CreateUser({ roles }: CreateUserProps) {
+export default function CreateUser({ roles, campusOptions, canChooseEveryCampus }: CreateUserProps) {
+    // A campus administrator's new accounts go to their campus.
+    const onlyCampus = !canChooseEveryCampus && campusOptions.length === 1 ? campusOptions[0] : undefined;
     const form = useForm<UserFormData>({
         name: '',
         username: '',
         email: '',
         role_id: '',
+        campus_id: onlyCampus ? String(onlyCampus.id) : '',
         is_active: true,
         password: '',
         password_confirmation: '',
@@ -38,7 +41,15 @@ export default function CreateUser({ roles }: CreateUserProps) {
                     breadcrumbs={[{ label: 'Users', href: routes.users.index() }, { label: 'Create Account' }]}
                 />
 
-                <UserForm form={form} roles={roles} mode="create" submitLabel="Create Account" onSubmit={submit} />
+                <UserForm
+                    form={form}
+                    roles={roles}
+                    campusOptions={campusOptions}
+                    canChooseEveryCampus={canChooseEveryCampus}
+                    mode="create"
+                    submitLabel="Create Account"
+                    onSubmit={submit}
+                />
             </div>
         </>
     );

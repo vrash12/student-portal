@@ -47,6 +47,7 @@ enum Permission: string
     case ManageMedical = 'medical.manage';
     case ConfigureMedical = 'medical.configure';
     case ManageBackups = 'backups.manage';
+    case ManageCampuses = 'campuses.manage';
 
     public function label(): string
     {
@@ -83,6 +84,7 @@ enum Permission: string
             self::ManageMedical => 'Record candidate medical records',
             self::ConfigureMedical => 'Configure medical record fields',
             self::ManageBackups => 'Manage backups',
+            self::ManageCampuses => 'Manage campuses',
         };
     }
 
@@ -97,7 +99,7 @@ enum Permission: string
             self::ManageSubjects => 'Create, edit, activate, and deactivate subjects.',
             self::ManageClassBatches => 'Create and edit classes and the subjects they take.',
             self::ManageInstructorAssignments => 'Assign instructors to the subjects of each class.',
-            self::ViewAllCandidates => 'View every candidate record, regardless of class assignment.',
+            self::ViewAllCandidates => 'View every candidate record of the user\'s campus, regardless of class assignment (every campus for accounts not limited to a campus).',
             self::ManageCandidates => 'Create and update candidate records and their sign-in accounts.',
             self::TeachClasses => 'Can be assigned to teach subjects, and view the classes and candidates they teach.',
             self::ConfigureGrading => 'Set the components and weights used for each subject of a class, and the passing and warning grades that decide academic standing in each academic period (Grading Setup).',
@@ -120,7 +122,25 @@ enum Permission: string
             self::ViewMedical => 'See every candidate\'s full medical record, its change history and uploaded documents (open and download). Instructors without it see the records of the classes they teach, view only.',
             self::ManageMedical => 'Record medical values (every change kept in the history), accept or return the documents candidates upload, and approve, reject or withdraw instructors\' requests to download a document.',
             self::ConfigureMedical => 'Define the medical record fields (name, type, choices), and whether instructors and candidates see each field.',
-            self::ManageBackups => 'See the encrypted backups of the whole system, start a backup or a restore test, and restore the system from a backup (password and typed confirmation required).',
+            self::ManageBackups => 'See the encrypted backups of the whole system, start a backup or a restore test, and restore the system from a backup (password and typed confirmation required). Only for accounts not limited to a campus.',
+            self::ManageCampuses => 'Add and edit campuses, deactivate a campus, and remove a campus that was never used. Only for accounts not limited to a campus.',
+        };
+    }
+
+    /**
+     * Permissions over settings shared by every campus (academic years and
+     * phases, subjects, performance areas and merit/demerit types, fitness
+     * events, medical fields), the campuses themselves and backups of the
+     * whole system. Only accounts not limited to a campus hold them; for a
+     * campus-limited account they are never granted, whatever its role says
+     * (owner decision 2026-10-03; User::hasPermission).
+     */
+    public function isInstitutionWide(): bool
+    {
+        return match ($this) {
+            self::ManageAcademicPeriods, self::ManageSubjects, self::ConfigurePerformance, self::ConfigureFitness,
+            self::ConfigureMedical, self::ManageBackups, self::ManageCampuses => true,
+            default => false,
         };
     }
 
@@ -130,7 +150,7 @@ enum Permission: string
             self::AccessStaffArea, self::AccessExamPortal => 'Access',
             self::ViewUsers, self::ManageUsers => 'Administration',
             self::ManageAcademicPeriods, self::ManageSubjects, self::ManageClassBatches,
-            self::ManageInstructorAssignments => 'Academic Structure',
+            self::ManageInstructorAssignments, self::ManageCampuses => 'Academic Structure',
             self::ViewAllCandidates, self::ManageCandidates => 'Candidates',
             self::TeachClasses => 'Teaching',
             self::ConfigureGrading, self::RecordGrades, self::ApproveGradeCorrections => 'Grading',

@@ -44,13 +44,29 @@ class Candidate extends Model
      */
     protected $hidden = ['qr_token'];
 
-    /** Every candidate gets a QR code for attendance (owner request, 2026-10-02). */
+    /**
+     * Every candidate gets a QR code for attendance (owner request, 2026-10-02).
+     *
+     * A candidate in a class is on the class's campus (owner decision
+     * 2026-10-03): the campus follows the class whenever the class is set or
+     * changed. A candidate without a class keeps the campus it was given.
+     * A composite foreign key checks the pair in the database.
+     */
     protected static function booted(): void
     {
         static::creating(function (Candidate $candidate): void {
             if (blank($candidate->qr_token)) {
                 $candidate->qr_token = CandidateQrCode::newToken();
                 $candidate->qr_token_issued_at = now();
+            }
+        });
+
+        static::saving(function (Candidate $candidate): void {
+            $classBatchId = $candidate->getAttributes()['class_batch_id'] ?? null;
+            $campusId = $candidate->getAttributes()['campus_id'] ?? null;
+
+            if ($classBatchId !== null && ($campusId === null || $candidate->isDirty('class_batch_id'))) {
+                $candidate->setAttribute('campus_id', ClassBatch::query()->whereKey($classBatchId)->value('campus_id'));
             }
         });
     }
@@ -72,6 +88,29 @@ class Candidate extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return BelongsTo<Campus, $this>
+     */
+    public function campus(): BelongsTo
+    {
+        return $this->belongsTo(Campus::class);
+    }
+
+    /**
+     * The candidate's campus, read from the database when the column was
+     * not selected (campus checks must not depend on how the row was loaded).
+     */
+    public function campusId(): ?int
+    {
+        $campusId = $this->getAttributes()['campus_id'] ?? null;
+
+        if ($campusId === null && $this->exists) {
+            $campusId = self::query()->whereKey($this->getKey())->value('campus_id');
+        }
+
+        return $campusId === null ? null : (int) $campusId;
     }
 
     /**

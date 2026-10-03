@@ -25,10 +25,12 @@ class InstructorController extends Controller
     {
         $search = QueryFilters::search($request);
         $actor = $request->user();
+        // The user's campus, or every campus narrowed by the campus filter (CampusScope).
+        $campus = $actor->campusScope()->filteredBy($request);
 
-        $instructors = User::query()
+        $instructors = $campus->constrain(User::query(), 'users.campus_id')
             ->teachingStaff()
-            ->with('role.permissions')
+            ->with(['role.permissions', 'campus'])
             ->withCount('teachingAssignments')
             ->when($search !== '', fn (Builder $query) => $query->where(function (Builder $match) use ($search): void {
                 $term = QueryFilters::likeTerm($search);
@@ -43,12 +45,14 @@ class InstructorController extends Controller
                 'name' => $instructor->name,
                 'username' => $instructor->username,
                 'isActive' => $instructor->is_active,
+                'campus' => $instructor->campus?->summary(),
                 'assignmentCount' => (int) $instructor->teaching_assignments_count,
             ]);
 
         return Inertia::render('staff/instructors/index', [
             'instructors' => $instructors,
-            'filters' => ['search' => $search],
+            'filters' => ['search' => $search, 'campus' => $campus->filterValue()],
+            'campusOptions' => $campus->filterOptions(),
             'canCreateAccounts' => $actor->can('create', User::class),
         ]);
     }
@@ -56,6 +60,7 @@ class InstructorController extends Controller
     public function show(Request $request, User $instructor): Response
     {
         abort_unless($instructor->isTeachingStaff(), 404);
+        $instructor->loadMissing('campus');
 
         $assignments = $instructor->teachingAssignments()
             ->with(['classSubject.subject', 'classSubject.classBatch.academicPeriod'])
@@ -83,6 +88,8 @@ class InstructorController extends Controller
                 'name' => $instructor->name,
                 'username' => $instructor->username,
                 'isActive' => $instructor->is_active,
+                // Instructors teach only on their own campus (owner decision 2026-10-03).
+                'campus' => $instructor->campus?->summary(),
             ],
             'assignments' => $assignments,
             'offeringOptions' => $instructor->is_active ? $this->unassignedOfferings($instructor) : [],
@@ -91,8 +98,9 @@ class InstructorController extends Controller
     }
 
     /**
-     * Subjects of classes in the active academic period that this
-     * instructor is not yet assigned to.
+     * Subjects of classes on the instructor's campus, in the active academic
+     * period, that this instructor is not yet assigned to. An instructor
+     * without a campus cannot be assigned until one is set on their account.
      *
      * @return list<array{id: int, label: string}>
      */
@@ -100,11 +108,12 @@ class InstructorController extends Controller
     {
         $activePeriodId = AcademicPeriod::query()->active()->value('id');
 
-        if ($activePeriodId === null) {
+        if ($activePeriodId === null || $instructor->campus_id === null) {
             return [];
         }
 
         return ClassSubject::query()
+            ->where('class_subjects.campus_id', $instructor->campus_id)
             ->with(['classBatch', 'subject'])
             ->whereHas('classBatch', fn (Builder $classes) => $classes->where('academic_period_id', $activePeriodId))
             ->whereDoesntHave('instructorAssignments', fn (Builder $assignments) => $assignments->where('instructor_id', $instructor->id))

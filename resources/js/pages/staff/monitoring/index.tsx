@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Activity, CalendarClock, SearchX } from 'lucide-react';
+import { CampusFilter } from '@/components/academic/campus-filter';
 import { GradeStatusBadge, StandingBadge, StandingCell, ThresholdSummary } from '@/components/grading/standing';
 import { StandingCounts } from '@/components/monitoring/standing-counts';
 import { Alert } from '@/components/ui/alert';
@@ -15,12 +16,13 @@ import { formatGrade } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import { useQueryFilters } from '@/lib/use-query-filters';
-import type { Paginated } from '@/types';
+import type { CampusOption, Paginated } from '@/types';
 import type { GradingThresholds } from '@/types/grading';
 import type { MonitoredCandidateRow, MonitoringScopeKind, StandingCounts as Counts, SubjectAttention, SubjectConcern } from '@/types/monitoring';
 
 interface MonitoringFilters {
     period: string;
+    campus: string;
     class: string;
     subject: string;
     standing: string;
@@ -38,6 +40,8 @@ interface AcademicMonitoringProps {
     counts: Counts;
     subjectsRequiringAttention: SubjectAttention[];
     filters: MonitoringFilters;
+    /** Campuses to filter by (accounts that see every campus only). */
+    campusOptions: CampusOption[];
     classOptions: Array<{ id: number; name: string }>;
     subjectOptions: Array<{ id: number; code: string; name: string }>;
     standingOptions: Array<{ value: string; label: string }>;
@@ -62,8 +66,11 @@ export default function AcademicMonitoring(props: AcademicMonitoringProps) {
     // The current filters with some values replaced, for links.
     const queryFor = (patch: Partial<MonitoringFilters>): Record<string, string> =>
         Object.fromEntries(Object.entries({ ...filters, ...patch }).map(([key, value]) => [key, value ?? '']));
-    // A new period starts clean: classes and subjects belong to the period.
-    const changePeriod = (value: string) => router.get(routes.monitoring.index(), value === '' ? {} : { period: value });
+    // A new period or campus starts clean: classes and subjects belong to both.
+    const visitScope = (scopeFilters: { period: string; campus: string }) =>
+        router.get(routes.monitoring.index(), Object.fromEntries(Object.entries(scopeFilters).filter(([, value]) => value !== '')));
+    const changePeriod = (value: string) => visitScope({ period: value, campus: filters.campus });
+    const changeCampus = (value: string) => visitScope({ period: filters.period, campus: value });
     const resetFilters = () => updateMany({ class: '', subject: '', standing: '', search: '' });
 
     return (
@@ -94,16 +101,19 @@ export default function AcademicMonitoring(props: AcademicMonitoringProps) {
             ) : (
                 <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                        <FormField label="Academic Period" className="md:w-72">
-                            <SelectInput value={filters.period || String(period.id)} onChange={(event) => changePeriod(event.target.value)}>
-                                {periods.map((option) => (
-                                    <option key={option.id} value={String(option.id)}>
-                                        {option.name}
-                                        {option.isActive ? ' (active)' : ''}
-                                    </option>
-                                ))}
-                            </SelectInput>
-                        </FormField>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                            <FormField label="Academic Period" className="md:w-72">
+                                <SelectInput value={filters.period || String(period.id)} onChange={(event) => changePeriod(event.target.value)}>
+                                    {periods.map((option) => (
+                                        <option key={option.id} value={String(option.id)}>
+                                            {option.name}
+                                            {option.isActive ? ' (active)' : ''}
+                                        </option>
+                                    ))}
+                                </SelectInput>
+                            </FormField>
+                            <CampusFilter options={props.campusOptions} value={filters.campus} onChange={changeCampus} className="md:w-56" />
+                        </div>
                         {thresholds !== null && (
                             <p className="text-sm text-ink-muted md:text-right">
                                 Standing uses the <ThresholdSummary thresholds={thresholds} /> of {period.name}.

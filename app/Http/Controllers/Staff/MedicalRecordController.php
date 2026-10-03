@@ -35,13 +35,16 @@ class MedicalRecordController extends Controller
 
     public function index(Request $request): Response
     {
+        // The user's campus, or every campus narrowed by the campus filter (CampusScope).
+        $campus = $request->user()->campusScope()->filteredBy($request);
         $filters = [
             'search' => QueryFilters::search($request),
+            'campus' => $campus->filterValue(),
             'class' => QueryFilters::id($request, 'class'),
         ];
         $activeFieldIds = MedicalField::query()->active()->pluck('id')->all();
 
-        $candidates = Candidate::query()
+        $candidates = $campus->constrain(Candidate::query(), 'candidates.campus_id')
             ->with('classBatch:id,name')
             ->when($filters['search'] !== '', fn (Builder $query) => $query->matching($filters['search']))
             ->when($filters['class'] !== '', fn (Builder $query) => $query->where('class_batch_id', (int) $filters['class']))
@@ -65,11 +68,12 @@ class MedicalRecordController extends Controller
             ]),
             'fieldCount' => count($activeFieldIds),
             'filters' => $filters,
-            'classes' => ClassBatch::query()->orderBy('name')->get(['id', 'name'])->map(fn (ClassBatch $class): array => ['id' => $class->id, 'name' => $class->name])->all(),
+            'campusOptions' => $campus->filterOptions(),
+            'classes' => $campus->constrain(ClassBatch::query(), 'campus_id')->orderBy('name')->get(['id', 'name'])->map(fn (ClassBatch $class): array => ['id' => $class->id, 'name' => $class->name])->all(),
             // Uploaded documents waiting for review.
-            'waitingDocuments' => CandidateMedicalDocument::query()->waiting()->count(),
+            'waitingDocuments' => $campus->constrainByCandidate(CandidateMedicalDocument::query()->waiting())->count(),
             // Instructors' download requests waiting for a decision.
-            'pendingDownloadRequests' => MedicalDownloadRequest::query()->where('status', MedicalDownloadStatus::Pending->value)->count(),
+            'pendingDownloadRequests' => $campus->constrainByCandidate(MedicalDownloadRequest::query()->where('status', MedicalDownloadStatus::Pending->value))->count(),
             'can' => [
                 'configure' => $request->user()->can('medical.configure'),
                 'manage' => $request->user()->can('medical.manage'),

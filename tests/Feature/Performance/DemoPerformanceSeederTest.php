@@ -44,8 +44,8 @@ class DemoPerformanceSeederTest extends TestCase
     {
         $this->seed(ClientDemoSeeder::class);
 
-        // Companies and platoons, audited as candidate changes.
-        $units = Candidate::query()->orderBy('candidate_number')->get()
+        // Companies and platoons of Class A, audited as candidate changes (the North Campus has none).
+        $units = Candidate::query()->where('candidate_number', 'like', 'student%')->orderBy('candidate_number')->get()
             ->mapWithKeys(fn (Candidate $candidate): array => [$candidate->candidate_number => "{$candidate->company} / {$candidate->platoon}"]);
         $this->assertCount(20, $units);
         $this->assertSame('Alpha Company / 1st Platoon', $units['student01']);
@@ -76,7 +76,10 @@ class DemoPerformanceSeederTest extends TestCase
         $this->assertSame(6, AttendanceSession::query()->count());
         $this->assertSame(120, AttendanceRecord::query()->count());
         $this->assertSame(6, AuditLog::query()->where('action', AuditAction::AttendanceRecorded->value)->count());
-        $this->assertSame(['Diagnostic Fitness Test', 'Midterm Fitness Test'], FitnessTest::query()->orderBy('tested_on')->pluck('title')->all());
+        $fitnessTests = fn (string $class): array => FitnessTest::query()->whereHas('classBatch', fn ($classes) => $classes->where('name', $class))->orderBy('tested_on')->pluck('title')->all();
+        $this->assertSame(['Diagnostic Fitness Test', 'Midterm Fitness Test'], $fitnessTests('Class A'));
+        // The North Campus's class has the diagnostic test only.
+        $this->assertSame(['Diagnostic Fitness Test'], $fitnessTests('Class B'));
 
         // Records describe what has happened: no date after today.
         $this->assertFalse(ConductEntry::query()->where('occurred_on', '>', '2026-10-01')->exists());

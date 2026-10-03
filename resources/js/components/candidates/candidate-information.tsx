@@ -33,6 +33,7 @@ export function CandidateInformationPanels({ candidate, qrReissueUrl = null, aud
                 <Detail label="Middle Name">{candidate.middleName ?? 'Not provided'}</Detail>
                 <Detail label="Last Name">{candidate.lastName}</Detail>
                 <Detail label="Suffix">{candidate.suffix ?? 'None'}</Detail>
+                <Detail label="Campus">{candidate.campus?.name ?? 'Not assigned'}</Detail>
                 <Detail label={terms.classBatch.singular}>{candidate.classBatch?.name ?? 'Not assigned'}</Detail>
                 <Detail label="Candidate Status"><StatusBadge tone={candidate.status.tone}>{candidate.status.label}</StatusBadge></Detail>
                 <Detail label="Academic Period">{candidate.classBatch?.period ?? 'Not assigned'}</Detail>

@@ -41,6 +41,14 @@ export const routes = {
         activate: (periodId: number) => `/academic-periods/${periodId}/activate`,
         thresholds: (periodId: number, query?: Record<string, string>) => withQuery(`/academic-periods/${periodId}/grading-thresholds`, query),
     },
+    campuses: {
+        index: () => '/campuses',
+        create: () => '/campuses/create',
+        store: () => '/campuses',
+        edit: (campusId: number) => `/campuses/${campusId}/edit`,
+        update: (campusId: number) => `/campuses/${campusId}`,
+        destroy: (campusId: number) => `/campuses/${campusId}`,
+    },
     trainingPhases: {
         index: (query?: Record<string, string>) => withQuery('/training-phases', query),
         store: () => '/training-phases',

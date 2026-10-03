@@ -38,7 +38,8 @@ class AcademicMonitoringController extends Controller
     public function __invoke(Request $request): Response
     {
         $viewer = $request->user();
-        $scope = MonitoringScope::for($viewer);
+        // The viewer's scope, narrowed by the campus filter for accounts that see every campus.
+        $scope = MonitoringScope::for($viewer)->filteredBy($request);
 
         // The requested period if selectable, else the active one if
         // selectable (listed first), else the most recent.
@@ -108,10 +109,12 @@ class AcademicMonitoringController extends Controller
             'periods' => $periods,
             'scope' => $scope->kind(),
             'thresholds' => $thresholds?->toArray(),
-            'canConfigureThresholds' => $viewer->hasPermission(Permission::ConfigureGrading),
+            // Passing grades apply to every campus: set by accounts that see every campus.
+            'canConfigureThresholds' => $viewer->hasPermission(Permission::ConfigureGrading) && $viewer->campusScope()->isInstitutionWide(),
             'counts' => $this->monitoring->counts($monitored),
             'subjectsRequiringAttention' => $subjectView ? [] : $this->monitoring->subjectsRequiringAttention($monitored),
-            'filters' => $filters,
+            'filters' => [...$filters, 'campus' => $scope->campus->filterValue()],
+            'campusOptions' => $scope->campus->filterOptions(),
             'classOptions' => $classOptions,
             'subjectOptions' => $subjectOptions,
             'standingOptions' => $this->standingOptions(),

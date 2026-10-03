@@ -36,13 +36,15 @@ class AttendanceSessionController extends Controller
 
     public function index(Request $request): Response
     {
-        $scope = AttendanceScope::for($request->user());
+        // The user's scope, narrowed by the campus filter for accounts that see every campus.
+        $scope = AttendanceScope::for($request->user())->filteredBy($request);
         $periods = $scope->periods();
         $periodIds = array_column($periods, 'id');
         $requestedPeriod = QueryFilters::id($request, 'period');
         $filters = [
             // The active (first) period by default; unknown periods show the default.
             'period' => in_array((int) $requestedPeriod, $periodIds, true) ? $requestedPeriod : (string) ($periodIds[0] ?? ''),
+            'campus' => $scope->campus->filterValue(),
             'class' => QueryFilters::id($request, 'class'),
         ];
 
@@ -74,6 +76,7 @@ class AttendanceSessionController extends Controller
                 'rosterCount' => $rosterSizes[$session->class_batch_id] ?? 0,
             ]),
             'filters' => $filters,
+            'campusOptions' => $scope->campus->filterOptions(),
             // Charts over every session of the filtered classes, not only this page.
             'trend' => [
                 'days' => $this->ledger->dailyRates($classIds),

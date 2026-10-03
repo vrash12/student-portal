@@ -3,13 +3,15 @@ import type { FormEvent } from 'react';
 import { CandidateForm, type CandidateFormData, type ClassOptionGroup } from '@/components/candidates/candidate-form';
 import { PageHeader } from '@/components/ui/page-header';
 import { routes } from '@/lib/routes';
+import type { CampusOption } from '@/types';
 import type { CandidateGroupOptions } from '@/types/candidates';
 
 interface CreateCandidateProps extends CandidateGroupOptions {
     classOptions: ClassOptionGroup[];
+    campusOptions: CampusOption[];
 }
 
-export default function CreateCandidate({ classOptions, companyOptions, platoonOptions }: CreateCandidateProps) {
+export default function CreateCandidate({ classOptions, campusOptions, companyOptions, platoonOptions }: CreateCandidateProps) {
     const form = useForm<CandidateFormData>({
         candidate_number: '',
         first_name: '',
@@ -22,6 +24,7 @@ export default function CreateCandidate({ classOptions, companyOptions, platoonO
         profile_photo: null,
         remove_photo: false,
         class_batch_id: '',
+        campus_id: campusOptions.length === 1 ? String(campusOptions[0]?.id) : '',
         status: 'enrolled',
         account_active: true,
         password: '',
@@ -41,6 +44,7 @@ export default function CreateCandidate({ classOptions, companyOptions, platoonO
             platoon: data.platoon,
             profile_photo: data.profile_photo,
             class_batch_id: data.class_batch_id,
+            campus_id: data.class_batch_id === '' ? data.campus_id : '',
             password: data.password,
             password_confirmation: data.password_confirmation,
         }));
@@ -64,6 +68,7 @@ export default function CreateCandidate({ classOptions, companyOptions, platoonO
                     form={form}
                     mode="create"
                     classOptions={classOptions}
+                    campusOptions={campusOptions}
                     companyOptions={companyOptions}
                     platoonOptions={platoonOptions}
                     submitLabel="Create Candidate"

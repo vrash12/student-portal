@@ -10,6 +10,7 @@ use App\Models\ConductType;
 use App\Models\FitnessEvent;
 use App\Models\PerformanceArea;
 use App\Models\Subject;
+use App\Support\CampusScope;
 use App\Support\DecimalValue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -55,9 +56,9 @@ final class GradingSetupOverview
      *
      * @return list<array{classSubjectId: int, classBatch: array{id: int, name: string}, subject: array{id: int, code: string, name: string}, phase: array{id: int, number: int, name: string}|null, units: string, components: list<array{name: string, weight: string}>, assessmentCount: int, finalizedCount: int}>
      */
-    public function subjectWeights(AcademicPeriod $period): array
+    public function subjectWeights(AcademicPeriod $period, ?CampusScope $campus = null): array
     {
-        return $this->offeringsOf($period)
+        return $this->offeringsOf($period, $campus)
             ->map(fn (ClassSubject $offering): array => [
                 'classSubjectId' => $offering->id,
                 'classBatch' => ['id' => $offering->classBatch->id, 'name' => $offering->classBatch->name],
@@ -78,16 +79,19 @@ final class GradingSetupOverview
      *
      * @return list<array{classSubjectId: int, label: string, components: list<array{name: string, weight: string}>}>
      */
-    public function copySources(?int $preferredPeriodId, ?int $exceptClassSubjectId = null): array
+    public function copySources(?int $preferredPeriodId, ?int $exceptClassSubjectId = null, ?CampusScope $campus = null): array
     {
-        return ClassSubject::query()
+        $campus ??= CampusScope::everyCampus();
+        $labelsCampuses = $campus->labelsCampuses();
+
+        return $campus->constrain(ClassSubject::query(), 'class_subjects.campus_id')
             ->select('class_subjects.*')
             ->join('class_batches', 'class_batches.id', '=', 'class_subjects.class_batch_id')
             ->join('academic_periods', 'academic_periods.id', '=', 'class_batches.academic_period_id')
             ->join('subjects', 'subjects.id', '=', 'class_subjects.subject_id')
             ->whereHas('assessmentCategories')
             ->when($exceptClassSubjectId !== null, fn (Builder $query) => $query->whereKeyNot($exceptClassSubjectId))
-            ->with(['classBatch.academicPeriod', 'subject', 'assessmentCategories'])
+            ->with(['classBatch.academicPeriod', 'classBatch.campus:id,code', 'subject', 'assessmentCategories'])
             ->orderByRaw('case when class_batches.academic_period_id = ? then 0 else 1 end', [$preferredPeriodId ?? 0])
             ->orderByDesc('academic_periods.starts_on')
             ->orderBy('class_batches.name')
@@ -96,7 +100,7 @@ final class GradingSetupOverview
             ->get()
             ->map(fn (ClassSubject $offering): array => [
                 'classSubjectId' => $offering->id,
-                'label' => "{$offering->classBatch->name} · {$offering->subject->name} ({$offering->classBatch->academicPeriod->name})",
+                'label' => $campus->classLabel($offering->classBatch->name, $offering->classBatch->campus?->code, $labelsCampuses)." · {$offering->subject->name} ({$offering->classBatch->academicPeriod->name})",
                 'components' => $this->components($offering->assessmentCategories),
             ])
             ->values()
@@ -109,15 +113,16 @@ final class GradingSetupOverview
      *
      * @return array{list: list<array<string, mixed>>, totalWeight: float, hasMustPass: bool, emptySubjectAreas: list<string>, unmappedSubjects: list<string>}
      */
-    public function areas(?AcademicPeriod $period): array
+    public function areas(?AcademicPeriod $period, ?CampusScope $campus = null): array
     {
+        $campus ??= CampusScope::everyCampus();
         $areas = PerformanceArea::query()->active()->ordered()->with(['subjects' => fn ($subjects) => $subjects->orderBy('name')])->get();
         $total = (float) $areas->sum(fn (PerformanceArea $area): float => (float) $area->weight);
 
         // Subjects taught in the period whose grades reach no active area.
         $activeSubjectAreaIds = $areas->where('source', PerformanceSource::Subjects)->modelKeys();
         $unmapped = $period === null ? [] : Subject::query()
-            ->whereHas('classSubjects.classBatch', fn (Builder $classes) => $classes->where('academic_period_id', $period->id))
+            ->whereHas('classSubjects.classBatch', fn (Builder $classes) => $campus->constrain($classes->where('academic_period_id', $period->id), 'class_batches.campus_id'))
             ->where(fn (Builder $subjects) => $subjects->whereNull('performance_area_id')->orWhereNotIn('performance_area_id', $activeSubjectAreaIds ?: [0]))
             ->orderBy('name')
             ->pluck('name')
@@ -169,9 +174,9 @@ final class GradingSetupOverview
      *
      * @return array<string, mixed>
      */
-    public function workedExample(?AcademicPeriod $period): array
+    public function workedExample(?AcademicPeriod $period, ?CampusScope $campus = null): array
     {
-        $offering = $period === null ? null : $this->offeringsOf($period)->first(fn (ClassSubject $offering): bool => $offering->assessmentCategories->isNotEmpty());
+        $offering = $period === null ? null : $this->offeringsOf($period, $campus)->first(fn (ClassSubject $offering): bool => $offering->assessmentCategories->isNotEmpty());
 
         $weights = $offering === null
             ? [new CategoryWeight(1, 'Quizzes', 40.0), new CategoryWeight(2, 'Examinations', 60.0)]
@@ -215,9 +220,9 @@ final class GradingSetupOverview
     /**
      * @return Collection<int, ClassSubject>
      */
-    private function offeringsOf(AcademicPeriod $period): Collection
+    private function offeringsOf(AcademicPeriod $period, ?CampusScope $campus = null): Collection
     {
-        return ClassSubject::query()
+        return ($campus ?? CampusScope::everyCampus())->constrain(ClassSubject::query(), 'class_subjects.campus_id')
             ->select('class_subjects.*')
             ->join('class_batches', 'class_batches.id', '=', 'class_subjects.class_batch_id')
             ->join('subjects', 'subjects.id', '=', 'class_subjects.subject_id')

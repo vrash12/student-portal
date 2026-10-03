@@ -6,14 +6,17 @@ use App\Enums\Permission;
 use App\Models\AcademicPeriod;
 use App\Models\ClassSubject;
 use App\Models\User;
+use App\Support\CampusScope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 
 /**
  * Which class subjects a user may monitor, decided from permissions (never
  * role names). The only way to build one is MonitoringScope::for() (or
  * teaching()), so every monitoring view starts from the same rule:
  *
- * - "view all candidates" holders: every class subject of the period;
+ * - "view all candidates" holders: every class subject of the period on
+ *   their campus (every campus for accounts not limited to one; CampusScope);
  * - otherwise active teaching staff: only the class subjects they are
  *   assigned to teach (checked after canTeach(), so assignments left over
  *   from a former teaching role grant nothing);
@@ -25,19 +28,36 @@ use Illuminate\Database\Eloquent\Builder;
 final readonly class MonitoringScope
 {
     private function __construct(
-        /** Every class subject (administrative view). */
+        /** Every class subject of the campus scope (administrative view). */
         public bool $allSubjects,
         /** Only the class subjects taught by this user. */
         public ?int $instructorId,
+        /** The campuses in view: the user's own, or every campus (optionally filtered). */
+        public CampusScope $campus,
     ) {}
 
     public static function for(User $user): self
     {
         if ($user->hasPermission(Permission::ViewAllCandidates)) {
-            return new self(true, null);
+            return new self(true, null, $user->campusScope());
         }
 
         return self::teaching($user);
+    }
+
+    /**
+     * The scope narrowed by the request's campus filter (accounts that see
+     * every campus only; a campus-limited scope never changes).
+     */
+    public function filteredBy(Request $request): self
+    {
+        return new self($this->allSubjects, $this->instructorId, $this->campus->filteredBy($request));
+    }
+
+    /** The scope narrowed to one campus (an institution-wide report filter; null keeps it). */
+    public function narrowedTo(?int $campusId): self
+    {
+        return new self($this->allSubjects, $this->instructorId, $this->campus->narrowTo($campusId));
     }
 
     /**
@@ -46,7 +66,7 @@ final readonly class MonitoringScope
      */
     public static function teaching(User $user): self
     {
-        return $user->canTeach() ? new self(false, $user->id) : new self(false, null);
+        return new self(false, $user->canTeach() ? $user->id : null, $user->campusScope());
     }
 
     public function isEmpty(): bool
@@ -74,13 +94,15 @@ final readonly class MonitoringScope
      */
     public function offerings(int $periodId): Builder
     {
-        return ClassSubject::query()
+        $offerings = ClassSubject::query()
             ->whereHas('classBatch', fn (Builder $classes) => $classes->where('academic_period_id', $periodId))
             ->when($this->isEmpty(), fn (Builder $query) => $query->whereRaw('1 = 0'))
             ->when(! $this->allSubjects && $this->instructorId !== null, fn (Builder $query) => $query->whereHas(
                 'instructorAssignments',
                 fn (Builder $assignments) => $assignments->where('instructor_id', $this->instructorId),
             ));
+
+        return $this->campus->constrain($offerings, 'class_subjects.campus_id');
     }
 
     /**

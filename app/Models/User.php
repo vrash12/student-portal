@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\Permission;
 use App\Policies\UserPolicy;
+use App\Support\CampusScope;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -17,8 +18,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
- * Role assignment and activation status are deliberately not mass
+ * Role assignment, activation status and campus are deliberately not mass
  * assignable; they are set explicitly by UserAccountService.
+ *
+ * campus_id (staff accounts): the campus the account is limited to, or null
+ * for an account that sees every campus (administrators only; instructors
+ * always belong to one campus). Candidate accounts leave it null: a
+ * candidate's campus is on the candidate record.
  */
 #[Fillable(['name', 'username', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
@@ -47,6 +53,7 @@ class User extends Authenticatable
     {
         return [
             'role_id' => 'integer',
+            'campus_id' => 'integer',
             'is_active' => 'boolean',
             'password_change_required' => 'boolean',
             'last_login_at' => 'datetime',
@@ -60,6 +67,23 @@ class User extends Authenticatable
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /**
+     * @return BelongsTo<Campus, $this>
+     */
+    public function campus(): BelongsTo
+    {
+        return $this->belongsTo(Campus::class);
+    }
+
+    /**
+     * The campuses this account may see and work with: its own campus, or
+     * every campus when it has none (App\Support\CampusScope).
+     */
+    public function campusScope(): CampusScope
+    {
+        return CampusScope::for($this);
     }
 
     /**
@@ -190,11 +214,17 @@ class User extends Authenticatable
     }
 
     /**
-     * Effective permission check. Deactivated accounts hold no permissions.
+     * Effective permission check. Deactivated accounts hold no permissions,
+     * and accounts limited to a campus never hold the institution-wide ones
+     * (Permission::isInstitutionWide).
      */
     public function hasPermission(Permission $permission): bool
     {
         if (! $this->is_active) {
+            return false;
+        }
+
+        if ($permission->isInstitutionWide() && $this->isCampusLimited()) {
             return false;
         }
 
@@ -215,8 +245,22 @@ class User extends Authenticatable
         }
 
         $this->loadMissing('role.permissions');
+        $codes = $this->role->permissionCodes();
 
-        return $this->role->permissionCodes();
+        if (! $this->isCampusLimited()) {
+            return $codes;
+        }
+
+        return array_values(array_filter(
+            $codes,
+            fn (string $code): bool => ! (Permission::tryFrom($code)?->isInstitutionWide() ?? false),
+        ));
+    }
+
+    /** Whether the account is limited to one campus (App\Support\CampusScope). */
+    public function isCampusLimited(): bool
+    {
+        return $this->getAttribute('campus_id') !== null;
     }
 
     /**

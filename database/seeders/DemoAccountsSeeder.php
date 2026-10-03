@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Permission;
 use App\Enums\SystemRole;
 use App\Models\Role;
 use App\Models\User;
@@ -11,6 +12,7 @@ use RuntimeException;
 /**
  * Clearly fictional staff accounts for local development and demonstrations.
  * Candidate accounts are created with their records by DemoAcademicSeeder.
+ * Instructors are on the Main Campus; administrators see every campus.
  *
  * All accounts share the password from DEMO_ACCOUNT_PASSWORD, falling back
  * to the documented development default. Never runs in production.
@@ -49,7 +51,11 @@ class DemoAccountsSeeder extends Seeder
             'email' => null,
             'password' => $password,
         ]);
-        $user->role()->associate(Role::query()->where('code', $systemRole->value)->firstOrFail());
+        $role = Role::query()->where('code', $systemRole->value)->firstOrFail();
+        $user->role()->associate($role);
+        if (in_array(Permission::TeachClasses, $systemRole->defaultPermissions(), true)) {
+            $user->campus()->associate(DemoCampusSeeder::mainCampus());
+        }
         $user->is_active = true;
         $user->save();
     }

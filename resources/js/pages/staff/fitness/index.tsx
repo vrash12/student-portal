@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { Dumbbell, Plus, SlidersHorizontal } from 'lucide-react';
+import { CampusFilter } from '@/components/academic/campus-filter';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { FilterBar } from '@/components/ui/filter-bar';
@@ -12,7 +13,7 @@ import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import { withQuery } from '@/lib/url';
 import { useQueryFilters } from '@/lib/use-query-filters';
-import type { Paginated } from '@/types';
+import type { CampusOption, Paginated } from '@/types';
 
 interface FitnessTestRow {
     id: number;
@@ -27,7 +28,9 @@ interface FitnessTestRow {
 
 interface FitnessIndexProps {
     tests: Paginated<FitnessTestRow>;
-    filters: { period: string; class: string };
+    filters: { period: string; campus: string; class: string };
+    /** Campuses to filter by (accounts that see every campus only). */
+    campusOptions: CampusOption[];
     periods: Array<{ id: number; name: string }>;
     classes: Array<{ id: number; name: string }>;
     /** "all": every class; "taught": only the classes the user teaches. */
@@ -35,11 +38,11 @@ interface FitnessIndexProps {
     can: { manage: boolean; configure: boolean };
 }
 
-export default function FitnessIndex({ tests, filters, periods, classes, scope, can }: FitnessIndexProps) {
+export default function FitnessIndex({ tests, filters, campusOptions, periods, classes, scope, can }: FitnessIndexProps) {
     const { singular, plural } = terms.classBatch;
     const defaultPeriod = String(periods[0]?.id ?? '');
-    const { values, update, updateMany } = useQueryFilters(routes.fitness.index(), { period: filters.period, class: filters.class });
-    const canReset = values.period !== defaultPeriod || values.class !== '';
+    const { values, update, updateMany } = useQueryFilters(routes.fitness.index(), { period: filters.period, campus: filters.campus, class: filters.class });
+    const canReset = values.period !== defaultPeriod || values.campus !== '' || values.class !== '';
 
     const newTestAction = can.manage && (
         <ButtonLink href={withQuery(routes.fitness.tests.create(), { class: values.class })} variant="primary" icon={<Plus className="size-4" aria-hidden="true" />}>
@@ -69,7 +72,7 @@ export default function FitnessIndex({ tests, filters, periods, classes, scope, 
             />
 
             <section className="rounded-lg border border-line-box bg-surface" aria-label="Fitness tests">
-                <FilterBar onReset={() => updateMany({ period: defaultPeriod, class: '' })} canReset={canReset}>
+                <FilterBar onReset={() => updateMany({ period: defaultPeriod, campus: '', class: '' })} canReset={canReset}>
                     <FormField label="Academic period" className="sm:w-60">
                         <SelectInput value={values.period} onChange={(event) => updateMany({ period: event.target.value, class: '' })}>
                             {periods.length === 0 && <option value="">No academic periods</option>}
@@ -80,6 +83,7 @@ export default function FitnessIndex({ tests, filters, periods, classes, scope, 
                             ))}
                         </SelectInput>
                     </FormField>
+                    <CampusFilter options={campusOptions} value={values.campus} onChange={(campus) => updateMany({ campus, class: '' })} />
                     <FormField label={singular} className="sm:w-60">
                         <SelectInput value={values.class} onChange={(event) => update('class', event.target.value)}>
                             <option value="">All {plural.toLowerCase()}</option>

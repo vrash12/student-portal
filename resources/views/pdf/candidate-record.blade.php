@@ -80,6 +80,7 @@
                 <tr><td class="k">Status:</td><td class="v">{{ $candidate['status']['label'] }}</td></tr>
             </table></td>
             <td><table>
+                <tr><td class="k">Campus:</td><td class="v">{{ $candidate['campus']['name'] ?? 'Not assigned' }}</td></tr>
                 <tr><td class="k">Class / Section:</td><td class="v">{{ $candidate['classBatch']['name'] ?? 'Not assigned' }}</td></tr>
                 <tr><td class="k">Training Group:</td><td class="v">{{ $candidate['trainingGroup'] ?? 'Not assigned' }}</td></tr>
                 @php($unit = implode(' / ', array_filter([$candidate['company'] ?? null, $candidate['platoon'] ?? null])))
@@ -153,6 +154,7 @@
                 <h3>Registration Summary</h3>
                 <table class="grid">
                     <tr><td style="width:45%">Academic period</td><td>{{ $period['name'] ?? 'Not assigned' }}</td></tr>
+                    <tr><td>Campus</td><td>{{ $candidate['campus']['name'] ?? 'Not assigned' }}</td></tr>
                     <tr><td>Class / section</td><td>{{ $candidate['classBatch']['name'] ?? 'Not assigned' }}</td></tr>
                     <tr><td>Enrolled subjects</td><td>{{ count($subjects) }}</td></tr>
                     <tr><td>Candidate status</td><td>{{ $candidate['status']['label'] }}</td></tr>

@@ -1,6 +1,7 @@
 import {
     Activity,
     Award,
+    Building2,
     BookOpen,
     CalendarCheck,
     CalendarRange,
@@ -96,6 +97,8 @@ export const staffNavigation: NavigationSection[] = [
             },
             { label: terms.candidate.plural, href: routes.candidates.index(), icon: GraduationCap, permission: Permission.ViewAllCandidates },
             { label: terms.classBatch.plural, href: routes.classes.index(), icon: UsersRound, permission: Permission.ManageClassBatches },
+            // Accounts limited to a campus never hold campuses.manage (Permission::isInstitutionWide).
+            { label: 'Campuses', href: routes.campuses.index(), icon: Building2, permission: Permission.ManageCampuses },
             { label: 'Subjects', href: routes.subjects.index(), icon: BookOpen, permission: Permission.ManageSubjects },
             {
                 label: 'Academic Periods',

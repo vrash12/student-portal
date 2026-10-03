@@ -1,6 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
 import { ListCharts, type ListChart } from '@/components/charts/list-charts';
 import { History, SearchX } from 'lucide-react';
+import { CampusFilter } from '@/components/academic/campus-filter';
 import { AuditChangeList, humanizeKey, type AuditValues } from '@/components/audit/audit-change-list';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -11,7 +12,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
 import { useDateFormatter } from '@/lib/format';
 import { useQueryFilters } from '@/lib/use-query-filters';
-import type { Paginated } from '@/types';
+import type { CampusOption, Paginated } from '@/types';
 
 interface Entry {
     id: number;
@@ -25,9 +26,10 @@ interface Entry {
     after: AuditValues;
 }
 
-type FilterKey = 'actor' | 'action' | 'entity' | 'entity_id' | 'from' | 'to';
+type FilterKey = 'campus' | 'actor' | 'action' | 'entity' | 'entity_id' | 'from' | 'to';
 
 interface AuditFilters {
+    campus: string;
     actor: string;
     action: string;
     entity: string;
@@ -45,12 +47,15 @@ interface Props {
     actions: { value: string; label: string }[];
     entities: string[];
     filters: Partial<Record<FilterKey, string | number>>;
+    /** Campuses to filter by (accounts that see every campus only). */
+    campusOptions: CampusOption[];
 }
 
 const AUDIT_HISTORY_URL = '/audit-history';
 
-export default function AuditHistory({ entries, actors, actions, entities, filters, charts }: Props) {
-    const { values, update, reset, isFiltered } = useQueryFilters<AuditFilters>(AUDIT_HISTORY_URL, {
+export default function AuditHistory({ entries, actors, actions, entities, filters, campusOptions, charts }: Props) {
+    const { values, update, updateMany, reset, isFiltered } = useQueryFilters<AuditFilters>(AUDIT_HISTORY_URL, {
+        campus: String(filters.campus ?? ''),
         actor: String(filters.actor ?? ''),
         action: String(filters.action ?? ''),
         entity: String(filters.entity ?? ''),
@@ -74,6 +79,8 @@ export default function AuditHistory({ entries, actors, actions, entities, filte
 
             <div className="rounded-lg border border-line-box bg-surface">
                 <FilterBar onReset={reset} canReset={isFiltered}>
+                    {/* Actors are listed per campus, so a new campus clears the actor. */}
+                    <CampusFilter options={campusOptions} value={values.campus} onChange={(campus) => updateMany({ campus, actor: '' })} />
                     <FormField label="Actor" className="sm:w-52">
                         <SelectInput value={values.actor} onChange={(event) => update('actor', event.target.value)}>
                             <option value="">All actors</option>

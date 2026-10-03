@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Campus;
 use App\Models\ExaminationAttempt;
 use App\Models\User;
 use App\Services\Monitoring\AcademicMonitoring;
@@ -30,15 +31,16 @@ final class ReportingService
 
     public function generate(User $user, array $filters): array
     {
-        $filters = array_intersect_key($filters, array_flip(['type', 'period', 'class', 'subject', 'search', 'from', 'to']));
-        $scope = MonitoringScope::for($user);
+        $filters = array_intersect_key($filters, array_flip(['type', 'period', 'campus', 'class', 'subject', 'search', 'from', 'to']));
+        // The user's scope, narrowed to one campus by the campus filter (accounts that see every campus only).
+        $scope = MonitoringScope::for($user)->narrowedTo(isset($filters['campus']) && ctype_digit((string) $filters['campus']) ? (int) $filters['campus'] : null);
         $periods = $scope->periods();
         $periodId = (int) ($filters['period'] ?? $periods[0]['id'] ?? 0);
         abort_if($periodId && ! in_array($periodId, array_column($periods, 'id'), true), 403);
         $all = $scope->offerings($periodId)->with('classBatch', 'subject')->get();
         $offerings = $all->filter(fn ($offering) => (empty($filters['class']) || $offering->class_batch_id === (int) $filters['class']) && (empty($filters['subject']) || $offering->subject_id === (int) $filters['subject']))->values();
         $type = $filters['type'] ?? 'candidate';
-        $filters = array_merge(['period' => $periodId ?: '', 'class' => '', 'subject' => '', 'search' => '', 'from' => '', 'to' => ''], $filters, ['type' => $type]);
+        $filters = array_merge(['period' => $periodId ?: '', 'class' => '', 'subject' => '', 'search' => '', 'from' => '', 'to' => ''], $filters, ['type' => $type, 'campus' => $scope->campus->filterValue()]);
         $result = in_array($type, ['examination', 'quiz'], true)
             ? $this->examinations($offerings->modelKeys(), $type, $filters)
             : $this->academic($this->monitoring->evaluate($offerings), $type);
@@ -51,6 +53,9 @@ final class ReportingService
 
         return $result + [
             'filters' => $filters, 'periods' => $periods, 'scope' => $scope->kind(),
+            'campusOptions' => $scope->campus->filterOptions(),
+            // The campus the report covers, for the PDF ("All campuses" when not narrowed).
+            'campusLabel' => $scope->campus->campusId === null ? 'All campuses' : (string) Campus::query()->whereKey($scope->campus->campusId)->value('name'),
             'classes' => $all->pluck('classBatch')->unique('id')->sortBy('name')->map(fn ($row) => ['id' => $row->id, 'name' => $row->name])->values()->all(),
             'subjects' => $all->pluck('subject')->unique('id')->sortBy('name')->map(fn ($row) => ['id' => $row->id, 'name' => $row->name])->values()->all(),
             'generatedAt' => now()->toIso8601String(),

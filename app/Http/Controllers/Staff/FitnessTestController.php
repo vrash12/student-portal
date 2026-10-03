@@ -40,13 +40,15 @@ class FitnessTestController extends Controller
 
     public function index(Request $request): Response
     {
-        $scope = FitnessScope::for($request->user());
+        // The user's scope, narrowed by the campus filter for accounts that see every campus.
+        $scope = FitnessScope::for($request->user())->filteredBy($request);
         $periods = $scope->periods();
         $periodIds = array_column($periods, 'id');
         $requestedPeriod = QueryFilters::id($request, 'period');
         $filters = [
             // The active (first) period by default; unknown periods show the default.
             'period' => in_array((int) $requestedPeriod, $periodIds, true) ? $requestedPeriod : (string) ($periodIds[0] ?? ''),
+            'campus' => $scope->campus->filterValue(),
             'class' => QueryFilters::id($request, 'class'),
         ];
 
@@ -83,6 +85,7 @@ class FitnessTestController extends Controller
                 'summary' => $summaries[$test->id],
             ]),
             'filters' => $filters,
+            'campusOptions' => $scope->campus->filterOptions(),
             'periods' => array_map(fn (array $period): array => ['id' => $period['id'], 'name' => $period['name']], $periods),
             'classes' => $classes->map(fn (ClassBatch $class): array => ['id' => $class->id, 'name' => $class->name])->all(),
             // "all": every class; "taught": only the classes the user teaches.

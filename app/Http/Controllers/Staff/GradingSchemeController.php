@@ -37,7 +37,7 @@ class GradingSchemeController extends Controller
             'offering' => $this->gradebook->offering($classSubject),
             'categories' => $categories,
             // An empty setup can start from another subject's weights (prefill only).
-            'copySources' => $categories === [] ? $this->overview->copySources($classSubject->classBatch->academic_period_id, $classSubject->id) : [],
+            'copySources' => $categories === [] ? $this->overview->copySources($classSubject->classBatch->academic_period_id, $classSubject->id, $request->user()->campusScope()) : [],
             // Opened from Grading Setup: return there after saving or cancelling.
             'returnTo' => $request->query('return') === self::RETURN_TO_SETUP ? self::RETURN_TO_SETUP : null,
             // Standing in this subject uses the period's passing and warning grades.
@@ -48,6 +48,8 @@ class GradingSchemeController extends Controller
             'maxCategories' => GradingSchemeRequest::MAX_CATEGORIES,
             'can' => [
                 'viewClass' => $request->user()->hasPermission(Permission::ManageClassBatches),
+                // Passing grades apply to every campus: set by accounts that see every campus.
+                'setThresholds' => $request->user()->campusScope()->isInstitutionWide(),
             ],
         ]);
     }

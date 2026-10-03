@@ -44,7 +44,7 @@ interface SubjectWeightsProps {
     hasFinalizedAssessments: boolean;
     totalWeight: number;
     maxCategories: number;
-    can: { viewClass: boolean };
+    can: { viewClass: boolean; setThresholds: boolean };
 }
 
 /**
@@ -206,9 +206,11 @@ export default function SubjectWeights({
                                 Standing uses <ThresholdSummary thresholds={thresholds} /> ({offering.period.name}).{' '}
                             </>
                         )}
-                        <Link href={routes.academicPeriods.thresholds(periodId)} className="font-medium text-primary-700 underline">
-                            {thresholds === null ? 'Set Passing and Warning Grades' : 'Change Passing and Warning Grades'}
-                        </Link>
+                        {can.setThresholds && (
+                            <Link href={routes.academicPeriods.thresholds(periodId)} className="font-medium text-primary-700 underline">
+                                {thresholds === null ? 'Set Passing and Warning Grades' : 'Change Passing and Warning Grades'}
+                            </Link>
+                        )}
                     </p>
                     {form.isDirty && <p className="font-medium text-warning-fg">Unsaved changes: leaving discards them.</p>}
                 </div>

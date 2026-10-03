@@ -82,12 +82,14 @@ class CandidateQrController extends Controller
 
     private function card(Candidate $candidate): Response
     {
-        $candidate->loadMissing('classBatch');
+        $candidate->loadMissing(['classBatch', 'campus']);
         $html = view('pdf.qr-card', [
             'qr' => 'data:image/svg+xml;base64,'.base64_encode(CandidateQrCode::svg($candidate, 600)),
             'name' => $candidate->full_name,
             'candidateNumber' => $candidate->candidate_number,
             'className' => $candidate->classBatch?->name,
+            // The candidate's campus (owner decision 2026-10-03).
+            'campusName' => $candidate->campus?->name,
             'organization' => config('institution.organization_name'),
             'systemName' => config('institution.system_name'),
             'generatedAt' => now()->timezone(config('institution.timezone'))->format('d M Y, h:i A T'),

@@ -7,7 +7,9 @@ use App\Models\User;
 
 /**
  * Staff account management. Candidate accounts are managed through
- * candidate records instead.
+ * candidate records instead. Campus-limited administrators manage only the
+ * staff of their own campus (CampusScope); accounts that see every campus
+ * are managed by accounts that see every campus.
  */
 class UserPolicy
 {
@@ -31,6 +33,10 @@ class UserPolicy
             return false;
         }
 
-        return $actor->is($target) || $actor->canAssignRole($target->role);
+        if ($actor->is($target)) {
+            return true;
+        }
+
+        return $actor->canAssignRole($target->role) && $actor->campusScope()->allowsRecord($target);
     }
 }

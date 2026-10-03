@@ -14,6 +14,7 @@ use App\Models\Subject;
 use App\Models\User;
 use App\Services\ClassBatchService;
 use App\Services\InstructorAssignmentService;
+use Database\Factories\CampusFactory;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -29,6 +30,8 @@ class ClassBatchTest extends TestCase
 
         $this->admin = $this->userWithRole(SystemRole::AcademicAdministrator);
         $this->period = AcademicPeriod::factory()->active()->create(['name' => 'Active Period']);
+        // The institution's only campus: new classes go there without choosing it.
+        CampusFactory::defaultCampusId();
     }
 
     public function test_administrator_creates_a_class_in_a_period(): void
@@ -41,7 +44,7 @@ class ClassBatchTest extends TestCase
         $this->assertSame($this->period->id, $classBatch->academic_period_id);
 
         $entry = AuditLog::query()->where('action', AuditAction::ClassBatchCreated->value)->sole();
-        $this->assertSame(['name' => 'Sample Batch A', 'academic_period' => 'Active Period'], $entry->new_values);
+        $this->assertSame(['name' => 'Sample Batch A', 'academic_period' => 'Active Period', 'campus' => 'Main Campus'], $entry->new_values);
     }
 
     public function test_class_names_are_unique_within_a_period_only(): void
@@ -51,7 +54,7 @@ class ClassBatchTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post('/classes', ['academic_period_id' => $this->period->id, 'name' => 'Sample Batch A'])
-            ->assertSessionHasErrors(['name' => 'Another class in this academic period already uses this name.']);
+            ->assertSessionHasErrors(['name' => 'Another class of this campus in this academic period already uses this name.']);
 
         $this->actingAs($this->admin)
             ->post('/classes', ['academic_period_id' => $otherPeriod->id, 'name' => 'Sample Batch A'])

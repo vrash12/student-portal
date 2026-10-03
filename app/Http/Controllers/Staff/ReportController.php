@@ -56,6 +56,7 @@ final class ReportController
 
         $meta = [
             ['Academic period', $name($report['periods'], $filters['period'], 'No academic period')],
+            ['Campus', $report['campusLabel']],
             ['Class / Batch', $name($report['classes'], $filters['class'], 'All authorized classes')],
             ['Subject', $name($report['subjects'], $filters['subject'], 'All authorized subjects')],
             ['Records', number_format(count($rows))],
@@ -90,7 +91,7 @@ final class ReportController
     {
         return $request->validate([
             'type' => ['sometimes', Rule::in(array_keys(ReportingService::TYPES))],
-            'period' => 'nullable|integer|min:1', 'class' => 'nullable|integer|min:1',
+            'period' => 'nullable|integer|min:1', 'campus' => 'nullable|integer|min:1', 'class' => 'nullable|integer|min:1',
             'subject' => 'nullable|integer|min:1', 'search' => 'nullable|string|max:100',
             'from' => 'nullable|date_format:Y-m-d', 'to' => 'nullable|date_format:Y-m-d|after_or_equal:from',
             'page' => 'sometimes|integer|min:1',

@@ -54,6 +54,7 @@ class UpdateCandidateRequest extends CandidateRequest
             'first_name' => $this->string('first_name')->value(),
             'last_name' => $this->string('last_name')->value(),
             'class_batch_id' => $this->classBatchId(),
+            'campus_id' => $this->campusId(),
             'status' => CandidateStatus::from($this->string('status')->value()),
             'account_active' => $this->boolean('account_active'),
             'password' => $password === '' ? null : $password,

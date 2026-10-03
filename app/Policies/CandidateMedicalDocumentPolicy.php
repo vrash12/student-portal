@@ -10,8 +10,9 @@ use App\Models\User;
 /**
  * Who may open, review and withdraw uploaded medical documents:
  *
- * - medical staff (medical.view) open and download every document, and
- *   with medical.manage accept or return those waiting for review;
+ * - medical staff (medical.view) open and download every document of
+ *   their campus (CampusScope), and with medical.manage accept or return
+ *   those waiting for review;
  * - the candidate opens and downloads their own documents, and withdraws
  *   one only while it waits for review;
  * - an instructor of the candidate's class views documents (not returned
@@ -22,12 +23,14 @@ class CandidateMedicalDocumentPolicy
 {
     public function view(User $user, CandidateMedicalDocument $document): bool
     {
-        return $user->hasPermission(Permission::ViewMedical) || $this->owns($user, $document);
+        return ($user->hasPermission(Permission::ViewMedical) && $user->campusScope()->allowsRecord($document))
+            || $this->owns($user, $document);
     }
 
     public function review(User $user, CandidateMedicalDocument $document): bool
     {
-        return $user->hasPermission(Permission::ManageMedical) && $user->hasPermission(Permission::ViewMedical);
+        return $user->hasPermission(Permission::ManageMedical) && $user->hasPermission(Permission::ViewMedical)
+            && $user->campusScope()->allowsRecord($document);
     }
 
     public function withdraw(User $user, CandidateMedicalDocument $document): bool

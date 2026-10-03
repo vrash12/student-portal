@@ -54,7 +54,7 @@ interface InstructorOption {
 }
 
 interface ClassShowProps {
-    classBatch: { id: number; name: string; period: { id: number; name: string; isActive: boolean } };
+    classBatch: { id: number; name: string; period: { id: number; name: string; isActive: boolean }; campus: { id: number; name: string; code: string } };
     offerings: Offering[];
     candidates: Paginated<CandidateRow>;
     subjectOptions: Array<{ id: number; code: string; name: string }>;
@@ -85,6 +85,8 @@ export default function ClassShow({ classBatch, offerings, candidates, subjectOp
                             classBatch.period.name
                         )}{' '}
                         {classBatch.period.isActive && <StatusBadge tone="success">Active</StatusBadge>}
+                        <span className="mx-2 text-ink-muted" aria-hidden="true">·</span>
+                        Campus: {classBatch.campus.name}
                     </>
                 }
                 breadcrumbs={[{ label: plural, href: routes.classes.index() }, { label: classBatch.name }]}

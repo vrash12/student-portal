@@ -31,10 +31,11 @@ class ClassSubjectPolicy
     }
 
     /**
-     * Set the grading categories and weights (administrative).
+     * Set the grading categories and weights (administrative, for the
+     * classes of the actor's campus).
      */
     public function configureGrading(User $actor, ClassSubject $offering): bool
     {
-        return $actor->hasPermission(Permission::ConfigureGrading);
+        return $actor->hasPermission(Permission::ConfigureGrading) && $actor->campusScope()->allowsRecord($offering);
     }
 }

@@ -23,6 +23,7 @@ use App\Services\Monitoring\CandidateAcademicRecord;
 use App\Services\Monitoring\CandidateProfileRecord;
 use App\Services\Performance\CandidatePerformanceRecord;
 use App\Support\AcademicOptions;
+use App\Support\CampusScope;
 use App\Support\CandidateBackgroundPresenter;
 use App\Support\CandidateGroups;
 use App\Support\CandidatePresenter;
@@ -54,26 +55,29 @@ class CandidateController extends Controller
     public function index(Request $request): Response
     {
         $statusValues = array_map(fn (CandidateStatus $status): string => $status->value, CandidateStatus::cases());
+        // The user's campus, or every campus narrowed by the campus filter (CampusScope).
+        $campus = $request->user()->campusScope()->filteredBy($request);
         // Only names already in use are valid filters; anything else is ignored.
-        $companies = CandidateGroups::companies();
-        $platoons = CandidateGroups::platoons();
+        $companies = CandidateGroups::companies(campus: $campus);
+        $platoons = CandidateGroups::platoons(campus: $campus);
         $filters = [
             'search' => QueryFilters::search($request),
+            'campus' => $campus->filterValue(),
             'class' => QueryFilters::id($request, 'class'),
             'status' => QueryFilters::oneOf($request, 'status', $statusValues),
             'company' => QueryFilters::oneOf($request, 'company', $companies),
             'platoon' => QueryFilters::oneOf($request, 'platoon', $platoons),
         ];
 
-        $query = Candidate::query()
-            ->with('classBatch')
+        $query = $campus->constrain(Candidate::query(), 'candidates.campus_id')
+            ->with(['classBatch', 'campus'])
             ->when($filters['search'] !== '', fn (Builder $query) => $query->matching($filters['search']))
             ->when($filters['class'] !== '', fn (Builder $query) => $query->where('class_batch_id', (int) $filters['class']))
             ->when($filters['status'] !== '', fn (Builder $query) => $query->where('status', $filters['status']))
             ->when($filters['company'] !== '', fn (Builder $query) => $query->where('company', $filters['company']))
             ->when($filters['platoon'] !== '', fn (Builder $query) => $query->where('platoon', $filters['platoon']));
 
-        $classNames = ClassBatch::query()->pluck('name', 'id');
+        $classNames = $campus->constrain(ClassBatch::query(), 'campus_id')->pluck('name', 'id');
         $charts = [
             ListCharts::pie('Candidates by Status', 'Enrollment status of the matching candidates.',
                 ListCharts::countBy($query, 'status', fn (mixed $value): string => CandidateStatus::tryFrom((string) $value)?->label() ?? (string) $value,
@@ -93,6 +97,7 @@ class CandidateController extends Controller
                 'candidateNumber' => $candidate->candidate_number,
                 'name' => $candidate->full_name,
                 'className' => $candidate->classBatch?->name,
+                'campus' => $candidate->campus?->summary(),
                 'company' => $candidate->company,
                 'platoon' => $candidate->platoon,
                 'status' => $this->status($candidate->status),
@@ -103,7 +108,8 @@ class CandidateController extends Controller
             'candidates' => $candidates,
             'charts' => $charts,
             'filters' => $filters,
-            'classOptions' => AcademicOptions::classBatchesByPeriod(),
+            'campusOptions' => $campus->filterOptions(),
+            'classOptions' => AcademicOptions::classBatchesByPeriod($campus),
             'statusOptions' => CandidateStatus::options(),
             'companyOptions' => $companies,
             'platoonOptions' => $platoons,
@@ -111,11 +117,15 @@ class CandidateController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        $campus = $request->user()->campusScope();
+
         return Inertia::render('staff/candidates/create', [
-            'classOptions' => AcademicOptions::classBatchesByPeriod(),
-            ...$this->groupSuggestions(),
+            'classOptions' => AcademicOptions::classBatchesByPeriod($campus),
+            // For candidates without a class (a class decides the campus otherwise).
+            'campusOptions' => $campus->assignableOptions(),
+            ...$this->groupSuggestions($campus),
         ]);
     }
 
@@ -212,7 +222,8 @@ class CandidateController extends Controller
                 'scope' => $seesAllSubjects ? 'all' : 'taught',
                 'thresholds' => $thresholds?->toArray(),
                 'monitored' => $monitored,
-                'canConfigureThresholds' => $viewer->hasPermission(Permission::ConfigureGrading),
+                // Passing grades apply to every campus: set by accounts that see every campus.
+                'canConfigureThresholds' => $viewer->hasPermission(Permission::ConfigureGrading) && $viewer->campusScope()->isInstitutionWide(),
             ],
             // The same definition of a concern as academic monitoring.
             'warnings' => $monitored ? $record->warnings($subjectResults) : [],
@@ -235,9 +246,10 @@ class CandidateController extends Controller
         ]);
     }
 
-    public function edit(Candidate $candidate): Response
+    public function edit(Request $request, Candidate $candidate): Response
     {
         $candidate->load(['user', 'classBatch.academicPeriod']);
+        $campus = $request->user()->campusScope();
 
         return Inertia::render('staff/candidates/edit', [
             'candidate' => [
@@ -245,9 +257,10 @@ class CandidateController extends Controller
                 'accountActive' => $candidate->user->is_active,
                 'username' => $candidate->user->username,
             ],
-            'classOptions' => AcademicOptions::classBatchesByPeriod(),
+            'classOptions' => AcademicOptions::classBatchesByPeriod($campus),
+            'campusOptions' => $campus->assignableOptions(),
             'statusOptions' => CandidateStatus::options(),
-            ...$this->groupSuggestions(),
+            ...$this->groupSuggestions($campus),
         ]);
     }
 
@@ -309,9 +322,9 @@ class CandidateController extends Controller
      *
      * @return array{companyOptions: list<string>, platoonOptions: list<string>}
      */
-    private function groupSuggestions(): array
+    private function groupSuggestions(CampusScope $campus): array
     {
-        return ['companyOptions' => CandidateGroups::companies(), 'platoonOptions' => CandidateGroups::platoons()];
+        return ['companyOptions' => CandidateGroups::companies(campus: $campus), 'platoonOptions' => CandidateGroups::platoons(campus: $campus)];
     }
 
     /**

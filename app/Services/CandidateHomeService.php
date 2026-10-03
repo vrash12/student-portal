@@ -120,11 +120,13 @@ final class CandidateHomeService
      */
     private function summary(Candidate $candidate, ?array $academics = null): array
     {
-        $candidate->loadMissing('classBatch.academicPeriod');
+        $candidate->loadMissing(['classBatch.academicPeriod', 'campus']);
 
         return [
             'name' => $candidate->full_name, 'number' => $candidate->candidate_number,
             'className' => $candidate->classBatch?->name, 'period' => $candidate->classBatch?->academicPeriod->name,
+            // The candidate's campus, as text (owner decision 2026-10-03).
+            'campus' => $candidate->campus?->name,
             'eligible' => $this->eligible($candidate),
             ...($academics === null ? [] : ['subjectCount' => count($academics['subjects']), 'overall' => $academics['overall']]),
         ];

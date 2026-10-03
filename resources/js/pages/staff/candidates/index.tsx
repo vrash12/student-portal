@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { ListCharts, type ListChart } from '@/components/charts/list-charts';
 import { GraduationCap, Plus, SearchX } from 'lucide-react';
+import { CampusFilter, showsCampuses } from '@/components/academic/campus-filter';
 import type { ClassOptionGroup, StatusOption } from '@/components/candidates/candidate-form';
 import { CandidateUnit } from '@/components/candidates/candidate-unit';
 import { Button, ButtonLink } from '@/components/ui/button';
@@ -15,7 +16,7 @@ import { useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import { useQueryFilters } from '@/lib/use-query-filters';
-import type { Paginated } from '@/types';
+import type { CampusOption, CampusSummary, Paginated } from '@/types';
 import type { CandidateGroupOptions } from '@/types/candidates';
 
 interface CandidateRow {
@@ -23,6 +24,7 @@ interface CandidateRow {
     candidateNumber: string;
     name: string;
     className: string | null;
+    campus: CampusSummary | null;
     company: string | null;
     platoon: string | null;
     status: { value: string; label: string; tone: StatusTone };
@@ -31,6 +33,7 @@ interface CandidateRow {
 
 interface CandidateFilters {
     search: string;
+    campus: string;
     class: string;
     status: string;
     company: string;
@@ -43,13 +46,16 @@ interface CandidatesIndexProps extends CandidateGroupOptions {
     charts: ListChart[];
     candidates: Paginated<CandidateRow>;
     filters: CandidateFilters;
+    /** Campuses to filter by (accounts that see every campus only). */
+    campusOptions: CampusOption[];
     classOptions: ClassOptionGroup[];
     statusOptions: StatusOption[];
     canCreate: boolean;
 }
 
-export default function CandidatesIndex({ candidates, filters, classOptions, statusOptions, companyOptions, platoonOptions, canCreate, charts }: CandidatesIndexProps) {
-    const { values, update, reset, isFiltered } = useQueryFilters(routes.candidates.index(), filters);
+export default function CandidatesIndex({ candidates, filters, campusOptions, classOptions, statusOptions, companyOptions, platoonOptions, canCreate, charts }: CandidatesIndexProps) {
+    const { values, update, updateMany, reset, isFiltered } = useQueryFilters(routes.candidates.index(), filters);
+    const showCampus = showsCampuses(campusOptions);
     const formatDate = useDateFormatter();
     const classTerm = terms.classBatch.singular;
 
@@ -78,6 +84,8 @@ export default function CandidatesIndex({ candidates, filters, classOptions, sta
                         value={values.search}
                         onChange={(value) => update('search', value, { debounce: true })}
                     />
+                    {/* The class list depends on the campus, so a new campus clears the class. */}
+                    <CampusFilter options={campusOptions} value={values.campus} onChange={(campus) => updateMany({ campus, class: '' })} />
                     <FormField label={classTerm} className="sm:w-56">
                         <SelectInput value={values.class} onChange={(event) => update('class', event.target.value)}>
                             <option value="">All {terms.classBatch.plural.toLowerCase()}</option>
@@ -155,9 +163,11 @@ export default function CandidatesIndex({ candidates, filters, classOptions, sta
                             <Th>Candidate No.</Th>
                             <Th>Name</Th>
                             <Th>{classTerm}</Th>
+                            {showCampus && <Th className="hidden md:table-cell">Campus</Th>}
                             <Th className="hidden md:table-cell">Company / Platoon</Th>
                             <Th>Status</Th>
-                            <Th className="hidden lg:table-cell">Last Updated</Th>
+                            {/* With the Campus column, the date gives way first. */}
+                            <Th className={showCampus ? 'hidden 2xl:table-cell' : 'hidden lg:table-cell'}>Last Updated</Th>
                             <Th align="right">
                                 <span className="sr-only">Actions</span>
                             </Th>
@@ -169,14 +179,15 @@ export default function CandidatesIndex({ candidates, filters, classOptions, sta
                                         {candidate.candidateNumber}
                                     </Td>
                                     <Td className="text-ink">{candidate.name}</Td>
-                                    <Td className="text-ink-muted">{candidate.className ?? 'Not assigned'}</Td>
+                                    <Td className="whitespace-nowrap text-ink-muted">{candidate.className ?? 'Not assigned'}</Td>
+                                    {showCampus && <Td className="hidden whitespace-nowrap text-ink-muted md:table-cell">{candidate.campus?.name ?? 'Not assigned'}</Td>}
                                     <Td className="hidden md:table-cell">
                                         <CandidateUnit company={candidate.company} platoon={candidate.platoon} />
                                     </Td>
                                     <Td>
                                         <StatusBadge tone={candidate.status.tone}>{candidate.status.label}</StatusBadge>
                                     </Td>
-                                    <Td className="hidden text-ink-muted lg:table-cell">{formatDate.dateTime(candidate.updatedAt)}</Td>
+                                    <Td className={`hidden text-ink-muted ${showCampus ? '2xl:table-cell' : 'lg:table-cell'}`}>{formatDate.dateTime(candidate.updatedAt)}</Td>
                                     <Td align="right">
                                         <RowAction href={routes.candidates.show(candidate.id)} label={`View ${candidate.name}`}>
                                             View

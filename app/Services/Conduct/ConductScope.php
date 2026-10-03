@@ -9,13 +9,16 @@ use App\Models\ClassBatch;
 use App\Models\ClassSubject;
 use App\Models\User;
 use App\Support\AcademicOptions;
+use App\Support\CampusScope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 
 /**
  * Which candidates a user may act on for merits and demerits, decided from
  * permissions (never role names):
  *
- * - "view all candidates" holders: every candidate;
+ * - "view all candidates" holders: every candidate of their campus (every
+ *   campus for accounts not limited to one; CampusScope);
  * - otherwise active teaching staff: only candidates whose current class
  *   they teach (User::teachesClass, checked after canTeach(), so assignments
  *   left over from a former teaching role grant nothing);
@@ -27,19 +30,30 @@ use Illuminate\Database\Eloquent\Builder;
 final readonly class ConductScope
 {
     private function __construct(
-        /** Every candidate (administrative view). */
+        /** Every candidate of the campus scope (administrative view). */
         public bool $allCandidates,
         /** Only candidates of the classes this user teaches. */
         private ?User $teacher,
+        /** The campuses in view: the user's own, or every campus (optionally filtered). */
+        public CampusScope $campus,
     ) {}
 
     public static function for(User $user): self
     {
         if ($user->hasPermission(Permission::ViewAllCandidates)) {
-            return new self(true, null);
+            return new self(true, null, $user->campusScope());
         }
 
-        return new self(false, $user->canTeach() ? $user : null);
+        return new self(false, $user->canTeach() ? $user : null, $user->campusScope());
+    }
+
+    /**
+     * The scope narrowed by the request's campus filter (accounts that see
+     * every campus only; a campus-limited scope never changes).
+     */
+    public function filteredBy(Request $request): self
+    {
+        return new self($this->allCandidates, $this->teacher, $this->campus->filteredBy($request));
     }
 
     public function isEmpty(): bool
@@ -62,6 +76,10 @@ final readonly class ConductScope
 
     public function covers(Candidate $candidate): bool
     {
+        if (! $this->campus->allows($candidate->campusId())) {
+            return false;
+        }
+
         if ($this->allCandidates) {
             return true;
         }
@@ -78,6 +96,8 @@ final readonly class ConductScope
      */
     public function constrain(Builder $candidates): void
     {
+        $this->campus->constrain($candidates, 'candidates.campus_id');
+
         if ($this->allCandidates) {
             return;
         }
@@ -100,7 +120,7 @@ final readonly class ConductScope
     public function classOptions(): array
     {
         if ($this->allCandidates) {
-            return AcademicOptions::classBatchesByPeriod();
+            return AcademicOptions::classBatchesByPeriod($this->campus);
         }
 
         if ($this->teacher === null) {

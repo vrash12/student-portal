@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\ClassBatchRequest;
 use App\Models\AcademicPeriod;
 use App\Models\AssessmentCategory;
+use App\Models\Campus;
 use App\Models\Candidate;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
@@ -36,9 +37,11 @@ class ClassBatchController extends Controller
         $activePeriodId = AcademicPeriod::query()->active()->value('id');
         $requestedPeriod = QueryFilters::id($request, 'period');
         $periodId = $requestedPeriod !== '' ? (int) $requestedPeriod : $activePeriodId;
+        // The user's campus, or every campus narrowed by the campus filter (CampusScope).
+        $campus = $request->user()->campusScope()->filteredBy($request);
 
-        $classBatches = ClassBatch::query()
-            ->with('academicPeriod')
+        $classBatches = $campus->constrain(ClassBatch::query(), 'class_batches.campus_id')
+            ->with(['academicPeriod', 'campus'])
             ->withCount(['candidates', 'classSubjects'])
             ->when($periodId !== null, fn (Builder $query) => $query->where('academic_period_id', $periodId))
             ->orderBy('name')
@@ -48,11 +51,12 @@ class ClassBatchController extends Controller
                 'id' => $classBatch->id,
                 'name' => $classBatch->name,
                 'period' => $classBatch->academicPeriod->name,
+                'campus' => $classBatch->campus->summary(),
                 'candidateCount' => (int) $classBatch->candidates_count,
                 'subjectCount' => (int) $classBatch->class_subjects_count,
             ]);
 
-        $largest = ClassBatch::query()
+        $largest = $campus->constrain(ClassBatch::query(), 'class_batches.campus_id')
             ->withCount('candidates')
             ->when($periodId !== null, fn (Builder $query) => $query->where('academic_period_id', $periodId))
             ->orderByDesc('candidates_count')
@@ -70,22 +74,26 @@ class ClassBatchController extends Controller
         return Inertia::render('staff/classes/index', [
             'classes' => $classBatches,
             'charts' => $charts,
-            'filters' => ['period' => $periodId === null ? '' : (string) $periodId],
+            'filters' => ['period' => $periodId === null ? '' : (string) $periodId, 'campus' => $campus->filterValue()],
+            'campusOptions' => $campus->filterOptions(),
             'periods' => AcademicOptions::academicPeriods(),
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
         return Inertia::render('staff/classes/create', [
             'periods' => AcademicOptions::academicPeriods(),
+            // Active campuses the user may place a class on (the campus cannot change later).
+            'campusOptions' => $request->user()->campusScope()->assignableOptions(),
         ]);
     }
 
     public function store(ClassBatchRequest $request): RedirectResponse
     {
         $period = AcademicPeriod::query()->findOrFail($request->integer('academic_period_id'));
-        $classBatch = $this->classes->create($period, $request->string('name')->value());
+        $campus = Campus::query()->findOrFail($request->integer('campus_id'));
+        $classBatch = $this->classes->create($period, $campus, $request->string('name')->value());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Class {$classBatch->name} created."]);
 
@@ -96,6 +104,7 @@ class ClassBatchController extends Controller
     {
         $classBatch->load([
             'academicPeriod',
+            'campus',
             'classSubjects' => fn ($offerings) => $offerings->withCount('assessments'),
             'classSubjects.subject',
             'classSubjects.trainingPhase',
@@ -128,6 +137,7 @@ class ClassBatchController extends Controller
                     'name' => $classBatch->academicPeriod->name,
                     'isActive' => $classBatch->academicPeriod->is_active,
                 ],
+                'campus' => $classBatch->campus->summary(),
             ],
             'offerings' => $offerings->map(fn (ClassSubject $offering): array => [
                 'id' => $offering->id,
@@ -165,7 +175,8 @@ class ClassBatchController extends Controller
                 ->get(['id', 'code', 'name'])
                 ->map(fn (Subject $subject): array => ['id' => $subject->id, 'code' => $subject->code, 'name' => $subject->name])
                 ->all(),
-            'instructorOptions' => AcademicOptions::eligibleInstructors(),
+            // Instructors teach only on their own campus (owner decision 2026-10-03).
+            'instructorOptions' => AcademicOptions::eligibleInstructors($classBatch->campus_id),
             // Phases of the class's academic year only.
             'phases' => $classBatch->academicPeriod->trainingPhases()->ordered()->get()->map(fn (TrainingPhase $phase): array => $phase->toSummary())->all(),
             'can' => [
@@ -179,13 +190,14 @@ class ClassBatchController extends Controller
 
     public function edit(ClassBatch $classBatch): Response
     {
-        $classBatch->load('academicPeriod');
+        $classBatch->load(['academicPeriod', 'campus']);
 
         return Inertia::render('staff/classes/edit', [
             'classBatch' => [
                 'id' => $classBatch->id,
                 'name' => $classBatch->name,
                 'period' => $classBatch->academicPeriod->name,
+                'campus' => $classBatch->campus->name,
             ],
         ]);
     }

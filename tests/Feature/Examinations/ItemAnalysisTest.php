@@ -569,7 +569,8 @@ class ItemAnalysisTest extends TestCase
             DB::listen(function () use (&$count): void {
                 $count++;
             });
-            $this->actingAs($this->alpha)->get($this->url($exam, ['scope' => 'all']))->assertOk();
+            // A fresh user each time: relations loaded by an earlier request (role, campus) are not carried over.
+            $this->actingAs($this->alpha->fresh())->get($this->url($exam, ['scope' => 'all']))->assertOk();
 
             return $count;
         };

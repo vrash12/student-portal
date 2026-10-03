@@ -25,6 +25,7 @@ use App\Http\Controllers\Staff\AttendanceScanController;
 use App\Http\Controllers\Staff\AttendanceSessionController;
 use App\Http\Controllers\Staff\AuditHistoryController;
 use App\Http\Controllers\Staff\BackupController;
+use App\Http\Controllers\Staff\CampusController;
 use App\Http\Controllers\Staff\CandidateBackgroundController;
 use App\Http\Controllers\Staff\CandidateController;
 use App\Http\Controllers\Staff\ClassBatchController;
@@ -70,14 +71,16 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     // The address inside every candidate's QR code: the profile for staff who may see the candidate.
     Route::get('q/{token}', [CandidateQrController::class, 'open'])->name('qr.open')->where('token', '[A-Za-z0-9]{1,64}');
 
-    // Staff area: administrators and instructors.
-    Route::middleware(['can:'.Permission::AccessStaffArea->value, 'password.current'])->group(function (): void {
+    // Staff area: administrators and instructors. `campus`: every record named
+    // in a URL must be on a campus the user may see (EnsureRecordsInCampus).
+    Route::middleware(['can:'.Permission::AccessStaffArea->value, 'password.current', 'campus'])->group(function (): void {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
         Route::get('reports', ReportController::class)->name('reports.index')->can(Permission::ViewReports->value);
         Route::get('reports/pdf', [ReportController::class, 'pdf'])->name('reports.pdf')->can(Permission::ViewReports->value)->middleware('throttle:pdf-downloads');
         Route::get('audit-history', AuditHistoryController::class)->name('audit-history.index')->can(Permission::ViewAuditHistory->value);
-        // Encrypted backups of the whole system (BackupController; Admin only).
-        Route::middleware('can:'.Permission::ManageBackups->value)->group(function () {
+        // Encrypted backups of the whole system (BackupController; Admin only,
+        // and only accounts not limited to a campus).
+        Route::middleware(['can:'.Permission::ManageBackups->value, 'institution'])->group(function () {
             Route::get('backups', [BackupController::class, 'index'])->name('backups.index');
             Route::post('backups', [BackupController::class, 'store'])->name('backups.store')->middleware('throttle:backup-actions');
             Route::post('backups/verify', [BackupController::class, 'verify'])->name('backups.verify')->middleware('throttle:backup-actions');
@@ -120,18 +123,23 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::post('account-entries/{accountEntry}/void', [AccountExpenseController::class, 'void'])->name('accounts.entries.void')->whereNumber('accountEntry');
 
             Route::get('account-expenses', [AccountExpenseController::class, 'index'])->name('accounts.expenses.index');
-            Route::get('account-expenses/create', [AccountExpenseController::class, 'create'])->name('accounts.expenses.create');
-            Route::post('account-expenses', [AccountExpenseController::class, 'store'])->name('accounts.expenses.store');
             Route::get('account-expenses/{accountExpense}', [AccountExpenseController::class, 'show'])->name('accounts.expenses.show')->whereNumber('accountExpense');
-            Route::get('account-expenses/{accountExpense}/edit', [AccountExpenseController::class, 'edit'])->name('accounts.expenses.edit')->whereNumber('accountExpense');
-            Route::put('account-expenses/{accountExpense}', [AccountExpenseController::class, 'update'])->name('accounts.expenses.update')->whereNumber('accountExpense');
             Route::post('account-expenses/{accountExpense}/assignments', [AccountExpenseController::class, 'assign'])->name('accounts.expenses.assign')->whereNumber('accountExpense');
 
-            Route::get('account-categories', [AccountCategoryController::class, 'index'])->name('accounts.categories.index');
-            Route::get('account-categories/create', [AccountCategoryController::class, 'create'])->name('accounts.categories.create');
-            Route::post('account-categories', [AccountCategoryController::class, 'store'])->name('accounts.categories.store');
-            Route::get('account-categories/{accountCategory}/edit', [AccountCategoryController::class, 'edit'])->name('accounts.categories.edit')->whereNumber('accountCategory');
-            Route::put('account-categories/{accountCategory}', [AccountCategoryController::class, 'update'])->name('accounts.categories.update')->whereNumber('accountCategory');
+            // Expense definitions and categories are shared by every campus:
+            // only accounts not limited to a campus change them.
+            Route::middleware('institution')->group(function (): void {
+                Route::get('account-expenses/create', [AccountExpenseController::class, 'create'])->name('accounts.expenses.create');
+                Route::post('account-expenses', [AccountExpenseController::class, 'store'])->name('accounts.expenses.store');
+                Route::get('account-expenses/{accountExpense}/edit', [AccountExpenseController::class, 'edit'])->name('accounts.expenses.edit')->whereNumber('accountExpense');
+                Route::put('account-expenses/{accountExpense}', [AccountExpenseController::class, 'update'])->name('accounts.expenses.update')->whereNumber('accountExpense');
+
+                Route::get('account-categories', [AccountCategoryController::class, 'index'])->name('accounts.categories.index');
+                Route::get('account-categories/create', [AccountCategoryController::class, 'create'])->name('accounts.categories.create');
+                Route::post('account-categories', [AccountCategoryController::class, 'store'])->name('accounts.categories.store');
+                Route::get('account-categories/{accountCategory}/edit', [AccountCategoryController::class, 'edit'])->name('accounts.categories.edit')->whereNumber('accountCategory');
+                Route::put('account-categories/{accountCategory}', [AccountCategoryController::class, 'update'])->name('accounts.categories.update')->whereNumber('accountCategory');
+            });
         });
 
         // Merits and demerits (conduct.manage; scoped to the classes the user
@@ -224,7 +232,20 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('account/password', [AccountPasswordController::class, 'edit'])->name('account.password.edit');
         Route::put('account/password', [AccountPasswordController::class, 'update'])->name('account.password.update')->middleware('throttle:password-change');
 
-        // Academic structure.
+        // Campuses of the institution (owner decision 2026-10-03; Admin only,
+        // and only accounts not limited to a campus).
+        Route::middleware(['can:'.Permission::ManageCampuses->value, 'institution'])->group(function (): void {
+            Route::get('campuses', [CampusController::class, 'index'])->name('campuses.index');
+            Route::get('campuses/create', [CampusController::class, 'create'])->name('campuses.create');
+            Route::post('campuses', [CampusController::class, 'store'])->name('campuses.store');
+            Route::get('campuses/{campus}/edit', [CampusController::class, 'edit'])->name('campuses.edit')->whereNumber('campus');
+            Route::put('campuses/{campus}', [CampusController::class, 'update'])->name('campuses.update')->whereNumber('campus');
+            Route::delete('campuses/{campus}', [CampusController::class, 'destroy'])->name('campuses.destroy')->whereNumber('campus');
+        });
+
+        // Academic structure. Academic years, training phases and subjects are
+        // shared by every campus; their permissions are institution-wide
+        // (Permission::isInstitutionWide), so campus-limited accounts never hold them.
         Route::middleware('can:'.Permission::ManageAcademicPeriods->value)->group(function (): void {
             Route::get('academic-periods', [AcademicPeriodController::class, 'index'])->name('academic-periods.index');
             Route::get('academic-periods/create', [AcademicPeriodController::class, 'create'])->name('academic-periods.create');
@@ -276,10 +297,13 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::middleware('can:'.Permission::ConfigureGrading->value)->group(function (): void {
             Route::get('grading-setup', [GradingSetupController::class, 'index'])->name('grading-setup.index');
             Route::post('grading-setup/copy-weights', [GradingSetupController::class, 'copy'])->name('grading-setup.copy');
+            // Passing and warning grades apply to every campus of the year.
             Route::get('academic-periods/{academicPeriod}/grading-thresholds', [GradingThresholdController::class, 'edit'])
-                ->name('academic-periods.thresholds.edit');
+                ->name('academic-periods.thresholds.edit')
+                ->middleware('institution');
             Route::put('academic-periods/{academicPeriod}/grading-thresholds', [GradingThresholdController::class, 'update'])
-                ->name('academic-periods.thresholds.update');
+                ->name('academic-periods.thresholds.update')
+                ->middleware('institution');
         });
 
         // Grading setup of a class subject (administrative).
