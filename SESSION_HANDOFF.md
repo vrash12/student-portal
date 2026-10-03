@@ -31,6 +31,11 @@ Updated 2026-10-01 by Claude Code (earlier sections by Codex, 2026-09-30). Read 
 - **Open owner decisions** are under "Requirements still needing confirmation" at the end of this file, plus whether to deactivate the "Pay & Allowances" and "Deductions" account categories.
 - Extra test databases `academic_system_{r1,r2,r3,w1,w2,w3,v1…v12,login}_testing` exist from parallel runs and can be dropped.
 
+## Owner requests — compact candidate portal header on phones; Hostinger scheduler (2026-10-03, Claude Code)
+
+- **Portal header (`candidate-layout.tsx`):** on phones a small menu button (grid icon + arrow) beside Sign Out folds or shows the page icons; the choice is remembered on the device (`localStorage` key `portal-nav-collapsed`, wrapped in try/catch). On phones the header is one row: logo only, the candidate's first name and picture, the menu button, and Sign Out as an icon. Tablet and up are unchanged apart from the picture. The first name and picture come from the shared prop `auth.user.candidate` (`{firstName, photoUrl}`), sent only to accounts with the portal permission (`HandleInertiaRequests`); without a picture an initial is shown. Test: `CandidateProfileTest::test_the_portal_header_gets_only_the_candidates_first_name_and_own_picture`.
+- **Hostinger scheduler:** `testwebsitetrial.site` is registered as a Node.js app, so its hPanel has no Cron Jobs, and `crontab` over SSH is silently ignored. The scheduler cron job was instead created on the same account's other website (**agritanac.online → Advanced → Cron Jobs**, Custom, every minute): `/opt/alt/php84/usr/bin/php /home/u330835917/domains/testwebsitetrial.site/academic-app/artisan schedule:run`. On that server plain `php` is 8.3; always use `/opt/alt/php84/usr/bin/php` for artisan. The owner is setting `BACKUP_PASSPHRASE` in the live `.env` (then `artisan config:cache`); confirm the Backups page shows no warnings and a first backup and restore test have succeeded.
+
 ## Owner request — Save as PDF instead of Print, and a logo watermark on every PDF (2026-10-03, Claude Code)
 
 - **Request:** "instead of print feature, just make it save to pdf, and then add like watermark with 20% transparency of the school logo to every PDF."
