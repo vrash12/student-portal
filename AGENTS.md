@@ -296,6 +296,8 @@ Administrators should be able to manage:
 
 Owner decision (2026-10-03): the read-only Roles & Permissions page and its `roles.view` permission were removed. Roles are still assigned to accounts on the Users page; what each role may do is defined in code (`App\Enums\SystemRole`) and applied by `AccessControlSeeder`.
 
+Owner decision (2026-10-03): an account's role is chosen only when the account is created and cannot be changed afterwards (the Edit page shows it as text; the server rejects a different role). An instructor can never be turned into an administrator from Edit.
+
 Administration interfaces should prioritize clarity and efficiency.
 
 ---

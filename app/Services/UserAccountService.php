@@ -51,10 +51,7 @@ final class UserAccountService
     public function update(User $user, array $data): User
     {
         return DB::transaction(function () use ($user, $data): User {
-            $user->loadMissing('role');
-
             $previousProfile = $this->profileSnapshot($user);
-            $previousRole = $user->role;
             $wasActive = $user->is_active;
 
             $user->fill([
@@ -63,11 +60,7 @@ final class UserAccountService
                 'email' => $data['email'],
             ]);
 
-            $roleChanged = $data['role_id'] !== $user->role_id;
-            if ($roleChanged) {
-                $user->role()->associate(Role::query()->findOrFail($data['role_id']));
-            }
-
+            // The role is fixed once the account exists (UpdateUserRequest); $data['role_id'] is the current role.
             $user->is_active = $data['is_active'];
 
             $passwordReset = $data['password'] !== null && $data['password'] !== '';
@@ -80,15 +73,6 @@ final class UserAccountService
 
             $this->audit->recordChanges(AuditAction::UserUpdated, $user, $previousProfile, $this->profileSnapshot($user));
 
-            if ($roleChanged) {
-                $this->audit->record(
-                    AuditAction::UserRoleChanged,
-                    $user,
-                    oldValues: ['role' => $previousRole->name],
-                    newValues: ['role' => $user->role->name],
-                );
-            }
-
             if ($wasActive !== $user->is_active) {
                 $this->audit->record($user->is_active ? AuditAction::UserReactivated : AuditAction::UserDeactivated, $user);
             }
@@ -97,9 +81,9 @@ final class UserAccountService
                 $this->audit->record(AuditAction::UserPasswordReset, $user);
             }
 
-            // Deactivation, role changes, and password resets end the account's
-            // existing sessions so the change takes effect immediately.
-            if ($roleChanged || $passwordReset || ! $user->is_active) {
+            // Deactivation and password resets end the account's existing
+            // sessions so the change takes effect immediately.
+            if ($passwordReset || ! $user->is_active) {
                 $this->endSessions($user);
             }
 

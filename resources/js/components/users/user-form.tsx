@@ -80,19 +80,25 @@ export function UserForm({ form, roles, mode, isOwnAccount = false, submitLabel,
             </FormSection>
 
             <FormSection title="Access" description="The role determines what this account can see and do.">
-                <RadioCards
-                    legend="Role"
-                    name="role_id"
-                    required
-                    options={roleOptions}
-                    value={form.data.role_id}
-                    onChange={(value) => form.setData('role_id', value)}
-                    error={form.errors.role_id}
-                    disabled={isOwnAccount}
-                />
-                {isOwnAccount && <p className="text-sm text-ink-muted">You cannot change the role of your own account.</p>}
-                {mode === 'edit' && !isOwnAccount && (
-                    <p className="text-sm text-ink-muted">Changing the role signs the user out of their active sessions.</p>
+                {mode === 'create' ? (
+                    <RadioCards
+                        legend="Role"
+                        name="role_id"
+                        required
+                        options={roleOptions}
+                        value={form.data.role_id}
+                        onChange={(value) => form.setData('role_id', value)}
+                        error={form.errors.role_id}
+                    />
+                ) : (
+                    // The role is fixed once the account exists (owner decision, 2026-10-03).
+                    <div>
+                        <p className="text-sm font-medium text-ink">Role</p>
+                        <p className="mt-1 font-semibold text-ink">{roles[0]?.name ?? '—'}</p>
+                        {roles[0]?.description && <p className="text-sm text-ink-muted">{roles[0].description}</p>}
+                        <p className="mt-2 text-sm text-ink-muted">The role is set when the account is created and cannot be changed.</p>
+                        {form.errors.role_id && <p role="alert" className="mt-1 text-sm text-danger-fg">{form.errors.role_id}</p>}
+                    </div>
                 )}
 
                 <CheckboxField

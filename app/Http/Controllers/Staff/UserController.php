@@ -109,7 +109,8 @@ class UserController extends Controller
                 'lastLoginAt' => $user->last_login_at?->toIso8601String(),
                 'createdAt' => $user->created_at?->toIso8601String(),
             ],
-            'roles' => $this->assignableRoles($request->user(), keepRoleId: $user->role_id),
+            // The role is fixed once the account exists; the form shows it, not a choice.
+            'roles' => [['id' => $user->role->id, 'name' => $user->role->name, 'description' => $user->role->description]],
             'isOwnAccount' => $request->user()->is($user),
         ]);
     }
@@ -124,18 +125,17 @@ class UserController extends Controller
     }
 
     /**
-     * Staff roles the acting user may assign, plus the account's current role
-     * when editing (keeping a role is always allowed).
+     * Staff roles the acting user may give a new account.
      *
      * @return list<array{id: int, name: string, description: ?string}>
      */
-    private function assignableRoles(User $actor, ?int $keepRoleId = null): array
+    private function assignableRoles(User $actor): array
     {
         return Role::query()
             ->staff()
             ->orderByDesc('rank')
             ->get()
-            ->filter(fn (Role $role): bool => $role->id === $keepRoleId || $actor->canAssignRole($role))
+            ->filter(fn (Role $role): bool => $actor->canAssignRole($role))
             ->map(fn (Role $role): array => [
                 'id' => $role->id,
                 'name' => $role->name,

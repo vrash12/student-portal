@@ -181,17 +181,18 @@ class UserManagementTest extends TestCase
         $this->actingAs($academicAdmin)->get("/users/{$peer->id}/edit")->assertForbidden();
     }
 
-    public function test_edit_form_lists_the_accounts_current_role_even_when_not_assignable(): void
+    public function test_edit_form_shows_only_the_accounts_fixed_role(): void
     {
-        $academicAdmin = $this->userWithRole(SystemRole::AcademicAdministrator);
-        $ownRoleId = $academicAdmin->role_id;
+        $admin = $this->userWithRole(SystemRole::SuperAdministrator);
+        $instructor = $this->userWithRole(SystemRole::Instructor);
 
-        $this->actingAs($academicAdmin)
-            ->get("/users/{$academicAdmin->id}/edit")
+        $this->actingAs($admin)
+            ->get("/users/{$instructor->id}/edit")
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->where('isOwnAccount', true)
-                ->where('roles', fn ($roles) => collect($roles)->pluck('id')->contains($ownRoleId)));
+                ->where('isOwnAccount', false)
+                ->has('roles', 1)
+                ->where('roles.0.id', $instructor->role_id));
     }
 
     public function test_academic_administrator_cannot_edit_a_super_administrator(): void
@@ -250,20 +251,29 @@ class UserManagementTest extends TestCase
         $this->assertSame(0, AuditLog::query()->where('auditable_id', $target->id)->count());
     }
 
-    public function test_role_change_is_audited_and_ends_the_users_sessions(): void
+    public function test_the_role_of_an_existing_account_cannot_be_changed(): void
     {
         $admin = $this->userWithRole(SystemRole::SuperAdministrator);
         $target = $this->userWithRole(SystemRole::Instructor);
         $this->storeSession($target);
 
         $this->actingAs($admin)->put("/users/{$target->id}", $this->updatePayload($target, [
+            'name' => 'Renamed Instructor',
             'role_id' => $this->role(SystemRole::AcademicAdministrator)->id,
-        ]));
+        ]))->assertSessionHasErrors(['role_id' => 'The role of an existing account cannot be changed.']);
 
-        $entry = AuditLog::query()->where('action', AuditAction::UserRoleChanged->value)->sole();
-        $this->assertSame(['role' => 'Instructor'], $entry->old_values);
-        $this->assertSame(['role' => 'Academic Administrator'], $entry->new_values);
-        $this->assertSame(0, DB::table('sessions')->where('user_id', $target->id)->count());
+        $fresh = $target->fresh();
+        $this->assertSame($this->role(SystemRole::Instructor)->id, $fresh->role_id);
+        $this->assertNotSame('Renamed Instructor', $fresh->name);
+        $this->assertSame(0, AuditLog::query()->where('action', AuditAction::UserRoleChanged->value)->count());
+        $this->assertSame(1, DB::table('sessions')->where('user_id', $target->id)->count());
+
+        // Without a role in the request, other details still save and the role stays.
+        $payload = $this->updatePayload($target, ['name' => 'Renamed Instructor']);
+        unset($payload['role_id']);
+        $this->actingAs($admin)->put("/users/{$target->id}", $payload)->assertSessionHasNoErrors();
+        $this->assertSame('Renamed Instructor', $target->fresh()->name);
+        $this->assertSame($this->role(SystemRole::Instructor)->id, $target->fresh()->role_id);
     }
 
     public function test_deactivation_is_audited_and_ends_the_users_sessions(): void
@@ -320,7 +330,7 @@ class UserManagementTest extends TestCase
                 'password_confirmation' => 'a-brand-new-password',
             ]))
             ->assertSessionHasErrors([
-                'role_id' => 'You cannot change your own role.',
+                'role_id' => 'The role of an existing account cannot be changed.',
                 'is_active' => 'You cannot deactivate your own account.',
                 'password' => 'Change your own password from the Account page.',
             ]);

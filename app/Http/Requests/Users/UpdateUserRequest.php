@@ -26,7 +26,27 @@ class UpdateUserRequest extends UserAccountRequest
     }
 
     /**
-     * Guards that stop administrators from locking themselves out.
+     * The role is chosen when the account is created and never changes
+     * afterwards (owner decision, 2026-10-03): an instructor cannot be made an
+     * administrator from the Edit page. A role sent anyway must be the current one.
+     *
+     * @return array<string, mixed>
+     */
+    public function rules(): array
+    {
+        return ['role_id' => ['nullable', 'integer']] + parent::rules();
+    }
+
+    /**
+     * @return array{name: string, username: string, email: ?string, password: ?string, role_id: int, is_active: bool}
+     */
+    public function accountData(): array
+    {
+        return ['role_id' => $this->targetUser()->role_id] + parent::accountData();
+    }
+
+    /**
+     * The fixed role, and guards that stop administrators from locking themselves out.
      *
      * @return array<int, callable(Validator): void>
      */
@@ -34,12 +54,12 @@ class UpdateUserRequest extends UserAccountRequest
     {
         return [
             function (Validator $validator): void {
-                if (! $this->user()->is($this->targetUser())) {
-                    return;
+                if ($this->filled('role_id') && $this->integer('role_id') !== $this->targetUser()->role_id) {
+                    $validator->errors()->add('role_id', 'The role of an existing account cannot be changed.');
                 }
 
-                if ($this->integer('role_id') !== $this->targetUser()->role_id) {
-                    $validator->errors()->add('role_id', 'You cannot change your own role.');
+                if (! $this->user()->is($this->targetUser())) {
+                    return;
                 }
 
                 if (! $this->boolean('is_active')) {
