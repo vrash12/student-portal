@@ -212,4 +212,42 @@ class GradeCalculationServiceTest extends TestCase
     {
         $this->assertSame($expected, $this->calculator->scorePercentage($score, $maxScore));
     }
+
+    // Phase averages and the CGPA (owner request, 2026-10-03) ------------------
+
+    public function test_weighted_average_weights_each_grade_by_its_units(): void
+    {
+        // (90 × 3 + 80 × 2 + 70 × 1) ÷ 6 = 500 ÷ 6 = 83.333...
+        $this->assertSame(83.33, $this->calculator->weightedAverage([
+            ['grade' => 90.0, 'units' => '3'],
+            ['grade' => 80.0, 'units' => '2'],
+            ['grade' => 70.0, 'units' => '1'],
+        ]));
+    }
+
+    public function test_weighted_average_leaves_out_subjects_without_a_grade(): void
+    {
+        // The ungraded subject is not a zero: (90 × 3 + 80 × 1) ÷ 4 = 87.50.
+        $this->assertSame(87.5, $this->calculator->weightedAverage([
+            ['grade' => 90.0, 'units' => '3'],
+            ['grade' => null, 'units' => '5'],
+            ['grade' => 80.0, 'units' => '1'],
+        ]));
+        $this->assertNull($this->calculator->weightedAverage([['grade' => null, 'units' => '3']]));
+        $this->assertNull($this->calculator->weightedAverage([]));
+    }
+
+    public function test_weighted_average_with_equal_units_is_the_plain_mean_rounded_half_up(): void
+    {
+        // 80.01 and 80.00: 80.005, rounded half up.
+        $this->assertSame(80.01, $this->calculator->weightedAverage([
+            ['grade' => 80.01, 'units' => '1'],
+            ['grade' => 80.0, 'units' => '1'],
+        ]));
+        // Fractional units: (88 × 1.5 + 72 × 0.5) ÷ 2 = 84.
+        $this->assertSame(84.0, $this->calculator->weightedAverage([
+            ['grade' => 88.0, 'units' => '1.5'],
+            ['grade' => 72.0, 'units' => '0.5'],
+        ]));
+    }
 }

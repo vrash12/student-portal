@@ -12,6 +12,7 @@ import {
     GraduationCap,
     HeartPulse,
     History,
+    Layers,
     LayoutDashboard,
     Library,
     Medal,
@@ -97,6 +98,8 @@ export const staffNavigation: NavigationSection[] = [
                 icon: CalendarRange,
                 permission: Permission.ManageAcademicPeriods,
             },
+            // Phases of the course; each subject of a class belongs to one.
+            { label: 'Training Phases', href: routes.trainingPhases.index(), icon: Layers, permission: Permission.ManageAcademicPeriods },
             {
                 // Every grading setting in one place; the class subject weights
                 // and period passing grades it links to stay under this item.

@@ -7,11 +7,14 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Add an active subject to a class. Authorization is enforced by the
+ * Add an active subject to a class, optionally in a training phase and with
+ * units (1 when left empty). Authorization is enforced by the
  * `can:class_batches.manage` route middleware.
  */
 class StoreClassSubjectRequest extends FormRequest
 {
+    use ValidatesSubjectPlacement;
+
     public function authorize(): bool
     {
         return true;
@@ -31,6 +34,7 @@ class StoreClassSubjectRequest extends FormRequest
                 Rule::exists('subjects', 'id')->where('is_active', true),
                 Rule::unique('class_subjects', 'subject_id')->where('class_batch_id', $classBatch->id),
             ],
+            ...$this->placementRules(unitsRequired: false),
         ];
     }
 
@@ -43,6 +47,7 @@ class StoreClassSubjectRequest extends FormRequest
             'subject_id.required' => 'Select a subject to add.',
             'subject_id.exists' => 'Select an active subject.',
             'subject_id.unique' => 'This class already takes this subject.',
+            ...$this->placementMessages(),
         ];
     }
 }

@@ -27,6 +27,7 @@
         .grid td { padding: 2pt 3pt; border: 0.5pt solid #cfd9d2; vertical-align: top; overflow-wrap: break-word; }
         .grid .num { text-align: right; white-space: nowrap; }
         .grid .total td { font-weight: bold; background: #f6f8f7; }
+        .grid .phase td { font-weight: bold; color: #235842; background: #edf3ef; text-transform: uppercase; letter-spacing: 0.4pt; font-size: 6.3pt; }
         .grid .sign { height: 13pt; }
         thead { display: table-header-group; }
         tr { page-break-inside: avoid; }

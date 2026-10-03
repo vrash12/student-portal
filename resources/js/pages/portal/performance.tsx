@@ -67,7 +67,7 @@ export default function MyPerformance({ candidate, areas, result, staffAssessedA
                                 </div>
                                 <StatTile
                                     icon={Scale}
-                                    label="Overall Score"
+                                    label="Final Course Grade"
                                     value={formatAreaGrade(result.overall.score)}
                                     hint={
                                         result.overall.score === null

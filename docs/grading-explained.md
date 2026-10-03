@@ -14,12 +14,25 @@ This is the short version of how a candidate's result is decided, where each rul
  assessment                                         Failing / Incomplete        its own passing grade           (staff only)
 ```
 
-Two layers sit on the same subject grades:
+Three layers sit on the same subject grades:
 
 | Layer | Answers | Set where | Applies to |
 | --- | --- | --- | --- |
 | **Academic standing** (steps 1–3) | "Is this candidate passing this subject?" | Weights: per subject of a class. Passing/warning grades: per academic period. | Gradebooks, Academic Monitoring, profiles, portal My Grades, reports |
-| **Qualification** (steps 4–5) | "Has this candidate met the requirements to qualify, and where do they rank?" | Performance Areas (global, every period and class) | Records → Qualification, admin dashboard, profile panel, portal My Performance (no rank) |
+| **Phase averages and CGPA** (step 3b) | "What is the candidate's average in each training phase, and overall so far?" | Training Phases (global); each subject's phase and units on its class page | Profile (staff who see every subject), portal My Grades, Qualification page, Academic Record PDF |
+| **Qualification** (steps 4–5) | "Has this candidate met the requirements to qualify, what is their final course grade, and where do they rank?" | Performance Areas (global, every period and class) | Records → Qualification, admin dashboard, profile panel, portal My Performance (no rank) |
+
+How the OCS course format maps to the system (owner decision 2026-10-03: a class keeps its candidates for the whole course):
+
+| Course format | In the system |
+| --- | --- |
+| Training period / phase | **Training Phases** (Academics → Training Phases): Phase 1, 2, 3 or the official phases. The academic period holds the course run. |
+| Subjects / training modules under each phase | Each subject of a class has a **phase** and **units** (class page) |
+| Individual grades | Subject grades (step 2) |
+| Phase average | Unit-weighted average of the phase's subject grades |
+| Cumulative General Point Average (CGPA) | Unit-weighted average of every subject grade so far |
+| Class standing / rank | Class rank by final course grade (staff only) |
+| Final course grade | The weighted performance areas (step 5), shown as **Final Course Grade** |
 
 Nothing is stored: every grade, standing, area result and rank is calculated when a page is opened, so a changed score or setting shows everywhere at once.
 
@@ -51,21 +64,34 @@ Nothing is stored: every grade, standing, area result and rank is calculated whe
 - A candidate's overall standing is their **most serious** subject standing (`overallStanding()`), not an average.
 - Withdrawn candidates keep their grades but get no standing.
 
+### 3b. Training phases, phase averages and the CGPA
+
+- **Training phases** are a global list (number and name, e.g. Phase 1, Phase 2, Phase 3; three placeholders are created by the migration), managed under **Academics → Training Phases** (permission `academic_periods.manage`). A phase that subjects are placed in cannot be deleted.
+- On a **class page** each subject gets a **phase** (or none) and **units** (default 1; 0.1–50). Units weight the averages, like a GWA; with every subject at 1 unit each subject counts equally. Changes are audited (`class_subject.updated`).
+- The rule (`GradeCalculationService::weightedAverage`, used by `CourseRecordService`):
+  - **phase average** = Σ (subject grade × units) ÷ Σ (units) over the phase's subjects that have a grade;
+  - **CGPA** = the same over every subject of the class so far, whatever its phase;
+  - subjects without a grade are left out, never counted as zero; half up to two decimals with exact integer arithmetic;
+  - a phase (or the CGPA) is **Final** once every one of its subjects has a final grade (graded, every component assessed, nothing missing); until then it is **In progress**.
+- Example: Subject 1 (Phase 1, 3 units) 84.00 and Subject 2 (Phase 2, 1 unit) 60.00 → Phase 1 84.00, Phase 2 60.00, CGPA (84 × 3 + 60) ÷ 4 = **78.00**.
+- The CGPA is on the same 0–100 scale as the grades. It combines every subject, so it is shown only to staff who see all of a candidate's subjects (not to instructors limited to the subjects they teach) and to the candidate themselves.
+- Subject performance areas (step 4) use the same unit-weighted average.
+
 ### 4. Performance areas
 
 - Global list (`performance_areas`), set on **Performance Areas** (Records → Qualification → Performance Areas, permission `performance.configure`). Each area has a **source**, a **weight**, its own **passing grade** and **must pass**.
 - Sources and their grade (`QualificationEngine`, `ConductLedger`, `AttendanceLedger`, `FitnessResults`):
-  - **Subject grades:** average of the candidate's grades in the subjects ticked for the area (each subject belongs to at most one area);
+  - **Subject grades:** unit-weighted average of the candidate's grades in the subjects ticked for the area (each subject belongs to at most one area);
   - **Military fitness:** points in the latest fitness test of the class that has results; every event standard must also be met (events and points tables: Records → Military Fitness → Events and Points);
   - **Conduct:** base rating + merit points × value − demerit points × value, kept within 0–100 (types: Records → Merits & Demerits → Types);
   - **Attendance:** (present + late) ÷ (present + late + absent) × 100.
-- Weights are **relative**: an area's share of the overall score is its weight ÷ the total of the active weights (Grading Setup and the areas list show the share).
+- Weights are **relative**: an area's share of the final course grade is its weight ÷ the total of the active weights (Grading Setup and the areas list show the share).
 
-### 5. Qualification and class rank
+### 5. Qualification, final course grade and class rank
 
-- **Overall score** = Σ (weight × area grade) ÷ Σ (weights of the areas that have a grade); *Partial* while some weighted area has no grade.
+- **Final course grade** (the "overall score" in the code) = Σ (weight × area grade) ÷ Σ (weights of the areas that have a grade); *Partial* while some weighted area has no grade.
 - **Not Qualified** when a must-pass area is failed; **Pending** while a must-pass area has no result or is incomplete; otherwise **Qualified**.
-- **Class rank**: within each class by overall score (ties share a rank). Staff only; never sent to the portal.
+- **Class rank**: within each class by final course grade (ties share a rank). Staff only; never sent to the portal.
 
 ## The three "passing" settings
 
@@ -81,11 +107,16 @@ They are independent on purpose; Grading Setup shows them side by side.
 
 1. **Academic Periods → Create Period**, then **Set Active**.
 2. **Grading Setup → Step 3**: set the passing and warning grades (prefilled from the previous period).
-3. **Classes → Create Class**, then **Add Subject** for each subject and assign instructors.
-4. **Grading Setup → Step 2**: set one subject's weights, then **Copy Weights** to the rest.
-5. Check **Steps 4–5** once (areas are global): every subject belongs to an area, weights and must-pass are right.
+3. **Training Phases**: check the phases of the course (once; they are global).
+4. **Classes → Create Class**, then **Add Subject** for each subject with its **phase** and **units**, and assign instructors.
+5. **Grading Setup → Step 2**: set one subject's weights, then **Copy Weights** to the rest (the table also shows each subject's phase and units).
+6. Check **Steps 4–5** once (areas are global): every subject belongs to an area, weights and must-pass are right.
 
 ## Open policy questions (owner decisions; the code does not decide them)
+
+- The official training phases and the units of each subject (placeholders: Phase 1–3, 1 unit each).
+- The CGPA is on the 0–100 grade scale; a 1.00–5.00 point scale would need the official conversion table. It includes every subject of the class (academic and military skills subjects alike).
+- Whether the CGPA should count only finished phases (it currently counts every graded subject, with In progress shown).
 
 - Overall standing is the most serious subject (the AGENTS.md §17 example suggests an average).
 - A subject area averages its subjects, so one failing subject can be hidden by a strong one in qualification while Academic Monitoring shows it Failing.

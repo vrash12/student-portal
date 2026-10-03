@@ -1,6 +1,6 @@
 # Performance Areas, Qualification and Class Rank
 
-This document explains, in plain language, how the system decides whether a candidate is **qualified**, how the **overall score** and **class rank** are worked out, and how **merits/demerits** and **attendance** feed into them. It also explains how an administrator sets everything up, what candidates can and cannot see, and which rules still need to be confirmed by OCS.
+This document explains, in plain language, how the system decides whether a candidate is **qualified**, how the **final course grade** (called the overall score in the code) and **class rank** are worked out, and how **merits/demerits** and **attendance** feed into them. It also explains how an administrator sets everything up, what candidates can and cannot see, and which rules still need to be confirmed by OCS.
 
 > **Every number below is a placeholder.** Areas, weights, passing grades, the conduct rule, the merit/demerit catalogue and session hours are all configurable in the application. The values seeded for the demo come from a suggested military-school structure and must be replaced by the official grading SOP once OCS provides it.
 
@@ -17,7 +17,7 @@ A performance area is one thing candidates are assessed in, for example "Academi
 | Setting | Meaning |
 | --- | --- |
 | **Source** | Where the grade comes from: *Subjects*, *Military fitness*, *Conduct* or *Attendance*. |
-| **Weight** | The area's share in the overall score (0–100). Weights are relative; they do not have to add up to 100. A weight of 0 leaves the area out of the overall score (it can still be required to qualify). |
+| **Weight** | The area's share in the final course grade (0–100). Weights are relative; they do not have to add up to 100. A weight of 0 leaves the area out of the final course grade (it can still be required to qualify). |
 | **Passing grade** | The grade needed to pass the area (above 0, up to 100). A grade equal to the passing grade passes. Grades are compared to two decimals, so a grade shown as 75.00 always passes a passing grade of 75. |
 | **Must pass** | Whether the area must be passed to qualify. |
 | **Active** | Only active areas count. Areas are deactivated, never deleted. |
@@ -26,7 +26,7 @@ Only one **active** area may use each of the fitness, conduct and attendance sou
 
 ### How each area's grade is found
 
-**Subjects.** The candidate's class subjects that belong to the area. The area grade is the average of the current subject grades (the same grades as academic standing, from finalized assessments), rounded half up to two decimals. A subject with no grade yet is left out of the average (the result says, for example, "Based on 1 of 2 subjects").
+**Subjects.** The candidate's class subjects that belong to the area. The area grade is the average of the current subject grades (the same grades as academic standing, from finalized assessments), weighted by each subject's units (1 by default, set on the class page; see `docs/grading-explained.md`, step 3b), rounded half up to two decimals. A subject with no grade yet is left out of the average (the result says, for example, "Based on 1 of 2 subjects").
 
 **Military fitness.** The latest fitness test of the candidate's class that has any results. The grade is the candidate's points in that test.
 - Not tested in that test → *No results yet*.
@@ -55,9 +55,9 @@ Excused sessions and sessions not yet recorded are left out. Example: 5 present,
 | **Incomplete** | Subjects: the grade passes but a subject still has missing scores (the same meaning as in academic standing). Fitness: some events have no result. |
 | **No results yet** | Nothing to grade yet: no subject grades, not tested, or no attendance that counts. |
 
-## 2. Overall score
+## 2. Final course grade (overall score)
 
-> overall score = Σ (weight × area grade) ÷ Σ (weight)
+> final course grade = Σ (weight × area grade) ÷ Σ (weight)
 
 over the active areas that have a weight above 0 **and** a grade, rounded half up to two decimals. If some weighted areas have no grade yet, the score is shown as **Partial**. If no weighted area has a grade, there is no overall score.
 
@@ -71,7 +71,7 @@ Areas that are not must-pass never change the decision; they only count toward t
 
 ## 4. Class rank
 
-Candidates are ranked **within their class** by overall score, highest first. Equal scores (to two decimals) share a rank and the next rank is skipped: 1, 2, 2, 4. Candidates without an overall score and withdrawn candidates are not ranked.
+Candidates are ranked **within their class** by final course grade, highest first. Equal grades (to two decimals) share a rank and the next rank is skipped: 1, 2, 2, 4. Candidates without a final course grade and withdrawn candidates are not ranked. The Qualification page also lists each candidate's **CGPA** (the unit-weighted average of every subject grade so far; see `docs/grading-explained.md`).
 
 The rank is **staff only** (permission *View qualification and class ranking*). It is never sent to the candidate portal.
 

@@ -1,12 +1,13 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { BookOpen, GraduationCap, Pencil, Plus, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import type { FormEvent } from 'react';
+import { phaseName, unitsLabel } from '@/components/grading/course-record';
 import { WeightSummary } from '@/components/grading/offering-context';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { ClientPagination, useClientPagination } from '@/components/ui/client-pagination';
 import { ConfirmAction } from '@/components/ui/confirm-action';
 import { EmptyState } from '@/components/ui/empty-state';
-import { FormField, SelectInput } from '@/components/ui/form-field';
+import { FormField, SelectInput, TextInput } from '@/components/ui/form-field';
 import { PageHeader } from '@/components/ui/page-header';
 import { Pagination } from '@/components/ui/pagination';
 import { Panel } from '@/components/ui/panel';
@@ -16,6 +17,7 @@ import { cn } from '@/lib/cn';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import type { Paginated } from '@/types';
+import type { TrainingPhaseSummary } from '@/types/grading';
 
 interface AssignedInstructor {
     assignmentId: number;
@@ -27,6 +29,10 @@ interface AssignedInstructor {
 interface Offering {
     id: number;
     subject: { code: string; name: string; isActive: boolean };
+    /** The training phase the subject is in; null when not placed in one. */
+    phase: TrainingPhaseSummary | null;
+    /** Weight in phase averages and the CGPA, display form, e.g. "3" or "1.5". */
+    units: string;
     instructors: AssignedInstructor[];
     /** Grading categories and weights; empty when grading is not set up. */
     grading: Array<{ name: string; weight: string }>;
@@ -52,10 +58,12 @@ interface ClassShowProps {
     candidates: Paginated<CandidateRow>;
     subjectOptions: Array<{ id: number; code: string; name: string }>;
     instructorOptions: InstructorOption[];
+    /** Training phases of the course, in order. */
+    phases: TrainingPhaseSummary[];
     can: { manageAssignments: boolean; viewCandidates: boolean; configureGrading: boolean; viewPeriod: boolean };
 }
 
-export default function ClassShow({ classBatch, offerings, candidates, subjectOptions, instructorOptions, can }: ClassShowProps) {
+export default function ClassShow({ classBatch, offerings, candidates, subjectOptions, instructorOptions, phases, can }: ClassShowProps) {
     const { singular, plural } = terms.classBatch;
     const offeringPagination = useClientPagination(offerings);
 
@@ -87,9 +95,25 @@ export default function ClassShow({ classBatch, offerings, candidates, subjectOp
             />
 
             <div className="flex flex-col gap-6">
-                <Panel title="Subjects & Instructors" description={`Subjects this ${singular.toLowerCase()} takes and who teaches each one.`}>
+                <Panel
+                    title="Subjects & Instructors"
+                    description={
+                        <>
+                            Subjects this {singular.toLowerCase()} takes, the training phase and units of each (units weight phase averages and the CGPA), and who teaches
+                            it.
+                            {can.viewPeriod && (
+                                <>
+                                    {' '}
+                                    <Link href={routes.trainingPhases.index()} className="text-primary-700 underline">
+                                        Manage phases
+                                    </Link>
+                                </>
+                            )}
+                        </>
+                    }
+                >
                     <div className="flex flex-col gap-5">
-                        {subjectOptions.length > 0 && <AddSubjectForm classId={classBatch.id} options={subjectOptions} />}
+                        {subjectOptions.length > 0 && <AddSubjectForm classId={classBatch.id} options={subjectOptions} phases={phases} />}
 
                         {offerings.length === 0 ? (
                             <EmptyState
@@ -105,6 +129,7 @@ export default function ClassShow({ classBatch, offerings, candidates, subjectOp
                                         key={offering.id}
                                         classBatch={classBatch}
                                         offering={offering}
+                                        phases={phases}
                                         instructorOptions={instructorOptions}
                                         canManageAssignments={can.manageAssignments}
                                         canConfigureGrading={can.configureGrading}
@@ -167,19 +192,20 @@ export default function ClassShow({ classBatch, offerings, candidates, subjectOp
     );
 }
 
-function AddSubjectForm({ classId, options }: { classId: number; options: ClassShowProps['subjectOptions'] }) {
-    const form = useForm({ subject_id: '' });
+function AddSubjectForm({ classId, options, phases }: { classId: number; options: ClassShowProps['subjectOptions']; phases: TrainingPhaseSummary[] }) {
+    const form = useForm({ subject_id: '', training_phase_id: '', units: '1' });
 
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         form.post(routes.classes.addSubject(classId), {
             preserveScroll: true,
-            onSuccess: () => form.reset(),
+            // The phase is kept: subjects of one phase are often added one after another.
+            onSuccess: () => form.reset('subject_id', 'units'),
         });
     };
 
     return (
-        <form onSubmit={submit} noValidate className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <form onSubmit={submit} noValidate className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
             <FormField label="Add Subject" error={form.errors.subject_id} className="sm:w-80">
                 <SelectInput value={form.data.subject_id} onChange={(event) => form.setData('subject_id', event.target.value)}>
                     <option value="">Select a subject</option>
@@ -190,6 +216,8 @@ function AddSubjectForm({ classId, options }: { classId: number; options: ClassS
                     ))}
                 </SelectInput>
             </FormField>
+            <PhaseSelect phases={phases} value={form.data.training_phase_id} onChange={(value) => form.setData('training_phase_id', value)} error={form.errors.training_phase_id} />
+            <UnitsInput value={form.data.units} onChange={(value) => form.setData('units', value)} error={form.errors.units} />
             <Button
                 type="submit"
                 variant="secondary"
@@ -206,12 +234,13 @@ function AddSubjectForm({ classId, options }: { classId: number; options: ClassS
 interface OfferingItemProps {
     classBatch: ClassShowProps['classBatch'];
     offering: Offering;
+    phases: TrainingPhaseSummary[];
     instructorOptions: InstructorOption[];
     canManageAssignments: boolean;
     canConfigureGrading: boolean;
 }
 
-function OfferingItem({ classBatch, offering, instructorOptions, canManageAssignments, canConfigureGrading }: OfferingItemProps) {
+function OfferingItem({ classBatch, offering, phases, instructorOptions, canManageAssignments, canConfigureGrading }: OfferingItemProps) {
     const { subject, instructors } = offering;
     const hasAssessments = offering.assessmentCount > 0;
     const assignedIds = new Set(instructors.map((instructor) => instructor.id));
@@ -223,7 +252,7 @@ function OfferingItem({ classBatch, offering, instructorOptions, canManageAssign
                 <div className="min-w-0">
                     <p className="font-medium text-ink">{subject.name}</p>
                     <p className="text-sm text-ink-muted">
-                        {subject.code}
+                        {subject.code} · {phaseName(offering.phase)} · {unitsLabel(offering.units)}
                         {!subject.isActive && ' · Subject is inactive'}
                     </p>
                 </div>
@@ -263,6 +292,8 @@ function OfferingItem({ classBatch, offering, instructorOptions, canManageAssign
                     </ConfirmAction>
                 </div>
             </div>
+
+            <PlacementForm classId={classBatch.id} offering={offering} phases={phases} />
 
             <div>
                 <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-subtle">Grading</p>
@@ -354,6 +385,68 @@ function AssignInstructorForm({ offeringId, subjectName, options }: { offeringId
             </FormField>
             <Button type="submit" variant="secondary" loading={form.processing} disabled={form.data.instructor_id === ''}>
                 Assign
+            </Button>
+        </form>
+    );
+}
+
+function PhaseSelect({ phases, value, onChange, error, srSuffix }: { phases: TrainingPhaseSummary[]; value: string; onChange: (value: string) => void; error?: string; srSuffix?: string }) {
+    return (
+        <FormField
+            label={
+                <>
+                    Phase{srSuffix && <span className="sr-only"> of {srSuffix}</span>}
+                </>
+            }
+            error={error}
+            className="sm:w-48"
+        >
+            <SelectInput value={value} onChange={(event) => onChange(event.target.value)}>
+                <option value="">Not in a phase</option>
+                {phases.map((phase) => (
+                    <option key={phase.id} value={String(phase.id)}>
+                        {phase.name}
+                    </option>
+                ))}
+            </SelectInput>
+        </FormField>
+    );
+}
+
+function UnitsInput({ value, onChange, error, srSuffix }: { value: string; onChange: (value: string) => void; error?: string; srSuffix?: string }) {
+    return (
+        <FormField
+            label={
+                <>
+                    Units{srSuffix && <span className="sr-only"> of {srSuffix}</span>}
+                </>
+            }
+            error={error}
+            className="sm:w-28"
+        >
+            <TextInput value={value} onChange={(event) => onChange(event.target.value)} inputMode="decimal" autoComplete="off" className="tabular-nums" />
+        </FormField>
+    );
+}
+
+/** The subject's training phase and units, which weight phase averages and the CGPA. */
+function PlacementForm({ classId, offering, phases }: { classId: number; offering: Offering; phases: TrainingPhaseSummary[] }) {
+    const form = useForm({ training_phase_id: offering.phase === null ? '' : String(offering.phase.id), units: offering.units });
+
+    const submit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        form.put(routes.classes.updateSubject(classId, offering.id), {
+            preserveScroll: true,
+            onSuccess: () => form.setDefaults(),
+        });
+    };
+
+    return (
+        <form onSubmit={submit} noValidate className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
+            <PhaseSelect phases={phases} value={form.data.training_phase_id} onChange={(value) => form.setData('training_phase_id', value)} error={form.errors.training_phase_id} srSuffix={offering.subject.name} />
+            <UnitsInput value={form.data.units} onChange={(value) => form.setData('units', value)} error={form.errors.units} srSuffix={offering.subject.name} />
+            <Button type="submit" variant="ghost" loading={form.processing} disabled={!form.isDirty}>
+                Save<span className="sr-only"> phase and units of {offering.subject.name}</span>
             </Button>
         </form>
     );

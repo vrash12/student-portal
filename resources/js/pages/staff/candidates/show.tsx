@@ -27,17 +27,22 @@ import { PageHeader, type BreadcrumbItem } from '@/components/ui/page-header';
 import { Panel } from '@/components/ui/panel';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
+import { CourseRecordSummary, phaseName, unitsLabel } from '@/components/grading/course-record';
 import { formatGrade } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { StartCollapsed } from '@/lib/use-collapsible';
 import { terms } from '@/lib/terminology';
-import type { GradingThresholds, OverallStanding, SubjectGrade } from '@/types/grading';
+import type { CourseRecord, GradingThresholds, OverallStanding, SubjectGrade, TrainingPhaseSummary } from '@/types/grading';
 import type { SubjectConcern } from '@/types/monitoring';
 
 interface SubjectPerformance {
     classSubjectId: number;
     code: string;
     name: string;
+    /** The training phase the subject is in; null when not placed in one. */
+    phase: TrainingPhaseSummary | null;
+    /** Weight in phase averages and the CGPA, display form. */
+    units: string;
     /** Calculated by the server from finalized assessments. */
     result: SubjectGrade;
     /** The viewer teaches this subject and may open its gradebook. */
@@ -49,6 +54,8 @@ interface CandidateShowProps {
     examinationResults: Paginated<CandidateExaminationResult>;
     subjects: Array<{ code: string; name: string; instructors: string[] }>;
     performance: SubjectPerformance[];
+    /** Phase averages and the CGPA; null for viewers who only see the subjects they teach, or without a class. */
+    course: CourseRecord | null;
     standing: {
         /** Most serious subject standing over the subjects shown, decided by the server. */
         overall: OverallStanding;
@@ -87,6 +94,7 @@ export default function CandidateShow({
     candidate,
     subjects,
     performance,
+    course,
     standing,
     warnings,
     assessmentResults,
@@ -200,6 +208,7 @@ export default function CandidateShow({
                         <Table caption={`Subject grades of ${candidate.name}`} className="min-w-[32rem]">
                             <TableHead>
                                 <Th>Subject</Th>
+                                <Th>Phase</Th>
                                 <Th align="right">Current Grade</Th>
                                 <Th>{showsStanding ? 'Current Standing' : 'Grade Status'}</Th>
                                 <Th align="right">
@@ -217,6 +226,10 @@ export default function CandidateShow({
                                                 <span className="block text-xs text-ink-muted">
                                                     {instructors.length > 0 ? instructors.join(', ') : 'No instructor assigned'}
                                                 </span>
+                                            </Td>
+                                            <Td className="text-sm text-ink">
+                                                {phaseName(subject.phase)}
+                                                <span className="block text-xs text-ink-muted">{unitsLabel(subject.units)}</span>
                                             </Td>
                                             <Td align="right" numeric className="font-semibold text-ink">
                                                 {formatGrade(subject.result.grade)}
@@ -242,6 +255,12 @@ export default function CandidateShow({
                     )}
                     <ClientPagination pagination={subjectPagination} noun={{ one: 'subject', other: 'subjects' }} label="Subject grade pages" />
                 </Panel>
+
+                {course !== null && course.cgpa.totalSubjects > 0 && (
+                    <Panel title="Phase Averages and CGPA" description="Averages of the subject grades, weighted by units. Subjects without a grade are left out.">
+                        <CourseRecordSummary course={course} />
+                    </Panel>
+                )}
 
                 {qualification !== null && (
                     <CandidateQualificationPanel

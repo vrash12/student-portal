@@ -17,6 +17,7 @@ use App\Models\MedicalDownloadRequest;
 use App\Models\Question;
 use App\Models\QuestionMedia;
 use App\Models\Subject;
+use App\Models\TrainingPhase;
 use App\Services\Accounts\AccountService;
 use App\Services\Attendance\AttendanceService;
 use App\Services\Conduct\ConductService;
@@ -196,6 +197,8 @@ class RouteAccessMatrixTest extends TestCase
             'performanceArea' => (string) $performanceArea->id,
             'question' => (string) $question->id,
             'subject' => (string) $subject2->id,
+            // A placeholder phase created by its migration.
+            'trainingPhase' => (string) TrainingPhase::query()->where('number', 3)->value('id'),
             'type' => 'registration',
             'user' => (string) $this->bravo->id,
         ];

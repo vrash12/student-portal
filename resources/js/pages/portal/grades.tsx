@@ -1,7 +1,8 @@
 import { Head } from '@inertiajs/react';
-import { BookOpen, ChartColumn, ClipboardClock, GraduationCap, History, Hourglass, TrendingUp, UserRound } from 'lucide-react';
+import { BookOpen, ChartColumn, ClipboardClock, GraduationCap, History, Hourglass, Layers, Sigma, TrendingUp, UserRound } from 'lucide-react';
 import { BarList } from '@/components/charts/bar-list';
 import { hasResultsOverTime, ResultsOverTimeChart, type SubjectResults } from '@/components/monitoring/candidate-academic-record';
+import { CourseRecordSummary, hasPhases, phaseName, unitsLabel } from '@/components/grading/course-record';
 import { GradeStatusBadge, OverallStandingValue, StandingCell } from '@/components/grading/standing';
 import { PortalEmpty, PortalHeading, PortalSection, StatTile } from '@/components/portal/portal-ui';
 import { Pagination } from '@/components/ui/pagination';
@@ -9,13 +10,15 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { formatCalendarDate, formatGrade, formatPercent } from '@/lib/format';
 import type { Paginated } from '@/types';
 import type { CandidateAssessmentResult } from '@/types/candidates';
-import type { GradingThresholds, OverallStanding, SubjectGrade } from '@/types/grading';
+import type { CourseRecord, GradingThresholds, OverallStanding, SubjectGrade, TrainingPhaseSummary } from '@/types/grading';
 
 interface GradesProps {
     summary: { eligible: boolean; className: string | null; period: string | null };
     academics: {
         overall: OverallStanding;
-        subjects: Array<{ id: number; code: string; name: string; instructors: string[]; result: SubjectGrade }>;
+        subjects: Array<{ id: number; code: string; name: string; phase: TrainingPhaseSummary | null; units: string; instructors: string[]; result: SubjectGrade }>;
+        /** Each training phase's average and the CGPA, calculated by the server. */
+        course: CourseRecord;
     };
     /** Passing and warning grades of the class's period; null when not set. */
     thresholds: GradingThresholds | null;
@@ -27,7 +30,8 @@ interface GradesProps {
 
 /** Candidate "My Grades": standing, current subject grades, missing scores and history. All grades come from the server. */
 export default function PortalGrades({ summary, academics, thresholds, outstanding, assessmentHistory, resultsBySubject }: GradesProps) {
-    const { subjects } = academics;
+    const { subjects, course } = academics;
+    const phased = hasPhases(course);
 
     return (
         <>
@@ -39,16 +43,28 @@ export default function PortalGrades({ summary, academics, thresholds, outstandi
             />
 
             <div className="flex flex-col gap-10">
-                <dl className="grid gap-5 md:grid-cols-3">
+                <dl className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
                     <div className="rounded-2xl border border-line-box bg-surface p-6 shadow-sm">
                         <dt className="text-sm font-medium text-ink-muted">Overall Standing</dt>
                         <dd className="mt-3">
                             {academics.overall.standing === null ? <span className="text-base text-ink-muted">Not available yet</span> : <OverallStandingValue overall={academics.overall} />}
                         </dd>
                     </div>
+                    <StatTile
+                        icon={Sigma}
+                        label="CGPA"
+                        value={formatGrade(course.cgpa.grade)}
+                        hint={course.cgpa.grade === null ? 'No grades yet.' : course.cgpa.complete ? 'Final.' : 'In progress; it changes as grades come in.'}
+                    />
                     <StatTile icon={BookOpen} label="Subjects" value={subjects.length} />
                     <StatTile icon={Hourglass} label="Awaiting a Score" value={outstanding.total} hint={outstanding.total > 0 ? 'Ask your instructor about these.' : 'Nothing missing.'} />
                 </dl>
+
+                {phased && (
+                    <PortalSection icon={Layers} title="Phase Averages" description="Your average in each training phase and your CGPA (Cumulative General Point Average), weighted by units. Subjects without a grade are left out.">
+                        <CourseRecordSummary course={course} />
+                    </PortalSection>
+                )}
 
                 <PortalSection icon={ChartColumn} title="Grades by Subject" description="Your current grade in each subject, out of 100.">
                     {subjects.length === 0 ? (
@@ -74,7 +90,10 @@ export default function PortalGrades({ summary, academics, thresholds, outstandi
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
                                                 <p className="text-lg font-semibold text-primary-900">{subject.name}</p>
-                                                <p className="text-sm text-ink-muted">{subject.code}</p>
+                                                <p className="text-sm text-ink-muted">
+                                                    {subject.code}
+                                                    {phased && ` · ${phaseName(subject.phase)}`} · {unitsLabel(subject.units)}
+                                                </p>
                                             </div>
                                             <p className="text-3xl font-bold text-ink tabular-nums">{formatGrade(subject.result.grade)}</p>
                                         </div>

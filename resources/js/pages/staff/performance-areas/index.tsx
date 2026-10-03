@@ -111,7 +111,7 @@ export default function PerformanceAreas({ areas, activeWeightTotal, hasActiveMu
                                             </Td>
                                             <Td align="right" numeric className="text-ink">
                                                 {formatNumber(Number(area.weight))}
-                                                {area.share !== null && <span className="block text-xs text-ink-muted">{area.share}% of overall score</span>}
+                                                {area.share !== null && <span className="block text-xs text-ink-muted">{area.share}% of final course grade</span>}
                                             </Td>
                                             <Td align="right" numeric className="text-ink">
                                                 {formatNumber(Number(area.passingGrade))}
@@ -132,7 +132,7 @@ export default function PerformanceAreas({ areas, activeWeightTotal, hasActiveMu
                             <ClientPagination pagination={pagination} noun={{ one: 'area', other: 'areas' }} label="Performance area pages" />
                             <p className="border-t border-line px-4 py-3 text-sm text-ink-muted">
                                 Total active weight: <span className="font-semibold text-ink tabular-nums">{formatNumber(activeWeightTotal)}</span>. Weights are
-                                relative: overall score = weighted average of the graded areas.
+                                relative: final course grade = weighted average of the graded areas.
                             </p>
                         </>
                     )}

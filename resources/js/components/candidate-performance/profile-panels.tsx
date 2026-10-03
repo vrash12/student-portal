@@ -31,7 +31,7 @@ export function CandidateQualificationPanel({ qualification, classBatch }: Quali
             description={
                 <>
                     Performance areas combine subject grades, the latest fitness test, conduct and attendance.
-                    {showRank && classBatch !== null && ` The rank compares the overall scores within ${classBatch.name}.`}
+                    {showRank && classBatch !== null && ` The rank compares the final course grades within ${classBatch.name}.`}
                 </>
             }
             actions={

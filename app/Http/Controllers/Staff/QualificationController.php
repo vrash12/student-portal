@@ -6,6 +6,8 @@ use App\Enums\Permission;
 use App\Enums\QualificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\ClassBatch;
+use App\Services\Grading\CourseRecord;
+use App\Services\Grading\CourseRecordService;
 use App\Services\Performance\AreaDefinition;
 use App\Services\Performance\CandidateQualification;
 use App\Services\Performance\QualificationEngine;
@@ -13,6 +15,7 @@ use App\Support\AcademicOptions;
 use App\Support\CandidateGroups;
 use App\Support\PdfReport;
 use App\Support\QueryFilters;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Inertia\Inertia;
@@ -20,12 +23,13 @@ use Inertia\Response;
 
 /**
  * Qualification and class rank of every candidate of a class (route
- * middleware: performance.view). All results come from QualificationEngine.
- * One class at a time; Save as PDF lists every candidate of the class shown.
+ * middleware: performance.view). All results come from QualificationEngine;
+ * the CGPA from CourseRecordService. One class at a time; Save as PDF lists
+ * every candidate of the class shown.
  */
 class QualificationController extends Controller
 {
-    public function __construct(private readonly QualificationEngine $engine) {}
+    public function __construct(private readonly QualificationEngine $engine, private readonly CourseRecordService $courses) {}
 
     public function index(Request $request): Response
     {
@@ -45,7 +49,10 @@ class QualificationController extends Controller
                 'isActivePeriod' => $class->academicPeriod->is_active,
             ],
             'areas' => array_map(fn (AreaDefinition $area): array => $area->toArray(), $areas),
-            'rows' => array_map(fn (CandidateQualification $qualification): array => $qualification->toArray(withRank: true), $data['shown']),
+            'rows' => array_map(fn (CandidateQualification $qualification): array => [
+                ...$qualification->toArray(withRank: true),
+                'cgpa' => ($data['courses'][$qualification->candidate->id] ?? null)?->cgpaToArray(),
+            ], $data['shown']),
             // Summaries of the company/platoon shown, before the status filter.
             'counts' => $this->engine->counts($data['inUnit']),
             'areaCounts' => $this->engine->areaCounts($data['inUnit'], $areas),
@@ -96,9 +103,9 @@ class QualificationController extends Controller
             'type' => 'table',
             'heading' => 'Candidates',
             'columns' => self::pdfColumns($areas),
-            'rows' => array_map(fn (CandidateQualification $qualification): array => self::pdfRow($qualification, $areas), $data['shown']),
+            'rows' => array_map(fn (CandidateQualification $qualification): array => self::pdfRow($qualification, $areas, $data['courses'][$qualification->candidate->id] ?? null), $data['shown']),
             'empty' => $data['classSize'] === 0 ? 'No candidates in this class.' : 'No candidates match these filters.',
-            'note' => "Class rank covers the whole class; filters don't change it. Partial: a weighted area has no grade yet. Subject standing is not affected.",
+            'note' => "Class rank is by final grade over the whole class; filters don't change it. CGPA: unit-weighted average of every subject grade so far. Partial: a weighted area has no grade yet. Subject standing is not affected.",
         ];
 
         return PdfReport::download($request->user(), 'Qualification & Class Rank', $class->name, $meta, $sections, 'qualification-'.$class->name.'-'.now()->format('Ymd'), 'landscape');
@@ -109,7 +116,7 @@ class QualificationController extends Controller
      * filters, every ranked candidate, those in the company/platoon shown,
      * and those also matching the status filter.
      *
-     * @return array{classOptions: array, class: ?ClassBatch, filters: array<string, string>, companyOptions: array, platoonOptions: array, areas: list<AreaDefinition>, inUnit: list<CandidateQualification>, shown: list<CandidateQualification>, classSize: int}
+     * @return array{classOptions: array, class: ?ClassBatch, filters: array<string, string>, companyOptions: array, platoonOptions: array, areas: list<AreaDefinition>, inUnit: list<CandidateQualification>, shown: list<CandidateQualification>, classSize: int, courses: array<int, CourseRecord>}
      */
     private function build(Request $request): array
     {
@@ -155,6 +162,11 @@ class QualificationController extends Controller
             'inUnit' => $inUnit,
             'shown' => $shown,
             'classSize' => count($ranked),
+            // The CGPA of each candidate shown.
+            'courses' => $class === null || $shown === [] ? [] : $this->courses->forClass(
+                $class,
+                new Collection(array_map(fn (CandidateQualification $qualification) => $qualification->candidate, $shown)),
+            ),
         ];
     }
 
@@ -164,7 +176,7 @@ class QualificationController extends Controller
      */
     private static function pdfColumns(array $areas): array
     {
-        $areaWidth = $areas === [] ? 0 : min(11, intdiv(52, count($areas)));
+        $areaWidth = $areas === [] ? 0 : min(11, intdiv(45, count($areas)));
         $configured = fn (float $value): string => rtrim(rtrim(number_format($value, 2), '0'), '.');
 
         return [
@@ -180,7 +192,8 @@ class QualificationController extends Controller
                     $area->mustPass ? 'must-pass' : null,
                 ])),
             ], $areas),
-            ['label' => 'Overall', 'width' => '7%', 'numeric' => true],
+            ['label' => 'CGPA', 'width' => '7%', 'numeric' => true],
+            ['label' => 'Final Grade', 'width' => '7%', 'numeric' => true],
             ['label' => 'Qualification'],
         ];
     }
@@ -191,7 +204,7 @@ class QualificationController extends Controller
      * @param  list<AreaDefinition>  $areas
      * @return list<string>
      */
-    private static function pdfRow(CandidateQualification $qualification, array $areas): array
+    private static function pdfRow(CandidateQualification $qualification, array $areas, ?CourseRecord $course): array
     {
         $row = $qualification->toArray(withRank: true);
         $candidate = $row['candidate'];
@@ -217,6 +230,7 @@ class QualificationController extends Controller
             $candidate['name']."\n".$candidate['candidateNumber'].($candidate['status']['value'] !== 'enrolled' ? ' · '.$candidate['status']['label'] : ''),
             implode(' · ', array_filter([$candidate['company'], $candidate['platoon']])) ?: '—',
             ...$areaCells,
+            $grade($course?->cgpa).($course?->cgpa !== null && ! $course->isComplete() ? "\nIn progress" : ''),
             $grade($row['overall']['score']).($row['overall']['score'] !== null && ! $row['overall']['complete'] ? "\nPartial" : ''),
             implode("\n", array_filter([
                 $decision['status']['label'],

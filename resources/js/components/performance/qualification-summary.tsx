@@ -40,7 +40,7 @@ export function QualificationSummary({ areas, qualification, showRank = false }:
                     </dd>
                 </div>
                 <div className="rounded-lg border border-line-box px-4 py-3">
-                    <dt className="text-sm font-medium text-ink-muted">Overall Score</dt>
+                    <dt className="text-sm font-medium text-ink-muted">Final Course Grade</dt>
                     <dd className="mt-1 text-2xl font-semibold text-ink tabular-nums">{formatAreaGrade(overall.score)}</dd>
                     {overall.score !== null && !overall.complete && (
                         <dd className="mt-0.5 text-xs text-ink-muted">Partial: a weighted area has no grade yet.</dd>
@@ -51,7 +51,7 @@ export function QualificationSummary({ areas, qualification, showRank = false }:
                     <div className="rounded-lg border border-line-box px-4 py-3">
                         <dt className="text-sm font-medium text-ink-muted">Class Rank</dt>
                         <dd className="mt-1 text-2xl font-semibold text-ink tabular-nums">{rank === null ? 'Unranked' : rank}</dd>
-                        {rank === null && <dd className="mt-0.5 text-xs text-ink-muted">No overall score, or withdrawn.</dd>}
+                        {rank === null && <dd className="mt-0.5 text-xs text-ink-muted">No final course grade, or withdrawn.</dd>}
                     </div>
                 )}
             </dl>

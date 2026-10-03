@@ -196,6 +196,41 @@ final class GradeCalculationService
     }
 
     /**
+     * Unit-weighted average of subject grades (owner request, 2026-10-03):
+     * phase averages, the CGPA and subject performance areas all use it.
+     *
+     *   average = Σ (subject grade × units) ÷ Σ (units)
+     *
+     * over the subjects that have a grade; subjects without one are left out
+     * (never counted as zero). Grades and units are taken in whole
+     * hundredths and the result is rounded half up to two decimals with
+     * exact integer arithmetic. Null when no subject has a grade. With every
+     * subject at 1 unit it is the plain mean.
+     *
+     * Example: 90 (3 units), 80 (2 units), 70 (1 unit) gives
+     * (270 + 160 + 70) ÷ 6 = 83.33.
+     *
+     * @param  iterable<array{grade: float|null, units: float|string}>  $subjects
+     */
+    public function weightedAverage(iterable $subjects): ?float
+    {
+        $numerator = 0;
+        $denominator = 0;
+        foreach ($subjects as $subject) {
+            $units = DecimalValue::toHundredths($subject['units']);
+            if ($subject['grade'] === null || $units <= 0) {
+                continue;
+            }
+
+            $numerator += DecimalValue::toHundredths(self::round($subject['grade'])) * $units;
+            $denominator += $units;
+        }
+
+        // numerator ÷ denominator is the average in hundredths.
+        return $denominator === 0 ? null : (float) (intdiv(2 * $numerator + $denominator, 2 * $denominator) / 100);
+    }
+
+    /**
      * Grades of several candidates in one class subject, loaded with a fixed
      * number of queries regardless of the number of candidates.
      *

@@ -65,6 +65,43 @@ export interface SubjectGrade {
     categories: CategoryGrade[];
 }
 
+/** A training phase of the course (Phase 1, Phase 2, … or the phases OCS uses). */
+export interface TrainingPhaseSummary {
+    id: number;
+    /** Position in the course: Phase 1 comes before Phase 2. */
+    number: number;
+    name: string;
+}
+
+/** A candidate's average in one training phase, calculated by the server (unit-weighted). */
+export interface PhaseAverage {
+    /** Null for the subjects not placed in a phase. */
+    phase: TrainingPhaseSummary | null;
+    /** Null while no subject of the phase has a grade. */
+    average: number | null;
+    /** Every subject of the phase has a final grade; until then the average is a current one. */
+    complete: boolean;
+    gradedSubjects: number;
+    totalSubjects: number;
+    /** Total units of the phase, display form. */
+    units: string;
+    subjects: Array<{ classSubjectId: number; name: string; units: string }>;
+}
+
+/** Cumulative General Point Average: the unit-weighted average of every subject grade so far. */
+export interface Cgpa {
+    grade: number | null;
+    complete: boolean;
+    gradedSubjects: number;
+    totalSubjects: number;
+}
+
+/** A candidate's grades for the course of their class, by training phase. */
+export interface CourseRecord {
+    phases: PhaseAverage[];
+    cgpa: Cgpa;
+}
+
 /** A subject grade without the per-category breakdown (monitoring payloads). */
 export type SubjectResult = Omit<SubjectGrade, 'categories'>;
 

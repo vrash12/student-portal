@@ -102,7 +102,7 @@ class PerformanceAreaRequest extends FormRequest
             'name.unique' => 'Another performance area already uses this name.',
             'source.required' => 'Choose where the area takes its grade from.',
             'source.enum' => 'Choose where the area takes its grade from.',
-            'weight.required' => 'Enter the weight of the area in the overall score.',
+            'weight.required' => 'Enter the weight of the area in the final course grade.',
             'weight.numeric' => 'Enter the weight as a number from 0 to 100, for example 40.',
             'weight.decimal' => 'Use at most two decimal places.',
             'weight.min' => 'Enter the weight as a number from 0 to 100, for example 40.',

@@ -7,19 +7,33 @@ use App\Models\Candidate;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
 use App\Models\ExaminationAttempt;
+use App\Services\Grading\CourseRecordService;
 use App\Services\Grading\GradeCalculationService;
+use App\Support\DecimalValue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 /** Own-record presentation; authorization and staff offering scope come from the caller. */
 final class CandidateProfileRecord
 {
-    public function __construct(private readonly GradeCalculationService $grades, private readonly CandidateAcademicRecord $academicRecord) {}
+    public function __construct(
+        private readonly GradeCalculationService $grades,
+        private readonly CandidateAcademicRecord $academicRecord,
+        private readonly CourseRecordService $courses,
+    ) {}
 
+    /**
+     * Every subject of the candidate's current class with its grade, in
+     * training-phase order, the overall standing, and the course record
+     * (phase averages and the CGPA). For the candidate's own record
+     * (portal, PDF): it covers every subject of the class.
+     */
     public function academics(Candidate $candidate): array
     {
         $offerings = ClassSubject::query()->where('class_batch_id', $candidate->class_batch_id ?? 0)
-            ->with(['subject', 'instructors:id,name'])->get()->sortBy('subject.name')->values();
+            ->with(['subject', 'instructors:id,name', 'trainingPhase:id,number,name'])->get()
+            ->sortBy(fn (ClassSubject $offering): array => [$offering->trainingPhase?->number ?? PHP_INT_MAX, $offering->subject->name])
+            ->values();
         $grades = $this->grades->forCandidate($candidate, $offerings->modelKeys());
 
         return [
@@ -28,9 +42,12 @@ final class CandidateProfileRecord
                 'id' => $offering->id,
                 'code' => $offering->subject->code,
                 'name' => $offering->subject->name,
+                'phase' => $offering->trainingPhase?->toSummary(),
+                'units' => DecimalValue::display($offering->units),
                 'instructors' => $offering->instructors->pluck('name')->sort()->values()->all(),
                 'result' => $grades[$offering->id]->toArray(),
             ])->all(),
+            'course' => $this->courses->record($offerings, $grades)->toArray(),
         ];
     }
 

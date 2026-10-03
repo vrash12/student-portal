@@ -7,6 +7,8 @@ use App\Models\AcademicPeriod;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
 use App\Models\Subject;
+use App\Models\TrainingPhase;
+use App\Support\DecimalValue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -46,21 +48,64 @@ final class ClassBatchService
         });
     }
 
-    public function addSubject(ClassBatch $classBatch, Subject $subject): ClassSubject
+    /**
+     * @param  string  $units  the subject's weight in phase averages and the CGPA, e.g. "3" or "1.5"
+     */
+    public function addSubject(ClassBatch $classBatch, Subject $subject, ?TrainingPhase $phase = null, string $units = ClassSubject::DEFAULT_UNITS): ClassSubject
     {
-        return DB::transaction(function () use ($classBatch, $subject): ClassSubject {
+        return DB::transaction(function () use ($classBatch, $subject, $phase, $units): ClassSubject {
             $offering = new ClassSubject;
             $offering->classBatch()->associate($classBatch);
             $offering->subject()->associate($subject);
+            $offering->trainingPhase()->associate($phase);
+            $offering->units = DecimalValue::normalize($units);
             $offering->save();
 
             $this->audit->record(AuditAction::ClassSubjectAdded, $offering, newValues: [
                 'class' => $classBatch->name,
                 'subject' => $subject->name,
+                'phase' => $phase?->name,
+                'units' => DecimalValue::display($offering->units),
             ]);
 
             return $offering;
         });
+    }
+
+    /**
+     * Moves a subject of a class to another training phase (or none) and
+     * sets its units. Grades are not stored, so phase averages and the CGPA
+     * follow at once; the change is audited with the previous values.
+     */
+    public function updateSubject(ClassSubject $offering, ?TrainingPhase $phase, string $units): ClassSubject
+    {
+        return DB::transaction(function () use ($offering, $phase, $units): ClassSubject {
+            $locked = ClassSubject::query()->with(['classBatch', 'subject', 'trainingPhase'])->lockForUpdate()->findOrFail($offering->getKey());
+            $before = self::placement($locked);
+
+            $locked->trainingPhase()->associate($phase);
+            $locked->units = DecimalValue::normalize($units);
+            $locked->save();
+
+            $after = self::placement($locked);
+            if ($after !== $before) {
+                $this->audit->record(AuditAction::ClassSubjectUpdated, $locked, oldValues: $before, newValues: [
+                    'class' => $locked->classBatch->name,
+                    'subject' => $locked->subject->name,
+                    ...$after,
+                ]);
+            }
+
+            return $locked;
+        });
+    }
+
+    /**
+     * @return array{phase: string|null, units: string}
+     */
+    private static function placement(ClassSubject $offering): array
+    {
+        return ['phase' => $offering->trainingPhase?->name, 'units' => DecimalValue::display($offering->units)];
     }
 
     /**

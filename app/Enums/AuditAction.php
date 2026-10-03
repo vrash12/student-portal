@@ -26,6 +26,10 @@ enum AuditAction: string
     case ClassBatchUpdated = 'class_batch.updated';
     case ClassSubjectAdded = 'class_subject.added';
     case ClassSubjectRemoved = 'class_subject.removed';
+    case ClassSubjectUpdated = 'class_subject.updated';
+    case TrainingPhaseCreated = 'training_phase.created';
+    case TrainingPhaseUpdated = 'training_phase.updated';
+    case TrainingPhaseDeleted = 'training_phase.deleted';
     case InstructorAssigned = 'instructor_assignment.created';
     case InstructorUnassigned = 'instructor_assignment.removed';
     case CandidateCreated = 'candidate.created';
@@ -139,6 +143,10 @@ enum AuditAction: string
             self::ClassBatchUpdated => 'Updated class',
             self::ClassSubjectAdded => 'Added subject to class',
             self::ClassSubjectRemoved => 'Removed subject from class',
+            self::ClassSubjectUpdated => 'Changed phase or units of a class subject',
+            self::TrainingPhaseCreated => 'Created training phase',
+            self::TrainingPhaseUpdated => 'Updated training phase',
+            self::TrainingPhaseDeleted => 'Deleted training phase',
             self::InstructorAssigned => 'Assigned instructor',
             self::InstructorUnassigned => 'Removed instructor assignment',
             self::CandidateCreated => 'Created candidate',

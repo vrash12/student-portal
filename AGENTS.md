@@ -383,6 +383,8 @@ may be used.
 
 Subjects must ultimately be configurable through the application.
 
+Owner decision (2026-10-03): the grading format is Training Phase → subjects under each phase → individual grades → phase average → Cumulative General Point Average (CGPA) → class standing/rank → final course grade. A class keeps its candidates for the whole course; each subject of a class belongs to a configurable training phase (Academics → Training Phases) and carries units (default 1). Phase averages and the CGPA are unit-weighted averages of the subject grades (`GradeCalculationService::weightedAverage`, `CourseRecordService`), on the 0–100 grade scale. The final course grade is the weighted performance areas (the overall score), and class rank (staff only) is by it. See `docs/grading-explained.md`.
+
 ---
 
 # 13. Candidate Management

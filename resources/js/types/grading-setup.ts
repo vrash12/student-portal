@@ -1,4 +1,4 @@
-import type { GradingThresholds, StatusValue } from '@/types/grading';
+import type { GradingThresholds, StatusValue, TrainingPhaseSummary } from '@/types/grading';
 
 /** One component of a subject's weights, e.g. Quizzes 20 (percent). */
 export interface WeightComponent {
@@ -12,6 +12,10 @@ export interface SubjectWeightsRow {
     classSubjectId: number;
     classBatch: { id: number; name: string };
     subject: { id: number; code: string; name: string };
+    /** The training phase the subject is in; null when not placed in one. */
+    phase: TrainingPhaseSummary | null;
+    /** The subject's weight in phase averages and the CGPA, display form. */
+    units: string;
     /** Empty when the subject has no weights yet (instructors cannot create assessments). */
     components: WeightComponent[];
     assessmentCount: number;

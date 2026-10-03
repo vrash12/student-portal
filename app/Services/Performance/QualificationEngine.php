@@ -39,8 +39,9 @@ use Illuminate\Support\Arr;
  *
  * Rules, for each active area (in area order):
  *
- * - subjects: the candidate's class subjects mapped to the area. Grade = mean
- *   of the subjects' current grades that exist (two decimals, half up).
+ * - subjects: the candidate's class subjects mapped to the area. Grade = the
+ *   unit-weighted average of the subjects' current grades that exist
+ *   (GradeCalculationService::weightedAverage; two decimals, half up).
  *   No results yet without such subjects or grades; Failed below the passing
  *   grade; Incomplete at or above it while any of those subjects has missing
  *   scores (as academic standing); otherwise Passed.
@@ -56,8 +57,8 @@ use Illuminate\Support\Arr;
  * Grades are compared with passing grades in whole hundredths, so a grade
  * shown as 75.00 always passes a passing grade of 75.
  *
- * Overall score = Σ(weight × grade) ÷ Σ(weight) over the areas with a weight
- * above 0 and a grade. Qualification: Not Qualified when a must-pass area is
+ * Overall score (shown as the Final Course Grade) = Σ(weight × grade) ÷
+ * Σ(weight) over the areas with a weight above 0 and a grade. Qualification: Not Qualified when a must-pass area is
  * Failed; otherwise Pending while a must-pass area is Incomplete or has no
  * results yet; otherwise Qualified. Rank: by overall score within the class,
  * highest first, ties sharing a rank (1, 2, 2, 4); candidates without an
@@ -153,7 +154,7 @@ final class QualificationEngine
     // ------------------------------------------------------------------
 
     /**
-     * @param  list<array{name: string, grade: SubjectGrade}>  $subjects  the candidate's class subjects mapped to the area
+     * @param  list<array{name: string, grade: SubjectGrade, units?: float|string}>  $subjects  the candidate's class subjects mapped to the area (1 unit when not given)
      */
     public function subjectsResult(AreaDefinition $area, array $subjects): AreaResult
     {
@@ -161,25 +162,28 @@ final class QualificationEngine
             return new AreaResult($area, null, AreaStatus::NotYet, 'No subject of this area is taught in the class.');
         }
 
-        $grades = [];
+        $graded = 0;
         $missing = [];
         foreach ($subjects as $subject) {
             if ($subject['grade']->grade !== null) {
-                $grades[] = DecimalValue::toHundredths($subject['grade']->grade);
+                $graded++;
             }
             if ($subject['grade']->missingScores > 0) {
                 $missing[] = $subject['name'];
             }
         }
 
-        if ($grades === []) {
+        $grade = $this->grades->weightedAverage(array_map(
+            fn (array $subject): array => ['grade' => $subject['grade']->grade, 'units' => $subject['units'] ?? ClassSubject::DEFAULT_UNITS],
+            $subjects,
+        ));
+        if ($grade === null) {
             return new AreaResult($area, null, AreaStatus::NotYet, $missing === [] ? 'No subject grades yet.' : self::missingScoresNote($missing));
         }
 
-        $grade = self::meanOfHundredths($grades);
         $notes = [];
-        if (count($grades) < count($subjects)) {
-            $notes[] = sprintf('Based on %d of %d subjects; the others have no grades yet.', count($grades), count($subjects));
+        if ($graded < count($subjects)) {
+            $notes[] = sprintf('Based on %d of %d subjects; the others have no grades yet.', $graded, count($subjects));
         }
         if ($missing !== []) {
             $notes[] = self::missingScoresNote($missing);
@@ -533,7 +537,7 @@ final class QualificationEngine
      *
      * @param  Collection<int, Candidate>  $candidates
      * @param  list<AreaDefinition>  $areas
-     * @return array<int, array<int, list<array{name: string, grade: SubjectGrade}>>> candidate id => area id => subjects
+     * @return array<int, array<int, list<array{name: string, grade: SubjectGrade, units: string}>>> candidate id => area id => subjects
      */
     private function subjectGrades(ClassBatch $class, Collection $candidates, array $areas): array
     {
@@ -564,7 +568,7 @@ final class QualificationEngine
             foreach ($offerings as $offering) {
                 $grade = $grades[$candidate->id][$offering->id] ?? null;
                 if ($grade !== null) {
-                    $byCandidate[$candidate->id][(int) $offering->subject->performance_area_id][] = ['name' => $offering->subject->name, 'grade' => $grade];
+                    $byCandidate[$candidate->id][(int) $offering->subject->performance_area_id][] = ['name' => $offering->subject->name, 'grade' => $grade, 'units' => (string) $offering->units];
                 }
             }
         }
@@ -605,19 +609,6 @@ final class QualificationEngine
     private static function meets(float $grade, float $passingGrade): bool
     {
         return DecimalValue::toHundredths($grade) >= DecimalValue::toHundredths($passingGrade);
-    }
-
-    /**
-     * Mean of non-negative values in hundredths, rounded half up to two
-     * decimals with exact integer arithmetic.
-     *
-     * @param  non-empty-list<int>  $hundredths
-     */
-    private static function meanOfHundredths(array $hundredths): float
-    {
-        $count = count($hundredths);
-
-        return (float) (intdiv(2 * array_sum($hundredths) + $count, 2 * $count) / 100);
     }
 
     /**

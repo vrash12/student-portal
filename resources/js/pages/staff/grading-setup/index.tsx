@@ -5,6 +5,7 @@ import { PieChart } from '@/components/charts/pie-chart';
 import { StandingBadge, StandingRanges } from '@/components/grading/standing';
 import { componentsText, CopyWeightsDialog } from '@/components/grading-setup/copy-weights-dialog';
 import { SetupFlow, type FlowStep } from '@/components/grading-setup/setup-flow';
+import { phaseName, unitsLabel } from '@/components/grading/course-record';
 import { Alert } from '@/components/ui/alert';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -71,7 +72,7 @@ export default function GradingSetup(props: GradingSetupProps) {
         {
             href: '#areas',
             title: 'Performance Areas',
-            description: 'Weighted areas give the overall score.',
+            description: 'Weighted areas give the final course grade.',
             status:
                 areas.list.length === 0
                     ? { ready: false, text: 'No active areas' }
@@ -83,7 +84,7 @@ export default function GradingSetup(props: GradingSetupProps) {
         {
             href: '#qualification',
             title: 'Qualification & Rank',
-            description: 'Must-pass areas decide qualification. Overall score sets class rank.',
+            description: 'Must-pass areas decide qualification. The final course grade sets class rank.',
             status:
                 areas.list.length === 0
                     ? null
@@ -247,7 +248,12 @@ function SubjectWeights({
                         {rows.map((row) => (
                             <Tr key={row.classSubjectId}>
                                 <Td className="text-ink">{row.classBatch.name}</Td>
-                                <Td className="font-medium text-ink">{row.subject.name}</Td>
+                                <Td className="font-medium text-ink">
+                                    {row.subject.name}
+                                    <span className="block text-xs font-normal text-ink-muted">
+                                        {phaseName(row.phase)} · {unitsLabel(row.units)}
+                                    </span>
+                                </Td>
                                 <Td>
                                     {row.components.length === 0 ? (
                                         <StatusBadge tone="warning">No Weights Yet</StatusBadge>
@@ -376,7 +382,7 @@ function Areas({ areas, canConfigure }: { areas: AreasOverview; canConfigure: bo
         >
             {areas.list.length === 0 ? (
                 <Alert tone="warning" title="No active performance areas">
-                    No overall score; every candidate is Pending.
+                    No final course grade; every candidate is Pending.
                 </Alert>
             ) : (
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
@@ -385,7 +391,7 @@ function Areas({ areas, canConfigure }: { areas: AreasOverview; canConfigure: bo
                             <TableHead>
                                 <Th>Area</Th>
                                 <Th>Grade Taken From</Th>
-                                <Th align="right">Share of Overall Score</Th>
+                                <Th align="right">Share of Final Grade</Th>
                                 <Th align="right">Area Passing Grade</Th>
                                 <Th>Must Pass</Th>
                             </TableHead>
@@ -416,14 +422,14 @@ function Areas({ areas, canConfigure }: { areas: AreasOverview; canConfigure: bo
                         </Table>
                         <div id="qualification" className={`flex flex-col gap-1.5 px-5 py-4 text-sm text-ink ${ANCHOR}`}>
                             <p>
-                                <strong>Overall score</strong>: weighted average of the graded areas; Partial while a weighted area has no grade.
+                                <strong>Final course grade</strong>: weighted average of the graded areas; Partial while a weighted area has no grade.
                             </p>
                             <p>
                                 <strong>Qualified</strong>: all must-pass areas passed · <strong>Not Qualified</strong>: one failed · <strong>Pending</strong>:
                                 one is incomplete or has no results yet.
                             </p>
                             <p>
-                                <strong>Class rank</strong>: by overall score, staff only.
+                                <strong>Class rank</strong>: by final course grade, staff only.
                             </p>
                         </div>
                     </div>

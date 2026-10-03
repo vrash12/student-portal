@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\Attendance\AttendanceScope;
 use App\Services\CandidateService;
 use App\Services\Fitness\FitnessResults;
+use App\Services\Grading\CourseRecordService;
 use App\Services\Grading\GradeCalculationService;
 use App\Services\Grading\GradingThresholds;
 use App\Services\Medical\MedicalRecordService;
@@ -24,6 +25,7 @@ use App\Services\Performance\CandidatePerformanceRecord;
 use App\Support\AcademicOptions;
 use App\Support\CandidateGroups;
 use App\Support\CandidatePresenter;
+use App\Support\DecimalValue;
 use App\Support\ListCharts;
 use App\Support\MedicalRecordPresenter;
 use App\Support\QueryFilters;
@@ -125,7 +127,7 @@ class CandidateController extends Controller
         return redirect()->route('candidates.show', $candidate);
     }
 
-    public function show(Request $request, Candidate $candidate, GradeCalculationService $grades, CandidateAcademicRecord $record, CandidateProfileRecord $profile, FitnessResults $fitness, CandidatePerformanceRecord $performanceRecord): Response
+    public function show(Request $request, Candidate $candidate, GradeCalculationService $grades, CandidateAcademicRecord $record, CandidateProfileRecord $profile, FitnessResults $fitness, CandidatePerformanceRecord $performanceRecord, CourseRecordService $courses): Response
     {
         $candidate->load(['user', 'classBatch.academicPeriod']);
         $viewer = $request->user();
@@ -140,9 +142,10 @@ class CandidateController extends Controller
                 'instructorAssignments',
                 fn (Builder $assignments) => $assignments->where('instructor_id', $viewer->id),
             ))
-            ->with(['subject', 'instructors'])
+            ->with(['subject', 'instructors', 'trainingPhase:id,number,name'])
             ->get()
-            ->sortBy(fn (ClassSubject $offering): string => $offering->subject->name)
+            // In training-phase order (subjects not in a phase last), then by name.
+            ->sortBy(fn (ClassSubject $offering): array => [$offering->trainingPhase?->number ?? PHP_INT_MAX, $offering->subject->name])
             ->values();
 
         $subjects = $offerings
@@ -165,6 +168,8 @@ class CandidateController extends Controller
                 'classSubjectId' => $offering->id,
                 'code' => $offering->subject->code,
                 'name' => $offering->subject->name,
+                'phase' => $offering->trainingPhase?->toSummary(),
+                'units' => DecimalValue::display($offering->units),
                 'result' => $subjectGrades[$offering->id]->toArray(),
                 'canOpenGradebook' => in_array($offering->id, $taughtOfferingIds, true),
             ])
@@ -196,6 +201,10 @@ class CandidateController extends Controller
             ],
             'subjects' => $subjects,
             'performance' => $performance,
+            // Phase averages and the CGPA combine every subject of the class,
+            // so only for viewers who see all of them (never instructors
+            // limited to the subjects they teach).
+            'course' => $seesAllSubjects && $candidate->classBatch !== null ? $courses->record($offerings, $subjectGrades)->toArray() : null,
             'standing' => [
                 'overall' => $overallStanding->toArray(),
                 // "all": every subject of the class; "taught": only the viewer's subjects.

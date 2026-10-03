@@ -30,6 +30,7 @@ use App\Models\PerformanceArea;
 use App\Models\Question;
 use App\Models\Role;
 use App\Models\Subject;
+use App\Models\TrainingPhase;
 use App\Models\User;
 use App\Services\Backups\DatabaseTools;
 use App\Services\Backups\MysqlDatabaseTools;
@@ -140,6 +141,7 @@ class AppServiceProvider extends ServiceProvider
             'conduct_type' => ConductType::class,
             'attendance_session' => AttendanceSession::class,
             'performance_area' => PerformanceArea::class,
+            'training_phase' => TrainingPhase::class,
         ]);
     }
 

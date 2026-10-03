@@ -120,7 +120,7 @@ export function PerformanceAreaForm({ form, areaId, sources, subjects, activeSin
             <FormSection title="Grading">
                 <div className="grid gap-5 sm:grid-cols-2">
                     <FormField
-                        label="Weight in the overall score"
+                        label="Weight in the final course grade"
                         required
                         error={form.errors.weight}
                         hint="0–100, relative to other areas. 0 leaves it out."

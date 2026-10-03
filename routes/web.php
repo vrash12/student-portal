@@ -49,6 +49,7 @@ use App\Http\Controllers\Staff\QualificationController;
 use App\Http\Controllers\Staff\ReportController;
 use App\Http\Controllers\Staff\SubjectController;
 use App\Http\Controllers\Staff\TeachingClassController;
+use App\Http\Controllers\Staff\TrainingPhaseController;
 use App\Http\Controllers\Staff\UserController;
 use App\Models\Candidate;
 use App\Models\GradeCorrectionRequest;
@@ -231,6 +232,11 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::get('academic-periods/{academicPeriod}/edit', [AcademicPeriodController::class, 'edit'])->name('academic-periods.edit');
             Route::put('academic-periods/{academicPeriod}', [AcademicPeriodController::class, 'update'])->name('academic-periods.update');
             Route::post('academic-periods/{academicPeriod}/activate', [AcademicPeriodController::class, 'activate'])->name('academic-periods.activate');
+            // Training phases of the course; subjects are placed in a phase on their class's page.
+            Route::get('training-phases', [TrainingPhaseController::class, 'index'])->name('training-phases.index');
+            Route::post('training-phases', [TrainingPhaseController::class, 'store'])->name('training-phases.store');
+            Route::put('training-phases/{trainingPhase}', [TrainingPhaseController::class, 'update'])->name('training-phases.update')->whereNumber('trainingPhase');
+            Route::delete('training-phases/{trainingPhase}', [TrainingPhaseController::class, 'destroy'])->name('training-phases.destroy')->whereNumber('trainingPhase');
         });
 
         Route::middleware('can:'.Permission::ManageSubjects->value)->group(function (): void {
@@ -249,6 +255,9 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::get('classes/{classBatch}/edit', [ClassBatchController::class, 'edit'])->name('classes.edit');
             Route::put('classes/{classBatch}', [ClassBatchController::class, 'update'])->name('classes.update');
             Route::post('classes/{classBatch}/subjects', [ClassSubjectController::class, 'store'])->name('classes.subjects.store');
+            Route::put('classes/{classBatch}/subjects/{classSubject}', [ClassSubjectController::class, 'update'])
+                ->name('classes.subjects.update')
+                ->scopeBindings();
             Route::delete('classes/{classBatch}/subjects/{classSubject}', [ClassSubjectController::class, 'destroy'])
                 ->name('classes.subjects.destroy')
                 ->scopeBindings();

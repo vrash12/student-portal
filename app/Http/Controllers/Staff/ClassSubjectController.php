@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\StoreClassSubjectRequest;
+use App\Http\Requests\Academic\UpdateClassSubjectRequest;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
 use App\Models\Subject;
@@ -22,9 +23,19 @@ class ClassSubjectController extends Controller
     public function store(StoreClassSubjectRequest $request, ClassBatch $classBatch): RedirectResponse
     {
         $subject = Subject::query()->findOrFail($request->integer('subject_id'));
-        $this->classes->addSubject($classBatch, $subject);
+        $this->classes->addSubject($classBatch, $subject, $request->phase(), $request->units());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "{$subject->name} added to {$classBatch->name}."]);
+
+        return redirect()->route('classes.show', $classBatch);
+    }
+
+    /** The subject's training phase and units. */
+    public function update(UpdateClassSubjectRequest $request, ClassBatch $classBatch, ClassSubject $classSubject): RedirectResponse
+    {
+        $offering = $this->classes->updateSubject($classSubject, $request->phase(), $request->units());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => "{$offering->subject->name}: phase and units saved."]);
 
         return redirect()->route('classes.show', $classBatch);
     }

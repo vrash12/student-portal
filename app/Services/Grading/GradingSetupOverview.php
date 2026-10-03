@@ -53,7 +53,7 @@ final class GradingSetupOverview
      * The subjects of every class of the period with their weights, ordered
      * by class and subject.
      *
-     * @return list<array{classSubjectId: int, classBatch: array{id: int, name: string}, subject: array{id: int, code: string, name: string}, components: list<array{name: string, weight: string}>, assessmentCount: int, finalizedCount: int}>
+     * @return list<array{classSubjectId: int, classBatch: array{id: int, name: string}, subject: array{id: int, code: string, name: string}, phase: array{id: int, number: int, name: string}|null, units: string, components: list<array{name: string, weight: string}>, assessmentCount: int, finalizedCount: int}>
      */
     public function subjectWeights(AcademicPeriod $period): array
     {
@@ -62,6 +62,8 @@ final class GradingSetupOverview
                 'classSubjectId' => $offering->id,
                 'classBatch' => ['id' => $offering->classBatch->id, 'name' => $offering->classBatch->name],
                 'subject' => ['id' => $offering->subject->id, 'code' => $offering->subject->code, 'name' => $offering->subject->name],
+                'phase' => $offering->trainingPhase?->toSummary(),
+                'units' => DecimalValue::display($offering->units),
                 'components' => $this->components($offering->assessmentCategories),
                 'assessmentCount' => (int) $offering->assessments_count,
                 'finalizedCount' => (int) $offering->finalized_count,
@@ -220,7 +222,7 @@ final class GradingSetupOverview
             ->join('class_batches', 'class_batches.id', '=', 'class_subjects.class_batch_id')
             ->join('subjects', 'subjects.id', '=', 'class_subjects.subject_id')
             ->where('class_batches.academic_period_id', $period->id)
-            ->with(['classBatch:id,name,academic_period_id', 'subject:id,code,name', 'assessmentCategories'])
+            ->with(['classBatch:id,name,academic_period_id', 'subject:id,code,name', 'trainingPhase:id,number,name', 'assessmentCategories'])
             ->withCount([
                 'assessments',
                 'assessments as finalized_count' => fn (Builder $assessments) => $assessments->finalized(),

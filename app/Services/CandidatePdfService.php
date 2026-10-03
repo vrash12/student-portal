@@ -18,7 +18,7 @@ final class CandidatePdfService
     /** Rows that fit one column of a landscape page next to another column. */
     private const COLUMN_ROWS = 26;
 
-    /** Space reserved in the left column for the current subjects table. */
+    /** Space reserved at least in the left column for the current subjects table. */
     private const CURRENT_SUBJECT_ROWS = 10;
 
     public function __construct(private readonly CandidateProfileRecord $records) {}
@@ -59,7 +59,7 @@ final class CandidatePdfService
             }
             $data['assessments'] = $assessments->items();
             $data['examinations'] = $exams->items();
-            $data['periods'] = $this->periods($data['period'], $data['assessments'], $data['examinations']);
+            $data['periods'] = $this->periods($data['period'], $data['assessments'], $data['examinations'], self::subjectTableRows($data['academics']));
         }
 
         return $data;
@@ -69,6 +69,21 @@ final class CandidatePdfService
     {
         // Landscape, like the institution's printed registration form.
         return PdfDocument::render(view('pdf.candidate-record', $data)->render(), 'landscape');
+    }
+
+    /**
+     * Rows of the current subjects table: one per subject, a heading and an
+     * average per training phase when subjects are in phases, the CGPA and
+     * the overall standing.
+     *
+     * @param  array{subjects: list<array<string, mixed>>, course: array{phases: list<array<string, mixed>>}}  $academics
+     */
+    private static function subjectTableRows(array $academics): int
+    {
+        $phases = $academics['course']['phases'];
+        $phased = array_filter($phases, fn (array $phase): bool => $phase['phase'] !== null) !== [];
+
+        return count($academics['subjects']) + ($phased ? 2 * count($phases) : 0) + 2;
     }
 
     /**
@@ -98,7 +113,7 @@ final class CandidatePdfService
      * @param  list<array<string, mixed>>  $examinations
      * @return list<array{period: array<string, mixed>, isCurrent: bool, assessments: list<array<string, mixed>>, examinations: list<array<string, mixed>>, twoColumns: bool}>
      */
-    private function periods(?array $current, array $assessments, array $examinations): array
+    private function periods(?array $current, array $assessments, array $examinations, int $currentSubjectRows): array
     {
         $periods = [];
         if ($current !== null) {
@@ -114,7 +129,7 @@ final class CandidatePdfService
 
         uasort($periods, fn (array $a, array $b): int => [$a['period']['startsOn'] ?? '', $a['period']['id']] <=> [$b['period']['startsOn'] ?? '', $b['period']['id']]);
 
-        return array_values(array_map(function (array $group) use ($current): array {
+        return array_values(array_map(function (array $group) use ($current, $currentSubjectRows): array {
             $isCurrent = $current !== null && $group['period']['id'] === $current['id'];
             // Assessments are listed oldest first within a semester.
             $group['assessments'] = array_reverse($group['assessments']);
@@ -125,7 +140,7 @@ final class CandidatePdfService
                 // Side-by-side columns fit one landscape page for typical semesters;
                 // longer ones are printed stacked so every row stays readable.
                 'twoColumns' => count($group['assessments']) <= self::COLUMN_ROWS
-                    && count($group['examinations']) + ($isCurrent ? self::CURRENT_SUBJECT_ROWS : 0) <= self::COLUMN_ROWS,
+                    && count($group['examinations']) + ($isCurrent ? max(self::CURRENT_SUBJECT_ROWS, $currentSubjectRows) : 0) <= self::COLUMN_ROWS,
             ];
         }, $periods));
     }

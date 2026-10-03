@@ -20,7 +20,11 @@ import { formatPercent, useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import { useQueryFilters } from '@/lib/use-query-filters';
+import type { Cgpa } from '@/types/grading';
 import type { AreaCount, CandidateQualificationData, PerformanceAreaSummary, QualificationCounts } from '@/types/performance';
+
+/** A candidate's qualification with their CGPA (calculated by the server). */
+type QualificationRowData = CandidateQualificationData & { cgpa: Cgpa | null };
 
 interface QualificationFilters {
     class: string;
@@ -41,7 +45,7 @@ interface QualificationPageProps {
     /** The active areas, in area order: one column each. */
     areas: PerformanceAreaSummary[];
     /** Candidates shown, in class rank order (unranked last). */
-    rows: CandidateQualificationData[];
+    rows: QualificationRowData[];
     /** Of the company/platoon shown, before the status filter. */
     counts: QualificationCounts;
     areaCounts: AreaCount[];
@@ -289,7 +293,8 @@ export default function Qualification({
                                                 <span className="block font-normal normal-case tracking-normal text-primary-700">{areaRuleLabel(area)}</span>
                                             </Th>
                                         ))}
-                                        <Th align="right">Overall</Th>
+                                        <Th align="right">CGPA</Th>
+                                        <Th align="right">Final Grade</Th>
                                         <Th className="min-w-48">Qualification</Th>
                                     </TableHead>
                                     <tbody className="divide-y divide-line print:hidden">
@@ -312,8 +317,8 @@ export default function Qualification({
                     </section>
 
                     <p className="text-sm text-ink-muted">
-                        Class rank covers the whole {classTerm.toLowerCase()}; filters don't change it. Partial: a weighted area has no grade yet. Subject standing is
-                        not affected.
+                        Class rank is by final grade over the whole {classTerm.toLowerCase()}; filters don't change it. CGPA: average of every subject grade so far,
+                        weighted by units. Partial: a weighted area has no grade yet. Subject standing is not affected.
                     </p>
                 </div>
             )}
@@ -321,7 +326,7 @@ export default function Qualification({
     );
 }
 
-function QualificationRow({ row, areas, linkCandidate }: { row: CandidateQualificationData; areas: PerformanceAreaSummary[]; linkCandidate: boolean }) {
+function QualificationRow({ row, areas, linkCandidate }: { row: QualificationRowData; areas: PerformanceAreaSummary[]; linkCandidate: boolean }) {
     const results = new Map(row.areas.map((result) => [result.areaId, result]));
     const rank = row.rank ?? null;
     const { candidate, overall, qualification } = row;
@@ -371,6 +376,10 @@ function QualificationRow({ row, areas, linkCandidate }: { row: CandidateQualifi
                     </Td>
                 );
             })}
+            <Td align="right" numeric className="text-ink">
+                <span className="font-semibold">{formatAreaGrade(row.cgpa?.grade ?? null)}</span>
+                {row.cgpa !== null && row.cgpa.grade !== null && !row.cgpa.complete && <span className="block text-xs text-ink-muted">In progress</span>}
+            </Td>
             <Td align="right" numeric className="text-ink">
                 <span className="font-semibold">{formatAreaGrade(overall.score)}</span>
                 {overall.score !== null && !overall.complete && <span className="block text-xs text-ink-muted">Partial</span>}

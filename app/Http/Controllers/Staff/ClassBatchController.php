@@ -11,6 +11,7 @@ use App\Models\Candidate;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
 use App\Models\Subject;
+use App\Models\TrainingPhase;
 use App\Services\ClassBatchService;
 use App\Support\AcademicOptions;
 use App\Support\DecimalValue;
@@ -97,11 +98,13 @@ class ClassBatchController extends Controller
             'academicPeriod',
             'classSubjects' => fn ($offerings) => $offerings->withCount('assessments'),
             'classSubjects.subject',
+            'classSubjects.trainingPhase',
             'classSubjects.instructorAssignments.instructor',
             'classSubjects.assessmentCategories',
         ]);
 
-        $offerings = $classBatch->classSubjects->sortBy(fn (ClassSubject $offering): string => $offering->subject->name);
+        // In phase order (subjects not in a phase last), then by name.
+        $offerings = $classBatch->classSubjects->sortBy(fn (ClassSubject $offering): array => [$offering->trainingPhase?->number ?? PHP_INT_MAX, $offering->subject->name]);
         $offeredSubjectIds = $offerings->pluck('subject_id')->all();
 
         $candidates = $classBatch->candidates()
@@ -133,6 +136,8 @@ class ClassBatchController extends Controller
                     'name' => $offering->subject->name,
                     'isActive' => $offering->subject->is_active,
                 ],
+                'phase' => $offering->trainingPhase?->toSummary(),
+                'units' => DecimalValue::display($offering->units),
                 'instructors' => $offering->instructorAssignments
                     ->sortBy(fn ($assignment) => $assignment->instructor->name)
                     ->map(fn ($assignment): array => [
@@ -161,6 +166,7 @@ class ClassBatchController extends Controller
                 ->map(fn (Subject $subject): array => ['id' => $subject->id, 'code' => $subject->code, 'name' => $subject->name])
                 ->all(),
             'instructorOptions' => AcademicOptions::eligibleInstructors(),
+            'phases' => TrainingPhase::query()->ordered()->get()->map(fn (TrainingPhase $phase): array => $phase->toSummary())->all(),
             'can' => [
                 'manageAssignments' => $request->user()->hasPermission(Permission::ManageInstructorAssignments),
                 'viewCandidates' => $request->user()->can('viewAny', Candidate::class),

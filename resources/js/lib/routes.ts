@@ -41,6 +41,12 @@ export const routes = {
         activate: (periodId: number) => `/academic-periods/${periodId}/activate`,
         thresholds: (periodId: number, query?: Record<string, string>) => withQuery(`/academic-periods/${periodId}/grading-thresholds`, query),
     },
+    trainingPhases: {
+        index: () => '/training-phases',
+        store: () => '/training-phases',
+        update: (phaseId: number) => `/training-phases/${phaseId}`,
+        destroy: (phaseId: number) => `/training-phases/${phaseId}`,
+    },
     subjects: {
         index: () => '/subjects',
         create: () => '/subjects/create',
@@ -56,6 +62,8 @@ export const routes = {
         edit: (classId: number) => `/classes/${classId}/edit`,
         update: (classId: number) => `/classes/${classId}`,
         addSubject: (classId: number) => `/classes/${classId}/subjects`,
+        /** The subject's training phase and units. */
+        updateSubject: (classId: number, classSubjectId: number) => `/classes/${classId}/subjects/${classSubjectId}`,
         removeSubject: (classId: number, classSubjectId: number) => `/classes/${classId}/subjects/${classSubjectId}`,
         grading: (classId: number, classSubjectId: number, query?: Record<string, string>) =>
             withQuery(`/classes/${classId}/subjects/${classSubjectId}/grading`, query),

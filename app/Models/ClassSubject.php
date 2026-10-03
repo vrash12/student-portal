@@ -12,11 +12,38 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * A subject taken by a class during its academic period. Instructors are
  * assigned to these offerings; grading categories and assessments belong to
- * them.
+ * them. Each may belong to a training phase and carries units, its weight in
+ * phase averages and the CGPA (owner request, 2026-10-03).
  */
 #[UsePolicy(ClassSubjectPolicy::class)]
 class ClassSubject extends Model
 {
+    /** Units of a subject when none are given (every subject then counts equally). */
+    public const DEFAULT_UNITS = '1.00';
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'units' => self::DEFAULT_UNITS,
+    ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return ['units' => 'decimal:2'];
+    }
+
+    /**
+     * @return BelongsTo<TrainingPhase, $this>
+     */
+    public function trainingPhase(): BelongsTo
+    {
+        return $this->belongsTo(TrainingPhase::class);
+    }
+
     public function examinations(): HasMany
     {
         return $this->hasMany(Examination::class);

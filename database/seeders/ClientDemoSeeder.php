@@ -115,6 +115,9 @@ class ClientDemoSeeder extends Seeder
 
         // Placeholder medical record fields and fictional values.
         $this->call(DemoMedicalSeeder::class);
+
+        // The subjects in the placeholder training phases, with units.
+        $this->call(DemoTrainingPhasesSeeder::class);
     }
 
     private function staff(string $username, string $name, SystemRole $role): User
