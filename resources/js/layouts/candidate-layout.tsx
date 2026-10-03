@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Award, ClipboardList, Dumbbell, GraduationCap, HeartPulse, House, LogOut, UserRound, type LucideIcon } from 'lucide-react';
-import { useEffect, type ReactNode } from 'react';
+import { Award, ChevronDown, ChevronUp, ClipboardList, Dumbbell, GraduationCap, HeartPulse, House, LogOut, UserRound, type LucideIcon } from 'lucide-react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
 import { buttonClasses } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/toaster';
@@ -22,6 +22,25 @@ const PORTAL_SECTIONS: Array<{ href: string; label: string; icon: LucideIcon; is
     { href: routes.portal.profile(), label: 'My Information', icon: UserRound, isActive: (component) => component === 'portal/profile' },
 ];
 
+/** Remembers on this device whether the candidate folded the phone menu. */
+const NAV_COLLAPSED_KEY = 'portal-nav-collapsed';
+
+function readNavCollapsed(): boolean {
+    try {
+        return window.localStorage.getItem(NAV_COLLAPSED_KEY) === '1';
+    } catch {
+        return false;
+    }
+}
+
+function storeNavCollapsed(collapsed: boolean): void {
+    try {
+        window.localStorage.setItem(NAV_COLLAPSED_KEY, collapsed ? '1' : '0');
+    } catch {
+        // Storage unavailable (private window): the choice lasts for this page only.
+    }
+}
+
 /**
  * Candidate examination portal shell (UI_UX_DESIGN.md §20): deliberately
  * simpler than the staff area, with no administrative navigation.
@@ -32,6 +51,16 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
     const userId = auth.user?.id ?? null;
     // Military fitness is staff only unless the institution shows it to candidates.
     const sections = PORTAL_SECTIONS.filter((item) => !item.fitness || app.portal.showFitness);
+    const current = sections.find((item) => item.isActive(component));
+    // Phones only: the icon grid can be folded into one bar (owner request, 2026-10-03).
+    const [navCollapsed, setNavCollapsed] = useState(readNavCollapsed);
+    const toggleNav = () => {
+        setNavCollapsed((collapsed) => {
+            storeNavCollapsed(!collapsed);
+
+            return !collapsed;
+        });
+    };
     useFocusMainOnNavigate();
     // Set during render: child pages (the attempt screen) read recovery data
     // in their own effects, which run before this layout's effects.
@@ -76,8 +105,25 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
                     </div>
                 </div>
                 {component !== 'portal/examinations/attempt' && <nav aria-label="Candidate portal" className="mx-auto max-w-7xl px-2 pb-2 sm:px-4">
-                    {/* Equal tabs, icon above the label: one row from tablet width, rows of three on phones. Nothing is hidden or scrolled. */}
-                    <ul className={`grid grid-cols-3 gap-1 ${TAB_COLUMNS[sections.length] ?? 'sm:grid-cols-7'}`}>
+                    {/* Phones: one bar naming the current page folds or shows the icons below. Hidden from tablet width, where the tabs fit one row. */}
+                    <button
+                        type="button"
+                        onClick={toggleNav}
+                        aria-expanded={!navCollapsed}
+                        aria-controls="portal-sections"
+                        className="mb-1 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/15 focus-visible:outline focus-visible:outline-2 sm:hidden"
+                    >
+                        <span className="flex min-w-0 items-center gap-2">
+                            {current && <current.icon className="size-5 shrink-0 text-accent-300" aria-hidden="true" />}
+                            <span className="truncate">{current?.label ?? 'Menu'}</span>
+                        </span>
+                        <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary-100">
+                            {navCollapsed ? 'Show Menu' : 'Hide Menu'}
+                            {navCollapsed ? <ChevronDown className="size-4" aria-hidden="true" /> : <ChevronUp className="size-4" aria-hidden="true" />}
+                        </span>
+                    </button>
+                    {/* Equal tabs, icon above the label: one row from tablet width, rows of three on phones. */}
+                    <ul id="portal-sections" className={`${navCollapsed ? 'hidden sm:grid' : 'grid'} grid-cols-3 gap-1 ${TAB_COLUMNS[sections.length] ?? 'sm:grid-cols-7'}`}>
                         {sections.map((item) => {
                             const active = item.isActive(component);
 
