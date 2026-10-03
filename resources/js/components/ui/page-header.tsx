@@ -92,28 +92,31 @@ export function PageHeader({ title, description, actions, breadcrumbs }: PageHea
     return fullWidth ? createPortal(banner, slot) : banner;
 }
 
+/**
+ * The way back to the pages above this one. The current page itself is not
+ * repeated: the title right below names it (owner request, 2026-10-03).
+ */
 function Breadcrumbs({ items }: { items: BreadcrumbItem[] }) {
+    const parents = items.slice(0, -1);
+    if (parents.length === 0) {
+        return null;
+    }
+
     return (
         <nav aria-label="Breadcrumb" className="mb-1.5">
-            <ol className="flex flex-wrap items-center gap-1 text-xs font-medium uppercase tracking-[0.12em] text-accent-300 print:text-ink-muted">
-                {items.map((item, index) => {
-                    const isLast = index === items.length - 1;
-
-                    return (
-                        <li key={`${item.label}-${index}`} className="flex items-center gap-1">
-                            {item.href && !isLast ? (
-                                <Link href={item.href} className="rounded-sm text-primary-100 hover:text-white hover:underline">
-                                    {item.label}
-                                </Link>
-                            ) : (
-                                <span aria-current={isLast ? 'page' : undefined} className={isLast ? 'text-accent-300' : undefined}>
-                                    {item.label}
-                                </span>
-                            )}
-                            {!isLast && <ChevronRight className="size-3.5 text-primary-200" aria-hidden="true" />}
-                        </li>
-                    );
-                })}
+            <ol className="flex flex-wrap items-center gap-1 text-xs font-medium uppercase tracking-[0.12em] text-primary-100 print:text-ink-muted">
+                {parents.map((item, index) => (
+                    <li key={`${item.label}-${index}`} className="flex items-center gap-1">
+                        {item.href ? (
+                            <Link href={item.href} className="rounded-sm hover:text-white hover:underline">
+                                {item.label}
+                            </Link>
+                        ) : (
+                            <span>{item.label}</span>
+                        )}
+                        <ChevronRight className="size-3.5 text-primary-200" aria-hidden="true" />
+                    </li>
+                ))}
             </ol>
         </nav>
     );
