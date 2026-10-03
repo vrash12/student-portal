@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Award, ChevronDown, ChevronUp, ClipboardList, Dumbbell, GraduationCap, HeartPulse, House, LogOut, UserRound, type LucideIcon } from 'lucide-react';
+import { Award, ChevronDown, ChevronUp, ClipboardList, LayoutGrid, Dumbbell, GraduationCap, HeartPulse, House, LogOut, UserRound, type LucideIcon } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
 import { buttonClasses } from '@/components/ui/button';
@@ -51,7 +51,6 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
     const userId = auth.user?.id ?? null;
     // Military fitness is staff only unless the institution shows it to candidates.
     const sections = PORTAL_SECTIONS.filter((item) => !item.fitness || app.portal.showFitness);
-    const current = sections.find((item) => item.isActive(component));
     // Phones only: the icon grid can be folded into one bar (owner request, 2026-10-03).
     const [navCollapsed, setNavCollapsed] = useState(readNavCollapsed);
     const toggleNav = () => {
@@ -78,50 +77,47 @@ export default function CandidateLayout({ children }: { children: ReactNode }) {
         <div className="flex min-h-dvh flex-col">
             <a href="#main-content" className="sr-only rounded-lg bg-accent-300 px-4 py-3 text-primary-900 focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50">Skip to main content</a>
             <header className="brand-dark border-b-4 border-accent-300 bg-primary-900 text-white shadow-sm">
-                <div className="mx-auto flex min-h-20 w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-2 sm:px-6">
-                    <div className="flex min-w-0 items-center gap-3">
-                        <BrandMark className="size-12" />
-                        <p className="min-w-0 truncate text-sm font-semibold text-white">{app.organizationName}</p>
+                <div className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between gap-2 px-3 py-2 sm:min-h-20 sm:gap-4 sm:px-6">
+                    <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+                        <BrandMark className="size-10 shrink-0 sm:size-12" />
+                        <p className="line-clamp-2 min-w-0 text-xs font-semibold leading-snug text-white sm:truncate sm:text-sm">{app.organizationName}</p>
                     </div>
 
-                    <div className="ml-auto flex items-center gap-3 sm:gap-4">
+                    <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-4">
                         {auth.user && (
                             <div className="hidden min-w-0 text-right sm:block">
                                 <p className="truncate text-sm font-semibold text-white">{auth.user.name}</p>
                                 <p className="truncate text-xs text-primary-100">{auth.user.username}</p>
                             </div>
                         )}
+                        {/* Phones: a small button folds or shows the page icons below (owner request, 2026-10-03). Hidden from tablet width and during an attempt. */}
+                        {component !== 'portal/examinations/attempt' && <button
+                            type="button"
+                            onClick={toggleNav}
+                            aria-expanded={!navCollapsed}
+                            aria-controls="portal-sections"
+                            aria-label={navCollapsed ? 'Show menu' : 'Hide menu'}
+                            title={navCollapsed ? 'Show menu' : 'Hide menu'}
+                            className={`inline-flex min-h-11 items-center gap-0.5 rounded-lg px-2.5 focus-visible:outline focus-visible:outline-2 sm:hidden ${navCollapsed ? 'bg-white/10 text-white hover:bg-white/15' : 'text-primary-100 hover:bg-white/10 hover:text-white'}`}
+                        >
+                            <LayoutGrid className="size-5" aria-hidden="true" />
+                            {navCollapsed ? <ChevronDown className="size-4" aria-hidden="true" /> : <ChevronUp className="size-4" aria-hidden="true" />}
+                        </button>}
                         {/* Hidden during an attempt: one tap would sign the candidate out mid-examination. */}
                         {component !== 'portal/examinations/attempt' && <Link
                             href={routes.logout()}
                             method="post"
                             as="button"
                             onBefore={() => { void pruneRecovery(); }}
-                            className={buttonClasses('ghost', 'md', 'text-primary-100 hover:bg-white/10 hover:text-white')}
+                            aria-label="Sign Out"
+                            className={buttonClasses('ghost', 'md', 'px-2.5 text-primary-100 hover:bg-white/10 hover:text-white sm:px-4')}
                         >
                             <LogOut className="size-4" aria-hidden="true" />
-                            Sign Out
+                            <span className="hidden sm:inline">Sign Out</span>
                         </Link>}
                     </div>
                 </div>
                 {component !== 'portal/examinations/attempt' && <nav aria-label="Candidate portal" className="mx-auto max-w-7xl px-2 pb-2 sm:px-4">
-                    {/* Phones: one bar naming the current page folds or shows the icons below. Hidden from tablet width, where the tabs fit one row. */}
-                    <button
-                        type="button"
-                        onClick={toggleNav}
-                        aria-expanded={!navCollapsed}
-                        aria-controls="portal-sections"
-                        className="mb-1 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl bg-white/10 px-4 text-sm font-semibold text-white hover:bg-white/15 focus-visible:outline focus-visible:outline-2 sm:hidden"
-                    >
-                        <span className="flex min-w-0 items-center gap-2">
-                            {current && <current.icon className="size-5 shrink-0 text-accent-300" aria-hidden="true" />}
-                            <span className="truncate">{current?.label ?? 'Menu'}</span>
-                        </span>
-                        <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary-100">
-                            {navCollapsed ? 'Show Menu' : 'Hide Menu'}
-                            {navCollapsed ? <ChevronDown className="size-4" aria-hidden="true" /> : <ChevronUp className="size-4" aria-hidden="true" />}
-                        </span>
-                    </button>
                     {/* Equal tabs, icon above the label: one row from tablet width, rows of three on phones. */}
                     <ul id="portal-sections" className={`${navCollapsed ? 'hidden sm:grid' : 'grid'} grid-cols-3 gap-1 ${TAB_COLUMNS[sections.length] ?? 'sm:grid-cols-7'}`}>
                         {sections.map((item) => {
