@@ -44,11 +44,16 @@ class DemoBackgroundsSeeder extends Seeder
             throw new RuntimeException('Demo backgrounds must not be seeded in production.');
         }
 
-        Candidate::query()->whereDoesntHave('background')->orderBy('candidate_number')->get()->values()->each(function (Candidate $candidate, int $index): void {
+        // The sex of a demo candidate matches their name and picture.
+        $female = array_map(fn (array $person): bool => $person[4], DemoPeopleSeeder::CANDIDATES)
+            + array_map(fn (array $person): bool => $person[3], DemoCampusSeeder::candidates());
+
+        Candidate::query()->whereDoesntHave('background')->orderBy('candidate_number')->get()->values()->each(function (Candidate $candidate, int $index) use ($female): void {
+            $isFemale = $female[$candidate->candidate_number] ?? $index % 4 === 1;
             $background = new CandidateBackground([
                 'date_of_birth' => sprintf('%d-%02d-%02d', 1998 + $index % 6, 1 + ($index * 5) % 12, 1 + ($index * 7) % 28),
                 'place_of_birth' => self::PLACES[$index % count(self::PLACES)],
-                'sex' => $index % 4 === 1 ? 'female' : 'male',
+                'sex' => $isFemale ? 'female' : 'male',
                 'civil_status' => $index % 5 === 3 ? 'married' : 'single',
                 'home_address' => sprintf('%d Sample Street, Barangay %d, %s', 10 + $index * 3, 1 + $index % 9, self::PLACES[($index + 2) % count(self::PLACES)]),
                 // 0917-555-01xx: a fictional mobile range for demos.

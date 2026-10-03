@@ -77,9 +77,11 @@ On 2026-10-01 the local database was reset to a small set for client demonstrati
 | `student01` … `student20` | Candidates in Class A, South Campus (fictional Filipino names, e.g. `student01` Mark Anthony Dizon Villanueva) |
 | `north.admin` | Admin limited to North Campus (Rosario T. Valdez) |
 | `instructor3` | Instructor, Subjects 1 and 2 of Class B, North Campus (Dennis R. Aquino) |
-| `north01` … `north05` | Candidates in Class B, North Campus |
+| `north01` … `north20` | Candidates in Class B, North Campus |
+| `east.admin`, `instructor4`, `east01` … `east20` | East Campus: Admin, instructor and candidates of Class C |
+| `west.admin`, `instructor5`, `west01` … `west20` | West Campus: Admin, instructor and candidates of Class D |
 
-Campuses (2026-10-03, fixed on 2026-10-04): the institution has exactly four campuses, **South, North, East and West**, created by the migrations; none can be added or removed (an administrator may change a campus's address and switch it off). Class A and its people are on the **South Campus**; `DemoCampusSeeder` (run by `ClientDemoSeeder`) adds Class B on the **North Campus**, so campus scoping can be tried: `north.admin` sees only North Campus, `admin` sees every campus and can narrow lists, the dashboard and reports with the Campus filter. It is safe to run again on an existing demo database:
+Campuses (2026-10-03, fixed on 2026-10-04): the institution has exactly four campuses, **South, North, East and West**, created by the migrations; none can be added or removed (an administrator may change a campus's address and switch it off). Class A and its people are on the **South Campus**; `DemoCampusSeeder` (run by `ClientDemoSeeder`) gives every other campus a class of 20 candidates (Class B North, Class C East, Class D West) with an instructor and a campus administrator, so there are 20 candidates on every campus (80 in all) and campus scoping can be tried: `north.admin` sees only North Campus, `admin` sees every campus and can narrow lists, the dashboard and reports with the Campus filter. It is safe to run again on an existing demo database:
 
 ```bash
 php artisan db:seed --class=DemoCampusSeeder

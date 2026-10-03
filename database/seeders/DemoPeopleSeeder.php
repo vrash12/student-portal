@@ -13,8 +13,8 @@ use RuntimeException;
  * Fictional Filipino names and illustrated profile pictures for the client
  * demo set (owner request, 2026-10-02). Usernames and candidate numbers do
  * not change (student01 … student20, instructor1, instructor2, admin), so
- * demo sign-ins keep working. The North Campus candidates (DemoCampusSeeder)
- * get pictures too.
+ * demo sign-ins keep working. The candidates of the North, East and West
+ * campuses (DemoCampusSeeder) get pictures too.
  *
  * Only placeholder records are changed: candidates still named "Student NN"
  * and staff still named "Instructor One/Two" or "Administrator"; names
@@ -94,10 +94,10 @@ class DemoPeopleSeeder extends Seeder
             });
         }
 
-        // The second demo campus's candidates already have their names.
-        $northCandidates = Candidate::query()->whereIn('candidate_number', array_keys(DemoCampusSeeder::CANDIDATES))->get();
-        foreach ($northCandidates as $candidate) {
-            self::addPortrait($candidate, DemoCampusSeeder::CANDIDATES[$candidate->candidate_number][3]);
+        // The other campuses' candidates already have their names.
+        $campusCandidates = DemoCampusSeeder::candidates();
+        foreach (Candidate::query()->whereIn('candidate_number', array_keys($campusCandidates))->get() as $candidate) {
+            self::addPortrait($candidate, $campusCandidates[$candidate->candidate_number][3]);
         }
     }
 

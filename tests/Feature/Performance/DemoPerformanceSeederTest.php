@@ -78,8 +78,10 @@ class DemoPerformanceSeederTest extends TestCase
         $this->assertSame(6, AuditLog::query()->where('action', AuditAction::AttendanceRecorded->value)->count());
         $fitnessTests = fn (string $class): array => FitnessTest::query()->whereHas('classBatch', fn ($classes) => $classes->where('name', $class))->orderBy('tested_on')->pluck('title')->all();
         $this->assertSame(['Diagnostic Fitness Test', 'Midterm Fitness Test'], $fitnessTests('Class A'));
-        // The North Campus's class has the diagnostic test only.
-        $this->assertSame(['Diagnostic Fitness Test'], $fitnessTests('Class B'));
+        // The classes of the other campuses have the diagnostic test only.
+        foreach (['Class B', 'Class C', 'Class D'] as $class) {
+            $this->assertSame(['Diagnostic Fitness Test'], $fitnessTests($class));
+        }
 
         // Records describe what has happened: no date after today.
         $this->assertFalse(ConductEntry::query()->where('occurred_on', '>', '2026-10-01')->exists());

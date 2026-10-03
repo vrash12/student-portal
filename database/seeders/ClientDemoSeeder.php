@@ -31,9 +31,9 @@ use RuntimeException;
  *   instructor1, instructor2   Instructors (Subject 1 and Subject 2)
  *   student01 … student20      Candidates in Class A
  *
- * Class A and its instructors are on the South Campus. DemoCampusSeeder adds
- * a second campus (North Campus) with its own class, instructor, candidates
- * and campus administrator.
+ * Class A and its instructors are on the South Campus. DemoCampusSeeder gives
+ * the North, East and West campuses a class of 20 candidates each, with an
+ * instructor and a campus administrator.
  *
  * Display names are fictional Filipino names (DemoPeopleSeeder).
  *
@@ -98,7 +98,7 @@ class ClientDemoSeeder extends Seeder
 
         $this->students($class);
 
-        // A second campus with its own class, instructor, candidates and administrator.
+        // The other three campuses: a class of 20, an instructor and an administrator each.
         $this->call(DemoCampusSeeder::class);
 
         // Grading weights, 75/80 thresholds and finalized scores for every taught subject.
