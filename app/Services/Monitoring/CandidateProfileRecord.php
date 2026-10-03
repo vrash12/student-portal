@@ -31,7 +31,7 @@ final class CandidateProfileRecord
     public function academics(Candidate $candidate): array
     {
         $offerings = ClassSubject::query()->where('class_batch_id', $candidate->class_batch_id ?? 0)
-            ->with(['subject', 'instructors:id,name', 'trainingPhase:id,number,name'])->get()
+            ->with(['subject', 'instructors:id,name', 'trainingPhase:id,number,name,starts_on,ends_on'])->get()
             ->sortBy(fn (ClassSubject $offering): array => [$offering->trainingPhase?->number ?? PHP_INT_MAX, $offering->subject->name])
             ->values();
         $grades = $this->grades->forCandidate($candidate, $offerings->modelKeys());

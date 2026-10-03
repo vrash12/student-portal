@@ -4,11 +4,15 @@ namespace App\Http\Requests\Academic;
 
 use App\Http\Requests\Concerns\NormalizesTextInput;
 use App\Models\AcademicPeriod;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 /**
- * Create or update an academic period. Authorization is enforced by the
+ * Create or update an academic period: one year of the course at most
+ * (owner request, 2026-10-03), still holding all of its training phases
+ * when its dates change. Authorization is enforced by the
  * `can:academic_periods.manage` route middleware.
  */
 class AcademicPeriodRequest extends FormRequest
@@ -38,6 +42,38 @@ class AcademicPeriodRequest extends FormRequest
             'starts_on' => ['required', 'date_format:Y-m-d'],
             'ends_on' => ['required', 'date_format:Y-m-d', 'after_or_equal:starts_on'],
         ];
+    }
+
+    /**
+     * @return array<int, callable(Validator): void>
+     */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $startsOn = CarbonImmutable::parse($this->validated('starts_on'));
+            $endsOn = CarbonImmutable::parse($this->validated('ends_on'));
+            $lastEnd = AcademicPeriod::lastAllowedEnd($startsOn);
+            if ($endsOn->gt($lastEnd)) {
+                $validator->errors()->add('ends_on', 'The course lasts one year: end the academic year on or before '.$lastEnd->format('M j, Y').'.');
+
+                return;
+            }
+
+            /** @var AcademicPeriod|null $period */
+            $period = $this->route('academicPeriod');
+            $first = $period?->trainingPhases()->orderBy('starts_on')->first();
+            $last = $period?->trainingPhases()->orderByDesc('ends_on')->first();
+            if ($first !== null && $startsOn->gt($first->starts_on)) {
+                $validator->errors()->add('starts_on', "{$first->name} starts on ".$first->starts_on->format('M j, Y').'. Start the year on or before that day, or change the phase first.');
+            }
+            if ($last !== null && $endsOn->lt($last->ends_on)) {
+                $validator->errors()->add('ends_on', "{$last->name} ends on ".$last->ends_on->format('M j, Y').'. End the year on or after that day, or change the phase first.');
+            }
+        }];
     }
 
     /**

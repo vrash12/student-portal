@@ -71,6 +71,9 @@ export interface TrainingPhaseSummary {
     /** Position in the course: Phase 1 comes before Phase 2. */
     number: number;
     name: string;
+    /** Y-m-d; the phase lies inside its academic year. */
+    startsOn: string;
+    endsOn: string;
 }
 
 /** A candidate's average in one training phase, calculated by the server (unit-weighted). */

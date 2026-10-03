@@ -9,6 +9,7 @@ use App\Services\ClassBatchService;
 use App\Services\Grading\CourseRecordService;
 use App\Services\Performance\PerformanceAreaService;
 use App\Services\Performance\QualificationEngine;
+use App\Services\TrainingPhaseService;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -33,9 +34,10 @@ class CourseRecordTest extends TestCase
         parent::setUp();
         $this->buildGradingFixtures();
 
-        // The three placeholder phases come from their migration.
-        $this->phase1 = TrainingPhase::query()->where('number', 1)->sole();
-        $this->phase2 = TrainingPhase::query()->where('number', 2)->sole();
+        // Two phases of the active year (Aug 3 – Dec 18, 2026).
+        $phases = $this->app->make(TrainingPhaseService::class);
+        $this->phase1 = $phases->create($this->activePeriod, ['number' => 1, 'name' => 'Phase 1', 'starts_on' => '2026-08-03', 'ends_on' => '2026-10-09']);
+        $this->phase2 = $phases->create($this->activePeriod, ['number' => 2, 'name' => 'Phase 2', 'starts_on' => '2026-10-10', 'ends_on' => '2026-12-18']);
 
         $classes = $this->app->make(ClassBatchService::class);
         $classes->updateSubject($this->offeringA1, $this->phase1, '3');

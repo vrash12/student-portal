@@ -17,7 +17,6 @@ use App\Models\MedicalDownloadRequest;
 use App\Models\Question;
 use App\Models\QuestionMedia;
 use App\Models\Subject;
-use App\Models\TrainingPhase;
 use App\Services\Accounts\AccountService;
 use App\Services\Attendance\AttendanceService;
 use App\Services\Conduct\ConductService;
@@ -27,6 +26,7 @@ use App\Services\Fitness\FitnessTestService;
 use App\Services\Grading\GradeCorrectionService;
 use App\Services\Medical\MedicalRecordService;
 use App\Services\Performance\PerformanceAreaService;
+use App\Services\TrainingPhaseService;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as Router;
 use Illuminate\Support\Str;
@@ -197,8 +197,10 @@ class RouteAccessMatrixTest extends TestCase
             'performanceArea' => (string) $performanceArea->id,
             'question' => (string) $question->id,
             'subject' => (string) $subject2->id,
-            // A placeholder phase created by its migration.
-            'trainingPhase' => (string) TrainingPhase::query()->where('number', 3)->value('id'),
+            // A phase of the active year, used by no subject.
+            'trainingPhase' => (string) $this->app->make(TrainingPhaseService::class)->create($this->activePeriod, [
+                'number' => 3, 'name' => 'Phase 3', 'starts_on' => '2026-11-03', 'ends_on' => '2026-12-18',
+            ])->id,
             'type' => 'registration',
             'user' => (string) $this->bravo->id,
         ];

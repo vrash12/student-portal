@@ -166,7 +166,8 @@ class ClassBatchController extends Controller
                 ->map(fn (Subject $subject): array => ['id' => $subject->id, 'code' => $subject->code, 'name' => $subject->name])
                 ->all(),
             'instructorOptions' => AcademicOptions::eligibleInstructors(),
-            'phases' => TrainingPhase::query()->ordered()->get()->map(fn (TrainingPhase $phase): array => $phase->toSummary())->all(),
+            // Phases of the class's academic year only.
+            'phases' => $classBatch->academicPeriod->trainingPhases()->ordered()->get()->map(fn (TrainingPhase $phase): array => $phase->toSummary())->all(),
             'can' => [
                 'manageAssignments' => $request->user()->hasPermission(Permission::ManageInstructorAssignments),
                 'viewCandidates' => $request->user()->can('viewAny', Candidate::class),

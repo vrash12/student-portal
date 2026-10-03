@@ -14,6 +14,7 @@ import { Panel } from '@/components/ui/panel';
 import { StatusBadge, type StatusTone } from '@/components/ui/status-badge';
 import { RowAction, Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
 import { cn } from '@/lib/cn';
+import { formatCalendarDate } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
 import type { Paginated } from '@/types';
@@ -104,7 +105,7 @@ export default function ClassShow({ classBatch, offerings, candidates, subjectOp
                             {can.viewPeriod && (
                                 <>
                                     {' '}
-                                    <Link href={routes.trainingPhases.index()} className="text-primary-700 underline">
+                                    <Link href={routes.trainingPhases.index({ period: String(classBatch.period.id) })} className="text-primary-700 underline">
                                         Manage phases
                                     </Link>
                                 </>
@@ -399,13 +400,13 @@ function PhaseSelect({ phases, value, onChange, error, srSuffix }: { phases: Tra
                 </>
             }
             error={error}
-            className="sm:w-48"
+            className="sm:w-80"
         >
             <SelectInput value={value} onChange={(event) => onChange(event.target.value)}>
                 <option value="">Not in a phase</option>
                 {phases.map((phase) => (
                     <option key={phase.id} value={String(phase.id)}>
-                        {phase.name}
+                        {phase.name} ({formatCalendarDate(phase.startsOn)} – {formatCalendarDate(phase.endsOn)})
                     </option>
                 ))}
             </SelectInput>

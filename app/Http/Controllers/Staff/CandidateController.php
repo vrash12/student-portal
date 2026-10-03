@@ -142,7 +142,7 @@ class CandidateController extends Controller
                 'instructorAssignments',
                 fn (Builder $assignments) => $assignments->where('instructor_id', $viewer->id),
             ))
-            ->with(['subject', 'instructors', 'trainingPhase:id,number,name'])
+            ->with(['subject', 'instructors', 'trainingPhase:id,number,name,starts_on,ends_on'])
             ->get()
             // In training-phase order (subjects not in a phase last), then by name.
             ->sortBy(fn (ClassSubject $offering): array => [$offering->trainingPhase?->number ?? PHP_INT_MAX, $offering->subject->name])

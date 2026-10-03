@@ -9,6 +9,7 @@ use App\Models\AcademicPeriod;
 use App\Models\ClassBatch;
 use App\Models\ClassSubject;
 use App\Models\InstructorAssignment;
+use App\Models\TrainingPhase;
 use App\Services\AcademicPeriodService;
 use App\Services\Grading\GradingThresholds;
 use Illuminate\Http\RedirectResponse;
@@ -114,6 +115,8 @@ class AcademicPeriodController extends Controller
                 ...$this->present($academicPeriod),
                 'thresholds' => GradingThresholds::forPeriod($academicPeriod)?->toArray(),
             ],
+            // The year's training phases, in order (the course lasts one year).
+            'phases' => $academicPeriod->trainingPhases()->ordered()->get()->map(fn (TrainingPhase $phase): array => $phase->toSummary())->all(),
             'classes' => $presentedClasses->all(),
             'totals' => [
                 'classes' => $classes->count(),

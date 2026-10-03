@@ -68,10 +68,10 @@ class ClientDemoSeeder extends Seeder
             2 => $this->staff('instructor2', DemoPeopleSeeder::STAFF['instructor2'], SystemRole::Instructor),
         ];
 
-        $period = AcademicPeriod::query()->firstOrCreate(
-            ['name' => 'First Semester 2026-2027'],
-            ['starts_on' => '2026-08-03', 'ends_on' => '2026-12-18'],
-        );
+        // The course lasts one year, named after its years (owner request, 2026-10-03). Demo
+        // data seeded before then keeps its earlier "First Semester 2026-2027" period.
+        $period = AcademicPeriod::query()->whereIn('name', ['2026-2027', 'First Semester 2026-2027'])->orderBy('id')->first()
+            ?? AcademicPeriod::query()->create(['name' => '2026-2027', 'starts_on' => '2026-08-03', 'ends_on' => '2027-07-30']);
         if (! AcademicPeriod::query()->active()->exists()) {
             $period->forceFill(['is_active' => true])->save();
         }

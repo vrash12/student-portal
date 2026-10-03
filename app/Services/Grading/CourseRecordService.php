@@ -115,7 +115,7 @@ final class CourseRecordService
     {
         return ClassSubject::query()
             ->where('class_batch_id', $classBatchId)
-            ->with(['subject:id,code,name', 'trainingPhase:id,number,name'])
+            ->with(['subject:id,code,name', 'trainingPhase:id,number,name,starts_on,ends_on'])
             ->get()
             ->sortBy(fn (ClassSubject $offering): array => [$offering->trainingPhase?->number ?? PHP_INT_MAX, $offering->subject->name, $offering->id])
             ->values();

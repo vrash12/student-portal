@@ -385,6 +385,8 @@ Subjects must ultimately be configurable through the application.
 
 Owner decision (2026-10-03): the grading format is Training Phase → subjects under each phase → individual grades → phase average → Cumulative General Point Average (CGPA) → class standing/rank → final course grade. A class keeps its candidates for the whole course; each subject of a class belongs to a configurable training phase (Academics → Training Phases) and carries units (default 1). Phase averages and the CGPA are unit-weighted averages of the subject grades (`GradeCalculationService::weightedAverage`, `CourseRecordService`), on the 0–100 grade scale. The final course grade is the weighted performance areas (the overall score), and class rank (staff only) is by it. See `docs/grading-explained.md`.
 
+Owner decision (2026-10-03): the whole course lasts one year. An academic period is that year (named like 2026-2027, 2027-2028) and lasts at most one year; every training phase belongs to one academic year, with dates inside it, in phase order and without overlapping. A class's subjects use only the phases of the class's year.
+
 ---
 
 # 13. Candidate Management

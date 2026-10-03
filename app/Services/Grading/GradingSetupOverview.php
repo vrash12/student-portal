@@ -222,7 +222,7 @@ final class GradingSetupOverview
             ->join('class_batches', 'class_batches.id', '=', 'class_subjects.class_batch_id')
             ->join('subjects', 'subjects.id', '=', 'class_subjects.subject_id')
             ->where('class_batches.academic_period_id', $period->id)
-            ->with(['classBatch:id,name,academic_period_id', 'subject:id,code,name', 'trainingPhase:id,number,name', 'assessmentCategories'])
+            ->with(['classBatch:id,name,academic_period_id', 'subject:id,code,name', 'trainingPhase:id,number,name,starts_on,ends_on', 'assessmentCategories'])
             ->withCount([
                 'assessments',
                 'assessments as finalized_count' => fn (Builder $assessments) => $assessments->finalized(),

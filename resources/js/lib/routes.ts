@@ -42,7 +42,7 @@ export const routes = {
         thresholds: (periodId: number, query?: Record<string, string>) => withQuery(`/academic-periods/${periodId}/grading-thresholds`, query),
     },
     trainingPhases: {
-        index: () => '/training-phases',
+        index: (query?: Record<string, string>) => withQuery('/training-phases', query),
         store: () => '/training-phases',
         update: (phaseId: number) => `/training-phases/${phaseId}`,
         destroy: (phaseId: number) => `/training-phases/${phaseId}`,

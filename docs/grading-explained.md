@@ -19,14 +19,14 @@ Three layers sit on the same subject grades:
 | Layer | Answers | Set where | Applies to |
 | --- | --- | --- | --- |
 | **Academic standing** (steps 1–3) | "Is this candidate passing this subject?" | Weights: per subject of a class. Passing/warning grades: per academic period. | Gradebooks, Academic Monitoring, profiles, portal My Grades, reports |
-| **Phase averages and CGPA** (step 3b) | "What is the candidate's average in each training phase, and overall so far?" | Training Phases (global); each subject's phase and units on its class page | Profile (staff who see every subject), portal My Grades, Qualification page, Academic Record PDF |
+| **Phase averages and CGPA** (step 3b) | "What is the candidate's average in each training phase, and overall so far?" | Training Phases of each academic year; each subject's phase and units on its class page | Profile (staff who see every subject), portal My Grades, Qualification page, Academic Record PDF |
 | **Qualification** (steps 4–5) | "Has this candidate met the requirements to qualify, what is their final course grade, and where do they rank?" | Performance Areas (global, every period and class) | Records → Qualification, admin dashboard, profile panel, portal My Performance (no rank) |
 
 How the OCS course format maps to the system (owner decision 2026-10-03: a class keeps its candidates for the whole course):
 
 | Course format | In the system |
 | --- | --- |
-| Training period / phase | **Training Phases** (Academics → Training Phases): Phase 1, 2, 3 or the official phases. The academic period holds the course run. |
+| Training period / phase | The **academic period is the course year** (e.g. 2026-2027, at most one year). Its **Training Phases** (Academics → Training Phases): Phase 1, 2, 3 or the official phases, each with dates inside the year. |
 | Subjects / training modules under each phase | Each subject of a class has a **phase** and **units** (class page) |
 | Individual grades | Subject grades (step 2) |
 | Phase average | Unit-weighted average of the phase's subject grades |
@@ -66,7 +66,9 @@ Nothing is stored: every grade, standing, area result and rank is calculated whe
 
 ### 3b. Training phases, phase averages and the CGPA
 
-- **Training phases** are a global list (number and name, e.g. Phase 1, Phase 2, Phase 3; three placeholders are created by the migration), managed under **Academics → Training Phases** (permission `academic_periods.manage`). A phase that subjects are placed in cannot be deleted.
+- The whole course lasts **one year**: an **academic period** is that year (named like 2026-2027; the form fills the name from the dates) and lasts at most one year (form rule and a database CHECK).
+- **Training phases** belong to one academic year (number, name, start and end dates), managed under **Academics → Training Phases** per year (permission `academic_periods.manage`). Their dates lie inside the year, follow the phase numbers and never overlap; numbers and names are unique within the year. A year's dates cannot be changed to leave out its phases. A phase that subjects are placed in cannot be deleted.
+- A subject of a class can only be placed in a phase of its class's year.
 - On a **class page** each subject gets a **phase** (or none) and **units** (default 1; 0.1–50). Units weight the averages, like a GWA; with every subject at 1 unit each subject counts equally. Changes are audited (`class_subject.updated`).
 - The rule (`GradeCalculationService::weightedAverage`, used by `CourseRecordService`):
   - **phase average** = Σ (subject grade × units) ÷ Σ (units) over the phase's subjects that have a grade;
@@ -107,7 +109,7 @@ They are independent on purpose; Grading Setup shows them side by side.
 
 1. **Academic Periods → Create Period**, then **Set Active**.
 2. **Grading Setup → Step 3**: set the passing and warning grades (prefilled from the previous period).
-3. **Training Phases**: check the phases of the course (once; they are global).
+3. **Training Phases**: add the phases of the new year, with their dates (Phase 1, 2, 3 …).
 4. **Classes → Create Class**, then **Add Subject** for each subject with its **phase** and **units**, and assign instructors.
 5. **Grading Setup → Step 2**: set one subject's weights, then **Copy Weights** to the rest (the table also shows each subject's phase and units).
 6. Check **Steps 4–5** once (areas are global): every subject belongs to an area, weights and must-pass are right.

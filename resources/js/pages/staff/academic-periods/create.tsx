@@ -22,7 +22,7 @@ export default function CreateAcademicPeriod() {
                     description="New periods start inactive. Set a period active from the list when it begins."
                     breadcrumbs={[{ label: 'Academic Periods', href: routes.academicPeriods.index() }, { label: 'Create Period' }]}
                 />
-                <PeriodForm form={form} submitLabel="Create Period" onSubmit={submit} />
+                <PeriodForm form={form} submitLabel="Create Period" onSubmit={submit} suggestName />
             </div>
         </>
     );

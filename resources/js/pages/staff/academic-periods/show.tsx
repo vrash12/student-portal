@@ -12,7 +12,7 @@ import { Table, TableBody, TableHead, Td, Th, Tr } from '@/components/ui/table';
 import { formatCalendarDate, formatGrade } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import { terms } from '@/lib/terminology';
-import type { GradingThresholds } from '@/types/grading';
+import type { GradingThresholds, TrainingPhaseSummary } from '@/types/grading';
 
 interface PeriodInstructor {
     id: number;
@@ -45,12 +45,14 @@ interface AcademicPeriodShowProps {
         thresholds: GradingThresholds | null;
     };
     classes: PeriodClass[];
+    /** The year's training phases, in order. */
+    phases: TrainingPhaseSummary[];
     totals: { classes: number; subjects: number; instructors: number; candidates: number; unassignedSubjects: number };
     can: { configureGrading: boolean; manageClasses: boolean; manageAssignments: boolean };
 }
 
 /** One academic period with everything that hangs off it: classes, their subjects, and the assigned instructors. */
-export default function AcademicPeriodShow({ period, classes, totals, can }: AcademicPeriodShowProps) {
+export default function AcademicPeriodShow({ period, classes, phases, totals, can }: AcademicPeriodShowProps) {
     const { singular, plural } = terms.classBatch;
 
     return (
@@ -99,6 +101,32 @@ export default function AcademicPeriodShow({ period, classes, totals, can }: Aca
                         </span>
                     )}
                 </p>
+
+                <Panel
+                    title="Training Phases"
+                    description={`The phases of ${period.name}, in order.`}
+                    actions={
+                        <ButtonLink href={routes.trainingPhases.index({ period: String(period.id) })} variant="secondary">
+                            Manage Phases
+                        </ButtonLink>
+                    }
+                    bodyClassName={phases.length === 0 ? undefined : 'p-0'}
+                >
+                    {phases.length === 0 ? (
+                        <p className="text-sm text-ink-muted">No phases yet.</p>
+                    ) : (
+                        <ol className="divide-y divide-line">
+                            {phases.map((phase) => (
+                                <li key={phase.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3">
+                                    <span className="font-medium text-ink">{phase.name}</span>
+                                    <span className="text-sm text-ink-muted tabular-nums">
+                                        {formatCalendarDate(phase.startsOn)} – {formatCalendarDate(phase.endsOn)}
+                                    </span>
+                                </li>
+                            ))}
+                        </ol>
+                    )}
+                </Panel>
 
                 {totals.unassignedSubjects > 0 && (
                     <Alert tone="warning" title="Subjects without an instructor">
