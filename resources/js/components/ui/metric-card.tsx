@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 
 interface MetricCardProps {
     label: string;
-    value: number;
+    /** A count, or an already formatted figure such as "98.28%" or "—". */
+    value: number | string;
     /** Optional supporting line, e.g. the period the number refers to. */
     description?: ReactNode;
 }

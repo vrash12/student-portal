@@ -44,6 +44,7 @@ export const routes = {
     /** The four fixed campuses: listed and edited (address, on/off), never added or removed. */
     campuses: {
         index: () => '/campuses',
+        show: (campusId: number) => `/campuses/${campusId}`,
         edit: (campusId: number) => `/campuses/${campusId}/edit`,
         update: (campusId: number) => `/campuses/${campusId}`,
     },

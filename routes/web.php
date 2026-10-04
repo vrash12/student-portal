@@ -238,6 +238,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         // edited (address, on/off), never added or removed.
         Route::middleware(['can:'.Permission::ManageCampuses->value, 'institution'])->group(function (): void {
             Route::get('campuses', [CampusController::class, 'index'])->name('campuses.index');
+            Route::get('campuses/{campus}', [CampusController::class, 'show'])->name('campuses.show')->whereNumber('campus');
             Route::get('campuses/{campus}/edit', [CampusController::class, 'edit'])->name('campuses.edit')->whereNumber('campus');
             Route::put('campuses/{campus}', [CampusController::class, 'update'])->name('campuses.update')->whereNumber('campus');
         });
