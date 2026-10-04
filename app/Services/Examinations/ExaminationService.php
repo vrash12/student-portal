@@ -173,6 +173,10 @@ final class ExaminationService
 
     public function archive(User $user, Examination $exam, string $reason): void
     {
+        // Attempts whose time has run out are closed first (as the expiry job
+        // would), so only attempts still being taken can hold archiving back.
+        app(CandidateAttemptService::class)->expireDue($exam->id);
+
         DB::transaction(function () use ($user, $exam, $reason) {
             $exam = Examination::whereKey($exam->id)->lockForUpdate()->firstOrFail();
             $this->authorize($user, $exam->class_subject_id);

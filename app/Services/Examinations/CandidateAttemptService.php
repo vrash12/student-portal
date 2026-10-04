@@ -13,7 +13,9 @@ use App\Services\AuditLogger;
 use App\Services\QuestionBank\QuestionPresenter;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 final class CandidateAttemptService
 {
@@ -143,7 +145,11 @@ final class CandidateAttemptService
         });
     }
 
-    /** Reconcile deadlines even when the candidate's tablet is disconnected. */
+    /**
+     * Reconcile deadlines even when the candidate's tablet is disconnected.
+     * One attempt that cannot be closed (its own transaction rolls back) is
+     * logged and retried on the next run; it never keeps the others open.
+     */
     public function expireDue(?int $examinationId = null): int
     {
         $count = 0;
@@ -151,8 +157,17 @@ final class CandidateAttemptService
             ->when($examinationId !== null, fn ($query) => $query->where('examination_id', $examinationId))
             ->chunkById(100, function ($attempts) use (&$count) {
                 foreach ($attempts as $attempt) {
-                    $this->expire($attempt);
-                    $count++;
+                    try {
+                        $this->expire($attempt);
+                        $count++;
+                    } catch (Throwable $exception) {
+                        // The attempt's id only: answers and questions stay out of the log.
+                        Log::error('An examination attempt past its deadline could not be closed.', [
+                            'attempt_id' => $attempt->id,
+                            'examination_id' => $attempt->examination_id,
+                            'error' => $exception::class.': '.$exception->getMessage(),
+                        ]);
+                    }
                 }
             });
 

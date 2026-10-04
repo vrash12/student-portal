@@ -195,6 +195,11 @@ export default function ExamAttempt({ attempt, questions }: { attempt: Attempt; 
         window.addEventListener('focus', onFocus);
         window.addEventListener('online', onOnline);
         if (document.hidden) leave('hidden');
+        // A page opened again (refresh, reconnection, another tablet) means the
+        // candidate is back: a departure the previous page left open is closed
+        // now, not counted until the attempt ends. The server ignores it when
+        // nothing is open.
+        else report('returned', 'hidden');
 
         return () => {
             window.clearTimeout(blurTimer);
