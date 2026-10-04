@@ -29,7 +29,7 @@ return [
     // The sign-in photograph shown at every screen size (full quality; the
     // layout keeps the school's building clear of the card). Empty: the main
     // image setting instead.
-    'login_compact_image_url' => env('LOGIN_COMPACT_IMAGE_URL', '/branding/login-background.png') ?: null,
+    'login_compact_image_url' => env('LOGIN_COMPACT_IMAGE_URL', '/branding/login-background-school-logo.png') ?: null,
 
     // Sign-in page texts. Empty values fall back (titles) or are hidden.
     'login' => [

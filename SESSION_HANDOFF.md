@@ -1,5 +1,19 @@
 # SESSION_HANDOFF.md
 
+## Live/local login comparison (2026-10-04, Codex)
+
+- Owner reported that pushing did not make Hostinger match localhost. Visited both login pages: live loads older compiled assets (`app-DvTcnm1a.css`, `app-BoC2rQMH.js`) and `/branding/login-background.png`; local loads newer assets and `/branding/login-background-school-logo.png`.
+- Local HEAD and origin/main are `e5eccce`, but GitHub Actions run `37187793767` reports success after skipping deployment. Its log explicitly says `HOSTINGER_SSH_KEY` is missing and nothing was deployed. `gh secret list` returned no repository secrets. The workflow intentionally warns/skips when its deployment key is absent, explaining the misleading green run. The new unmasked and school-logo background files plus configuration changes are also still uncommitted locally, so not in HEAD.
+- No deployment or credential changes made. To bring live up to date: include the pending background/configuration files in a commit, configure the required Hostinger repository secrets via the existing setup script, then run and verify a real deployment; check live branding environment settings too, since the deploy script preserves the server `.env`.
+
+## Owner request — building emblem matches the school logo (2026-10-04, Codex)
+
+- Used built-in ChatGPT imagegen with the existing `public/branding/logo.jpg` as reference to replace the small emblem above OFFICER CANDIDATE SCHOOL on the background's building. Saved `public/branding/login-background-school-logo.png`; retained the earlier backgrounds. Updated `LOGIN_COMPACT_IMAGE_URL` in local `.env`, `.env.example` and the configuration default; cleared the config cache. Checked the login page references the new background and page/image HTTP responses are 200. The main foreground candidate remains unmasked.
+
+## Owner request — remove the front candidate's mask (2026-10-04, Codex)
+
+- Used built-in ChatGPT imagegen to remove the black face mask from the main frontmost ceremonial candidate in the login background. Saved the edited asset as `public/branding/login-background-unmasked.png`; retained the original. Updated local `LOGIN_COMPACT_IMAGE_URL` and its configuration default; cleared configuration cache. The login page references the new asset and both page and image return HTTP 200. No frontend build needed for this image/configuration change.
+
 ## Owner request — generated login background (2026-10-01, Codex)
 
 - The owner approved the generated login concept and requested it as the actual login background. Built-in imagegen produced a background-only version (removing the pictured form/header/footer) at `public/branding/login-background.png`. The original concept and generation prompts are in `output/imagegen/`; the implemented desktop screenshot is `output/imagegen/login-page-desktop.png`.
