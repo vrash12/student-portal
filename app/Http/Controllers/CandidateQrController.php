@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Enums\AuditAction;
+use App\Enums\CandidateStatus;
 use App\Enums\Permission;
 use App\Models\Candidate;
+use App\Models\ClassBatch;
 use App\Services\AuditLogger;
 use App\Support\CandidateQrCode;
 use App\Support\PdfDocument;
@@ -22,6 +24,9 @@ use Inertia\Inertia;
  */
 class CandidateQrController extends Controller
 {
+    /** QR cards on one printed page of a class sheet (two columns, three rows). */
+    private const CARDS_PER_PAGE = 6;
+
     /**
      * /q/{token}: staff who may see the candidate go to the profile, the
      * candidate to their own My Information; anyone else gets "not found"
@@ -65,6 +70,40 @@ class CandidateQrController extends Controller
     public function ownPdf(Request $request): Response
     {
         return $this->card($request->user()->candidate()->firstOrFail());
+    }
+
+    /**
+     * Every QR card of a class on letter pages, six to a page with cut lines
+     * (owner request 2026-10-05). Candidates who withdrew are left out.
+     */
+    public function classSheet(ClassBatch $classBatch): Response
+    {
+        $classBatch->loadMissing(['campus', 'academicPeriod']);
+        $candidates = $classBatch->candidates()
+            ->where('status', '!=', CandidateStatus::Withdrawn->value)
+            ->whereNotNull('qr_token')
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->orderBy('id')
+            ->get();
+
+        $html = view('pdf.qr-cards', [
+            'cards' => $candidates->map(fn (Candidate $candidate): array => [
+                'qr' => 'data:image/svg+xml;base64,'.base64_encode(CandidateQrCode::svg($candidate, 400)),
+                'name' => $candidate->full_name,
+                'candidateNumber' => $candidate->candidate_number,
+            ])->chunk(self::CARDS_PER_PAGE)->map(fn ($page) => $page->chunk(2)->map->values()->values())->values(),
+            'className' => $classBatch->name,
+            'periodName' => $classBatch->academicPeriod->name,
+            'campusName' => $classBatch->campus?->name,
+            'count' => $candidates->count(),
+            'organization' => config('institution.organization_name'),
+            'systemName' => config('institution.system_name'),
+            'generatedAt' => now()->timezone(config('institution.timezone'))->format('d M Y, h:i A T'),
+            'logo' => PdfDocument::logo(),
+        ])->render();
+
+        return PdfDocument::download($html, 'portrait', 'qr-cards-'.$classBatch->name);
     }
 
     /** A new code for a lost or shared card; the old code stops working at once. */

@@ -98,6 +98,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::middleware('can:'.Permission::ViewFitness->value)->group(function (): void {
             Route::get('fitness', [FitnessTestController::class, 'index'])->name('fitness.index');
             Route::get('fitness/tests/{fitnessTest}', [FitnessTestController::class, 'show'])->name('fitness.tests.show')->whereNumber('fitnessTest')->can('view', 'fitnessTest');
+            Route::get('fitness/tests/{fitnessTest}/pdf', [FitnessTestController::class, 'pdf'])->name('fitness.tests.pdf')->whereNumber('fitnessTest')->can('view', 'fitnessTest')->middleware('throttle:pdf-downloads');
 
             Route::middleware('can:'.Permission::ManageFitness->value)->group(function (): void {
                 Route::get('fitness/tests/create', [FitnessTestController::class, 'create'])->name('fitness.tests.create');
@@ -363,6 +364,8 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::put('candidates/{candidate}/background', [CandidateBackgroundController::class, 'update'])->name('candidates.background.update')->can('update', 'candidate');
         Route::get('candidates/{candidate}/photo', [CandidatePhotoController::class, 'show'])->name('candidates.photo')->can('view', 'candidate');
         Route::get('candidates/{candidate}/qr', [CandidateQrController::class, 'show'])->name('candidates.qr')->can('view', 'candidate');
+        // Every QR attendance card of a class on printable sheets (ClassBatchPolicy::printQrCards).
+        Route::get('classes/{classBatch}/qr-cards/pdf', [CandidateQrController::class, 'classSheet'])->name('classes.qr-cards')->whereNumber('classBatch')->can('printQrCards', 'classBatch')->middleware('throttle:pdf-downloads');
         Route::get('candidates/{candidate}/qr/pdf', [CandidateQrController::class, 'pdf'])->name('candidates.qr.pdf')->can('view', 'candidate')->middleware('throttle:pdf-downloads');
         Route::post('candidates/{candidate}/qr', [CandidateQrController::class, 'reissue'])->name('candidates.qr.reissue')->can('update', 'candidate');
         Route::get('candidates/{candidate}/documents/{type}', [CandidatePdfController::class, 'show'])

@@ -16,6 +16,7 @@ use App\Services\Examinations\ExaminationService;
 use App\Services\QuestionBank\QuestionBankService;
 use App\Services\QuestionBank\QuestionPresenter;
 use App\Support\ListCharts;
+use App\Support\QueryFilters;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -23,6 +24,9 @@ use Inertia\Inertia;
 
 final class ExaminationController
 {
+    /** Status filter of the list: the lifecycle shown in each row (Examination::lifecycle). */
+    private const LIFECYCLE_FILTERS = ['draft' => 'Draft', 'upcoming' => 'Published (not open yet)', 'active' => 'Active', 'ended' => 'Ended', 'archived' => 'Archived'];
+
     public function index(Request $request)
     {
         abort_unless($request->user()->canTeach(), 403);
@@ -34,9 +38,44 @@ final class ExaminationController
             ListCharts::pie('Quizzes and Examinations', 'How many of each kind you have created.',
                 ListCharts::countBy($query, 'kind', fn (mixed $value): string => ExaminationKind::tryFrom((string) $value)?->label() ?? (string) $value), 'item', 'items'),
         ];
-        $exams = $query->latest()->paginate(10)->through(fn ($exam) => $exam->toArray() + ['lifecycle' => $exam->lifecycle()]);
+        // Filters (owner request 2026-10-05). Only the instructor's own class subjects are offered; anything else is ignored.
+        $offerings = ClassSubject::with('subject', 'classBatch')
+            ->whereHas('instructorAssignments', fn ($assignments) => $assignments->where('instructor_id', $request->user()->id))
+            ->get()
+            ->sortBy(fn (ClassSubject $offering): string => $offering->classBatch->name.' '.$offering->subject->name)
+            ->values();
+        $filters = [
+            'search' => QueryFilters::search($request),
+            'status' => QueryFilters::oneOf($request, 'status', array_keys(self::LIFECYCLE_FILTERS)),
+            'kind' => QueryFilters::oneOf($request, 'kind', ExaminationKind::values()),
+            'offering' => in_array((int) QueryFilters::id($request, 'offering'), $offerings->modelKeys(), true) ? QueryFilters::id($request, 'offering') : '',
+        ];
+        $now = now();
+        $filtered = (clone $query)
+            ->when($filters['search'] !== '', fn ($exams) => $exams->where('title', 'like', QueryFilters::likeTerm($filters['search'])))
+            ->when($filters['kind'] !== '', fn ($exams) => $exams->where('kind', $filters['kind']))
+            ->when($filters['offering'] !== '', fn ($exams) => $exams->where('class_subject_id', (int) $filters['offering']))
+            ->when($filters['status'] !== '', fn ($exams) => match ($filters['status']) {
+                'draft' => $exams->where('status', ExaminationStatus::Draft->value),
+                'archived' => $exams->where('status', ExaminationStatus::Archived->value),
+                // Published, the same rules as Examination::lifecycle().
+                'upcoming' => $exams->where('status', ExaminationStatus::Published->value)->where('opens_at', '>', $now)->where(fn ($open) => $open->whereNull('closes_at')->orWhere('closes_at', '>', $now)),
+                'active' => $exams->where('status', ExaminationStatus::Published->value)
+                    ->where(fn ($open) => $open->whereNull('opens_at')->orWhere('opens_at', '<=', $now))
+                    ->where(fn ($open) => $open->whereNull('closes_at')->orWhere('closes_at', '>', $now)),
+                'ended' => $exams->where('status', ExaminationStatus::Published->value)->where('closes_at', '<=', $now),
+            });
+        $exams = $filtered->latest()->paginate(10)->withQueryString()->through(fn ($exam) => $exam->toArray() + ['lifecycle' => $exam->lifecycle()]);
 
-        return Inertia::render('staff/examinations/index', ['examinations' => $exams, 'charts' => $charts]);
+        return Inertia::render('staff/examinations/index', [
+            'examinations' => $exams,
+            'charts' => $charts,
+            'filters' => $filters,
+            'total' => (clone $query)->count(),
+            'statusOptions' => array_map(fn (string $value, string $label): array => ['value' => $value, 'label' => $label], array_keys(self::LIFECYCLE_FILTERS), self::LIFECYCLE_FILTERS),
+            'kindOptions' => array_map(fn (ExaminationKind $kind): array => ['value' => $kind->value, 'label' => $kind->label()], ExaminationKind::cases()),
+            'offeringOptions' => $offerings->map(fn (ClassSubject $offering): array => ['id' => $offering->id, 'name' => $offering->classBatch->name.' · '.$offering->subject->name])->all(),
+        ]);
     }
 
     public function create(Request $request)

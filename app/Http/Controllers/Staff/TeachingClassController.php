@@ -85,6 +85,8 @@ class TeachingClassController extends Controller
             'candidates' => $candidates,
             'filters' => $filters,
             'statusOptions' => CandidateStatus::options(),
+            // The class's QR attendance cards (ClassBatchPolicy::printQrCards).
+            'canPrintQrCards' => $request->user()->can('printQrCards', $classBatch),
         ]);
     }
 }

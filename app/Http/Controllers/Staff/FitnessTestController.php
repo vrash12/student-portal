@@ -15,9 +15,11 @@ use App\Services\Fitness\FitnessResults;
 use App\Services\Fitness\FitnessScope;
 use App\Services\Fitness\FitnessTestService;
 use App\Services\Fitness\FitnessValue;
+use App\Support\PdfReport;
 use App\Support\QueryFilters;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -158,6 +160,82 @@ class FitnessTestController extends Controller
                 'viewCandidates' => $request->user()->hasPermission(Permission::ViewAllCandidates) || $request->user()->teachesClass($fitnessTest->class_batch_id),
             ],
         ]);
+    }
+
+    /**
+     * The test as a PDF (owner request 2026-10-05): the summary, each event's
+     * standard and pass rate, and every candidate's results with points and
+     * outcome. Figures come from FitnessResults, as on the test page.
+     */
+    public function pdf(Request $request, FitnessTest $fitnessTest): HttpResponse
+    {
+        $fitnessTest->load(['classBatch.academicPeriod', 'classBatch.campus', 'creator:id,name']);
+        $sheet = $this->results->sheet($fitnessTest);
+        $summary = $sheet['summary'];
+        $counts = $summary['counts'];
+        $points = fn (int|float|null $value): string => $value === null ? '—' : rtrim(rtrim(number_format((float) $value, 2), '0'), '.');
+
+        $sections = [
+            ['type' => 'fields', 'heading' => 'Summary', 'perRow' => 5, 'fields' => [
+                ['Passed', (string) $counts['passed']],
+                ['Failed', (string) $counts['failed']],
+                ['Incomplete', (string) $counts['incomplete']],
+                ['Not tested', (string) $counts['not_tested']],
+                ['Mean overall points', $points($summary['meanPoints'])],
+            ], 'note' => 'A candidate passes the test by reaching the passing points of every event. The overall points are the mean of the event points, once every event has a result.'],
+            ['type' => 'table', 'heading' => 'Events', 'keep' => true, 'columns' => [
+                ['label' => 'Event'], ['label' => 'Scoring', 'width' => '20%'],
+                ['label' => 'Passing', 'width' => '17%', 'numeric' => true], ['label' => 'Best', 'width' => '17%', 'numeric' => true],
+                ['label' => 'Passed', 'width' => '15%', 'numeric' => true],
+            ], 'rows' => array_map(function (array $event, array $rate) use ($points): array {
+                return [
+                    $event['name'],
+                    $event['method'] === 'table' ? 'Points table ('.count($event['table']).' rows)' : 'Scaled',
+                    $event['passingDisplay'].' ('.$points($event['passingPoints']).' pts)',
+                    $event['maximumDisplay'].' ('.$points($event['maximumPoints']).' pts)',
+                    $rate['recorded'] === 0 ? '—' : $rate['passed'].' of '.$rate['recorded'],
+                ];
+            }, $sheet['events'], $summary['eventPassRates'])],
+        ];
+
+        $eventColumns = array_map(fn (array $event): array => ['label' => $event['name'], 'numeric' => true], $sheet['events']);
+        $sections[] = [
+            'type' => 'table',
+            'heading' => 'Results',
+            'columns' => [['label' => 'Candidate', 'width' => '11%'], ['label' => 'Name', 'width' => '20%'], ...$eventColumns, ['label' => 'Overall', 'width' => '9%', 'numeric' => true], ['label' => 'Outcome', 'width' => '11%']],
+            'rows' => array_map(function (array $row) use ($sheet, $points): array {
+                $cells = array_map(function (array $event) use ($row, $points): string {
+                    $result = $row['results'][$event['id']] ?? null;
+
+                    return $result === null ? '—' : $result['display']."\n".$points($result['points']).' pts'.($result['passed'] ? '' : ', below');
+                }, $sheet['events']);
+
+                return [$row['candidate']['candidateNumber'], $row['candidate']['name'], ...$cells, $points($row['outcome']['points']), $row['outcome']['status']['label']];
+            }, $sheet['rows']),
+            'empty' => 'No candidates in this class.',
+            'note' => 'Each event shows the result, then its points; "below" marks a result short of the event\'s passing points.',
+        ];
+        if ($fitnessTest->notes) {
+            $sections[] = ['type' => 'text', 'heading' => 'Notes', 'text' => $fitnessTest->notes];
+        }
+
+        $class = $fitnessTest->classBatch;
+
+        return PdfReport::download(
+            $request->user(),
+            'Fitness Test Results',
+            $fitnessTest->title,
+            [
+                ['Class', $class->name],
+                ['Academic period', $class->academicPeriod->name],
+                ['Campus', PdfReport::value($class->campus?->name)],
+                ['Test date', $fitnessTest->tested_on->format('d M Y')],
+                ['Created by', $fitnessTest->creator->name],
+            ],
+            $sections,
+            'fitness-test-'.$fitnessTest->title.'-'.$class->name,
+            count($sheet['events']) > 3 ? 'landscape' : 'portrait',
+        );
     }
 
     public function edit(FitnessTest $fitnessTest): Response

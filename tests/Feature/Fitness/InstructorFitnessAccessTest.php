@@ -17,6 +17,7 @@ use App\Services\Fitness\FitnessScope;
 use App\Services\Fitness\FitnessStandardService;
 use App\Services\Fitness\FitnessTestService;
 use App\Services\InstructorAssignmentService;
+use Illuminate\Support\Facades\View;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -173,5 +174,28 @@ class InstructorFitnessAccessTest extends TestCase
         $this->actingAs($this->alpha)->get("/candidates/{$this->first->id}")->assertOk()
             ->assertInertia(fn (Assert $page) => $page->where('fitness.0.title', 'Class A Test'));
         $this->actingAs($this->alpha)->get("/candidates/{$this->other->id}")->assertForbidden();
+    }
+
+    public function test_the_test_results_pdf_follows_the_class_scope(): void
+    {
+        $eventA = (int) $this->testA->events()->value('id');
+        $this->actingAs($this->admin)->put("/fitness/tests/{$this->testA->id}/results", ['entries' => [$this->first->id => [$eventA => '50']]]);
+        $report = null;
+        View::composer('pdf.report', function ($view) use (&$report): void {
+            $report = $view->getData();
+        });
+
+        $this->actingAs($this->alpha)->get("/fitness/tests/{$this->testA->id}/pdf")->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->assertSame('Fitness Test Results', $report['title']);
+        $this->assertSame('Class A Test', $report['subtitle']);
+        $results = collect($report['sections'])->firstWhere('heading', 'Results');
+        // 50 push-ups of 40/60 = 80 points; every event passed.
+        $this->assertSame(['C-001', $this->first->full_name, "50\n80 pts", '80', 'Passed'], $results['rows'][0]);
+        $summary = collect($report['sections'])->firstWhere('heading', 'Summary');
+        $this->assertSame(['Passed', '1'], $summary['fields'][0]);
+
+        $this->actingAs($this->alpha)->get("/fitness/tests/{$this->testB->id}/pdf")->assertForbidden();
+        $this->actingAs($this->first->user)->get("/fitness/tests/{$this->testA->id}/pdf")->assertForbidden();
+        $this->actingAs($this->admin)->get("/fitness/tests/{$this->testB->id}/pdf")->assertOk();
     }
 }

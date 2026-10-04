@@ -66,6 +66,8 @@ export const routes = {
         store: () => '/classes',
         show: (classId: number) => `/classes/${classId}`,
         edit: (classId: number) => `/classes/${classId}/edit`,
+        /** Every QR attendance card of the class, six to a page (PDF). */
+        qrCards: (classId: number) => `/classes/${classId}/qr-cards/pdf`,
         update: (classId: number) => `/classes/${classId}`,
         addSubject: (classId: number) => `/classes/${classId}/subjects`,
         /** The subject's training phase and units. */
@@ -115,6 +117,8 @@ export const routes = {
             create: () => '/fitness/tests/create',
             store: () => '/fitness/tests',
             show: (testId: number) => `/fitness/tests/${testId}`,
+            /** The test's summary and every candidate's results (PDF). */
+            pdf: (testId: number) => `/fitness/tests/${testId}/pdf`,
             edit: (testId: number) => `/fitness/tests/${testId}/edit`,
             update: (testId: number) => `/fitness/tests/${testId}`,
             destroy: (testId: number) => `/fitness/tests/${testId}`,

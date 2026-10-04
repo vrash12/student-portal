@@ -1,5 +1,12 @@
 # SESSION_HANDOFF.md
 
+## Owner request — class QR card sheet, Examinations list filters, fitness results PDF (2026-10-05, Claude Code)
+
+- **Class QR cards:** `GET /classes/{classBatch}/qr-cards/pdf` (`CandidateQrController::classSheet`, view `pdf/qr-cards.blade.php`): every candidate of the class who has not withdrawn, by surname, six cards per letter page (2 × 3, dashed cut lines; logo, "Attendance QR Code", QR, name, number, class · campus). Allowed by `ClassBatchPolicy::printQrCards`: `class_batches.manage`, or `attendance.manage` with the class in `AttendanceScope` (the class's instructors); campus by the `campus` middleware. Buttons "QR Cards (PDF)" on the admin class page and on My Classes → class (`canPrintQrCards`). Checked: 20 candidates → exactly 4 pages (cards were first slightly too tall: 7 pages; shrunk to 188 pt rows, 118 pt QR).
+- **Examinations list filters** (`ExaminationController::index`, `pages/staff/examinations/index.tsx`): title search, status by the row's lifecycle (Draft, Published not open yet, Active, Ended, Archived — same rules as `Examination::lifecycle()`), kind, and class · subject (only offerings the instructor teaches; anything else ignored). Charts and the empty state use the unfiltered total; "no match" state when filters hide everything.
+- **Fitness results PDF:** `GET /fitness/tests/{fitnessTest}/pdf` (`FitnessTestController::pdf`, `PdfReport`), same `view` policy as the test page (instructors only their classes). Summary counts and mean, events (scoring, passing and best with points, passed of recorded), every candidate's result and points per event ("below" when short of passing), overall points and outcome, notes. Landscape when a test has more than 3 events. "Save as PDF" on the test page.
+- **Tests:** `ExaminationListFiltersTest` (2), class sheet in `QrAttendanceTest`, PDF in `InstructorFitnessAccessTest`; also fixed `CandidateExamPagesTest` to the 2026-10-04 compact sign-in background (`login-background-school-logo.png`), which an earlier session changed without updating the test. Examinations, Attendance, Fitness, Security, Teaching, Academic: 434 passing.
+
 ## Live deployment completed (2026-10-04, Codex)
 
 - Owner requested deployment after the live/local mismatch investigation. Configured all five Hostinger repository secrets using the existing scoped deploy key and setup script. Committed/pushed background changes as `e570374` (latest unmasked candidate and matching school emblem). GitHub Actions run `37196446122` deployed this commit successfully on its second attempt.

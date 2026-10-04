@@ -65,9 +65,9 @@ class CandidateExamPagesTest extends TestCase
         // Default: the local campus background (owner request, 2026-10-01).
         $this->get('/login')->assertOk()->assertInertia(fn ($page) => $page->where('app.loginImageUrl', fn (string $url) => str_starts_with($url, '/branding/login-campus.jpg?v=')));
         $this->assertFileExists(public_path('branding/login-campus.jpg'));
-        // Smaller screens use the background without the supplied design's card area.
-        $this->get('/login')->assertInertia(fn ($page) => $page->where('app.loginCompactImageUrl', fn (string $url) => str_starts_with($url, '/branding/login-background.png?v=')));
-        $this->assertFileExists(public_path('branding/login-background.png'));
+        // Smaller screens use the background with the school emblem on the building (owner, 2026-10-04).
+        $this->get('/login')->assertInertia(fn ($page) => $page->where('app.loginCompactImageUrl', fn (string $url) => str_starts_with($url, '/branding/login-background-school-logo.png?v=')));
+        $this->assertFileExists(public_path('branding/login-background-school-logo.png'));
 
         // An explicitly empty value disables the photograph.
         config(['institution.login_image_url' => null]);

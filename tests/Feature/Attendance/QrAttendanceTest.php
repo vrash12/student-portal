@@ -17,6 +17,7 @@ use App\Services\Attendance\AttendanceService;
 use App\Services\ClassBatchService;
 use App\Services\InstructorAssignmentService;
 use App\Support\CandidateQrCode;
+use Illuminate\Support\Facades\View;
 use Illuminate\Testing\TestResponse;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -227,5 +228,31 @@ class QrAttendanceTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page->where('candidate.qrCardUrl', route('portal.profile.qr.pdf')));
         $this->actingAs($this->first->user)->get(route('portal.profile.qr.pdf'))->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $this->actingAs($this->first->user)->get(route('candidates.qr.pdf', $this->second))->assertForbidden();
+    }
+
+    public function test_the_class_sheet_prints_every_card_of_the_class_for_administrators_and_its_instructors(): void
+    {
+        $withdrawn = Candidate::factory()->create(['class_batch_id' => $this->classA->id, 'candidate_number' => 'C-003', 'status' => CandidateStatus::Withdrawn]);
+        $printed = null;
+        View::composer('pdf.qr-cards', function ($view) use (&$printed): void {
+            $printed = $view->getData();
+        });
+
+        $this->actingAs($this->admin)->get(route('classes.qr-cards', $this->classA))->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $numbers = collect($printed['cards'])->flatten(2)->pluck('candidateNumber')->all();
+        $this->assertSame(2, $printed['count']);
+        $this->assertEqualsCanonicalizing(['C-001', 'C-002'], $numbers);
+        $this->assertNotContains($withdrawn->candidate_number, $numbers);
+        $this->assertNotContains('C-101', $numbers);
+        $this->assertSame('Class A', $printed['className']);
+
+        // The class's instructor (who keeps its attendance) may print it; the instructor of another class and candidates may not.
+        $this->actingAs($this->alpha)->get(route('classes.qr-cards', $this->classA))->assertOk();
+        $this->actingAs($this->alpha)->get(route('teaching.classes.show', $this->classA))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('canPrintQrCards', true));
+        $this->actingAs($this->bravo)->get(route('classes.qr-cards', $this->classA))->assertForbidden();
+        $this->actingAs($this->first->user)->get(route('classes.qr-cards', $this->classA))->assertForbidden();
+        auth()->logout();
+        $this->get(route('classes.qr-cards', $this->classA))->assertRedirect(route('login'));
     }
 }
