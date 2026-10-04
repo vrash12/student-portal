@@ -24,7 +24,7 @@ use Tests\TestCase;
  * 75 / warning 80 in the active period:
  *   Batch A Subject 1 (Alpha): Quiz 1 (/10) finalized: A1 9 (90, Passing), A2 6 (60, Failing)
  *   Batch A Subject 2 (Bravo): Exam (/100) finalized: A1 70 (Failing), A2 missing (Incomplete)
- *   Batch B Subject 1 (Bravo): Quiz (/10) finalized: B1 7.7 (77, At Risk)
+ *   Batch B Subject 1 (Bravo): Quiz (/10) finalized: B1 7.7 (77, Needs Improvement)
  */
 class AcademicMonitoringTest extends TestCase
 {
@@ -66,7 +66,7 @@ class AcademicMonitoringTest extends TestCase
                 ->where('scope', 'all')
                 ->where('period.id', $this->activePeriod->id)
                 ->where('thresholds', ['passingGrade' => 75, 'warningGrade' => 80])
-                // A1: Failing (Subject 2) · A2: Failing (Subject 1) · B1: At Risk. Withdrawn A3 excluded.
+                // A1: Failing (Subject 2) · A2: Failing (Subject 1) · B1: Needs Improvement. Withdrawn A3 excluded.
                 ->where('counts', ['monitored' => 3, 'failing' => 2, 'atRisk' => 1, 'incomplete' => 0, 'passing' => 0, 'noStanding' => 0])
                 ->has('candidates.data', 3)
                 ->where('view', 'overall'));
@@ -212,7 +212,7 @@ class AcademicMonitoringTest extends TestCase
                 ->where('counts.incomplete', 1)
                 ->where('candidates.data.3.lowest', null)
                 ->where('candidates.data', fn ($rows) => collect($rows)->pluck('candidate.id')->all() === [
-                    // Both Failing: A2 (60.00) before A1 (lowest 70.00); then B1 At Risk; then Incomplete.
+                    // Both Failing: A2 (60.00) before A1 (lowest 70.00); then B1 Needs Improvement; then Incomplete.
                     $this->secondInA->id, $this->candidateInA->id, $this->candidateInB->id, $ungraded->id,
                 ]));
 
@@ -292,7 +292,7 @@ class AcademicMonitoringTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('showAcademicAlerts', true)
                 ->where('academicAlerts.scope', 'taught')
-                // A1 Failing (Subject 2), A2 Incomplete (Subject 2), B1 At Risk.
+                // A1 Failing (Subject 2), A2 Incomplete (Subject 2), B1 Needs Improvement.
                 ->where('academicAlerts.counts', ['monitored' => 3, 'failing' => 1, 'atRisk' => 1, 'incomplete' => 1, 'passing' => 0, 'noStanding' => 0])
                 ->where('academicAlerts.requiringAttention.0.mostSerious.canOpenGradebook', true));
     }

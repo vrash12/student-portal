@@ -146,7 +146,7 @@ final class AcademicMonitoring
     }
 
     /**
-     * Failing and At Risk candidates, most serious first.
+     * Failing and Needs Improvement candidates, most serious first.
      *
      * @param  list<MonitoredCandidate>  $monitored
      * @return list<MonitoredCandidate>
@@ -162,7 +162,7 @@ final class AcademicMonitoring
     }
 
     /**
-     * Class subjects with at least one Failing or At Risk candidate, with
+     * Class subjects with at least one Failing or Needs Improvement candidate, with
      * counts per standing, most Failing first (UI_UX_DESIGN.md §35).
      *
      * @param  list<MonitoredCandidate>  $monitored

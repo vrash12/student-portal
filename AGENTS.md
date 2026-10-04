@@ -496,13 +496,15 @@ Frontend calculations may only be used for previews.
 
 # 16. Academic Risk Monitoring
 
+Owner decision (2026-10-04): the displayed standing formerly called "At Risk" is **Needs Improvement** throughout the system. It means a passing grade below the configured warning grade. The existing `at_risk` storage/filter value and grading thresholds stay unchanged.
+
 A major purpose of the system is identifying candidates who may require academic attention.
 
 The system should support states such as:
 
 ```text
 PASSING
-AT RISK
+NEEDS IMPROVEMENT
 FAILING
 INCOMPLETE
 ```
@@ -515,7 +517,7 @@ Potential dashboard metrics include:
 
 - total candidates
 - passing candidates
-- candidates at risk
+- candidates needing improvement
 - failing candidates
 - incomplete records
 - subject performance
@@ -529,7 +531,7 @@ Academic Overview
 400 Candidates
 
 342 Passing
-38 At Risk
+38 Needs Improvement
 14 Failing
 6 Incomplete
 ```
@@ -551,7 +553,7 @@ OCC Class XX
 ACADEMIC STANDING
 
 Subject 1        84.50    PASSING
-Subject 2        72.40    AT RISK
+Subject 2        72.40    NEEDS IMPROVEMENT
 Subject 3        91.00    PASSING
 Subject 4        68.20    FAILING
 
@@ -562,7 +564,7 @@ Quiz 2           74%
 Examination      69%
 
 Overall Status:
-AT RISK
+NEEDS IMPROVEMENT
 ```
 
 The interface should make academic problems immediately understandable.
@@ -1181,7 +1183,7 @@ Potential reports include:
 - assessment results
 - examination results
 - failing candidate list
-- at-risk candidate list
+- candidates needing improvement list
 - grade distribution
 - instructor/class reports
 
@@ -1203,7 +1205,7 @@ Total Candidates
 Passing
 
 38
-At Risk
+Needs Improvement
 
 14
 Failing
@@ -1243,7 +1245,7 @@ Tomorrow
 
 ACADEMIC ALERTS
 
-11 Candidates At Risk
+11 Candidates Needing Improvement
 4 Candidates Failing
 ```
 
@@ -1341,7 +1343,7 @@ Also display text such as:
 ```text
 FAILING
 PASSING
-AT RISK
+NEEDS IMPROVEMENT
 ```
 
 ---
@@ -1872,7 +1874,7 @@ For the current version, prioritize:
 
 - overall dashboard
 - candidate performance
-- at-risk candidates
+- candidates needing improvement
 - failing candidates
 - candidate academic profiles
 

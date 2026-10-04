@@ -511,7 +511,7 @@ function AcademicOverview({
                             Candidates Requiring Attention
                         </h3>
                         {summary.requiringAttention.length === 0 ? (
-                            <p className="px-5 pb-4 pt-1 text-sm text-ink-muted">No candidates are failing or at risk in {summary.period.name}.</p>
+                            <p className="px-5 pb-4 pt-1 text-sm text-ink-muted">No candidates are failing or need improvement in {summary.period.name}.</p>
                         ) : (
                             <AttentionList candidates={summary.requiringAttention} />
                         )}
@@ -523,7 +523,7 @@ function AcademicOverview({
 }
 
 /**
- * The instructor's own alerts: distinct candidates failing or at risk in
+ * The instructor's own alerts: distinct candidates failing or needing improvement in
  * the subjects they teach in the active period (UI_UX_DESIGN.md §19).
  */
 function AcademicAlerts({ summary, period }: { summary: MonitoringSummary | null; period: { name: string } }) {
@@ -572,7 +572,7 @@ function AlertsBody({ summary }: { summary: MonitoringSummary }) {
         <div className="space-y-3 p-4">
             <div className="grid grid-cols-2 gap-2">
                 <AlertCount href={routes.monitoring.index({ standing: 'failing' })} label="Failing" count={counts.failing} tone="danger" />
-                <AlertCount href={routes.monitoring.index({ standing: 'at_risk' })} label="At Risk" count={counts.atRisk} tone="warning" />
+                <AlertCount href={routes.monitoring.index({ standing: 'at_risk' })} label="Needs Improvement" count={counts.atRisk} tone="warning" />
             </div>
             <p className="text-xs text-ink-muted">
                 <span className="tabular-nums">{concerned}</span> of <span className="tabular-nums">{counts.monitored}</span> monitored candidates in your subjects.
@@ -612,7 +612,7 @@ function AlertCount({ href, label, count, tone }: { href: string; label: string;
         <Link
             href={href}
             className={
-                'flex items-center justify-between rounded-lg border px-3 py-2 hover:shadow-sm ' +
+                'flex items-center justify-between gap-2 rounded-lg border px-3 py-2 hover:shadow-sm ' +
                 (tone === 'danger' ? 'border-danger-border bg-danger-bg text-danger-fg' : 'border-warning-border bg-warning-bg text-warning-fg')
             }
         >

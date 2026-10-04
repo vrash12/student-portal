@@ -153,7 +153,7 @@ Status colors should follow recognizable conventions:
 Success / Passing
 Green
 
-Warning / At Risk
+Warning / Needs Improvement
 Amber / Orange
 
 Critical / Failing
@@ -173,7 +173,7 @@ Always pair color with text or an icon.
 Correct:
 
 ```text
-[!] At Risk
+[!] Needs Improvement
 ```
 
 Incorrect:
@@ -211,7 +211,7 @@ Example:
 Total Candidates      400
 
 Passing               342
-At Risk                38
+Needs Improvement                38
 Failing                14
 Incomplete              6
 ```
@@ -491,7 +491,7 @@ Dashboards should answer operational questions immediately.
 The administrator dashboard should help answer:
 
 - How many candidates are being monitored?
-- Who is at risk?
+- Who needs improvement?
 - Who is failing?
 - Are any examinations active?
 - What needs attention today?
@@ -512,7 +512,7 @@ Example:
 +------------------+
 
 +------------------+
-| At Risk          |
+| Needs Improvement          |
 |                  |
 |        38        |
 +------------------+
@@ -538,7 +538,7 @@ Academic Overview
 
 [ 400 Candidates ]
 [ 342 Passing ]
-[ 38 At Risk ]
+[ 38 Needs Improvement ]
 [ 14 Failing ]
 
 Candidates Requiring Attention
@@ -573,7 +573,7 @@ Subject 2
 
 ACADEMIC ALERTS
 
-11 At Risk
+11 Needs Improvement
 4 Failing
 
 UPCOMING ASSESSMENTS
@@ -880,7 +880,7 @@ Examples:
 
 ```text
 PASSING
-AT RISK
+NEEDS IMPROVEMENT
 FAILING
 INCOMPLETE
 ```
@@ -889,7 +889,7 @@ Possible treatment:
 
 ```text
 [ Passing ]
-[ At Risk ]
+[ Needs Improvement ]
 [ Failing ]
 ```
 
@@ -911,14 +911,14 @@ Class / Batch
 OCC Class XX
 
 Overall Standing
-AT RISK
+NEEDS IMPROVEMENT
 
 ----------------------------------------
 
 Academic Performance
 
 Subject 1       84.50       PASSING
-Subject 2       72.40       AT RISK
+Subject 2       72.40       NEEDS IMPROVEMENT
 Subject 3       91.00       PASSING
 Subject 4       68.20       FAILING
 
@@ -947,7 +947,7 @@ This is one of the most important system screens.
 Prioritize:
 
 - candidates failing
-- candidates at risk
+- candidates needing improvement
 - problematic subjects
 - overall distribution
 
@@ -959,7 +959,7 @@ ACADEMIC RISK
 Critical
 14 Candidates
 
-At Risk
+Needs Improvement
 38 Candidates
 
 -------------------------------------
@@ -1735,7 +1735,7 @@ Examination submitted by all candidates.
 
 Candidate requires manual essay grading.
 
-Candidate academic status changed to At Risk.
+Candidate academic status changed to Needs Improvement.
 ```
 
 Avoid turning the system into a noisy notification center.

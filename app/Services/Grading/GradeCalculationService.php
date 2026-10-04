@@ -130,13 +130,13 @@ final class GradeCalculationService
      * Academic standing in one subject (AGENTS.md §16):
      *
      * - grade below the passing grade: Failing;
-     * - at or above the passing grade but below the warning grade: At Risk;
+     * - at or above the passing grade but below the warning grade: Needs Improvement;
      * - at or above the warning grade: Passing, or Incomplete when scores are
      *   missing, because Passing is never claimed while records are missing;
      * - no grade yet: Incomplete when scores are missing, otherwise no
      *   standing (nothing to judge).
      *
-     * Failing and At Risk are kept when scores are missing, so a missing
+     * Failing and Needs Improvement are kept when scores are missing, so a missing
      * record never hides an early warning. A provisional grade (not every
      * category assessed yet) gets a current standing for the same reason.
      *
@@ -163,7 +163,7 @@ final class GradeCalculationService
 
     /**
      * Overall standing across the given subjects: the most serious one
-     * (Failing, then At Risk, then Incomplete, then Passing). Subjects
+     * (Failing, then Needs Improvement, then Incomplete, then Passing). Subjects
      * without a standing are ignored but counted, so the result says how
      * many subjects it rests on.
      *

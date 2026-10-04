@@ -19,7 +19,7 @@ interface StandingCountsProps {
 
 const cards: Record<StandingKey, { count: keyof Counts; label: string; tone: StatusTone }> = {
     failing: { count: 'failing', label: 'Failing', tone: 'danger' },
-    at_risk: { count: 'atRisk', label: 'At Risk', tone: 'warning' },
+    at_risk: { count: 'atRisk', label: 'Needs Improvement', tone: 'warning' },
     incomplete: { count: 'incomplete', label: 'Incomplete', tone: 'neutral' },
     passing: { count: 'passing', label: 'Passing', tone: 'success' },
 };
@@ -49,7 +49,7 @@ export function StandingCounts({ counts, totalLabel, standings, hrefFor, current
                 return (
                     <Card
                         key={standing}
-                        label={<StatusBadge tone={card.tone}>{card.label}</StatusBadge>}
+                        label={<StatusBadge tone={card.tone} wrap>{card.label}</StatusBadge>}
                         value={value}
                         href={hrefFor?.(standing)}
                         // Starts with the visible text (WCAG 2.5.3), e.g. "14 Failing candidates".

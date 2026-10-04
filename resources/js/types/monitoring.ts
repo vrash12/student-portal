@@ -18,7 +18,7 @@ export interface StandingCounts {
 }
 
 /**
- * A subject needing attention (Failing, At Risk, Incomplete, or missing
+ * A subject needing attention (Failing, Needs Improvement, Incomplete, or missing
  * scores), as decided by the server's single definition.
  */
 export interface SubjectConcern {
@@ -59,7 +59,7 @@ export interface MonitoredCandidateRow extends MonitoredCandidateSummary {
     } | null;
 }
 
-/** A class subject with failing or at-risk candidates. */
+/** A class subject with failing or candidates needing improvement. */
 export interface SubjectAttention {
     classSubjectId: number;
     classBatch: { id: number; name: string };

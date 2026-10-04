@@ -39,16 +39,16 @@ use Tests\TestCase;
  *       A2  Candidate A2              S1  6 -> 60 Failing   S2 missing      overall Failing, lowest 60 (Subject 1)
  *       A3  Candidate A3 (withdrawn)  S1  1 -> 10           S2 20           never monitored
  *       A4  Candidate A4 (On Leave)   S1  8 -> 80 Passing   S2 85 Passing   overall Passing, lowest 80
- *       A5  Candidate A5              S1 7.8 -> 78 At Risk  S2 90 Passing   overall At Risk, lowest 78
+ *       A5  Candidate A5              S1 7.8 -> 78 Needs Improvement  S2 90 Passing   overall Needs Improvement, lowest 78
  *   Sample Batch B
  *     Subject 1 (Instructor Bravo)  Batch B Quiz /10 finalized
- *       B1  Candidate B1              7.7 -> 77 At Risk
+ *       B1  Candidate B1              7.7 -> 77 Needs Improvement
  *       B2  Candidate B2              missing -> Incomplete, no grade
  *   Sample Batch C
  *     Subject 3 (nobody)            no grading set up
  *       C01 Candidate C01             no standing yet
  *
- *   Administrator counts: 7 monitored = 2 Failing + 2 At Risk + 1 Incomplete + 1 Passing + 1 No Standing Yet.
+ *   Administrator counts: 7 monitored = 2 Failing + 2 Needs Improvement + 1 Incomplete + 1 Passing + 1 No Standing Yet.
  *
  * "Period Past" (no thresholds): Sample Batch Old, Subject 1 (Alpha).
  * "Period Other" (no thresholds): Sample Batch Other, Subject 1 (Instructor Charlie only).
@@ -89,7 +89,7 @@ class MonitoringPageTest extends TestCase
     /** A4: On Leave, Passing in both subjects. */
     private Candidate $passingInA;
 
-    /** A5: At Risk in Subject 1, Passing in Subject 2. */
+    /** A5: Needs Improvement in Subject 1, Passing in Subject 2. */
     private Candidate $atRiskInA;
 
     /** B2: missing the Batch B quiz (Incomplete, no grade). */
@@ -598,7 +598,7 @@ class MonitoringPageTest extends TestCase
 
     public function test_unknown_standing_is_ignored_and_echoed_empty(): void
     {
-        foreach (['excellent', 'FAILING', 'At Risk', 'at risk', 'failing,passing'] as $standing) {
+        foreach (['excellent', 'FAILING', 'Needs Improvement', 'needs improvement', 'failing,passing'] as $standing) {
             $props = $this->monitoringProps($this->academicAdmin, ['standing' => $standing]);
 
             $this->assertSame('', $props['filters']['standing'], "Standing [{$standing}].");
@@ -643,8 +643,8 @@ class MonitoringPageTest extends TestCase
         $this->assertSame([
             $this->secondInA->id,   // Failing, lowest 60
             $this->candidateInA->id, // Failing, lowest 70
-            $this->candidateInB->id, // At Risk, 77
-            $this->atRiskInA->id,    // At Risk, lowest 78
+            $this->candidateInB->id, // Needs Improvement, 77
+            $this->atRiskInA->id,    // Needs Improvement, lowest 78
             $this->missingInB->id,   // Incomplete
             $this->passingInA->id,   // Passing
             $this->ungradedInC->id,  // No standing yet
@@ -730,7 +730,7 @@ class MonitoringPageTest extends TestCase
         // Bravo: most serious first; both Incomplete candidates (no grade) keep name order.
         $this->assertSame([
             $this->candidateInA->id, // Failing in Subject 2 (70)
-            $this->candidateInB->id, // At Risk (77)
+            $this->candidateInB->id, // Needs Improvement (77)
             $this->secondInA->id,    // Incomplete (Subject 2 missing)
             $this->missingInB->id,   // Incomplete (quiz missing)
             $this->passingInA->id,   // Passing 85

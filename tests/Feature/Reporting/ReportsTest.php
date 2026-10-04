@@ -123,7 +123,7 @@ class ReportsTest extends TestCase
         $this->assertSame([
             [$this->candidateInA->candidate_number, 'Sample Batch A', 'Failing', 70.0, 0, 'Yes'],
             [$this->secondInA->candidate_number, 'Sample Batch A', 'Failing', 60.0, 1, 'Yes'],
-            [$this->candidateInB->candidate_number, 'Sample Batch B', 'At Risk', 77.0, 0, 'No'],
+            [$this->candidateInB->candidate_number, 'Sample Batch B', 'Needs Improvement', 77.0, 0, 'No'],
         ], array_map(fn (array $row): array => [$row['number'], $row['classBatch'], $row['standing'], (float) $row['lowest'], $row['missing'], $row['provisional']], $rows));
 
         $monitoring = $this->app->make(AcademicMonitoring::class);

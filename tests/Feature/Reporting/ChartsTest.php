@@ -72,7 +72,7 @@ class ChartsTest extends TestCase
     public function test_charts_follow_the_search_and_the_viewers_scope(): void
     {
         [$total, $classChart] = $this->reportCharts($this->academicAdmin, ['type' => 'class', 'search' => 'batch b']);
-        // Batch B alone: B1 at risk.
+        // Batch B alone: B1 needs improvement.
         $this->assertSame(['passing' => 0, 'atRisk' => 1, 'failing' => 0, 'incomplete' => 0, 'noStanding' => 0], $total['counts']);
         $this->assertSame(['Sample Batch B'], array_column($classChart['groups'], 'label'));
 
@@ -95,7 +95,7 @@ class ChartsTest extends TestCase
     {
         [$total, $byClass] = $this->reportCharts($this->academicAdmin, ['type' => 'class']);
 
-        // The candidates of the candidate report: A1 and A2 failing, B1 at risk.
+        // The candidates of the candidate report: A1 and A2 failing, B1 needs improvement.
         $this->assertSame('standingTotal', $total['kind']);
         $this->assertSame(['passing' => 0, 'atRisk' => 1, 'failing' => 2, 'incomplete' => 0, 'noStanding' => 0], $total['counts']);
         $this->assertSame('standing', $byClass['kind']);
@@ -103,7 +103,7 @@ class ChartsTest extends TestCase
 
     public function test_at_risk_and_failing_lists_show_the_class_of_their_candidates(): void
     {
-        // All in one class (A1 and A2 failing, B1 at risk): one full ring would add nothing.
+        // All in one class (A1 and A2 failing, B1 needs improvement): one full ring would add nothing.
         $this->assertSame([], $this->reportCharts($this->academicAdmin, ['type' => 'failing']));
         $this->assertSame([], $this->reportCharts($this->academicAdmin, ['type' => 'at_risk']));
 

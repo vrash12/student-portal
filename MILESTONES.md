@@ -243,7 +243,7 @@ Centralize all academic grade logic.
 ## Suggested Academic States
 
 - PASSING
-- AT RISK
+- NEEDS IMPROVEMENT
 - FAILING
 - INCOMPLETE
 
@@ -269,7 +269,7 @@ Allow instructors and administrators to quickly identify candidates who require 
 
 - Total candidates
 - Passing count
-- At-risk count
+- Needs Improvement count
 - Failing count
 - Incomplete count
 
@@ -292,7 +292,7 @@ Allow instructors and administrators to quickly identify candidates who require 
 
 ## Acceptance Criteria
 
-- At-risk and failing candidates are automatically identified
+- Needs Improvement and Failing candidates are automatically identified
 - Filters work correctly
 - Academic status is never represented by color alone
 - Candidate profile provides a clear academic overview
@@ -580,7 +580,7 @@ Provide administrators with a clear institutional academic overview.
 
 - Total candidates
 - Passing count
-- At-risk count
+- Needs Improvement count
 - Failing count
 - Incomplete count
 - Candidates requiring attention
@@ -610,7 +610,7 @@ Provide useful academic and examination reports.
 - Candidate academic standing
 - Class / batch performance
 - Subject performance
-- At-risk candidates
+- Candidates needing improvement
 - Failing candidates
 - Examination results
 - Quiz results
@@ -837,7 +837,7 @@ Show:
 - login
 - academic dashboard
 - candidate count
-- at-risk candidates
+- candidates needing improvement
 - failing candidates
 
 ### 2. Instructor
@@ -907,7 +907,7 @@ The MVP can be considered ready for presentation when all of the following are f
 - manual grade entry
 - grade calculation
 - academic standing
-- at-risk / failing monitoring
+- Needs Improvement / Failing monitoring
 - question bank
 - quiz/exam creation
 - candidate tablet exam interface

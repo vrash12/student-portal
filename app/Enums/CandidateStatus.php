@@ -4,7 +4,7 @@ namespace App\Enums;
 
 /**
  * Enrollment status of a candidate record. This is distinct from academic
- * standing (Passing, At Risk, Failing, Incomplete; see AcademicStanding),
+ * standing (Passing, Needs Improvement, Failing, Incomplete; see AcademicStanding),
  * which the grade engine calculates. Withdrawn candidates have no standing.
  *
  * Values are also enforced by a CHECK constraint on candidates.status.

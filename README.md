@@ -87,7 +87,7 @@ Campuses (2026-10-03, fixed on 2026-10-04): the institution has exactly four cam
 php artisan db:seed --class=DemoCampusSeeder
 ```
 
-It includes grading weights, passing/warning grades (75/80), finalized scores (a mix of Passing, At Risk, Failing and Incomplete), five questions per subject and one published online quiz per subject, open for 7 days, plus three sample fitness events (placeholder standards) and a "Diagnostic Fitness Test" with synthetic results for Class A (`DemoFitnessSeeder`, also runnable on its own), plus sample expenses (`DemoAccountStatementsSeeder`: four expenses assigned to every class of the active period and a few one-off charges; no payments, since candidates are scholars). To rebuild it on an empty database (this deletes all data):
+It includes grading weights, passing/warning grades (75/80), finalized scores (a mix of Passing, Needs Improvement, Failing and Incomplete), five questions per subject and one published online quiz per subject, open for 7 days, plus three sample fitness events (placeholder standards) and a "Diagnostic Fitness Test" with synthetic results for Class A (`DemoFitnessSeeder`, also runnable on its own), plus sample expenses (`DemoAccountStatementsSeeder`: four expenses assigned to every class of the active period and a few one-off charges; no payments, since candidates are scholars). To rebuild it on an empty database (this deletes all data):
 
 ```bash
 php artisan migrate:fresh

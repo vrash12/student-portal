@@ -38,12 +38,12 @@ use Tests\TestCase;
  *   Batch A, Subject 2 (Bravo)   Subject 2 Examination, finalized 2026-09-02 08:00
  *       A1 70 (Failing)   A2 no score (Incomplete)
  *   Batch B, Subject 1 (Bravo)   Batch B Quiz, finalized 2026-09-03 08:00
- *       B1 77 (At Risk)   Candidate 101: 85 (Passing)   Candidate 102: no score (Incomplete)
+ *       B1 77 (Needs Improvement)   Candidate 101: 85 (Passing)   Candidate 102: no score (Incomplete)
  *   Past period (no thresholds), Batch Old, Subject 1 (Alpha)   Past Quiz: Old1 50
  *
  * Overall standing over every subject of the active period:
  *   A1 Failing (lowest 70, Subject 2), A2 Failing (lowest 60, Subject 1),
- *   B1 At Risk, Candidate 101 Passing, Candidate 102 Incomplete.
+ *   B1 Needs Improvement, Candidate 101 Passing, Candidate 102 Incomplete.
  */
 class MonitoringDashboardAndProfileTest extends TestCase
 {
@@ -131,7 +131,7 @@ class MonitoringDashboardAndProfileTest extends TestCase
             $this->assertTrue($overview['hasThresholds']);
             // A3 (withdrawn) and Old1 (past period) are not monitored.
             $this->assertCounts([5, 2, 1, 1, 1, 0], $overview['counts']);
-            // Failing by lowest grade (A2 60, A1 70), then At Risk (B1).
+            // Failing by lowest grade (A2 60, A1 70), then Needs Improvement (B1).
             $this->assertSame(
                 [$this->secondInA->id, $this->candidateInA->id, $this->candidateInB->id],
                 $this->attentionIds($overview),
@@ -167,7 +167,7 @@ class MonitoringDashboardAndProfileTest extends TestCase
         $this->assertFalse($bravo['showAcademicOverview']);
         $this->assertNull($bravo['academicOverview']);
         // Subject 2 of Batch A and Subject 1 of Batch B: A1 Failing, A2 Incomplete,
-        // B1 At Risk, Candidate 101 Passing, Candidate 102 Incomplete.
+        // B1 Needs Improvement, Candidate 101 Passing, Candidate 102 Incomplete.
         $this->assertCounts([5, 1, 1, 2, 1, 0], $bravo['academicAlerts']['counts']);
         // A2 is Failing only in Alpha's subject, so Bravo is not alerted about them.
         $this->assertSame([$this->candidateInA->id, $this->candidateInB->id], $this->attentionIds($bravo['academicAlerts']));
@@ -354,7 +354,7 @@ class MonitoringDashboardAndProfileTest extends TestCase
         $this->recordScores($quizC, $toRecord, $charlie);
         $this->finalize($quizC, $charlie);
 
-        // Charlie: Failing 201 (50), 205 (50), 208 (65), 202 (74.99); At Risk 204 (75), 203 (79.99).
+        // Charlie: Failing 201 (50), 205 (50), 208 (65), 202 (74.99); Needs Improvement 204 (75), 203 (79.99).
         $alerts = $this->dashboardProps($charlie)['academicAlerts'];
         $this->assertCounts([8, 4, 2, 1, 1, 0], $alerts['counts']);
         $this->assertSame(
@@ -370,7 +370,7 @@ class MonitoringDashboardAndProfileTest extends TestCase
             array_map(fn (array $entry): float => $entry['lowest']['grade'], $alerts['requiringAttention']),
         );
 
-        // Administrators: all Failing candidates of the period come before any At Risk one.
+        // Administrators: all Failing candidates of the period come before any Needs Improvement one.
         $overview = $this->dashboardProps($this->academicAdmin)['academicOverview'];
         $this->assertCounts([13, 6, 3, 2, 2, 0], $overview['counts']);
         $this->assertSame(
@@ -964,7 +964,7 @@ class MonitoringDashboardAndProfileTest extends TestCase
     }
 
     /**
-     * @param  array{0: int, 1: int, 2: int, 3: int, 4: int, 5: int}  $expected  monitored, failing, at risk, incomplete, passing, no standing
+     * @param  array{0: int, 1: int, 2: int, 3: int, 4: int, 5: int}  $expected  monitored, failing, needs improvement, incomplete, passing, no standing
      * @param  array<string, int>  $counts
      */
     private function assertCounts(array $expected, array $counts): void

@@ -4,7 +4,7 @@ This document explains, in plain language, how the system decides whether a cand
 
 > **Every number below is a placeholder.** Areas, weights, passing grades, the conduct rule, the merit/demerit catalogue and session hours are all configurable in the application. The values seeded for the demo come from a suggested military-school structure and must be replaced by the official grading SOP once OCS provides it.
 
-The existing **academic standing** (Passing / At Risk / Failing / Incomplete per subject, with the period's passing and warning grades) is not changed by anything here. Performance areas are a layer on top that reads the same subject grades.
+The existing **academic standing** (Passing / Needs Improvement / Failing / Incomplete per subject, with the period's passing and warning grades) is not changed by anything here. Performance areas are a layer on top that reads the same subject grades.
 
 All calculations are done on the server, in one place (`App\Services\Performance\QualificationEngine`, with `ConductLedger` and `AttendanceLedger` for points and attendance). Nothing is stored: results are worked out whenever a page is opened, so a new grade, a voided demerit or a changed passing grade shows immediately everywhere.
 

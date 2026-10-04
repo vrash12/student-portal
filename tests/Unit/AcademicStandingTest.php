@@ -55,7 +55,7 @@ class AcademicStandingTest extends TestCase
 
     public function test_grades_are_compared_as_displayed_after_rounding(): void
     {
-        // 74.995 is shown as 75.00, so it is At Risk, not Failing.
+        // 74.995 is shown as 75.00, so it is Needs Improvement, not Failing.
         $this->assertSame(AcademicStanding::AtRisk, $this->calculator->standing(74.995, 0, $this->thresholds));
         // Binary noise just below a boundary does not change the result.
         $this->assertSame(AcademicStanding::Passing, $this->calculator->standing(79.99999999999, 0, $this->thresholds));
@@ -94,7 +94,7 @@ class AcademicStandingTest extends TestCase
         $withThresholds = $this->calculator->subjectGrade($categories, $assessments, $scores, $this->thresholds);
         $this->assertSame(77.7, $withThresholds->grade);
         $this->assertSame(AcademicStanding::AtRisk, $withThresholds->standing);
-        $this->assertSame(['value' => 'at_risk', 'label' => 'At Risk', 'tone' => 'warning'], $withThresholds->toArray()['standing']);
+        $this->assertSame(['value' => 'at_risk', 'label' => 'Needs Improvement', 'tone' => 'warning'], $withThresholds->toArray()['standing']);
 
         $withoutThresholds = $this->calculator->subjectGrade($categories, $assessments, $scores, null);
         $this->assertSame(77.7, $withoutThresholds->grade);
@@ -165,8 +165,8 @@ class AcademicStandingTest extends TestCase
     }
 
     /**
-     * AGENTS.md §17 shows 84.50 Passing, 72.40 At Risk, 91.00 Passing, and
-     * 68.20 Failing with an overall At Risk, which an average could produce.
+     * AGENTS.md §17 shows 84.50 Passing, 72.40 Needs Improvement, 91.00 Passing, and
+     * 68.20 Failing with an overall Needs Improvement, which an average could produce.
      * The implemented rule is "most serious subject" (Failing here), pending
      * the owner's confirmation. This test documents the difference.
      */

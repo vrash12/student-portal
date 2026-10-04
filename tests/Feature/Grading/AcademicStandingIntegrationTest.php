@@ -33,7 +33,7 @@ use Tests\TestCase;
  * thresholds of the demo seeder.
  *
  * Unless a test says otherwise, the active period uses a passing grade of
- * 75 and a warning grade of 80 (Failing below 75, At Risk from 75 to 79.99,
+ * 75 and a warning grade of 80 (Failing below 75, Needs Improvement from 75 to 79.99,
  * Passing from 80). Page props are JSON: whole numbers such as 75.0 arrive
  * as 75.
  */
@@ -43,7 +43,7 @@ class AcademicStandingIntegrationTest extends TestCase
 
     private const PASSING = ['value' => 'passing', 'label' => 'Passing', 'tone' => 'success'];
 
-    private const AT_RISK = ['value' => 'at_risk', 'label' => 'At Risk', 'tone' => 'warning'];
+    private const AT_RISK = ['value' => 'at_risk', 'label' => 'Needs Improvement', 'tone' => 'warning'];
 
     private const FAILING = ['value' => 'failing', 'label' => 'Failing', 'tone' => 'danger'];
 
@@ -262,7 +262,7 @@ class AcademicStandingIntegrationTest extends TestCase
         $this->actingAs($this->alpha)
             ->get($this->gradebookUrl($this->offeringA1))
             ->assertInertia(fn (Assert $page) => $page
-                // A1: 78% x 40 + 60% x 60 = 31.2 + 36 = 67.20 (was 77.70, At Risk).
+                // A1: 78% x 40 + 60% x 60 = 31.2 + 36 = 67.20 (was 77.70, Needs Improvement).
                 ->where('grades.data.0.result.grade', 67.2)
                 ->where('grades.data.0.result.standing', self::FAILING)
                 // A2: 80% x 40 + 80% x 60 = 80.00, exactly the warning grade (was 70.40, Failing).
@@ -294,7 +294,7 @@ class AcademicStandingIntegrationTest extends TestCase
             ->get($this->gradebookUrl($this->offeringA1))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('thresholds', ['passingGrade' => 70, 'warningGrade' => 77])
-                // 77.70 >= 77: Passing. 70.40 >= 70: At Risk.
+                // 77.70 >= 77: Passing. 70.40 >= 70: Needs Improvement.
                 ->where('grades.data.0.result.grade', 77.7)
                 ->where('grades.data.0.result.standing', self::PASSING)
                 ->where('grades.data.1.result.grade', 70.4)
@@ -330,7 +330,7 @@ class AcademicStandingIntegrationTest extends TestCase
         $this->actingAs($this->alpha)
             ->get($this->gradebookUrl($this->offeringA1))
             ->assertInertia(fn (Assert $page) => $page
-                // A1: 78% x 90 + 77.5% x 10 = 70.2 + 7.75 = 77.95 (still At Risk).
+                // A1: 78% x 90 + 77.5% x 10 = 70.2 + 7.75 = 77.95 (still Needs Improvement).
                 ->where('grades.data.0.result.grade', 77.95)
                 ->where('grades.data.0.result.standing', self::AT_RISK)
                 // A2: 80% x 90 + 64% x 10 = 72 + 6.4 = 78.40 (was 70.40, Failing).
@@ -494,7 +494,7 @@ class AcademicStandingIntegrationTest extends TestCase
         $this->recordScores($test, [$this->candidateInA->id => '60', $this->secondInA->id => '95'], $this->bravo);
         $this->finalize($test, $this->bravo);
 
-        // A1: At Risk in Subject 1, Failing (provisional) in Subject 2.
+        // A1: Needs Improvement in Subject 1, Failing (provisional) in Subject 2.
         $this->actingAs($this->academicAdmin)
             ->get("/candidates/{$this->candidateInA->id}")
             ->assertInertia(fn (Assert $page) => $page
@@ -552,7 +552,7 @@ class AcademicStandingIntegrationTest extends TestCase
                     'isProvisional' => true,
                 ]));
 
-        // A2: At Risk in Subject 1 ((15 + 24) / 50 = 78%), Incomplete in Subject 2.
+        // A2: Needs Improvement in Subject 1 ((15 + 24) / 50 = 78%), Incomplete in Subject 2.
         $this->actingAs($this->academicAdmin)
             ->get("/candidates/{$this->secondInA->id}")
             ->assertInertia(fn (Assert $page) => $page
@@ -869,7 +869,7 @@ class AcademicStandingIntegrationTest extends TestCase
         $this->setThresholds($this->pastPeriod, '60', '70');
         [$oldOffering, $oldCandidate] = $this->recordOldPeriodGrade('65');
 
-        // 65.00 is At Risk at 60 / 70; with the active period's 75 / 80 it would be Failing.
+        // 65.00 is Needs Improvement at 60 / 70; with the active period's 75 / 80 it would be Failing.
         $this->actingAs($this->alpha)
             ->get($this->gradebookUrl($oldOffering))
             ->assertOk()

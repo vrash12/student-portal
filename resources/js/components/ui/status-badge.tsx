@@ -25,15 +25,17 @@ interface StatusBadgeProps {
     /** Visible text is required: status is never shown by color alone (§47). */
     children: ReactNode;
     className?: string;
+    wrap?: boolean;
 }
 
-export function StatusBadge({ tone, children, className }: StatusBadgeProps) {
+export function StatusBadge({ tone, children, className, wrap = false }: StatusBadgeProps) {
     const Icon = toneIcons[tone];
 
     return (
         <span
             className={cn(
-                'inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium',
+                'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium',
+                wrap ? 'max-w-full whitespace-normal' : 'whitespace-nowrap',
                 toneClasses[tone],
                 className,
             )}

@@ -45,7 +45,7 @@ final class ReportCharts
                 $this->outcomes($rows),
                 $this->resultsByExamination($rows, $type),
             ])),
-            // At-risk and failing lists hold one standing: the chart shows where those candidates are.
+            // Needs Improvement and Failing lists hold one standing: the chart shows where those candidates are.
             'at_risk', 'failing' => array_values(array_filter([$this->listByClass($rows, $type)])),
             default => [],
         };
@@ -96,7 +96,7 @@ final class ReportCharts
     }
 
     /**
-     * Where the candidates of an at-risk or failing list are: candidates per
+     * Where the candidates of a Needs Improvement or Failing list are: candidates per
      * class, the largest classes first and the rest as one slice. Null when
      * they are all in one class (a full ring would add nothing).
      *
@@ -120,7 +120,7 @@ final class ReportCharts
 
         return [
             'kind' => 'pie',
-            'title' => $type === 'failing' ? 'Failing Candidates by Class' : 'At-Risk Candidates by Class',
+            'title' => $type === 'failing' ? 'Failing Candidates by Class' : 'Candidates Needing Improvement by Class',
             'description' => 'The class of each candidate on this list.',
             'slices' => $slices,
             'noun' => ['one' => 'candidate', 'other' => 'candidates'],

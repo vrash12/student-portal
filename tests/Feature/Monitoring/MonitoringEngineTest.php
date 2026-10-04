@@ -49,7 +49,7 @@ class MonitoringEngineTest extends TestCase
 
     private const THRESHOLD_REASON = 'Synthetic thresholds for automated monitoring tests.';
 
-    /** Batch A. Scenario: At Risk in Subject 1, Passing in Subject 2. */
+    /** Batch A. Scenario: Needs Improvement in Subject 1, Passing in Subject 2. */
     private Candidate $candidateA4;
 
     /** Batch A. Scenario: no scores at all (Incomplete everywhere). */
@@ -445,7 +445,7 @@ class MonitoringEngineTest extends TestCase
         $this->assertSame([
             $this->secondInA->id,     // Failing, 60.00
             $this->candidateInA->id,  // Failing, 70.00
-            $this->candidateA4->id,   // At Risk
+            $this->candidateA4->id,   // Needs Improvement
             $this->candidateA5->id,   // Incomplete
             $this->candidateA6->id,   // Passing
             $this->candidateInB->id,  // no standing yet
@@ -519,7 +519,7 @@ class MonitoringEngineTest extends TestCase
             'incomplete' => 1, // A5
         ];
 
-        // Batch B Subject 1 has no Failing or At Risk candidate, so it is not listed.
+        // Batch B Subject 1 has no Failing or Needs Improvement candidate, so it is not listed.
         $this->assertSame([$subjectOneRow, $subjectTwoRow], $this->monitoring()->subjectsRequiringAttention($this->evaluateFor($this->academicAdmin)));
         $this->assertSame([$subjectOneRow], $this->monitoring()->subjectsRequiringAttention($this->evaluateFor($this->alpha)));
         $this->assertSame([$subjectTwoRow], $this->monitoring()->subjectsRequiringAttention($this->evaluateFor($this->bravo)));
@@ -528,7 +528,7 @@ class MonitoringEngineTest extends TestCase
     public function test_subjects_requiring_attention_are_ordered_by_failing_then_at_risk_then_subject_and_class_name(): void
     {
         $this->buildMonitoringScenario();
-        // Batch B Subject 1: two Failing, one At Risk.
+        // Batch B Subject 1: two Failing, one Needs Improvement.
         $b2 = $this->candidateIn($this->batchB, 'B2');
         $b3 = $this->candidateIn($this->batchB, 'B3');
         $this->setScheme($this->offeringB1, ['Quizzes' => '100']);
@@ -549,8 +549,8 @@ class MonitoringEngineTest extends TestCase
         $rows = $this->monitoring()->subjectsRequiringAttention($this->evaluateFor($this->academicAdmin));
 
         $this->assertSame([
-            $this->offeringB1->id,            // 2 Failing, 1 At Risk
-            $this->offeringA1->id,            // 1 Failing, 1 At Risk
+            $this->offeringB1->id,            // 2 Failing, 1 Needs Improvement
+            $this->offeringA1->id,            // 1 Failing, 1 Needs Improvement
             $this->offeringA2->id,            // 1 Failing: Subject 2, Sample Batch A
             $offeringsC['Subject 2']->id,     // 1 Failing: Subject 2, Sample Batch C
             $offeringsC['Subject 3']->id,     // 1 Failing: Subject 3
@@ -651,7 +651,7 @@ class MonitoringEngineTest extends TestCase
             $this->subjectResult($offerings['Subject 3'], 90.0, 0, $thresholds),  // Passing
             $this->subjectResult($offerings['Subject 1'], 70.0, 0, $thresholds),  // Failing
             $this->subjectResult($offerings['Subject 5'], null, 0, $thresholds),  // nothing to judge yet
-            $this->subjectResult($offerings['Subject 2'], 77.0, 1, $thresholds),  // At Risk, one missing score
+            $this->subjectResult($offerings['Subject 2'], 77.0, 1, $thresholds),  // Needs Improvement, one missing score
             $this->subjectResult($offerings['Subject 4'], 90.0, 2, $thresholds),  // Incomplete (Passing withheld)
             $this->subjectResult($offerings['Subject 6'], 88.0, 1, null),         // no thresholds, one missing score
         ];
@@ -679,7 +679,7 @@ class MonitoringEngineTest extends TestCase
             $this->subjectResult($offerings['Subject 7'], 50.0, 1, null),         // missing scores only
             $this->subjectResult($offerings['Subject 5'], null, 1, $thresholds),  // Incomplete, no grade
             $this->subjectResult($offerings['Subject 2'], 70.0, 0, $thresholds),  // Failing 70.00
-            $this->subjectResult($offerings['Subject 4'], 76.0, 0, $thresholds),  // At Risk
+            $this->subjectResult($offerings['Subject 4'], 76.0, 0, $thresholds),  // Needs Improvement
             $this->subjectResult($offerings['Subject 6'], 85.0, 1, $thresholds),  // Incomplete 85.00
             $this->subjectResult($offerings['Subject 1'], 70.0, 0, $thresholds),  // Failing 70.00
             $this->subjectResult($offerings['Subject 3'], 60.0, 1, $thresholds),  // Failing 60.00
@@ -700,7 +700,7 @@ class MonitoringEngineTest extends TestCase
             'classSubjectId' => $offerings['Subject 2']->id,
             'subject' => 'Subject 2',
             'grade' => 77.0,
-            'standing' => ['value' => 'at_risk', 'label' => 'At Risk', 'tone' => 'warning'],
+            'standing' => ['value' => 'at_risk', 'label' => 'Needs Improvement', 'tone' => 'warning'],
             'missingScores' => 1,
             'isProvisional' => true,
         ], SubjectConcerns::present($this->subjectResult($offerings['Subject 2'], 77.0, 1, $thresholds, pendingCategories: 1)));
@@ -895,7 +895,7 @@ class MonitoringEngineTest extends TestCase
         }
         $this->assertCountsReconcile($this->monitoring()->counts($monitored));
         $this->assertSame(
-            ['standing' => ['value' => 'at_risk', 'label' => 'At Risk', 'tone' => 'warning'], 'basedOnSubjects' => 2, 'totalSubjects' => 3, 'isProvisional' => true],
+            ['standing' => ['value' => 'at_risk', 'label' => 'Needs Improvement', 'tone' => 'warning'], 'basedOnSubjects' => 2, 'totalSubjects' => 3, 'isProvisional' => true],
             $this->entryFor($monitored, $atPassing)->overall->toArray(),
         );
     }
@@ -1058,7 +1058,7 @@ class MonitoringEngineTest extends TestCase
      *   A1             80.00 Passing               70.00 Failing          Failing, lowest 70.00
      *   A2             60.00 Failing, 1 missing    90.00 Passing          Failing, lowest 60.00
      *   A3 (withdrawn) -                           -                      not monitored
-     *   A4             75.00 At Risk               85.00 Passing          At Risk, lowest 75.00
+     *   A4             75.00 Needs Improvement               85.00 Passing          Needs Improvement, lowest 75.00
      *   A5             no grade, 2 missing         no grade, 1 missing    Incomplete, no grade
      *   A6 (on leave)  80.00 Passing               95.00 Passing          Passing, lowest 80.00
      *   B1             Batch B Subject 1 (Bravo): grading not set up      no standing yet

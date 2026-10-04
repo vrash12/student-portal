@@ -129,7 +129,7 @@ export default function GradingThresholds({ period, thresholds, suggestion, requ
                                 label="Warning Grade"
                                 required
                                 error={form.errors.warning_grade}
-                                hint="Below this: At Risk. Same as passing grade: no At Risk."
+                                hint="Passing but below this: Needs Improvement. Equal passing and warning grades remove this range."
                             >
                                 <TextInput
                                     name="warning_grade"

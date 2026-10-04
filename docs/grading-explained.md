@@ -10,7 +10,7 @@ This is the short version of how a candidate's result is decided, where each rul
  1. SCORES                2. SUBJECT GRADE          3. SUBJECT STANDING          4. PERFORMANCE AREAS            5. QUALIFICATION & RANK
  instructor records    →  components × weights   →  period passing/warning   →  subject grades, fitness,     →  must-pass areas: Qualified /
  raw scores, then         (per subject of a         grades:                     conduct, attendance,            Not Qualified / Pending;
- FINALIZES the            class), 0–100             Passing / At Risk /         each with a weight and          overall score ranks each class
+ FINALIZES the            class), 0–100             Passing / Needs Improvement /         each with a weight and          overall score ranks each class
  assessment                                         Failing / Incomplete        its own passing grade           (staff only)
 ```
 
@@ -60,7 +60,7 @@ Nothing is stored: every grade, standing, area result and rank is calculated whe
 ### 3. Subject standing: passing and warning grades
 
 - Each **academic period** has a passing grade and a warning grade (`academic_periods.passing_grade`, `warning_grade`), set on **Passing and Warning Grades** (`/academic-periods/{period}/grading-thresholds`). There is no built-in default; without them grades are calculated but no standing is shown.
-- `GradeCalculationService::standing()`: below passing → **Failing**; passing up to (not including) warning → **At Risk**; warning and above → **Passing**, or **Incomplete** when scores are missing (Failing and At Risk are kept even with missing scores, so a warning is never hidden). Compared as shown, to two decimals.
+- `GradeCalculationService::standing()`: below passing → **Failing**; passing up to (not including) warning → **Needs Improvement**; warning and above → **Passing**, or **Incomplete** when scores are missing (Failing and Needs Improvement are kept even with missing scores, so a warning is never hidden). Compared as shown, to two decimals.
 - A candidate's overall standing is their **most serious** subject standing (`overallStanding()`), not an average.
 - Withdrawn candidates keep their grades but get no standing.
 
@@ -101,7 +101,7 @@ Nothing is stored: every grade, standing, area result and rank is calculated whe
 
 | Setting | Set | Decides | Does not change |
 | --- | --- | --- | --- |
-| Passing and warning grades | per academic period | Passing / At Risk / Failing in each subject | qualification |
+| Passing and warning grades | per academic period | Passing / Needs Improvement / Failing in each subject | qualification |
 | Area passing grade | per performance area | whether the area is passed → Qualified / Not Qualified | subject standing |
 | Examination passing score | per quiz or examination | that attempt's Passed / Failed | subject standing, qualification |
 

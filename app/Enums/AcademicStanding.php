@@ -20,7 +20,7 @@ enum AcademicStanding: string
 
     /**
      * Scores are missing on finalized assessments, and the scores recorded
-     * so far do not show a concern (otherwise At Risk or Failing is shown).
+     * so far do not show a concern (otherwise Needs Improvement or Failing is shown).
      */
     case Incomplete = 'incomplete';
 
@@ -28,7 +28,7 @@ enum AcademicStanding: string
     {
         return match ($this) {
             self::Passing => 'Passing',
-            self::AtRisk => 'At Risk',
+            self::AtRisk => 'Needs Improvement',
             self::Failing => 'Failing',
             self::Incomplete => 'Incomplete',
         };

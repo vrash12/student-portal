@@ -50,7 +50,7 @@ class AdministratorDashboardTest extends TestCase
         $this->buildReportingFixtures();
         $attention = $this->dashboardProps($this->academicAdmin)['academicOverview']['requiringAttention'];
 
-        // Failing by lowest grade (A2 60, A1 70), then At Risk (B1 77).
+        // Failing by lowest grade (A2 60, A1 70), then Needs Improvement (B1 77).
         $this->assertSame(
             [$this->secondInA->id, $this->candidateInA->id, $this->candidateInB->id],
             array_map(fn (array $entry): int => $entry['candidate']['id'], $attention),
@@ -281,7 +281,7 @@ class AdministratorDashboardTest extends TestCase
 
     /**
      * @param  array<string, mixed>  $row
-     * @return array{0: int, 1: int, 2: int, 3: int} failing, at risk, passing, incomplete
+     * @return array{0: int, 1: int, 2: int, 3: int} failing, needs improvement, passing, incomplete
      */
     private function standingCounts(array $row): array
     {

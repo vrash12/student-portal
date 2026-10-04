@@ -280,11 +280,11 @@ function SubjectsRequiringAttention({ subjects, hrefFor }: { subjects: SubjectAt
     return (
         <Panel
             title="Subjects Requiring Attention"
-            description="Subjects with failing or at-risk candidates, most failing first."
+            description="Subjects with candidates who are failing or need improvement, most failing first."
             bodyClassName={subjects.length === 0 ? undefined : 'p-0'}
         >
             {subjects.length === 0 ? (
-                <p className="text-sm text-ink-muted">No subject has failing or at-risk candidates.</p>
+                <p className="text-sm text-ink-muted">No subject has candidates who are failing or need improvement.</p>
             ) : (
                 <ul className="divide-y divide-line">
                     {subjects.map((row) => (
@@ -304,11 +304,11 @@ function SubjectsRequiringAttention({ subjects, hrefFor }: { subjects: SubjectAt
     );
 }
 
-/** "2 failing, 1 at risk, 1 incomplete", leaving out zero counts (UI_UX_DESIGN.md §98). */
+/** "2 failing, 1 needing improvement, 1 incomplete", leaving out zero counts (UI_UX_DESIGN.md §98). */
 function attentionSummary(row: SubjectAttention): string {
     return [
         [row.failing, 'failing'],
-        [row.atRisk, 'at risk'],
+        [row.atRisk, 'needing improvement'],
         [row.incomplete, 'incomplete'],
     ]
         .filter(([count]) => count !== 0)

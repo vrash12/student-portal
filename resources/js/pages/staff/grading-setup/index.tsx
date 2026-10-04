@@ -62,7 +62,7 @@ export default function GradingSetup(props: GradingSetupProps) {
         {
             href: '#standing',
             title: 'Subject Standing',
-            description: 'Passing and Warning Grades give Passing, At Risk or Failing.',
+            description: 'Passing and Warning Grades give Passing, Needs Improvement or Failing.',
             status:
                 thresholds === null
                     ? { ready: false, text: 'Passing and Warning Grades not set' }
@@ -555,7 +555,7 @@ function PassingGradesExplained() {
         {
             name: 'Passing and Warning Grades',
             where: 'Step 3, per academic period',
-            decides: 'Subject standing: Passing, At Risk or Failing.',
+            decides: 'Subject standing: Passing, Needs Improvement or Failing.',
         },
         {
             name: 'Area passing grade',

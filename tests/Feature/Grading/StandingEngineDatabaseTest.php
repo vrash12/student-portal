@@ -138,7 +138,7 @@ class StandingEngineDatabaseTest extends TestCase
         $this->assertNull($new[$this->candidateInA->id]->grade);
         $this->assertSame(1, $new[$this->candidateInA->id]->missingScores);
         $this->assertSame(AcademicStanding::Incomplete, $new[$this->candidateInA->id]->standing);
-        // 15/20 = 75.00: At Risk.
+        // 15/20 = 75.00: Needs Improvement.
         $this->assertSame(AcademicStanding::AtRisk, $new[$this->candidateInB->id]->standing);
     }
 
@@ -468,7 +468,7 @@ class StandingEngineDatabaseTest extends TestCase
         $grades = $this->calculator()->forOffering($this->fresh($this->offeringA2), [$this->candidateInA->id, $this->secondInA->id]);
 
         $this->assertSame(75.0, $grades[$this->candidateInA->id]->grade);
-        // One missing score each, but At Risk and Failing are never hidden.
+        // One missing score each, but Needs Improvement and Failing are never hidden.
         $this->assertSame(1, $grades[$this->candidateInA->id]->missingScores);
         $this->assertSame(AcademicStanding::AtRisk, $grades[$this->candidateInA->id]->standing);
         $this->assertSame(74.99, $grades[$this->secondInA->id]->grade);
@@ -518,7 +518,7 @@ class StandingEngineDatabaseTest extends TestCase
         // 0.4 × 90 + 0.6 × 95 = 93.00, complete.
         $this->assertSame(93.0, $before[$this->candidateInA->id]->grade);
         $this->assertSame(AcademicStanding::Passing, $before[$this->candidateInA->id]->standing);
-        // Quizzes only (75%), examination missing: At Risk is kept.
+        // Quizzes only (75%), examination missing: Needs Improvement is kept.
         $this->assertSame(75.0, $before[$this->secondInA->id]->grade);
         $this->assertSame(AcademicStanding::AtRisk, $before[$this->secondInA->id]->standing);
 
@@ -700,7 +700,7 @@ class StandingEngineDatabaseTest extends TestCase
         // 12 candidates; the page shows the first 10.
         $this->assertCount(10, $largeResponse->inertiaProps('grades.data'));
         $this->assertSame(
-            ['value' => 'at_risk', 'label' => 'At Risk', 'tone' => 'warning'],
+            ['value' => 'at_risk', 'label' => 'Needs Improvement', 'tone' => 'warning'],
             $largeResponse->inertiaProps('grades.data')[9]['result']['standing'],
         );
         // The log really captured the page (at least the six queries of the
@@ -733,7 +733,7 @@ class StandingEngineDatabaseTest extends TestCase
             $this->assertCount(1, $oneResponse->inertiaProps('performance'));
             $this->assertCount(4, $fourResponse->inertiaProps('performance'));
             $this->assertSame([
-                'standing' => ['value' => 'at_risk', 'label' => 'At Risk', 'tone' => 'warning'],
+                'standing' => ['value' => 'at_risk', 'label' => 'Needs Improvement', 'tone' => 'warning'],
                 'basedOnSubjects' => 4,
                 'totalSubjects' => 4,
                 'isProvisional' => false,
@@ -876,7 +876,7 @@ class StandingEngineDatabaseTest extends TestCase
 
     /**
      * Two classes of the active period, all subjects taught by Alpha, each
-     * subject with one finalized quiz scored 15/20 (75%, At Risk at 75/80):
+     * subject with one finalized quiz scored 15/20 (75%, Needs Improvement at 75/80):
      * "Sample Batch One" with one subject and "Sample Batch Four" with four.
      *
      * @return array{Candidate, Candidate, list<ClassSubject>} the one-subject candidate, the four-subject candidate, and the four class subjects

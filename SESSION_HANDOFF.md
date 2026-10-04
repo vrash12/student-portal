@@ -1,5 +1,11 @@
 # SESSION_HANDOFF.md
 
+## Live deployment completed (2026-10-04, Codex)
+
+- Owner requested deployment after the live/local mismatch investigation. Configured all five Hostinger repository secrets using the existing scoped deploy key and setup script. Committed/pushed background changes as `e570374` (latest unmasked candidate and matching school emblem). GitHub Actions run `37196446122` deployed this commit successfully on its second attempt.
+- First attempt backed up the database then failed on migration `2026_10_03_000200` because the live MariaDB server was configured as `DB_CONNECTION=mysql` and received MySQL-only DROP CHECK syntax. Saved a copy of the live environment as `.env.before-login-deploy-20261004`, changed the live connection to `mariadb`, cleared config, and reran the deployment. Migrations, public-file publishing and cache rebuild completed; maintenance mode ended.
+- Updated the preserved live `.env` to `LOGIN_COMPACT_IMAGE_URL=/branding/login-background-school-logo.png` and rebuilt config cache. Verified live `/login`, `/up` and the new image return 200; browser confirms updated image loaded and the current card placement. Screenshot: `output/imagegen/live-login-deployed-20261004.png`. Future pushes to main now trigger a configured deployment. No credentials were committed.
+
 ## Live/local login comparison (2026-10-04, Codex)
 
 - Owner reported that pushing did not make Hostinger match localhost. Visited both login pages: live loads older compiled assets (`app-DvTcnm1a.css`, `app-BoC2rQMH.js`) and `/branding/login-background.png`; local loads newer assets and `/branding/login-background-school-logo.png`.

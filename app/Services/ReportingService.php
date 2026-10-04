@@ -15,7 +15,7 @@ final class ReportingService
 {
     public const TYPES = [
         'candidate' => 'Candidate academic standing', 'class' => 'Class / batch performance',
-        'subject' => 'Subject performance', 'at_risk' => 'At-risk candidates',
+        'subject' => 'Subject performance', 'at_risk' => 'Candidates needing improvement',
         'failing' => 'Failing candidates', 'examination' => 'Examination results',
         'quiz' => 'Quiz results', 'distribution' => 'Grade distribution',
     ];
@@ -69,7 +69,7 @@ final class ReportingService
     private function academic(array $entries, string $type): array
     {
         if ($type === 'subject') {
-            return ['columns' => ['classBatch' => 'Class', 'subject' => 'Subject', 'candidateCount' => 'Candidates', 'average' => 'Mean current grade', 'provisionalCount' => 'Provisional', 'passing' => 'Passing', 'at_risk' => 'At risk', 'failing' => 'Failing', 'incomplete' => 'Incomplete', 'none' => 'No standing'],
+            return ['columns' => ['classBatch' => 'Class', 'subject' => 'Subject', 'candidateCount' => 'Candidates', 'average' => 'Mean current grade', 'provisionalCount' => 'Provisional', 'passing' => 'Passing', 'at_risk' => 'Needs Improvement', 'failing' => 'Failing', 'incomplete' => 'Incomplete', 'none' => 'No standing'],
                 'numericColumns' => ['candidateCount', 'average', 'provisionalCount', 'passing', 'at_risk', 'failing', 'incomplete', 'none'],
                 'rows' => array_map(fn ($row) => array_diff_key($row, array_flip(['id', 'subjectId', 'classId', 'gradedCount'])), $this->performance->summarize($entries))];
         }
@@ -78,7 +78,7 @@ final class ReportingService
                 return ['classBatch' => $group->first()->candidate->classBatch->name] + $this->monitoring->counts($group->all());
             })->values()->all();
 
-            return ['columns' => ['classBatch' => 'Class', 'monitored' => 'Candidates', 'passing' => 'Passing', 'atRisk' => 'At risk', 'failing' => 'Failing', 'incomplete' => 'Incomplete', 'noStanding' => 'No standing'],
+            return ['columns' => ['classBatch' => 'Class', 'monitored' => 'Candidates', 'passing' => 'Passing', 'atRisk' => 'Needs Improvement', 'failing' => 'Failing', 'incomplete' => 'Incomplete', 'noStanding' => 'No standing'],
                 'numericColumns' => ['monitored', 'passing', 'atRisk', 'failing', 'incomplete', 'noStanding'], 'rows' => $rows];
         }
         if ($type === 'distribution') {

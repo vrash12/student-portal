@@ -16,7 +16,7 @@ final readonly class GradingThresholds
     public function __construct(
         /** Grades below this are Failing. */
         public int $passingHundredths,
-        /** Grades at or above the passing grade but below this are At Risk. */
+        /** Grades at or above the passing grade but below this are Needs Improvement. */
         public int $warningHundredths,
     ) {
         if ($passingHundredths <= 0 || $passingHundredths > $warningHundredths || $warningHundredths > 10000) {

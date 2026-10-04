@@ -8,7 +8,7 @@ use App\Services\Grading\SubjectGrade;
 
 /**
  * The single definition of a "concern" (AGENTS.md §16): a subject in which a
- * candidate is Failing, At Risk, or Incomplete, or has missing scores. Used
+ * candidate is Failing, Needs Improvement, or Incomplete, or has missing scores. Used
  * by the monitoring table, the dashboards, and the candidate profile's
  * Current Warnings, so all three always agree.
  */
@@ -17,7 +17,7 @@ final class SubjectConcerns
     private const CONCERNING = [AcademicStanding::Failing, AcademicStanding::AtRisk, AcademicStanding::Incomplete];
 
     /**
-     * Most serious first (Failing, At Risk, Incomplete, then subjects that
+     * Most serious first (Failing, Needs Improvement, Incomplete, then subjects that
      * only have missing scores), then lowest grade, then subject name.
      *
      * @param  list<array{offering: ClassSubject, grade: SubjectGrade}>  $subjects

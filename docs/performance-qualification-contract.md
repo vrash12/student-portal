@@ -8,7 +8,7 @@ Owner request (2026-10-01), based on a suggested military-school grading structu
 - **Statement of Account**: add default categories for pay and allowances, deductions and issued-item accountability (no tuition at OCS). Pay rates are never hardcoded; staff only.
 - Nothing institutional is hardcoded: areas, weights, passing grades, must-pass flags, conduct rule, merit/demerit types and session hours are configurable. Seeded values are placeholders until OCS provides its official grading SOP.
 
-Existing academic standing (Passing / At Risk / Failing / Incomplete per subject, `GradeCalculationService`, period thresholds) stays exactly as it is. Areas and qualification are a layer on top that reads it.
+Existing academic standing (Passing / Needs Improvement / Failing / Incomplete per subject, `GradeCalculationService`, period thresholds) stays exactly as it is. Areas and qualification are a layer on top that reads it.
 
 ## Shared pieces (already in the repository — do not edit unless your module section says so)
 

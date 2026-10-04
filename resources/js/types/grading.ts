@@ -58,7 +58,7 @@ export interface SubjectGrade {
     /** How complete the data behind the grade is (Complete, In Progress, Missing Scores, ...). */
     status: StatusValue;
     /**
-     * Passing, At Risk, Failing, or Incomplete. Null when the academic period
+     * Passing, Needs Improvement, Failing, or Incomplete. Null when the academic period
      * has no passing and warning grades, or when there is nothing to judge yet.
      */
     standing: StatusValue | null;

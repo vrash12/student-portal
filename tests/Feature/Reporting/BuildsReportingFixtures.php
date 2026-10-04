@@ -26,7 +26,7 @@ use Tests\Feature\Grading\BuildsGradingFixtures;
  *   Batch A, Subject 2 (Bravo)   Subject 2 Examination: A1 70, A2 no score
  *   Batch B, Subject 1 (Bravo)   Batch B Quiz:          B1 77
  *
- * Overall standings: A1 Failing (70), A2 Failing (60), B1 At Risk (77).
+ * Overall standings: A1 Failing (70), A2 Failing (60), B1 Needs Improvement (77).
  */
 trait BuildsReportingFixtures
 {

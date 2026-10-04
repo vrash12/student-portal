@@ -40,7 +40,7 @@ Each step lists what to open and what to point out. Roughly 20–25 minutes in t
 ### 1. Administrator: academic overview (`admin`)
 
 - **Sign-in page:** institutional design; a wrong password gives one neutral message; sign-in is rate limited and recorded.
-- **Dashboard:** monitored candidates and the Passing / At Risk / Failing / Incomplete counts with the distribution bar; *Candidates Requiring Attention*; recent examinations.
+- **Dashboard:** monitored candidates and the Passing / Needs Improvement / Failing / Incomplete counts with the distribution bar; *Candidates Requiring Attention*; recent examinations.
 - **Academic Monitoring:** filter by standing (e.g. Failing); open a candidate.
 - **Candidate profile:** subject grades with standing in words, current warnings ("2 missing scores" — missing scores are never counted as zero), recent assessments, qualification panel, Registration and Academic Record PDFs.
 - **Records → Qualification:** performance areas, must-pass rules, Qualified / Pending / Not Qualified and class rank (staff only).

@@ -7,7 +7,7 @@ import type { ChartTone, StandingGroup, StandingTally } from '@/types/charts';
 /** Standings in the order shown, with their chart fills. Every bar is also described in text, never by color alone (§47). */
 const SERIES: ReadonlyArray<{ key: keyof StandingTally; label: string; fill: string; tone: ChartTone }> = [
     { key: 'passing', label: 'Passing', fill: 'bg-chart-passing', tone: 'passing' },
-    { key: 'atRisk', label: 'At Risk', fill: 'bg-chart-at-risk', tone: 'atRisk' },
+    { key: 'atRisk', label: 'Needs Improvement', fill: 'bg-chart-at-risk', tone: 'atRisk' },
     { key: 'failing', label: 'Failing', fill: 'bg-chart-failing', tone: 'failing' },
     { key: 'incomplete', label: 'Incomplete', fill: 'bg-chart-incomplete', tone: 'incomplete' },
     { key: 'noStanding', label: 'No standing yet', fill: 'bg-chart-none', tone: 'none' },
@@ -21,7 +21,7 @@ function percentOf(count: number, total: number): string {
     return total === 0 ? '0%' : `${Math.round((count * 100) / total)}%`;
 }
 
-/** "12 Passing · 3 At Risk · 1 Failing": the non-zero standings, in chart order. */
+/** "12 Passing · 3 Needs Improvement · 1 Failing": the non-zero standings, in chart order. */
 function summaryOf(counts: StandingTally): string {
     const parts = SERIES.filter((series) => counts[series.key] > 0).map((series) => `${counts[series.key]} ${series.label}`);
 

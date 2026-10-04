@@ -68,7 +68,7 @@ export function ThresholdSummary({ thresholds }: { thresholds: GradingThresholds
  */
 export function StandingRanges({ passingHundredths, warningHundredths }: { passingHundredths: number; warningHundredths: number }) {
     return (
-        <dl className="grid gap-2 text-sm sm:grid-cols-[8rem_1fr]">
+        <dl className="grid gap-2 text-sm sm:grid-cols-[max-content_1fr]">
             <dt>
                 <StatusBadge tone="success">Passing</StatusBadge>
             </dt>
@@ -76,7 +76,7 @@ export function StandingRanges({ passingHundredths, warningHundredths }: { passi
                 <span className="tabular-nums">{formatHundredths(warningHundredths)}</span> and above, no missing scores
             </dd>
             <dt>
-                <StatusBadge tone="warning">At Risk</StatusBadge>
+                <StatusBadge tone="warning">Needs Improvement</StatusBadge>
             </dt>
             <dd className="text-ink">
                 {passingHundredths === warningHundredths ? (
