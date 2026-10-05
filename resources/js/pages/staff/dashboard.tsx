@@ -10,6 +10,7 @@ import { StandingBadge } from '@/components/grading/standing';
 import { AttentionList } from '@/components/monitoring/attention-list';
 import { QualificationDistribution } from '@/components/performance/qualification-distribution';
 import { StandingCounts } from '@/components/monitoring/standing-counts';
+import { NutritionDashboardPanel } from '@/components/nutrition/nutrition-dashboard-panel';
 import { Alert } from '@/components/ui/alert';
 import { ButtonLink } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -27,6 +28,7 @@ import type { QualificationOverviewData } from '@/types/candidate-performance';
 import type { ChartColumn as DistributionColumn } from '@/types/charts';
 import type { GradingThresholds, StatusValue } from '@/types/grading';
 import type { MonitoringSummary, SubjectStandingSummary } from '@/types/monitoring';
+import type { NutritionOverview } from '@/types/nutrition';
 
 interface RoleAccountCount {
     code: string;
@@ -89,6 +91,8 @@ interface DashboardProps {
     backupWarnings: string[];
     /** Attendance of the active period in the user's attendance scope; null when none is recorded or out of scope. */
     attendanceTrend: (AttendanceTrend & { period: { id: number; name: string }; scope: 'all' | 'taught' }) | null;
+    /** Nutrition of the campus scope (nutrition.view); null for everyone else. */
+    nutritionOverview: NutritionOverview | null;
 }
 
 interface AdministratorOverviewData {
@@ -119,6 +123,7 @@ export default function Dashboard({
     canConfigurePerformance,
     backupWarnings,
     attendanceTrend,
+    nutritionOverview,
 }: DashboardProps) {
     const { app, auth } = usePage().props;
     const userName = auth.user?.name ?? '';
@@ -191,6 +196,8 @@ export default function Dashboard({
                         <AttendanceTrendCharts trend={attendanceTrend} />
                     </Panel>
                 )}
+
+                {nutritionOverview !== null && <NutritionDashboardPanel overview={nutritionOverview} />}
 
                 {administratorOverview !== null && <AdministratorOverview overview={administratorOverview} />}
 

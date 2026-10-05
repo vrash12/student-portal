@@ -14,6 +14,7 @@ enum SystemRole: string
     case SuperAdministrator = 'super_admin';
     case AcademicAdministrator = 'academic_admin';
     case Instructor = 'instructor';
+    case Dietitian = 'dietitian';
     case Candidate = 'candidate';
 
     public function label(): string
@@ -22,6 +23,7 @@ enum SystemRole: string
             self::SuperAdministrator => 'Admin',
             self::AcademicAdministrator => 'Academic Administrator',
             self::Instructor => 'Instructor',
+            self::Dietitian => 'Dietitian',
             self::Candidate => 'Candidate',
         };
     }
@@ -32,6 +34,7 @@ enum SystemRole: string
             self::SuperAdministrator => 'Full system administration, including roles and administrator accounts.',
             self::AcademicAdministrator => 'Manages academic records and staff accounts below administrator level.',
             self::Instructor => 'Teaches assigned subjects and classes.',
+            self::Dietitian => 'Assesses and monitors the nutrition of the candidates of their campus.',
             self::Candidate => 'Takes quizzes and examinations through the examination portal.',
         };
     }
@@ -46,6 +49,7 @@ enum SystemRole: string
             self::SuperAdministrator => 100,
             self::AcademicAdministrator => 80,
             self::Instructor => 40,
+            self::Dietitian => 40,
             self::Candidate => 10,
         };
     }
@@ -81,6 +85,10 @@ enum SystemRole: string
             Permission::ViewMedical,
             Permission::ManageMedical,
             Permission::ConfigureMedical,
+            // Nutrition (owner request, 2026-10-05): administrators see every record and set the
+            // standards; the assessments themselves are recorded by dietitians.
+            Permission::ViewNutrition,
+            Permission::ConfigureNutrition,
         ];
 
         return match ($this) {
@@ -104,6 +112,12 @@ enum SystemRole: string
                 // and their points (ConfigureFitness) apply to every class: administrators only.
                 Permission::ViewFitness,
                 Permission::ManageFitness,
+            ],
+            // Nutrition monitoring of the candidates of their campus (owner request, 2026-10-05).
+            self::Dietitian => [
+                Permission::AccessStaffArea,
+                Permission::ViewNutrition,
+                Permission::ManageNutrition,
             ],
             self::Candidate => [
                 Permission::AccessExamPortal,

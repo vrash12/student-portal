@@ -28,7 +28,19 @@ final class PdfDocument
 
     private const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 
-    public static function render(string $html, string $orientation): string
+    /**
+     * The standard ID card size (ISO/IEC 7810 ID-1, "CR80": 54 x 85.6 mm,
+     * 2.125 x 3.375 in) in points, portrait. For the candidate ID cards.
+     *
+     * @var array{0: float, 1: float, 2: float, 3: float}
+     */
+    public const ID_CARD_PAPER = [0.0, 0.0, 153.0, 243.0];
+
+    /**
+     * @param  string|array{0: float, 1: float, 2: float, 3: float}  $paper  a paper name, or [0, 0, width, height] in points
+     * @param  bool  $pageNumbers  "Page 1 of 2" at the bottom (not on cards)
+     */
+    public static function render(string $html, string $orientation, string|array $paper = 'letter', bool $pageNumbers = true): string
     {
         $cache = storage_path('framework/cache/pdf');
         File::ensureDirectoryExists($cache);
@@ -43,13 +55,15 @@ final class PdfDocument
         $options->setFontCache($cache);
 
         $pdf = new Dompdf($options);
-        $pdf->setPaper('letter', $orientation);
+        $pdf->setPaper($paper, $orientation);
         $pdf->loadHtml($html, 'UTF-8');
         $pdf->render();
         $canvas = $pdf->getCanvas();
         self::watermark($canvas);
-        [$x, $y] = $orientation === 'landscape' ? [700, 590] : [520, 770];
-        $canvas->page_text($x, $y, 'Page {PAGE_NUM} of {PAGE_COUNT}', $pdf->getFontMetrics()->getFont('DejaVu Sans'), 7, [0.35, 0.39, 0.43]);
+        if ($pageNumbers) {
+            [$x, $y] = $orientation === 'landscape' ? [700, 590] : [520, 770];
+            $canvas->page_text($x, $y, 'Page {PAGE_NUM} of {PAGE_COUNT}', $pdf->getFontMetrics()->getFont('DejaVu Sans'), 7, [0.35, 0.39, 0.43]);
+        }
 
         return $pdf->output();
     }
@@ -57,11 +71,14 @@ final class PdfDocument
     /**
      * A PDF file download, never cached by the browser or a proxy.
      */
-    public static function download(string $html, string $orientation, string $filename): Response
+    /**
+     * @param  string|array{0: float, 1: float, 2: float, 3: float}  $paper
+     */
+    public static function download(string $html, string $orientation, string $filename, string|array $paper = 'letter', bool $pageNumbers = true): Response
     {
         $name = (Str::slug(pathinfo($filename, PATHINFO_FILENAME)) ?: 'document').'.pdf';
 
-        return response(self::render($html, $orientation), 200, [
+        return response(self::render($html, $orientation, $paper, $pageNumbers), 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="'.$name.'"',
             'Cache-Control' => 'no-store, private',

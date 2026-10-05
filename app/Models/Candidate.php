@@ -150,6 +150,24 @@ class Candidate extends Model
     }
 
     /**
+     * Nutrition assessments by dietitians (owner request, 2026-10-05).
+     *
+     * @return HasMany<NutritionAssessment, $this>
+     */
+    public function nutritionAssessments(): HasMany
+    {
+        return $this->hasMany(NutritionAssessment::class);
+    }
+
+    /**
+     * @return HasOne<CandidateDietaryProfile, $this>
+     */
+    public function dietaryProfile(): HasOne
+    {
+        return $this->hasOne(CandidateDietaryProfile::class);
+    }
+
+    /**
      * Personal details, contacts and service background (owner request, 2026-10-03).
      *
      * @return HasOne<CandidateBackground, $this>

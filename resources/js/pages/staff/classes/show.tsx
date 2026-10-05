@@ -2,6 +2,7 @@ import { Head, Link, useForm } from "@inertiajs/react";
 import {
     BookOpen,
     GraduationCap,
+    IdCard,
     Pencil,
     Plus,
     QrCode,
@@ -91,6 +92,7 @@ interface ClassShowProps {
         viewCandidates: boolean;
         configureGrading: boolean;
         viewPeriod: boolean;
+        printIdCards: boolean;
     };
 }
 
@@ -152,6 +154,12 @@ export default function ClassShow({
                             <QrCode className="size-4" aria-hidden="true" />
                             QR Cards (PDF)
                         </a>
+                        {can.printIdCards && (
+                            <a href={routes.classes.idCards(classBatch.id)} className={buttonClasses("secondary")}>
+                                <IdCard className="size-4" aria-hidden="true" />
+                                ID Cards (PDF)
+                            </a>
+                        )}
                         <ButtonLink
                             href={routes.classes.edit(classBatch.id)}
                             icon={

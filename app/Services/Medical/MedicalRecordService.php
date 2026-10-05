@@ -134,8 +134,8 @@ class MedicalRecordService
      * @throws ValidationException
      */
     /**
-     * Records that an instructor of the candidate's class opened the record
-     * (view only). No values.
+     * Records that an instructor of the candidate's class, or a dietitian of
+     * the candidate's campus, opened the record (view only). No values.
      */
     public function recordInstructorView(Candidate $candidate, User $viewer): void
     {

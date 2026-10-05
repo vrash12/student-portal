@@ -48,6 +48,9 @@ enum Permission: string
     case ConfigureMedical = 'medical.configure';
     case ManageBackups = 'backups.manage';
     case ManageCampuses = 'campuses.manage';
+    case ViewNutrition = 'nutrition.view';
+    case ManageNutrition = 'nutrition.manage';
+    case ConfigureNutrition = 'nutrition.configure';
 
     public function label(): string
     {
@@ -85,6 +88,9 @@ enum Permission: string
             self::ConfigureMedical => 'Configure medical record fields',
             self::ManageBackups => 'Manage backups',
             self::ManageCampuses => 'Manage campuses',
+            self::ViewNutrition => 'View candidate nutrition records',
+            self::ManageNutrition => 'Record nutrition assessments',
+            self::ConfigureNutrition => 'Configure nutrition standards',
         };
     }
 
@@ -124,6 +130,9 @@ enum Permission: string
             self::ConfigureMedical => 'Define the medical record fields (name, type, choices), and whether instructors and candidates see each field.',
             self::ManageBackups => 'See the encrypted backups of the whole system, start a backup or a restore test, and restore the system from a backup (password and typed confirmation required). Only for accounts not limited to a campus.',
             self::ManageCampuses => 'Add and edit campuses, deactivate a campus, and remove a campus that was never used. Only for accounts not limited to a campus.',
+            self::ViewNutrition => 'See the nutrition records of the candidates of the user\'s campus (every campus for accounts not limited to a campus): assessments, measurements, findings, plans and dietary profiles. Monitoring only; nothing changes grades or rank.',
+            self::ManageNutrition => 'Record and correct nutrition assessments and dietary profiles (allergies, restrictions, supplements), and see the candidate\'s medical record view only, like instructors of the class.',
+            self::ConfigureNutrition => 'Set the body mass index cut-offs, the waist-to-height risk line and the review interval used for every campus.',
         };
     }
 
@@ -139,7 +148,7 @@ enum Permission: string
     {
         return match ($this) {
             self::ManageAcademicPeriods, self::ManageSubjects, self::ConfigurePerformance, self::ConfigureFitness,
-            self::ConfigureMedical, self::ManageBackups, self::ManageCampuses => true,
+            self::ConfigureMedical, self::ManageBackups, self::ManageCampuses, self::ConfigureNutrition => true,
             default => false,
         };
     }
@@ -163,6 +172,7 @@ enum Permission: string
             self::ManageConduct, self::ManageAttendance => 'Conduct & Attendance',
             self::ConfigurePerformance, self::ViewPerformance => 'Performance',
             self::ViewMedical, self::ManageMedical, self::ConfigureMedical => 'Medical Records',
+            self::ViewNutrition, self::ManageNutrition, self::ConfigureNutrition => 'Nutrition',
         };
     }
 }

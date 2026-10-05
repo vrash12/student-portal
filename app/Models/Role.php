@@ -54,6 +54,17 @@ class Role extends Model
     }
 
     /**
+     * Accounts of this role belong to one campus: those who teach classes,
+     * and dietitians, who assess the candidates of their campus (owner
+     * decisions 2026-10-03 and 2026-10-05). Only administrator roles may see
+     * every campus.
+     */
+    public function requiresCampus(): bool
+    {
+        return $this->grants(PermissionCode::TeachClasses) || $this->grants(PermissionCode::ManageNutrition);
+    }
+
+    /**
      * Roles that grant access to the staff area (administrators, instructors).
      *
      * @param  Builder<Role>  $query

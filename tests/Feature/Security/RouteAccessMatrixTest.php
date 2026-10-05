@@ -27,6 +27,7 @@ use App\Services\Fitness\FitnessStandardService;
 use App\Services\Fitness\FitnessTestService;
 use App\Services\Grading\GradeCorrectionService;
 use App\Services\Medical\MedicalRecordService;
+use App\Services\Nutrition\NutritionService;
 use App\Services\Performance\PerformanceAreaService;
 use App\Services\TrainingPhaseService;
 use Database\Factories\CampusFactory;
@@ -55,7 +56,7 @@ class RouteAccessMatrixTest extends TestCase
     use BuildsGradingFixtures;
 
     /** Public or guest-only routes. */
-    private const UNPROTECTED = ['login', 'up', '{fallbackPlaceholder}'];
+    private const UNPROTECTED = ['login', 'login/two-factor', 'up', '{fallbackPlaceholder}'];
 
     /**
      * Route parameters naming a record that belongs to a campus (directly,
@@ -187,6 +188,12 @@ class RouteAccessMatrixTest extends TestCase
         $medicalDownload->status = 'pending';
         $medicalDownload->save();
 
+        // A dietitian's nutrition assessment of candidate B1 (dietitians of the campus correct it).
+        $nutritionDietitian = $this->userWithRole(SystemRole::Dietitian);
+        $nutritionAssessment = app(NutritionService::class)->recordAssessment($this->candidateInB, [
+            'assessed_on' => '2026-09-01', 'height_cm' => 170, 'weight_kg' => 65,
+        ], $nutritionDietitian);
+
         $this->parameters = [
             'academicPeriod' => (string) $this->activePeriod->id,
             'accountCategory' => (string) $accountEntry->account_category_id,
@@ -213,6 +220,7 @@ class RouteAccessMatrixTest extends TestCase
             'instructor' => (string) $this->bravo->id,
             'instructorAssignment' => (string) InstructorAssignment::query()->where('instructor_id', $this->bravo->id)->value('id'),
             'medicalDocument' => (string) $medicalDocument->id,
+            'nutritionAssessment' => (string) $nutritionAssessment->id,
             'medicalDownloadRequest' => (string) $medicalDownload->id,
             'medicalField' => (string) $medicalField->id,
             'medium' => (string) $media->id,

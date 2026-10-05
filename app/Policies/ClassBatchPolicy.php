@@ -27,6 +27,14 @@ class ClassBatchPolicy
      * who manage classes, and staff who keep the class's attendance (the
      * instructors of the class). The campus is checked by the campus middleware.
      */
+    /** Every ID card of the class (the administrator side, like CandidatePolicy::viewIdCard). */
+    public function printIdCards(User $actor, ClassBatch $classBatch): bool
+    {
+        return $actor->hasPermission(Permission::AccessStaffArea)
+            && $actor->hasPermission(Permission::ViewAllCandidates)
+            && $actor->campusScope()->allowsRecord($classBatch);
+    }
+
     public function printQrCards(User $actor, ClassBatch $classBatch): bool
     {
         return $actor->hasPermission(Permission::ManageClassBatches)

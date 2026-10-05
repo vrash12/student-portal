@@ -59,7 +59,7 @@ final class MedicalRecordPresenter
     {
         if ($viewer->hasPermission(Permission::ViewMedical)) {
             $scope = 'full';
-        } elseif ($viewer->can('viewMedicalAsInstructor', $candidate)) {
+        } elseif ($viewer->can('viewMedicalReadOnly', $candidate)) {
             $scope = 'granted';
         } else {
             return null;

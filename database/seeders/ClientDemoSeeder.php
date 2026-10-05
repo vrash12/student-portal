@@ -131,6 +131,9 @@ class ClientDemoSeeder extends Seeder
 
         // Synthetic background records (birth, contacts, education, service).
         $this->call(DemoBackgroundsSeeder::class);
+
+        // A dietitian per campus and synthetic nutrition assessments.
+        $this->call(DemoNutritionSeeder::class);
     }
 
     /** A staff account; $campus null = every campus (administrators only). */

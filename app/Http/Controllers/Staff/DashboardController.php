@@ -19,6 +19,7 @@ use App\Services\Monitoring\AcademicMonitoring;
 use App\Services\Monitoring\MonitoredCandidate;
 use App\Services\Monitoring\MonitoringPresenter;
 use App\Services\Monitoring\MonitoringScope;
+use App\Services\Nutrition\NutritionMonitoring;
 use App\Services\Performance\QualificationOverview;
 use App\Services\TeachingOverview;
 use App\Support\CampusScope;
@@ -77,6 +78,8 @@ class DashboardController extends Controller
             'canConfigurePerformance' => $user->hasPermission(Permission::ConfigurePerformance),
             // Attendance of the active period in the user's attendance scope (null: nothing recorded or no scope).
             'attendanceTrend' => $this->attendanceTrend($user, $attendance, $request),
+            // Nutrition of the candidates of the campus scope, for dietitians and administrators.
+            'nutritionOverview' => $user->hasPermission(Permission::ViewNutrition) ? $this->nutritionOverview($campus) : null,
         ]);
     }
 
@@ -220,5 +223,24 @@ class DashboardController extends Controller
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function nutritionOverview(CampusScope $campus): array
+    {
+        $monitoring = new NutritionMonitoring;
+        $rows = $monitoring->rows($campus->constrain(Candidate::query(), 'candidates.campus_id'));
+
+        return [
+            ...$monitoring->counts($rows),
+            // The candidates most in need of the dietitian: never assessed or review due first.
+            'attention' => $rows->where('needsAttention', true)
+                ->sortBy(fn (array $row): int => $row['assessedOn'] === null ? 0 : ($row['reviewDue'] ? 1 : 2))
+                ->take(self::ATTENTION_LIMIT)
+                ->values()
+                ->all(),
+        ];
     }
 }

@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Award, ChevronDown, ChevronUp, ClipboardList, LayoutGrid, Dumbbell, GraduationCap, HeartPulse, House, LogOut, UserRound, type LucideIcon } from 'lucide-react';
+import { Apple, Award, ChevronDown, ChevronUp, ClipboardList, LayoutGrid, Dumbbell, GraduationCap, HeartPulse, House, LogOut, UserRound, type LucideIcon } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
 import { buttonClasses } from '@/components/ui/button';
@@ -19,6 +19,7 @@ const PORTAL_SECTIONS: Array<{ href: string; label: string; icon: LucideIcon; is
     { href: routes.portal.performance(), label: 'My Performance', icon: Award, isActive: (component) => component === 'portal/performance' },
     { href: routes.portal.fitness(), label: 'Physical Fitness', icon: Dumbbell, isActive: (component) => component === 'portal/fitness', fitness: true },
     { href: routes.portal.medical(), label: 'Medical', icon: HeartPulse, isActive: (component) => component === 'portal/medical' },
+    { href: routes.portal.nutrition(), label: 'Nutrition', icon: Apple, isActive: (component) => component === 'portal/nutrition' },
     { href: routes.portal.profile(), label: 'My Information', icon: UserRound, isActive: (component) => component === 'portal/profile' },
 ];
 

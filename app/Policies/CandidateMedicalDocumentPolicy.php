@@ -43,7 +43,7 @@ class CandidateMedicalDocumentPolicy
     {
         return ! $user->hasPermission(Permission::ViewMedical)
             && $document->status !== MedicalDocumentStatus::Returned
-            && $user->can('viewMedicalAsInstructor', $document->candidate);
+            && $user->can('viewMedicalReadOnly', $document->candidate);
     }
 
     /** Asking for a copy: whoever may view the document in the protected viewer. */

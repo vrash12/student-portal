@@ -8,6 +8,7 @@ import { withQuery } from '@/lib/url';
 export const routes = {
     home: () => '/',
     login: () => '/login',
+    twoFactorChallenge: () => '/login/two-factor',
     logout: () => '/logout',
     dashboard: () => '/dashboard',
     backups: {
@@ -27,9 +28,18 @@ export const routes = {
         store: () => '/users',
         edit: (userId: number) => `/users/${userId}/edit`,
         update: (userId: number) => `/users/${userId}`,
+        resetTwoFactor: (userId: number) => `/users/${userId}/two-factor`,
     },
     account: {
         password: () => '/account/password',
+        twoFactor: {
+            show: () => '/account/two-factor',
+            store: () => '/account/two-factor',
+            confirm: () => '/account/two-factor/confirm',
+            cancel: () => '/account/two-factor/cancel',
+            recoveryCodes: () => '/account/two-factor/recovery-codes',
+            destroy: () => '/account/two-factor',
+        },
     },
     academicPeriods: {
         index: () => '/academic-periods',
@@ -69,6 +79,7 @@ export const routes = {
         edit: (classId: number) => `/classes/${classId}/edit`,
         /** Every QR attendance card of the class, six to a page (PDF). */
         qrCards: (classId: number) => `/classes/${classId}/qr-cards/pdf`,
+        idCards: (classId: number) => `/classes/${classId}/id-cards/pdf`,
         update: (classId: number) => `/classes/${classId}`,
         addSubject: (classId: number) => `/classes/${classId}/subjects`,
         /** The subject's training phase and units. */
@@ -103,6 +114,19 @@ export const routes = {
             edit: (fieldId: number) => `/medical-records/fields/${fieldId}/edit`,
             update: (fieldId: number) => `/medical-records/fields/${fieldId}`,
             destroy: (fieldId: number) => `/medical-records/fields/${fieldId}`,
+        },
+    },
+    nutrition: {
+        index: (query?: Record<string, string>) => withQuery('/nutrition', query),
+        show: (candidateId: number) => `/nutrition/${candidateId}`,
+        standards: () => '/nutrition/standards',
+        dietaryProfile: (candidateId: number) => `/nutrition/${candidateId}/dietary-profile`,
+        assessments: {
+            create: (candidateId: number) => `/nutrition/${candidateId}/assessments/create`,
+            store: (candidateId: number) => `/nutrition/${candidateId}/assessments`,
+            edit: (assessmentId: number) => `/nutrition-assessments/${assessmentId}/edit`,
+            update: (assessmentId: number) => `/nutrition-assessments/${assessmentId}`,
+            destroy: (assessmentId: number) => `/nutrition-assessments/${assessmentId}`,
         },
     },
     fitness: {
@@ -246,6 +270,7 @@ export const routes = {
         performance: () => '/portal/performance',
         profile: () => '/portal/profile',
         medical: () => '/portal/medical',
+        nutrition: () => '/portal/nutrition',
         medicalDocuments: {
             store: () => '/portal/medical/documents',
             destroy: (documentId: number) => `/portal/medical/documents/${documentId}`,

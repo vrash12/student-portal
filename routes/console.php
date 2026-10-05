@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+use App\Services\Auth\TwoFactorService;
 use App\Services\Backups\BackupManager;
 use App\Services\Examinations\CandidateAttemptService;
 use Illuminate\Foundation\Inspiring;
@@ -60,6 +62,33 @@ $timezone = (string) config('institution.timezone');
 Schedule::command('backups:process')->everyMinute();
 Schedule::command('backups:run')->dailyAt((string) config('backups.daily_at'))->timezone($timezone);
 Schedule::command('backups:verify')->weeklyOn((int) config('backups.verify_day'), (string) config('backups.verify_at'))->timezone($timezone);
+
+// Two-step sign-in (owner request, 2026-10-05): IT turns it off for an
+// account whose phone and recovery codes are lost and that no administrator
+// above it can reset from the Users page (for example the only Admin).
+Artisan::command('two-factor:reset {username : the account username} {--reason= : why (recorded in Audit History)}', function (TwoFactorService $twoFactor) {
+    $user = User::query()->where('username', strtolower((string) $this->argument('username')))->first();
+    if ($user === null) {
+        $this->error('There is no account with that username.');
+
+        return 1;
+    }
+    if (! $user->hasTwoFactorEnabled() && $user->two_factor_secret === null) {
+        $this->info("Two-step sign-in is already off for {$user->username}.");
+
+        return 0;
+    }
+    $reason = trim((string) ($this->option('reason') ?: $this->ask('Why is it being reset?')));
+    if ($reason === '') {
+        $this->error('Give the reason for the reset.');
+
+        return 1;
+    }
+    $twoFactor->reset($user, null, 'Server command: '.$reason);
+    $this->info("Two-step sign-in reset for {$user->username}. They sign in with their password and set it up again.");
+
+    return 0;
+})->purpose('Turn off two-step sign-in for one account (lost phone and recovery codes)');
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

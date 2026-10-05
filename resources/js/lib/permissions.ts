@@ -41,6 +41,9 @@ export const Permission = {
     ConfigureMedical: 'medical.configure',
     ManageBackups: 'backups.manage',
     ManageCampuses: 'campuses.manage',
+    ViewNutrition: 'nutrition.view',
+    ManageNutrition: 'nutrition.manage',
+    ConfigureNutrition: 'nutrition.configure',
 } as const;
 
 export type PermissionCode = (typeof Permission)[keyof typeof Permission];

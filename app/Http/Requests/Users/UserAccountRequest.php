@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Users;
 
-use App\Enums\Permission;
 use App\Http\Requests\Concerns\NormalizesTextInput;
 use App\Models\Role;
 use App\Models\User;
@@ -59,7 +58,7 @@ abstract class UserAccountRequest extends FormRequest
 
     private function roleTeaches(int $roleId): bool
     {
-        return $roleId > 0 && (bool) Role::query()->with('permissions')->find($roleId)?->grants(Permission::TeachClasses);
+        return $roleId > 0 && (bool) Role::query()->with('permissions')->find($roleId)?->requiresCampus();
     }
 
     /**
@@ -134,8 +133,8 @@ abstract class UserAccountRequest extends FormRequest
                 $campusId = $this->input('campus_id');
                 $role = Role::query()->with('permissions')->find($this->targetUser()?->role_id ?? $this->integer('role_id'));
 
-                if ($campusId === null && $role?->grants(Permission::TeachClasses)) {
-                    $validator->errors()->add('campus_id', 'Instructors belong to one campus. Choose the campus they teach at.');
+                if ($campusId === null && $role?->requiresCampus()) {
+                    $validator->errors()->add('campus_id', 'Instructors and dietitians belong to one campus. Choose their campus.');
                 }
 
                 if ($campusId === null && ! $this->user()->campusScope()->isInstitutionWide()) {

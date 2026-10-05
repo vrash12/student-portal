@@ -32,6 +32,23 @@ class CandidatePolicy
         return $candidate->class_batch_id !== null && $actor->teachesClass($candidate->class_batch_id);
     }
 
+    /**
+     * The candidate's ID card (owner request 2026-10-05: the administrator
+     * side for now): staff who view every candidate of the campus.
+     */
+    public function viewIdCard(User $actor, Candidate $candidate): bool
+    {
+        return $actor->hasPermission(Permission::AccessStaffArea)
+            && $actor->hasPermission(Permission::ViewAllCandidates)
+            && $actor->campusScope()->allows($candidate->campusId());
+    }
+
+    /** The picture: whoever may open the candidate, and nutrition staff of the campus (to recognise the candidate). */
+    public function viewPhoto(User $actor, Candidate $candidate): bool
+    {
+        return $this->view($actor, $candidate) || $this->viewNutrition($actor, $candidate);
+    }
+
     public function create(User $actor): bool
     {
         return $actor->hasPermission(Permission::ManageCandidates);
@@ -68,6 +85,48 @@ class CandidatePolicy
     public function viewMedicalAsInstructor(User $actor, Candidate $candidate): bool
     {
         return ! $actor->hasPermission(Permission::ViewMedical)
+            && $candidate->class_batch_id !== null
+            && $actor->canTeach()
+            && $actor->teachesClass($candidate->class_batch_id);
+    }
+
+    /**
+     * Dietitians of the candidate's campus see the medical record (lab
+     * results, check-ups) on the same view-only terms as instructors of the
+     * class (owner decision 2026-10-05).
+     */
+    public function viewMedicalAsDietitian(User $actor, Candidate $candidate): bool
+    {
+        return ! $actor->hasPermission(Permission::ViewMedical)
+            && $actor->hasPermission(Permission::ManageNutrition)
+            && $actor->campusScope()->allows($candidate->campusId());
+    }
+
+    /** The view-only medical record: instructors of the class and dietitians of the campus. */
+    public function viewMedicalReadOnly(User $actor, Candidate $candidate): bool
+    {
+        return $this->viewMedicalAsInstructor($actor, $candidate) || $this->viewMedicalAsDietitian($actor, $candidate);
+    }
+
+    /** The whole nutrition record: dietitians and administrators of the candidate's campus. */
+    public function viewNutrition(User $actor, Candidate $candidate): bool
+    {
+        return $actor->hasPermission(Permission::ViewNutrition) && $actor->campusScope()->allows($candidate->campusId());
+    }
+
+    /** Recording assessments and the dietary profile: dietitians of the candidate's campus. */
+    public function manageNutrition(User $actor, Candidate $candidate): bool
+    {
+        return $actor->hasPermission(Permission::ManageNutrition) && $this->viewNutrition($actor, $candidate);
+    }
+
+    /**
+     * Instructors of the class see only the BMI category and what the
+     * candidate must not eat (owner decision 2026-10-05).
+     */
+    public function viewNutritionSummary(User $actor, Candidate $candidate): bool
+    {
+        return ! $actor->hasPermission(Permission::ViewNutrition)
             && $candidate->class_batch_id !== null
             && $actor->canTeach()
             && $actor->teachesClass($candidate->class_batch_id);

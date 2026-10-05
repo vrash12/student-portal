@@ -64,6 +64,12 @@ return [
         'show_fitness' => (bool) env('PORTAL_SHOW_FITNESS', false),
     ],
 
+    // Candidate ID cards (owner request, 2026-10-05): the title printed under
+    // the name, e.g. "Officer Candidate".
+    'id_card' => [
+        'role_label' => env('ID_CARD_ROLE_LABEL') ?: 'Candidate',
+    ],
+
     // ISO 4217 code of the currency used on Statements of Account, e.g. PHP.
     'currency' => env('INSTITUTION_CURRENCY', 'PHP'),
 

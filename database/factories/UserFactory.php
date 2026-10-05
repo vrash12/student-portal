@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Enums\Permission;
 use App\Enums\SystemRole;
 use App\Models\Campus;
 use App\Models\Role;
@@ -39,7 +38,7 @@ class UserFactory extends Factory
             'email' => null,
             'password' => static::$password ??= Hash::make('password'),
             'role_id' => fn (): int => $this->roleId(SystemRole::Instructor),
-            'campus_id' => fn (array $attributes): ?int => $this->teachingRole((int) $attributes['role_id'])
+            'campus_id' => fn (array $attributes): ?int => $this->requiresCampus((int) $attributes['role_id'])
                 ? CampusFactory::defaultCampusId()
                 : null,
             'is_active' => true,
@@ -67,8 +66,9 @@ class UserFactory extends Factory
         return Role::query()->where('code', $role->value)->valueOrFail('id');
     }
 
-    private function teachingRole(int $roleId): bool
+    /** Instructors and dietitians belong to one campus (Role::requiresCampus). */
+    private function requiresCampus(int $roleId): bool
     {
-        return (bool) Role::query()->with('permissions')->find($roleId)?->grants(Permission::TeachClasses);
+        return (bool) Role::query()->with('permissions')->find($roleId)?->requiresCampus();
     }
 }

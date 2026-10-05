@@ -1,5 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
-import { ChartColumn, Pencil } from 'lucide-react';
+import { ChartColumn, IdCard, Pencil } from 'lucide-react';
 import { CandidateBackgroundPanels } from '@/components/candidates/candidate-background';
 import { CandidateInformationPanels } from '@/components/candidates/candidate-information';
 import { RecordDownloads } from '@/components/candidates/record-downloads';
@@ -8,7 +8,9 @@ import { CandidateAttendance } from '@/components/attendance/candidate-attendanc
 import { CandidateConductPanel, CandidateQualificationPanel } from '@/components/candidate-performance/profile-panels';
 import { CandidateFitness } from '@/components/fitness/candidate-fitness';
 import { CandidateMedicalPanel } from '@/components/medical/medical-record-panel';
+import { ProfileNutritionPanel } from '@/components/nutrition/profile-nutrition-panel';
 import type { ProfileMedical } from '@/types/medical';
+import type { ProfileNutrition } from '@/types/nutrition';
 import type { ProfileAttendance, ProfileConduct, ProfileQualification } from '@/types/candidate-performance';
 import type { CandidateFitnessTest } from '@/types/fitness';
 import type { CandidateBackground, CandidateInformation, CandidateExaminationResult } from '@/types/candidates';
@@ -84,11 +86,15 @@ interface CandidateShowProps {
     attendance: ProfileAttendance | null;
     /** Medical record: every field for medical staff, the fields shared with instructors for those who teach the class; null otherwise. */
     medical: ProfileMedical | null;
+    /** Nutrition: latest assessment for nutrition staff, the summary for instructors of the class; null otherwise. */
+    nutrition: ProfileNutrition | null;
     canEdit: boolean;
     /** Administrators browse all candidates; instructors arrive from a class they teach. */
     canBrowseCandidates: boolean;
     /** Where to issue a new QR code (candidates.manage); null for everyone else. */
     qrReissueUrl: string | null;
+    /** The ID card page (administrators); null for everyone else. */
+    idCardUrl: string | null;
     /** Background record: personal details only for those who view every candidate. */
     background: CandidateBackground;
     /** The Edit Background page (candidates.manage); null for everyone else. */
@@ -110,9 +116,11 @@ export default function CandidateShow({
     conduct,
     attendance,
     medical,
+    nutrition,
     canEdit,
     canBrowseCandidates,
     qrReissueUrl,
+    idCardUrl,
     background,
     backgroundEditUrl,
 }: CandidateShowProps) {
@@ -163,7 +171,11 @@ export default function CandidateShow({
                 }
                 breadcrumbs={breadcrumbs}
                 actions={
-                    <>{canBrowseCandidates && <RecordDownloads baseUrl={`/candidates/${candidate.id}/documents`} />}{canEdit && (
+                    <>{canBrowseCandidates && <RecordDownloads baseUrl={`/candidates/${candidate.id}/documents`} />}{idCardUrl !== null && (
+                        <ButtonLink href={idCardUrl} icon={<IdCard className="size-4" aria-hidden="true" />}>
+                            ID Card
+                        </ButtonLink>
+                    )}{canEdit && (
                         <ButtonLink href={routes.candidates.edit(candidate.id)} icon={<Pencil className="size-4" aria-hidden="true" />}>
                             Edit Candidate
                         </ButtonLink>
@@ -188,6 +200,7 @@ export default function CandidateShow({
                 <CandidateBackgroundPanels background={background} editUrl={backgroundEditUrl} />
 
                 {medical !== null && <CandidateMedicalPanel medical={medical} candidateId={candidate.id} />}
+                {nutrition !== null && <ProfileNutritionPanel nutrition={nutrition} />}
 
                 <Panel
                     title="Academic Performance"

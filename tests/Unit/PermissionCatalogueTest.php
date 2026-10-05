@@ -44,7 +44,8 @@ class PermissionCatalogueTest extends TestCase
      */
     public function test_super_administrator_holds_every_administrative_permission(): void
     {
-        $roleSpecific = [Permission::AccessExamPortal, Permission::TeachClasses, Permission::RecordGrades, Permission::ManageQuestionBank, Permission::ManageExaminations];
+        // Recording nutrition assessments is the dietitians' (owner decision 2026-10-05).
+        $roleSpecific = [Permission::AccessExamPortal, Permission::TeachClasses, Permission::RecordGrades, Permission::ManageQuestionBank, Permission::ManageExaminations, Permission::ManageNutrition];
         $administrative = array_values(array_filter(
             Permission::cases(),
             fn (Permission $permission): bool => ! in_array($permission, $roleSpecific, true),

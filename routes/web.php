@@ -2,6 +2,7 @@
 
 use App\Enums\Permission;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\CandidatePdfController;
 use App\Http\Controllers\CandidatePhotoController;
 use App\Http\Controllers\CandidateQrController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Portal\ExaminationListController;
 use App\Http\Controllers\Portal\FitnessController as PortalFitnessController;
 use App\Http\Controllers\Portal\GradesController;
 use App\Http\Controllers\Portal\MedicalController as PortalMedicalController;
+use App\Http\Controllers\Portal\NutritionController as PortalNutritionController;
 use App\Http\Controllers\Portal\PerformanceController as PortalPerformanceController;
 use App\Http\Controllers\Portal\PortalHomeController;
 use App\Http\Controllers\Staff\AcademicMonitoringController;
@@ -19,6 +21,7 @@ use App\Http\Controllers\Staff\AcademicPeriodController;
 use App\Http\Controllers\Staff\AccountCategoryController;
 use App\Http\Controllers\Staff\AccountExpenseController;
 use App\Http\Controllers\Staff\AccountPasswordController;
+use App\Http\Controllers\Staff\AccountTwoFactorController;
 use App\Http\Controllers\Staff\AssessmentController;
 use App\Http\Controllers\Staff\AssessmentScoreController;
 use App\Http\Controllers\Staff\AttendanceScanController;
@@ -28,6 +31,7 @@ use App\Http\Controllers\Staff\BackupController;
 use App\Http\Controllers\Staff\CampusController;
 use App\Http\Controllers\Staff\CandidateBackgroundController;
 use App\Http\Controllers\Staff\CandidateController;
+use App\Http\Controllers\Staff\CandidateIdCardController;
 use App\Http\Controllers\Staff\ClassBatchController;
 use App\Http\Controllers\Staff\ClassSubjectController;
 use App\Http\Controllers\Staff\ConductController;
@@ -46,6 +50,8 @@ use App\Http\Controllers\Staff\MedicalDocumentController;
 use App\Http\Controllers\Staff\MedicalDownloadController;
 use App\Http\Controllers\Staff\MedicalFieldController;
 use App\Http\Controllers\Staff\MedicalRecordController;
+use App\Http\Controllers\Staff\NutritionController;
+use App\Http\Controllers\Staff\NutritionStandardsController;
 use App\Http\Controllers\Staff\PerformanceAreaController;
 use App\Http\Controllers\Staff\QualificationController;
 use App\Http\Controllers\Staff\ReportController;
@@ -53,6 +59,7 @@ use App\Http\Controllers\Staff\SubjectController;
 use App\Http\Controllers\Staff\TeachingClassController;
 use App\Http\Controllers\Staff\TrainingPhaseController;
 use App\Http\Controllers\Staff\UserController;
+use App\Http\Controllers\Staff\UserTwoFactorController;
 use App\Models\Candidate;
 use App\Models\GradeCorrectionRequest;
 use App\Models\User;
@@ -61,6 +68,10 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('guest')->group(function (): void {
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store'])->name('login.attempt');
+
+    // Second step for accounts with two-step sign-in (TOTP code or recovery code).
+    Route::get('login/two-factor', [TwoFactorChallengeController::class, 'create'])->name('two-factor.challenge');
+    Route::post('login/two-factor', [TwoFactorChallengeController::class, 'store'])->name('two-factor.verify')->middleware('throttle:two-factor-challenge');
 });
 
 Route::middleware(['auth', 'active'])->group(function (): void {
@@ -73,7 +84,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
 
     // Staff area: administrators and instructors. `campus`: every record named
     // in a URL must be on a campus the user may see (EnsureRecordsInCampus).
-    Route::middleware(['can:'.Permission::AccessStaffArea->value, 'password.current', 'campus'])->group(function (): void {
+    Route::middleware(['can:'.Permission::AccessStaffArea->value, 'password.current', 'two-factor', 'campus'])->group(function (): void {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
         Route::get('reports', ReportController::class)->name('reports.index')->can(Permission::ViewReports->value);
         Route::get('reports/pdf', [ReportController::class, 'pdf'])->name('reports.pdf')->can(Permission::ViewReports->value)->middleware('throttle:pdf-downloads');
@@ -183,6 +194,24 @@ Route::middleware(['auth', 'active'])->group(function (): void {
 
         // Performance areas and qualification: ranking of every candidate
         // (performance.view); configuration (performance.configure).
+        // Nutrition monitoring (owner request, 2026-10-05): dietitians assess the candidates of
+        // their campus (nutrition.manage); administrators see every record (nutrition.view) and set
+        // the standards shared by every campus (nutrition.configure, institution-wide).
+        Route::middleware('can:'.Permission::ViewNutrition->value)->group(function (): void {
+            Route::get('nutrition', [NutritionController::class, 'index'])->name('nutrition.index');
+            Route::middleware(['can:'.Permission::ConfigureNutrition->value, 'institution'])->group(function (): void {
+                Route::get('nutrition/standards', [NutritionStandardsController::class, 'edit'])->name('nutrition.standards.edit');
+                Route::put('nutrition/standards', [NutritionStandardsController::class, 'update'])->name('nutrition.standards.update');
+            });
+            Route::get('nutrition/{candidate}', [NutritionController::class, 'show'])->name('nutrition.show')->whereNumber('candidate')->can('viewNutrition', 'candidate');
+            Route::get('nutrition/{candidate}/assessments/create', [NutritionController::class, 'create'])->name('nutrition.assessments.create')->whereNumber('candidate')->can('manageNutrition', 'candidate');
+            Route::post('nutrition/{candidate}/assessments', [NutritionController::class, 'store'])->name('nutrition.assessments.store')->whereNumber('candidate')->can('manageNutrition', 'candidate');
+            Route::put('nutrition/{candidate}/dietary-profile', [NutritionController::class, 'updateDietaryProfile'])->name('nutrition.dietary-profile.update')->whereNumber('candidate')->can('manageNutrition', 'candidate');
+            Route::get('nutrition-assessments/{nutritionAssessment}/edit', [NutritionController::class, 'edit'])->name('nutrition.assessments.edit')->whereNumber('nutritionAssessment')->can('manage', 'nutritionAssessment');
+            Route::put('nutrition-assessments/{nutritionAssessment}', [NutritionController::class, 'update'])->name('nutrition.assessments.update')->whereNumber('nutritionAssessment')->can('manage', 'nutritionAssessment');
+            Route::delete('nutrition-assessments/{nutritionAssessment}', [NutritionController::class, 'destroy'])->name('nutrition.assessments.destroy')->whereNumber('nutritionAssessment')->can('manage', 'nutritionAssessment');
+        });
+
         // Candidate medical records (owner request, 2026-10-02): administrators define the
         // fields (medical.configure), view (medical.view) and record (medical.manage) them.
         Route::get('medical-records', [MedicalRecordController::class, 'index'])->name('medical.records.index')->can(Permission::ViewMedical->value);
@@ -229,9 +258,20 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::post('users', [UserController::class, 'store'])->name('users.store')->can('create', User::class);
         Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit')->can('update', 'user');
         Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->can('update', 'user');
+        Route::delete('users/{user}/two-factor', [UserTwoFactorController::class, 'destroy'])->name('users.two-factor.destroy')->can('update', 'user');
 
         Route::get('account/password', [AccountPasswordController::class, 'edit'])->name('account.password.edit');
         Route::put('account/password', [AccountPasswordController::class, 'update'])->name('account.password.update')->middleware('throttle:password-change');
+
+        // The user's own two-step sign-in (AccountTwoFactorController); changes ask for the password.
+        Route::get('account/two-factor', [AccountTwoFactorController::class, 'show'])->name('account.two-factor.show');
+        Route::middleware('throttle:two-factor-setup')->group(function (): void {
+            Route::post('account/two-factor', [AccountTwoFactorController::class, 'store'])->name('account.two-factor.store');
+            Route::post('account/two-factor/confirm', [AccountTwoFactorController::class, 'confirm'])->name('account.two-factor.confirm');
+            Route::post('account/two-factor/cancel', [AccountTwoFactorController::class, 'cancel'])->name('account.two-factor.cancel');
+            Route::post('account/two-factor/recovery-codes', [AccountTwoFactorController::class, 'regenerateRecoveryCodes'])->name('account.two-factor.recovery-codes');
+            Route::delete('account/two-factor', [AccountTwoFactorController::class, 'destroy'])->name('account.two-factor.destroy');
+        });
 
         // The four fixed campuses (owner decisions 2026-10-03 and 2026-10-04;
         // Admin only, and only accounts not limited to a campus): listed and
@@ -363,10 +403,14 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         // Personal details, emergency contact, education and service background (owner request, 2026-10-03).
         Route::get('candidates/{candidate}/background/edit', [CandidateBackgroundController::class, 'edit'])->name('candidates.background.edit')->can('update', 'candidate');
         Route::put('candidates/{candidate}/background', [CandidateBackgroundController::class, 'update'])->name('candidates.background.update')->can('update', 'candidate');
-        Route::get('candidates/{candidate}/photo', [CandidatePhotoController::class, 'show'])->name('candidates.photo')->can('view', 'candidate');
+        Route::get('candidates/{candidate}/photo', [CandidatePhotoController::class, 'show'])->name('candidates.photo')->can('viewPhoto', 'candidate');
         Route::get('candidates/{candidate}/qr', [CandidateQrController::class, 'show'])->name('candidates.qr')->can('view', 'candidate');
         // Every QR attendance card of a class on printable sheets (ClassBatchPolicy::printQrCards).
         Route::get('classes/{classBatch}/qr-cards/pdf', [CandidateQrController::class, 'classSheet'])->name('classes.qr-cards')->whereNumber('classBatch')->can('printQrCards', 'classBatch')->middleware('throttle:pdf-downloads');
+        // The candidate's ID card at the standard size (owner request 2026-10-05; administrators).
+        Route::get('candidates/{candidate}/id-card', [CandidateIdCardController::class, 'show'])->name('candidates.id-card')->can('viewIdCard', 'candidate');
+        Route::get('candidates/{candidate}/id-card/pdf', [CandidateIdCardController::class, 'pdf'])->name('candidates.id-card.pdf')->can('viewIdCard', 'candidate')->middleware('throttle:pdf-downloads');
+        Route::get('classes/{classBatch}/id-cards/pdf', [CandidateIdCardController::class, 'classSheet'])->name('classes.id-cards')->whereNumber('classBatch')->can('printIdCards', 'classBatch')->middleware('throttle:pdf-downloads');
         Route::get('candidates/{candidate}/qr/pdf', [CandidateQrController::class, 'pdf'])->name('candidates.qr.pdf')->can('view', 'candidate')->middleware('throttle:pdf-downloads');
         Route::post('candidates/{candidate}/qr', [CandidateQrController::class, 'reissue'])->name('candidates.qr.reissue')->can('update', 'candidate');
         Route::get('candidates/{candidate}/documents/{type}', [CandidatePdfController::class, 'show'])
@@ -384,6 +428,8 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::get('examinations', ExaminationListController::class)->name('examinations.index');
             Route::get('grades', GradesController::class)->name('grades');
             Route::get('fitness', PortalFitnessController::class)->name('fitness');
+            // The candidate's own nutrition assessments and plan (owner decision 2026-10-05).
+            Route::get('nutrition', PortalNutritionController::class)->name('nutrition');
             Route::get('profile', CandidateProfileController::class)->name('profile');
             Route::get('profile/photo', [CandidatePhotoController::class, 'own'])->name('profile.photo');
             Route::get('profile/qr', [CandidateQrController::class, 'own'])->name('profile.qr');

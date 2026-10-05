@@ -29,15 +29,15 @@ class MedicalDownloadRequestPolicy
         return (int) $request->requested_by === (int) $actor->getKey();
     }
 
+    /** While the requester still teaches the candidate's class, or is still a dietitian of the candidate's campus. */
     public function download(User $actor, MedicalDownloadRequest $request): bool
     {
-        $classId = $request->candidate?->class_batch_id;
+        $candidate = $request->candidate;
 
         return (int) $request->requested_by === (int) $actor->getKey()
             && $request->isActive()
-            && $classId !== null
-            && $actor->canTeach()
-            && $actor->teachesClass($classId);
+            && $candidate !== null
+            && $actor->can('viewMedicalReadOnly', $candidate);
     }
 
     private function isMedicalStaff(User $actor, MedicalDownloadRequest $request): bool

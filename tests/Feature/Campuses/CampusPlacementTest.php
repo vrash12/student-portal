@@ -183,7 +183,7 @@ class CampusPlacementTest extends TestCase
         // Instructors always belong to one campus.
         $this->actingAs($this->institutionAdmin)
             ->post('/users', $this->userPayload(['role_id' => $instructorRole->id, 'campus_id' => '']))
-            ->assertSessionHasErrors(['campus_id' => 'Instructors belong to one campus. Choose the campus they teach at.']);
+            ->assertSessionHasErrors(['campus_id' => 'Instructors and dietitians belong to one campus. Choose their campus.']);
         $this->actingAs($this->institutionAdmin)
             ->post('/users', $this->userPayload(['role_id' => $instructorRole->id, 'campus_id' => $this->north->id]))
             ->assertSessionHasNoErrors();

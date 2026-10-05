@@ -63,7 +63,9 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Attempt to authenticate the request's credentials.
+     * Checks the request's credentials and returns the account. It does not
+     * sign in: the controller signs in now, or after the second step for
+     * accounts with two-step sign-in on (TwoFactorChallengeController).
      *
      * The error message does not reveal whether a username exists. A
      * deactivated account is only disclosed after a correct password.
@@ -75,18 +77,14 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         $username = $this->string('username')->value();
-        $deactivated = false;
+        $credentials = ['username' => $username, 'password' => $this->string('password')->value()];
 
-        $authenticated = Auth::attemptWhen(
-            ['username' => $username, 'password' => $this->string('password')->value()],
-            function (User $user) use (&$deactivated): bool {
-                $deactivated = ! $user->is_active;
+        $provider = Auth::guard('web')->getProvider();
+        $user = $provider->retrieveByCredentials(['username' => $username]);
+        $passwordMatches = $user instanceof User && $provider->validateCredentials($user, $credentials);
+        $deactivated = $passwordMatches && ! $user->is_active;
 
-                return ! $deactivated;
-            },
-        );
-
-        if (! $authenticated) {
+        if (! $passwordMatches || $deactivated) {
             RateLimiter::hit($this->throttleKey(), self::DECAY_SECONDS);
             RateLimiter::hit($this->addressThrottleKey(), self::DECAY_SECONDS);
 
@@ -106,10 +104,8 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        $provider->rehashPasswordIfRequired($user, $credentials);
         RateLimiter::clear($this->throttleKey());
-
-        /** @var User $user */
-        $user = Auth::user();
 
         return $user;
     }

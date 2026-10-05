@@ -19,6 +19,7 @@ use App\Models\GradeCorrectionRequest;
 use App\Models\InstructorAssignment;
 use App\Models\MedicalAccessRequest;
 use App\Models\MedicalDownloadRequest;
+use App\Models\NutritionAssessment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
@@ -57,7 +58,7 @@ final class AuditCampus
         Assessment::class, AssessmentCategory::class, Examination::class, AssessmentScore::class,
         GradeCorrectionRequest::class, ExaminationAttempt::class, ConductEntry::class, AccountEntry::class,
         CandidateMedicalDocument::class, MedicalDownloadRequest::class, MedicalAccessRequest::class,
-        FitnessTest::class, AttendanceSession::class,
+        FitnessTest::class, AttendanceSession::class, NutritionAssessment::class,
     ];
 
     public static function isCampusRecord(Model $subject): bool
@@ -85,7 +86,8 @@ final class AuditCampus
             $subject instanceof AccountEntry,
             $subject instanceof CandidateMedicalDocument,
             $subject instanceof MedicalDownloadRequest,
-            $subject instanceof MedicalAccessRequest => self::candidate(self::key($subject, 'candidate_id')),
+            $subject instanceof MedicalAccessRequest,
+            $subject instanceof NutritionAssessment => self::candidate(self::key($subject, 'candidate_id')),
             $subject instanceof FitnessTest,
             $subject instanceof AttendanceSession => self::classBatch(self::key($subject, 'class_batch_id')),
             default => null,

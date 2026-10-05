@@ -30,6 +30,8 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <!-- Two-step sign-in is not required in tests; tests/Feature/Auth/TwoFactor* turn the requirement on. -->
+        <env name="TWO_FACTOR_REQUIRED_FOR" value="none"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>

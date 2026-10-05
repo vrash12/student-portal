@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Staff;
 
-use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Users\StoreUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Auth\TwoFactorService;
 use App\Services\UserAccountService;
 use App\Support\ListCharts;
 use App\Support\QueryFilters;
@@ -106,7 +106,7 @@ class UserController extends Controller
         return redirect()->route('users.index');
     }
 
-    public function edit(Request $request, User $user): Response
+    public function edit(Request $request, User $user, TwoFactorService $twoFactor): Response
     {
         $actor = $request->user();
         $user->loadMissing('campus');
@@ -127,9 +127,16 @@ class UserController extends Controller
                 'isActive' => $user->is_active,
                 'lastLoginAt' => $user->last_login_at?->toIso8601String(),
                 'createdAt' => $user->created_at?->toIso8601String(),
+                'twoFactor' => [
+                    'enabled' => $user->hasTwoFactorEnabled(),
+                    'enabledAt' => $user->two_factor_confirmed_at?->toIso8601String(),
+                    'required' => $twoFactor->isRequired($user),
+                ],
             ],
+            // A lost phone: another administrator turns it off (one's own is on the Two-Step Sign-In page).
+            'canResetTwoFactor' => ! $actor->is($user) && ($user->hasTwoFactorEnabled() || $user->two_factor_secret !== null),
             // The role is fixed once the account exists; the form shows it, not a choice.
-            'roles' => [['id' => $user->role->id, 'name' => $user->role->name, 'description' => $user->role->description, 'requiresCampus' => $user->role->grants(Permission::TeachClasses)]],
+            'roles' => [['id' => $user->role->id, 'name' => $user->role->name, 'description' => $user->role->description, 'requiresCampus' => $user->role->requiresCampus()]],
             'isOwnAccount' => $actor->is($user),
             ...$campusChoices,
             // Only an administrator of every campus moves another account between campuses.
@@ -164,7 +171,7 @@ class UserController extends Controller
                 'id' => $role->id,
                 'name' => $role->name,
                 'description' => $role->description,
-                'requiresCampus' => $role->grants(Permission::TeachClasses),
+                'requiresCampus' => $role->requiresCampus(),
             ])
             ->values()
             ->all();

@@ -111,7 +111,7 @@ export function CandidateMedicalPanel({ medical, candidateId }: { medical: Profi
             description={
                 full
                     ? `Confidential. Fields marked Staff only are hidden from the candidate.${medical.updatedAt ? ` Last updated ${formatDate.dateTime(medical.updatedAt)}${medical.updatedBy ? ` by ${medical.updatedBy}` : ''}.` : ''}`
-                    : 'Confidential. View only for the instructors of this class: no printing, downloading or screenshots. Each time you open it is recorded.'
+                    : 'Confidential. View only (instructors of the class and dietitians of the campus): no printing, downloading or screenshots. Each time you open it is recorded.'
             }
             actions={
                 full && medical.canEdit ? (

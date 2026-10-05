@@ -30,6 +30,7 @@ use App\Support\CandidatePresenter;
 use App\Support\DecimalValue;
 use App\Support\ListCharts;
 use App\Support\MedicalRecordPresenter;
+use App\Support\NutritionPresenter;
 use App\Support\QueryFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -235,6 +236,8 @@ class CandidateController extends Controller
             ...$this->performanceSections($viewer, $candidate, $performanceRecord),
             // Every field for medical staff and, view only, for those who teach the class; null otherwise.
             'medical' => $this->medical($candidate, $viewer),
+            // Nutrition: the latest assessment for nutrition staff, the BMI category and what not to eat for instructors of the class.
+            'nutrition' => NutritionPresenter::forStaffProfile($candidate, $viewer),
             'canEdit' => $canManage,
             // Instructors return to the class they teach, not the full candidate list.
             'canBrowseCandidates' => $viewer->can('viewAny', Candidate::class),
@@ -243,6 +246,8 @@ class CandidateController extends Controller
             'backgroundEditUrl' => $canManage ? route('candidates.background.edit', $candidate) : null,
             // A new QR code for a lost or shared card (candidates.manage).
             'qrReissueUrl' => $viewer->can('update', $candidate) ? route('candidates.qr.reissue', $candidate) : null,
+            // The ID card page (administrators, owner request 2026-10-05); null for everyone else.
+            'idCardUrl' => $viewer->can('viewIdCard', $candidate) ? route('candidates.id-card', $candidate, false) : null,
         ]);
     }
 

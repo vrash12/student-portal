@@ -27,7 +27,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * candidate's campus is on the candidate record.
  */
 #[Fillable(['name', 'username', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'two_factor_last_step'])]
 #[UsePolicy(UserPolicy::class)]
 class User extends Authenticatable
 {
@@ -44,6 +44,10 @@ class User extends Authenticatable
         'is_active' => true,
         'password_change_required' => false,
         'remember_token' => null,
+        'two_factor_secret' => null,
+        'two_factor_recovery_codes' => null,
+        'two_factor_confirmed_at' => null,
+        'two_factor_last_step' => null,
     ];
 
     /**
@@ -58,6 +62,10 @@ class User extends Authenticatable
             'password_change_required' => 'boolean',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
+            'two_factor_last_step' => 'integer',
         ];
     }
 
@@ -272,6 +280,12 @@ class User extends Authenticatable
         $this->loadMissing('role.permissions');
 
         return $this->role->grants(Permission::AccessStaffArea);
+    }
+
+    /** Two-step sign-in is on once its setup was confirmed with a code (TwoFactorService). */
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->two_factor_confirmed_at !== null && $this->two_factor_secret !== null;
     }
 
     /**

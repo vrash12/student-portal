@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ChevronDown, KeyRound, LogOut, Menu, X } from 'lucide-react';
+import { ChevronDown, KeyRound, LogOut, Menu, ShieldCheck, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
 import { PageHeaderSlot } from '@/components/ui/page-header-slot';
@@ -349,6 +349,13 @@ function UserMenu() {
                     >
                         <KeyRound className="size-4 text-ink-subtle" aria-hidden="true" />
                         Change Password
+                    </Link>
+                    <Link
+                        href={routes.account.twoFactor.show()}
+                        className="flex h-11 items-center gap-3 px-4 text-sm text-ink hover:bg-surface-muted"
+                    >
+                        <ShieldCheck className="size-4 text-ink-subtle" aria-hidden="true" />
+                        Two-Step Sign-In
                     </Link>
                     <Link
                         href={routes.logout()}

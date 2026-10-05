@@ -80,6 +80,7 @@ On 2026-10-01 the local database was reset to a small set for client demonstrati
 | `north01` … `north20` | Candidates in Class B, North Campus |
 | `east.admin`, `instructor4`, `east01` … `east20` | East Campus: Admin, instructor and candidates of Class C |
 | `west.admin`, `instructor5`, `west01` … `west20` | West Campus: Admin, instructor and candidates of Class D |
+| `dietitian1` … `dietitian4` | Dietitians of the South, North, East and West campuses (`DemoNutritionSeeder`) |
 
 Campuses (2026-10-03, fixed on 2026-10-04): the institution has exactly four campuses, **South, North, East and West**, created by the migrations; none can be added or removed (an administrator may change a campus's address and switch it off). Class A and its people are on the **South Campus**; `DemoCampusSeeder` (run by `ClientDemoSeeder`) gives every other campus a class of 20 candidates (Class B North, Class C East, Class D West) with an instructor and a campus administrator, so there are 20 candidates on every campus (80 in all) and campus scoping can be tried: `north.admin` sees only North Campus, `admin` sees every campus and can narrow lists, the dashboard and reports with the Campus filter. It is safe to run again on an existing demo database:
 
@@ -152,6 +153,20 @@ The test suite refuses to run against any database whose name does not end in `_
 - Staff accounts created or reset by an administrator must choose their own password at the next sign-in.
 - Never commit `.env` or credentials. Keep `.env.example` current.
 - Backups are built in: see **Backups** below. They cover the database together with `storage/app/private` (question images/audio/video, candidate photos and the medical documents candidates upload) and `storage/app/public`.
+
+## Nutrition monitoring
+
+Dietitians (role **Dietitian**, one campus each) assess the candidates of their campus under **Records → Nutrition**: height, weight, waist and body fat, diet history, findings, a nutrition diagnosis and a plan with the next review. The system computes the BMI and classifies it by the standards administrators set (Nutrition → Standards; default: the Asian cut-offs 18.5 / 23 / 27.5 used by the Department of Health). The list and the dashboard show who needs attention: never assessed, BMI outside the normal range, waist ÷ height at or above 0.50, or a review due. Dietitians also see the medical record, view only. Instructors of the class see only the BMI category and food allergies/restrictions; candidates see their own measurements and plan under **Nutrition** in the portal. Details: `docs/nutrition-monitoring.md`. Demo dietitians: `dietitian1` (South) to `dietitian4` (West), demo password.
+
+## Two-step sign-in
+
+Staff accounts can add a second step to signing in: after the password, a 6-digit code from an authenticator app (Microsoft Authenticator, Google Authenticator, Aegis, FreeOTP, 2FAS) or a TOTP hardware token. The codes follow TOTP (RFC 6238): the phone and the server compute them from a shared secret and the clock, so no internet, SMS or email is needed.
+
+- **Setup:** account menu → **Two-Step Sign-In** → Set Up (asks for the password) → scan the QR code (or type the key) → enter the code. Eight single-use recovery codes are shown once; keep them away from the phone.
+- **Who must use it:** `TWO_FACTOR_REQUIRED_FOR` = `administrators` (default: accounts that manage users), `staff` (everyone in the staff area) or `none`. Required staff are sent to the setup page until it is on, and cannot turn it off. Candidates never use it (shared exam tablets).
+- **Clock:** codes from 30 seconds before and after are accepted. Keep the server's time synced (Windows Time / NTP from the institution's time server or domain controller); a clock off by more than a minute rejects every code.
+- **Protection:** each code works once; 5 wrong codes per minute per account are allowed, and after 5 wrong codes the password must be entered again; the second step expires after 5 minutes. The secret and recovery codes are stored encrypted with `APP_KEY` (keep the key with the backups: without it no one can sign in with two-step sign-in after a restore to another server). Codes and secrets never appear in Audit History.
+- **Lost phone:** sign in with a recovery code, or ask an administrator: Users → the account → **Reset Two-Step Sign-In** (with a reason; same rule as editing the account). For the top Admin, IT runs `php artisan two-factor:reset <username> --reason="..."` on the server.
 
 ## Attendance by QR code
 

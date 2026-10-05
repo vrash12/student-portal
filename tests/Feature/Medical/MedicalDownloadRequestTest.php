@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Medical;
 
+use App\Enums\CampusCode;
 use App\Enums\MedicalDownloadStatus;
 use App\Enums\SystemRole;
 use App\Models\AuditLog;
@@ -9,6 +10,7 @@ use App\Models\CandidateMedicalDocument;
 use App\Models\InstructorAssignment;
 use App\Models\MedicalDownloadRequest;
 use App\Models\User;
+use Database\Factories\CampusFactory;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
@@ -178,6 +180,28 @@ class MedicalDownloadRequestTest extends TestCase
         $this->assertStringNotContainsString('Check-up', json_encode($audit->getAttributes()) ?: '');
         $this->profileDocument($this->alpha)
             ->where('medical.documents.0.printScreenUrl', route('medical.documents.print-screen', $this->document, false));
+    }
+
+    public function test_dietitians_of_the_campus_view_documents_on_the_same_terms_as_instructors(): void
+    {
+        $dietitian = $this->userWithRole(SystemRole::Dietitian);
+        $northDietitian = User::factory()->withRole(SystemRole::Dietitian)->onCampus(CampusFactory::fixed(CampusCode::North))->create();
+
+        $this->actingAs($dietitian)->get(route('nutrition.show', $this->candidateInA))->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('medical.scope', 'granted')
+                ->where('medical.documents.0.fileUrl', null)
+                ->where('medical.documents.0.download.canRequest', true));
+        $this->actingAs($dietitian)->get(route('medical.documents.protected', $this->document), ['X-Medical-Viewer' => '1'])->assertOk();
+        $this->actingAs($dietitian)->get(route('medical.documents.file', $this->document))->assertForbidden();
+
+        $this->actingAs($dietitian)->post(route('medical.downloads.store', $this->document), ['reason' => self::REASON])->assertSessionHasNoErrors();
+        $download = MedicalDownloadRequest::query()->sole();
+        $this->actingAs($this->admin)->post(route('medical.downloads.approve', $download), ['note' => 'For the nutrition file.'])->assertSessionHasNoErrors();
+        $this->actingAs($dietitian)->get(route('medical.downloads.file', $download))->assertOk();
+
+        // A dietitian of another campus sees nothing of it.
+        $this->actingAs($northDietitian)->get(route('medical.documents.protected', $this->document), ['X-Medical-Viewer' => '1'])->assertNotFound();
+        $this->actingAs($northDietitian)->get(route('medical.downloads.file', $download))->assertNotFound();
     }
 
     private function requestDownload(array $data = ['reason' => self::REASON]): TestResponse

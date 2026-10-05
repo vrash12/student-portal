@@ -27,6 +27,8 @@ use App\Models\InstructorAssignment;
 use App\Models\MedicalAccessRequest;
 use App\Models\MedicalDownloadRequest;
 use App\Models\MedicalField;
+use App\Models\NutritionAssessment;
+use App\Models\NutritionStandards;
 use App\Models\PerformanceArea;
 use App\Models\Question;
 use App\Models\Role;
@@ -98,6 +100,10 @@ class AppServiceProvider extends ServiceProvider
         $perUser('attendance-scans', 240);
         // Changing one's own password (the current password is checked).
         $perUser('password-change', 6);
+        // Setting up two-step sign-in (password and code checks).
+        $perUser('two-factor-setup', 12);
+        // Sign-in codes, per network address (the per-account limit is in TwoFactorChallengeController).
+        RateLimiter::for('two-factor-challenge', fn (Request $request): Limit => Limit::perMinute(30)->by('two-factor-challenge|'.$request->ip()));
 
         // Starting an examination, per candidate and examination, so access
         // codes cannot be guessed by trying many.
@@ -144,6 +150,8 @@ class AppServiceProvider extends ServiceProvider
             'performance_area' => PerformanceArea::class,
             'training_phase' => TrainingPhase::class,
             'campus' => Campus::class,
+            'nutrition_assessment' => NutritionAssessment::class,
+            'nutrition_standards' => NutritionStandards::class,
         ]);
     }
 
