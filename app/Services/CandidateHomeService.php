@@ -9,6 +9,7 @@ use App\Models\Candidate;
 use App\Models\CandidateMedicalDocument;
 use App\Models\Examination;
 use App\Models\ExaminationAttempt;
+use App\Services\Announcements\AnnouncementPresenter;
 use App\Services\Fitness\FitnessResults;
 use App\Services\Grading\GradingThresholds;
 use App\Services\Monitoring\CandidateProfileRecord;
@@ -41,6 +42,7 @@ final class CandidateHomeService
         private readonly QualificationEngine $qualification,
         private readonly CandidateProfileRecord $records,
         private readonly FitnessResults $fitness,
+        private readonly AnnouncementPresenter $announcements,
     ) {}
 
     public function overview(Candidate $candidate): array
@@ -51,6 +53,8 @@ final class CandidateHomeService
 
         return [
             'summary' => $this->summary($candidate, $academics),
+            // Notices from the institution meant for this candidate (owner request, 2026-10-06).
+            'notices' => $this->announcements->forCandidate($candidate),
             'available' => $available,
             'upcoming' => $upcoming,
             'performance' => $this->performance($candidate),

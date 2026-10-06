@@ -944,6 +944,7 @@ Implemented at the owner's request (details and decisions in `SESSION_HANDOFF.md
 - Candidate portal split into Home, Examinations, My Grades, My Performance, Physical Fitness and My Information pages, with icons and charts (own records only, no rank)
 - Authorized grade corrections: instructors request changes to finalized scores with an incident report; administrators approve or reject them (2026-10-02)
 - Candidate medical records with administrator-defined fields in sections (shown to the candidate or staff only); instructors of the candidate's class see the record and its documents view only, a download only with an administrator's approval (2026-10-02)
+- Announcements: notices to every candidate, a campus or a class, posted by administrators and instructors and shown on the candidate portal's home page (2026-10-06)
 
 The next planned milestone remains **Milestone 17 — Security Hardening**.
 

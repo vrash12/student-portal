@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\AccountEntry;
+use App\Models\Announcement;
 use App\Models\Assessment;
 use App\Models\AssessmentCategory;
 use App\Models\AssessmentScore;
@@ -58,7 +59,7 @@ final class AuditCampus
         Assessment::class, AssessmentCategory::class, Examination::class, AssessmentScore::class,
         GradeCorrectionRequest::class, ExaminationAttempt::class, ConductEntry::class, AccountEntry::class,
         CandidateMedicalDocument::class, MedicalDownloadRequest::class, MedicalAccessRequest::class,
-        FitnessTest::class, AttendanceSession::class, NutritionAssessment::class,
+        FitnessTest::class, AttendanceSession::class, NutritionAssessment::class, Announcement::class,
     ];
 
     public static function isCampusRecord(Model $subject): bool
@@ -90,6 +91,8 @@ final class AuditCampus
             $subject instanceof NutritionAssessment => self::candidate(self::key($subject, 'candidate_id')),
             $subject instanceof FitnessTest,
             $subject instanceof AttendanceSession => self::classBatch(self::key($subject, 'class_batch_id')),
+            // Notices to every candidate have no campus: only accounts that see every campus reach them by URL.
+            $subject instanceof Announcement => self::key($subject, 'campus_id'),
             default => null,
         };
     }

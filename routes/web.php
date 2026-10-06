@@ -22,6 +22,7 @@ use App\Http\Controllers\Staff\AccountCategoryController;
 use App\Http\Controllers\Staff\AccountExpenseController;
 use App\Http\Controllers\Staff\AccountPasswordController;
 use App\Http\Controllers\Staff\AccountTwoFactorController;
+use App\Http\Controllers\Staff\AnnouncementController;
 use App\Http\Controllers\Staff\AssessmentController;
 use App\Http\Controllers\Staff\AssessmentScoreController;
 use App\Http\Controllers\Staff\AttendanceScanController;
@@ -60,6 +61,7 @@ use App\Http\Controllers\Staff\TeachingClassController;
 use App\Http\Controllers\Staff\TrainingPhaseController;
 use App\Http\Controllers\Staff\UserController;
 use App\Http\Controllers\Staff\UserTwoFactorController;
+use App\Models\Announcement;
 use App\Models\Candidate;
 use App\Models\GradeCorrectionRequest;
 use App\Models\User;
@@ -183,6 +185,15 @@ Route::middleware(['auth', 'active'])->group(function (): void {
             Route::put('attendance/sessions/{attendanceSession}/records', [AttendanceSessionController::class, 'recordAttendance'])->name('attendance.sessions.records')->whereNumber('attendanceSession');
             Route::post('attendance/sessions/{attendanceSession}/scan', AttendanceScanController::class)->name('attendance.sessions.scan')->whereNumber('attendanceSession')->can('manage', 'attendanceSession')->middleware('throttle:attendance-scans');
         });
+
+        // Notices to candidates (owner request, 2026-10-06): administrators post to every candidate,
+        // a campus or a class, instructors to the classes they teach (AnnouncementPolicy).
+        Route::get('announcements', [AnnouncementController::class, 'index'])->name('announcements.index')->can('viewAny', Announcement::class);
+        Route::get('announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create')->can('create', Announcement::class);
+        Route::post('announcements', [AnnouncementController::class, 'store'])->name('announcements.store')->can('create', Announcement::class);
+        Route::get('announcements/{announcement}/edit', [AnnouncementController::class, 'edit'])->name('announcements.edit')->whereNumber('announcement')->can('manage', 'announcement');
+        Route::put('announcements/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update')->whereNumber('announcement')->can('manage', 'announcement');
+        Route::post('announcements/{announcement}/withdraw', [AnnouncementController::class, 'withdraw'])->name('announcements.withdraw')->whereNumber('announcement')->can('manage', 'announcement');
 
         // Grade correction requests: instructors file them, administrators approve or reject them (GradeCorrectionRequestPolicy).
         Route::get('grade-corrections', [GradeCorrectionController::class, 'index'])->name('grade-corrections.index')->can('viewAny', GradeCorrectionRequest::class);

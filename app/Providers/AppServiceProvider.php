@@ -7,6 +7,7 @@ use App\Models\AcademicPeriod;
 use App\Models\AccountCategory;
 use App\Models\AccountEntry;
 use App\Models\AccountExpense;
+use App\Models\Announcement;
 use App\Models\Assessment;
 use App\Models\AssessmentCategory;
 use App\Models\AssessmentScore;
@@ -152,6 +153,7 @@ class AppServiceProvider extends ServiceProvider
             'campus' => Campus::class,
             'nutrition_assessment' => NutritionAssessment::class,
             'nutrition_standards' => NutritionStandards::class,
+            'announcement' => Announcement::class,
         ]);
     }
 

@@ -51,6 +51,7 @@ enum Permission: string
     case ViewNutrition = 'nutrition.view';
     case ManageNutrition = 'nutrition.manage';
     case ConfigureNutrition = 'nutrition.configure';
+    case ManageAnnouncements = 'announcements.manage';
 
     public function label(): string
     {
@@ -91,6 +92,7 @@ enum Permission: string
             self::ViewNutrition => 'View candidate nutrition records',
             self::ManageNutrition => 'Record nutrition assessments',
             self::ConfigureNutrition => 'Configure nutrition standards',
+            self::ManageAnnouncements => 'Post announcements',
         };
     }
 
@@ -133,6 +135,7 @@ enum Permission: string
             self::ViewNutrition => 'See the nutrition records of the candidates of the user\'s campus (every campus for accounts not limited to a campus): assessments, measurements, findings, plans and dietary profiles. Monitoring only; nothing changes grades or rank.',
             self::ManageNutrition => 'Record and correct nutrition assessments and dietary profiles (allergies, restrictions, supplements), and see the candidate\'s medical record view only, like instructors of the class.',
             self::ConfigureNutrition => 'Set the body mass index cut-offs, the waist-to-height risk line and the review interval used for every campus.',
+            self::ManageAnnouncements => 'Post notices that candidates see on the portal home page. Administrators post to a campus, a class or every candidate; instructors to the classes they teach, and change only their own.',
         };
     }
 
@@ -173,6 +176,7 @@ enum Permission: string
             self::ConfigurePerformance, self::ViewPerformance => 'Performance',
             self::ViewMedical, self::ManageMedical, self::ConfigureMedical => 'Medical Records',
             self::ViewNutrition, self::ManageNutrition, self::ConfigureNutrition => 'Nutrition',
+            self::ManageAnnouncements => 'Communication',
         };
     }
 }

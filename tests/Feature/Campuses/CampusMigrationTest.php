@@ -65,6 +65,7 @@ class CampusMigrationTest extends TestCase
     public function test_existing_records_join_a_main_campus(): void
     {
         $migration = $this->campusMigration();
+        $this->rollBackLaterCampusTables();
         $migration->down();
         $this->assertFalse(Schema::hasTable('campuses'));
 
@@ -120,6 +121,7 @@ class CampusMigrationTest extends TestCase
     public function test_a_new_installation_gets_the_four_campuses(): void
     {
         $migration = $this->campusMigration();
+        $this->rollBackLaterCampusTables();
         $migration->down();
         $migration->up();
 
@@ -135,6 +137,7 @@ class CampusMigrationTest extends TestCase
     public function test_an_unused_extra_campus_is_removed_and_one_in_use_is_kept(): void
     {
         $migration = $this->campusMigration();
+        $this->rollBackLaterCampusTables();
         $migration->down();
         $migration->up();
 
@@ -152,6 +155,17 @@ class CampusMigrationTest extends TestCase
         // The spare campus is gone; the annex has a class, so it stays and the rule waits.
         $this->assertSame(['SOUTH', 'NORTH', 'EAST', 'WEST', 'ANNEX'], array_keys($this->campuses()));
         $this->assertFalse($this->hasCodeCheck());
+    }
+
+    /**
+     * Later migrations whose tables point at the campus keys (composite
+     * foreign keys), rolled back newest first, as a real rollback would.
+     */
+    private function rollBackLaterCampusTables(): void
+    {
+        foreach (['2026_10_06_000100_create_announcements_table'] as $name) {
+            (require database_path("migrations/{$name}.php"))->down();
+        }
     }
 
     private function campusMigration(): Migration

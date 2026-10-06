@@ -186,6 +186,14 @@ export const routes = {
             update: (typeId: number) => `/conduct/types/${typeId}`,
         },
     },
+    announcements: {
+        index: (query?: Record<string, string>) => withQuery('/announcements', query),
+        create: () => '/announcements/create',
+        store: () => '/announcements',
+        edit: (announcementId: number) => `/announcements/${announcementId}/edit`,
+        update: (announcementId: number) => `/announcements/${announcementId}`,
+        withdraw: (announcementId: number) => `/announcements/${announcementId}/withdraw`,
+    },
     attendance: {
         index: (query?: Record<string, string>) => withQuery('/attendance', query),
         sessions: {

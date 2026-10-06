@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Security;
 
+use App\Enums\AnnouncementAudience;
 use App\Enums\CampusCode;
 use App\Enums\CorrectionIncidentType;
 use App\Enums\Permission;
@@ -20,6 +21,7 @@ use App\Models\Question;
 use App\Models\QuestionMedia;
 use App\Models\Subject;
 use App\Services\Accounts\AccountService;
+use App\Services\Announcements\AnnouncementService;
 use App\Services\Attendance\AttendanceService;
 use App\Services\Conduct\ConductService;
 use App\Services\Examinations\CandidateAttemptService;
@@ -65,7 +67,7 @@ class RouteAccessMatrixTest extends TestCase
      * years, settings) or the campus itself.
      */
     private const CAMPUS_PARAMETERS = [
-        'accountEntry', 'assessment', 'attempt', 'attendanceSession', 'candidate', 'classBatch', 'classSubject',
+        'accountEntry', 'announcement', 'assessment', 'attempt', 'attendanceSession', 'candidate', 'classBatch', 'classSubject',
         'conductEntry', 'examination', 'fitnessTest', 'gradeCorrectionRequest', 'instructor', 'instructorAssignment',
         'medicalDocument', 'medicalDownloadRequest', 'token', 'user',
     ];
@@ -194,8 +196,14 @@ class RouteAccessMatrixTest extends TestCase
             'assessed_on' => '2026-09-01', 'height_cm' => 170, 'weight_kg' => 65,
         ], $nutritionDietitian);
 
+        // Bravo's notice to Batch B (Bravo and administrators of the campus change it).
+        $announcement = app(AnnouncementService::class)->post($this->bravo, AnnouncementAudience::ClassBatch, null, $this->batchB->id, [
+            'title' => 'Notice B', 'body' => 'For Batch B.', 'is_important' => false, 'publishes_at' => null, 'expires_at' => null,
+        ]);
+
         $this->parameters = [
             'academicPeriod' => (string) $this->activePeriod->id,
+            'announcement' => (string) $announcement->id,
             'accountCategory' => (string) $accountEntry->account_category_id,
             'accountEntry' => (string) $accountEntry->id,
             'accountExpense' => (string) $accountExpense->id,
@@ -366,6 +374,7 @@ class RouteAccessMatrixTest extends TestCase
             '/attendance/sessions/'.$this->parameters['attendanceSession'],
             '/fitness/tests/'.$this->parameters['fitnessTest'],
             '/grade-corrections/'.$this->parameters['gradeCorrectionRequest'],
+            '/announcements/'.$this->parameters['announcement'].'/edit',
         ] as $url) {
             $this->get($url)->assertOk();
         }
@@ -435,6 +444,7 @@ class RouteAccessMatrixTest extends TestCase
             '/fitness/tests/'.$this->parameters['fitnessTest'],
             '/grade-corrections/'.$this->parameters['gradeCorrectionRequest'],
             '/medical-records/'.$this->parameters['candidate'].'/edit',
+            '/announcements/'.$this->parameters['announcement'].'/edit',
         ] as $url) {
             $this->get($url)->assertOk();
         }

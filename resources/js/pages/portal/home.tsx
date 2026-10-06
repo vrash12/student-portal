@@ -2,6 +2,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { Award, CalendarClock, CalendarDays, ClipboardList, Dumbbell, GraduationCap, HeartPulse, IdCard, MapPin, PartyPopper, Users } from 'lucide-react';
 import { QualificationBadge } from '@/components/performance/area-status';
 import { ExamCard, type PortalExam } from '@/components/portal/exam-card';
+import { PortalNotices } from '@/components/portal/portal-notices';
 import { PortalEmpty, PortalSection, PortalTile } from '@/components/portal/portal-ui';
 import { StandingBadge } from '@/components/grading/standing';
 import { ButtonLink } from '@/components/ui/button';
@@ -9,11 +10,14 @@ import { StatusBadge, type StatusTone } from '@/components/ui/status-badge';
 import { formatCalendarDate, formatGrade, useDateFormatter } from '@/lib/format';
 import { routes } from '@/lib/routes';
 import type { Paginated } from '@/types';
+import type { PortalNotice } from '@/types/announcements';
 import type { PortalPerformanceCard } from '@/types/candidate-performance';
 import type { OverallStanding, StatusValue } from '@/types/grading';
 
 interface HomeProps {
     summary: { name: string; number: string; className: string | null; campus: string | null; period: string | null; eligible: boolean; subjectCount: number; overall: OverallStanding };
+    /** Notices meant for this candidate, showing now; important first. */
+    notices: PortalNotice[];
     /** Open now (the first few; the Examinations page lists all). */
     available: Paginated<PortalExam>;
     /** The next scheduled examinations. */
@@ -34,7 +38,7 @@ interface HomeProps {
  * one tile per portal section with the single figure that matters. Details
  * live on each section's own page.
  */
-export default function PortalHome({ summary, available, upcoming, performance, sections }: HomeProps) {
+export default function PortalHome({ summary, notices, available, upcoming, performance, sections }: HomeProps) {
     // Military fitness is staff only unless the institution shows it to candidates.
     const { showFitness } = usePage().props.app.portal;
     const dates = useDateFormatter();
@@ -73,6 +77,8 @@ export default function PortalHome({ summary, available, upcoming, performance, 
             </section>
 
             <div className="flex flex-col gap-10">
+                <PortalNotices notices={notices} />
+
                 <PortalSection
                     icon={ClipboardList}
                     title="Open Now"

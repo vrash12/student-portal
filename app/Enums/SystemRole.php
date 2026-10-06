@@ -89,6 +89,8 @@ enum SystemRole: string
             // standards; the assessments themselves are recorded by dietitians.
             Permission::ViewNutrition,
             Permission::ConfigureNutrition,
+            // Notices to candidates (owner request, 2026-10-06).
+            Permission::ManageAnnouncements,
         ];
 
         return match ($this) {
@@ -112,6 +114,8 @@ enum SystemRole: string
                 // and their points (ConfigureFitness) apply to every class: administrators only.
                 Permission::ViewFitness,
                 Permission::ManageFitness,
+                // Notices to the classes they teach (owner request, 2026-10-06).
+                Permission::ManageAnnouncements,
             ],
             // Nutrition monitoring of the candidates of their campus (owner request, 2026-10-05).
             self::Dietitian => [

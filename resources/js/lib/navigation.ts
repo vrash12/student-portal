@@ -17,6 +17,7 @@ import {
     Layers,
     LayoutDashboard,
     Medal,
+    Megaphone,
     School,
     SlidersHorizontal,
     UserRoundCog,
@@ -57,7 +58,11 @@ export interface NavigationSection {
 export const staffNavigation: NavigationSection[] = [
     {
         label: null,
-        items: [{ label: 'Dashboard', href: routes.dashboard(), icon: LayoutDashboard, permission: Permission.AccessStaffArea }],
+        items: [
+            { label: 'Dashboard', href: routes.dashboard(), icon: LayoutDashboard, permission: Permission.AccessStaffArea },
+            // Notices candidates see on their portal home page (owner request, 2026-10-06).
+            { label: 'Announcements', href: routes.announcements.index(), icon: Megaphone, permission: Permission.ManageAnnouncements },
+        ],
     },
     {
         label: 'Teaching',

@@ -136,6 +136,9 @@ enum AuditAction: string
     case AttendanceRecorded = 'attendance_session.attendance_recorded';
     case PerformanceAreaCreated = 'performance_area.created';
     case PerformanceAreaUpdated = 'performance_area.updated';
+    case AnnouncementPosted = 'announcement.posted';
+    case AnnouncementUpdated = 'announcement.updated';
+    case AnnouncementWithdrawn = 'announcement.withdrawn';
 
     public function label(): string
     {
@@ -265,6 +268,9 @@ enum AuditAction: string
             self::AttendanceRecorded => 'Recorded attendance',
             self::PerformanceAreaCreated => 'Created performance area',
             self::PerformanceAreaUpdated => 'Updated performance area',
+            self::AnnouncementPosted => 'Posted announcement',
+            self::AnnouncementUpdated => 'Updated announcement',
+            self::AnnouncementWithdrawn => 'Withdrew announcement',
         };
     }
 }
