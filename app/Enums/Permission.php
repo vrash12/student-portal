@@ -52,6 +52,8 @@ enum Permission: string
     case ManageNutrition = 'nutrition.manage';
     case ConfigureNutrition = 'nutrition.configure';
     case ManageAnnouncements = 'announcements.manage';
+    case ViewSchedule = 'schedule.view';
+    case ManageSchedule = 'schedule.manage';
 
     public function label(): string
     {
@@ -93,6 +95,8 @@ enum Permission: string
             self::ManageNutrition => 'Record nutrition assessments',
             self::ConfigureNutrition => 'Configure nutrition standards',
             self::ManageAnnouncements => 'Post announcements',
+            self::ViewSchedule => 'View training schedules',
+            self::ManageSchedule => 'Manage training schedules',
         };
     }
 
@@ -136,6 +140,8 @@ enum Permission: string
             self::ManageNutrition => 'Record and correct nutrition assessments and dietary profiles (allergies, restrictions, supplements), and see the candidate\'s medical record view only, like instructors of the class.',
             self::ConfigureNutrition => 'Set the body mass index cut-offs, the waist-to-height risk line and the review interval used for every campus.',
             self::ManageAnnouncements => 'Post notices that candidates see on the portal home page. Administrators post to a campus, a class or every candidate; instructors to the classes they teach, and change only their own.',
+            self::ViewSchedule => 'See the weekly training schedule with examinations and fitness tests: every class of the user\'s campus for users who can view all candidates, otherwise their own week and the classes they teach.',
+            self::ManageSchedule => 'Add, change and remove sessions of class schedules (once or weekly; subject, instructor, room): every class of the user\'s campus for users who can view all candidates, otherwise the classes they teach.',
         };
     }
 
@@ -177,6 +183,7 @@ enum Permission: string
             self::ViewMedical, self::ManageMedical, self::ConfigureMedical => 'Medical Records',
             self::ViewNutrition, self::ManageNutrition, self::ConfigureNutrition => 'Nutrition',
             self::ManageAnnouncements => 'Communication',
+            self::ViewSchedule, self::ManageSchedule => 'Schedule',
         };
     }
 }

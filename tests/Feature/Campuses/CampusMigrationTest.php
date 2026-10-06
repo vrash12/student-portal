@@ -163,7 +163,7 @@ class CampusMigrationTest extends TestCase
      */
     private function rollBackLaterCampusTables(): void
     {
-        foreach (['2026_10_06_000100_create_announcements_table'] as $name) {
+        foreach (['2026_10_06_000200_create_schedule_entries_table', '2026_10_06_000100_create_announcements_table'] as $name) {
             (require database_path("migrations/{$name}.php"))->down();
         }
     }

@@ -16,6 +16,7 @@ use App\Http\Controllers\Portal\MedicalController as PortalMedicalController;
 use App\Http\Controllers\Portal\NutritionController as PortalNutritionController;
 use App\Http\Controllers\Portal\PerformanceController as PortalPerformanceController;
 use App\Http\Controllers\Portal\PortalHomeController;
+use App\Http\Controllers\Portal\ScheduleController as PortalScheduleController;
 use App\Http\Controllers\Staff\AcademicMonitoringController;
 use App\Http\Controllers\Staff\AcademicPeriodController;
 use App\Http\Controllers\Staff\AccountCategoryController;
@@ -56,6 +57,7 @@ use App\Http\Controllers\Staff\NutritionStandardsController;
 use App\Http\Controllers\Staff\PerformanceAreaController;
 use App\Http\Controllers\Staff\QualificationController;
 use App\Http\Controllers\Staff\ReportController;
+use App\Http\Controllers\Staff\ScheduleController;
 use App\Http\Controllers\Staff\SubjectController;
 use App\Http\Controllers\Staff\TeachingClassController;
 use App\Http\Controllers\Staff\TrainingPhaseController;
@@ -194,6 +196,17 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('announcements/{announcement}/edit', [AnnouncementController::class, 'edit'])->name('announcements.edit')->whereNumber('announcement')->can('manage', 'announcement');
         Route::put('announcements/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update')->whereNumber('announcement')->can('manage', 'announcement');
         Route::post('announcements/{announcement}/withdraw', [AnnouncementController::class, 'withdraw'])->name('announcements.withdraw')->whereNumber('announcement')->can('manage', 'announcement');
+
+        // Training schedule (owner request, 2026-10-06): a class's week or an instructor's own
+        // (schedule.view); entries are added and changed with schedule.manage (ScheduleEntryPolicy).
+        Route::get('schedule', [ScheduleController::class, 'index'])->name('schedule.index')->can(Permission::ViewSchedule->value);
+        Route::middleware('can:'.Permission::ManageSchedule->value)->group(function (): void {
+            Route::get('schedule/entries/create', [ScheduleController::class, 'create'])->name('schedule.entries.create');
+            Route::post('schedule/entries', [ScheduleController::class, 'store'])->name('schedule.entries.store');
+            Route::get('schedule/entries/{scheduleEntry}/edit', [ScheduleController::class, 'edit'])->name('schedule.entries.edit')->whereNumber('scheduleEntry')->can('manage', 'scheduleEntry');
+            Route::put('schedule/entries/{scheduleEntry}', [ScheduleController::class, 'update'])->name('schedule.entries.update')->whereNumber('scheduleEntry')->can('manage', 'scheduleEntry');
+            Route::delete('schedule/entries/{scheduleEntry}', [ScheduleController::class, 'destroy'])->name('schedule.entries.destroy')->whereNumber('scheduleEntry')->can('manage', 'scheduleEntry');
+        });
 
         // Grade correction requests: instructors file them, administrators approve or reject them (GradeCorrectionRequestPolicy).
         Route::get('grade-corrections', [GradeCorrectionController::class, 'index'])->name('grade-corrections.index')->can('viewAny', GradeCorrectionRequest::class);
@@ -437,6 +450,8 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         ->group(function (): void {
             Route::get('/', PortalHomeController::class)->name('home');
             Route::get('examinations', ExaminationListController::class)->name('examinations.index');
+            // The candidate's week: their class's schedule and examinations (owner request, 2026-10-06).
+            Route::get('schedule', PortalScheduleController::class)->name('schedule');
             Route::get('grades', GradesController::class)->name('grades');
             Route::get('fitness', PortalFitnessController::class)->name('fitness');
             // The candidate's own nutrition assessments and plan (owner decision 2026-10-05).

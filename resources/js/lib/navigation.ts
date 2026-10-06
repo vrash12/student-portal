@@ -5,6 +5,7 @@ import {
     Building2,
     BookOpen,
     CalendarCheck,
+    CalendarDays,
     CalendarRange,
     ClipboardCheck,
     DatabaseBackup,
@@ -60,6 +61,8 @@ export const staffNavigation: NavigationSection[] = [
         label: null,
         items: [
             { label: 'Dashboard', href: routes.dashboard(), icon: LayoutDashboard, permission: Permission.AccessStaffArea },
+            // Class timetables with examinations and fitness tests (owner request, 2026-10-06).
+            { label: 'Training Schedule', href: routes.schedule.index(), icon: CalendarDays, permission: Permission.ViewSchedule },
             // Notices candidates see on their portal home page (owner request, 2026-10-06).
             { label: 'Announcements', href: routes.announcements.index(), icon: Megaphone, permission: Permission.ManageAnnouncements },
         ],

@@ -134,6 +134,9 @@ class ClientDemoSeeder extends Seeder
 
         // A dietitian per campus and synthetic nutrition assessments.
         $this->call(DemoNutritionSeeder::class);
+
+        // Weekly timetables of every class and a few notices to candidates.
+        $this->call(DemoScheduleSeeder::class);
     }
 
     /** A staff account; $campus null = every campus (administrators only). */

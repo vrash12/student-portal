@@ -15,6 +15,7 @@ use App\Services\Grading\GradingThresholds;
 use App\Services\Monitoring\CandidateProfileRecord;
 use App\Services\Performance\PortalQualification;
 use App\Services\Performance\QualificationEngine;
+use App\Services\Schedule\CandidateSchedule;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -43,6 +44,7 @@ final class CandidateHomeService
         private readonly CandidateProfileRecord $records,
         private readonly FitnessResults $fitness,
         private readonly AnnouncementPresenter $announcements,
+        private readonly CandidateSchedule $schedule,
     ) {}
 
     public function overview(Candidate $candidate): array
@@ -55,6 +57,8 @@ final class CandidateHomeService
             'summary' => $this->summary($candidate, $academics),
             // Notices from the institution meant for this candidate (owner request, 2026-10-06).
             'notices' => $this->announcements->forCandidate($candidate),
+            // Today's and tomorrow's sessions and examinations of the candidate's class (owner request, 2026-10-06).
+            'schedule' => $this->schedule->todayAndTomorrow($candidate),
             'available' => $available,
             'upcoming' => $upcoming,
             'performance' => $this->performance($candidate),

@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Apple, Award, ChevronDown, ChevronUp, ClipboardList, LayoutGrid, Dumbbell, GraduationCap, HeartPulse, House, LogOut, UserRound, type LucideIcon } from 'lucide-react';
+import { Apple, Award, CalendarDays, ChevronDown, ChevronUp, ClipboardList, LayoutGrid, Dumbbell, GraduationCap, HeartPulse, House, LogOut, UserRound, type LucideIcon } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
 import { buttonClasses } from '@/components/ui/button';
@@ -10,10 +10,12 @@ import { useFocusMainOnNavigate } from '@/lib/use-focus-main-on-navigate';
 
 /** The portal's pages, in navigation order; each is active for its own page components. */
 /** One row of tabs from tablet width (static class names for Tailwind). */
-const TAB_COLUMNS: Record<number, string> = { 5: 'sm:grid-cols-5', 6: 'sm:grid-cols-6', 7: 'sm:grid-cols-7' };
+// Eight or nine tabs: two rows on tablets, one row on wide screens.
+const TAB_COLUMNS: Record<number, string> = { 5: 'sm:grid-cols-5', 6: 'sm:grid-cols-6', 7: 'sm:grid-cols-7', 8: 'sm:grid-cols-4 lg:grid-cols-8', 9: 'sm:grid-cols-5 lg:grid-cols-9' };
 
 const PORTAL_SECTIONS: Array<{ href: string; label: string; icon: LucideIcon; isActive: (component: string) => boolean; fitness?: true }> = [
     { href: routes.portal.home(), label: 'Home', icon: House, isActive: (component) => component === 'portal/home' },
+    { href: routes.portal.schedule(), label: 'Schedule', icon: CalendarDays, isActive: (component) => component === 'portal/schedule' },
     { href: routes.portal.examinations(), label: 'Examinations', icon: ClipboardList, isActive: (component) => component.startsWith('portal/examinations/') },
     { href: routes.portal.grades(), label: 'My Grades', icon: GraduationCap, isActive: (component) => component === 'portal/grades' },
     { href: routes.portal.performance(), label: 'My Performance', icon: Award, isActive: (component) => component === 'portal/performance' },

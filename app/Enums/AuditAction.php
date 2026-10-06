@@ -139,6 +139,9 @@ enum AuditAction: string
     case AnnouncementPosted = 'announcement.posted';
     case AnnouncementUpdated = 'announcement.updated';
     case AnnouncementWithdrawn = 'announcement.withdrawn';
+    case ScheduleEntryCreated = 'schedule_entry.created';
+    case ScheduleEntryUpdated = 'schedule_entry.updated';
+    case ScheduleEntryDeleted = 'schedule_entry.deleted';
 
     public function label(): string
     {
@@ -271,6 +274,9 @@ enum AuditAction: string
             self::AnnouncementPosted => 'Posted announcement',
             self::AnnouncementUpdated => 'Updated announcement',
             self::AnnouncementWithdrawn => 'Withdrew announcement',
+            self::ScheduleEntryCreated => 'Added schedule entry',
+            self::ScheduleEntryUpdated => 'Changed schedule entry',
+            self::ScheduleEntryDeleted => 'Removed schedule entry',
         };
     }
 }

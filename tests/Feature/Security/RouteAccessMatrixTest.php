@@ -31,6 +31,7 @@ use App\Services\Grading\GradeCorrectionService;
 use App\Services\Medical\MedicalRecordService;
 use App\Services\Nutrition\NutritionService;
 use App\Services\Performance\PerformanceAreaService;
+use App\Services\Schedule\ScheduleService;
 use App\Services\TrainingPhaseService;
 use Database\Factories\CampusFactory;
 use Illuminate\Routing\Route;
@@ -69,7 +70,7 @@ class RouteAccessMatrixTest extends TestCase
     private const CAMPUS_PARAMETERS = [
         'accountEntry', 'announcement', 'assessment', 'attempt', 'attendanceSession', 'candidate', 'classBatch', 'classSubject',
         'conductEntry', 'examination', 'fitnessTest', 'gradeCorrectionRequest', 'instructor', 'instructorAssignment',
-        'medicalDocument', 'medicalDownloadRequest', 'token', 'user',
+        'medicalDocument', 'medicalDownloadRequest', 'scheduleEntry', 'token', 'user',
     ];
 
     /** @var array<string, string> route parameter => value */
@@ -201,6 +202,13 @@ class RouteAccessMatrixTest extends TestCase
             'title' => 'Notice B', 'body' => 'For Batch B.', 'is_important' => false, 'publishes_at' => null, 'expires_at' => null,
         ]);
 
+        // A session on Batch B's schedule (administrators of the campus change it).
+        $scheduleEntry = app(ScheduleService::class)->create($this->batchB, [
+            'class_subject_id' => $this->offeringB1->id, 'instructor_id' => $this->bravo->id, 'title' => 'Lecture B', 'location' => null,
+            'starts_on' => $this->activePeriod->starts_on->toDateString(), 'repeats_weekly' => false, 'ends_on' => null,
+            'start_time' => '08:00', 'end_time' => '09:00', 'notes' => null,
+        ], $administrator);
+
         $this->parameters = [
             'academicPeriod' => (string) $this->activePeriod->id,
             'announcement' => (string) $announcement->id,
@@ -234,6 +242,7 @@ class RouteAccessMatrixTest extends TestCase
             'medium' => (string) $media->id,
             'performanceArea' => (string) $performanceArea->id,
             'question' => (string) $question->id,
+            'scheduleEntry' => (string) $scheduleEntry->id,
             'subject' => (string) $subject2->id,
             // A phase of the active year, used by no subject.
             'trainingPhase' => (string) $this->app->make(TrainingPhaseService::class)->create($this->activePeriod, [
@@ -445,6 +454,7 @@ class RouteAccessMatrixTest extends TestCase
             '/grade-corrections/'.$this->parameters['gradeCorrectionRequest'],
             '/medical-records/'.$this->parameters['candidate'].'/edit',
             '/announcements/'.$this->parameters['announcement'].'/edit',
+            '/schedule/entries/'.$this->parameters['scheduleEntry'].'/edit',
         ] as $url) {
             $this->get($url)->assertOk();
         }

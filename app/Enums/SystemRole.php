@@ -91,6 +91,9 @@ enum SystemRole: string
             Permission::ConfigureNutrition,
             // Notices to candidates (owner request, 2026-10-06).
             Permission::ManageAnnouncements,
+            // Class timetables (owner request, 2026-10-06).
+            Permission::ViewSchedule,
+            Permission::ManageSchedule,
         ];
 
         return match ($this) {
@@ -116,6 +119,8 @@ enum SystemRole: string
                 Permission::ManageFitness,
                 // Notices to the classes they teach (owner request, 2026-10-06).
                 Permission::ManageAnnouncements,
+                // Their own week and the schedules of the classes they teach; administrators set the schedules.
+                Permission::ViewSchedule,
             ],
             // Nutrition monitoring of the candidates of their campus (owner request, 2026-10-05).
             self::Dietitian => [

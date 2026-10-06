@@ -33,6 +33,7 @@ use App\Models\NutritionStandards;
 use App\Models\PerformanceArea;
 use App\Models\Question;
 use App\Models\Role;
+use App\Models\ScheduleEntry;
 use App\Models\Subject;
 use App\Models\TrainingPhase;
 use App\Models\User;
@@ -154,6 +155,7 @@ class AppServiceProvider extends ServiceProvider
             'nutrition_assessment' => NutritionAssessment::class,
             'nutrition_standards' => NutritionStandards::class,
             'announcement' => Announcement::class,
+            'schedule_entry' => ScheduleEntry::class,
         ]);
     }
 

@@ -3,6 +3,7 @@ import { Award, CalendarClock, CalendarDays, ClipboardList, Dumbbell, Graduation
 import { QualificationBadge } from '@/components/performance/area-status';
 import { ExamCard, type PortalExam } from '@/components/portal/exam-card';
 import { PortalNotices } from '@/components/portal/portal-notices';
+import { WeekCalendar } from '@/components/schedule/week-calendar';
 import { PortalEmpty, PortalSection, PortalTile } from '@/components/portal/portal-ui';
 import { StandingBadge } from '@/components/grading/standing';
 import { ButtonLink } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { formatCalendarDate, formatGrade, useDateFormatter } from '@/lib/format'
 import { routes } from '@/lib/routes';
 import type { Paginated } from '@/types';
 import type { PortalNotice } from '@/types/announcements';
+import type { ScheduleDay } from '@/types/schedule';
 import type { PortalPerformanceCard } from '@/types/candidate-performance';
 import type { OverallStanding, StatusValue } from '@/types/grading';
 
@@ -18,6 +20,8 @@ interface HomeProps {
     summary: { name: string; number: string; className: string | null; campus: string | null; period: string | null; eligible: boolean; subjectCount: number; overall: OverallStanding };
     /** Notices meant for this candidate, showing now; important first. */
     notices: PortalNotice[];
+    /** Today and tomorrow: the class's sessions and examinations. */
+    schedule: ScheduleDay[];
     /** Open now (the first few; the Examinations page lists all). */
     available: Paginated<PortalExam>;
     /** The next scheduled examinations. */
@@ -38,7 +42,7 @@ interface HomeProps {
  * one tile per portal section with the single figure that matters. Details
  * live on each section's own page.
  */
-export default function PortalHome({ summary, notices, available, upcoming, performance, sections }: HomeProps) {
+export default function PortalHome({ summary, notices, schedule, available, upcoming, performance, sections }: HomeProps) {
     // Military fitness is staff only unless the institution shows it to candidates.
     const { showFitness } = usePage().props.app.portal;
     const dates = useDateFormatter();
@@ -78,6 +82,21 @@ export default function PortalHome({ summary, notices, available, upcoming, perf
 
             <div className="flex flex-col gap-10">
                 <PortalNotices notices={notices} />
+
+                {summary.eligible && (
+                    <PortalSection
+                        icon={CalendarDays}
+                        title="Today and Tomorrow"
+                        description="Your class's sessions and examinations."
+                        action={
+                            <ButtonLink href={routes.portal.schedule()} variant="secondary">
+                                Full Week
+                            </ButtonLink>
+                        }
+                    >
+                        <WeekCalendar days={schedule} today={schedule[0]?.date ?? ''} layout="list" />
+                    </PortalSection>
+                )}
 
                 <PortalSection
                     icon={ClipboardList}

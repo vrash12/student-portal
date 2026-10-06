@@ -45,6 +45,8 @@ export const Permission = {
     ManageNutrition: 'nutrition.manage',
     ConfigureNutrition: 'nutrition.configure',
     ManageAnnouncements: 'announcements.manage',
+    ViewSchedule: 'schedule.view',
+    ManageSchedule: 'schedule.manage',
 } as const;
 
 export type PermissionCode = (typeof Permission)[keyof typeof Permission];

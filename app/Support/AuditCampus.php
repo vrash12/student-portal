@@ -21,6 +21,7 @@ use App\Models\InstructorAssignment;
 use App\Models\MedicalAccessRequest;
 use App\Models\MedicalDownloadRequest;
 use App\Models\NutritionAssessment;
+use App\Models\ScheduleEntry;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
@@ -60,6 +61,7 @@ final class AuditCampus
         GradeCorrectionRequest::class, ExaminationAttempt::class, ConductEntry::class, AccountEntry::class,
         CandidateMedicalDocument::class, MedicalDownloadRequest::class, MedicalAccessRequest::class,
         FitnessTest::class, AttendanceSession::class, NutritionAssessment::class, Announcement::class,
+        ScheduleEntry::class,
     ];
 
     public static function isCampusRecord(Model $subject): bool
@@ -93,6 +95,7 @@ final class AuditCampus
             $subject instanceof AttendanceSession => self::classBatch(self::key($subject, 'class_batch_id')),
             // Notices to every candidate have no campus: only accounts that see every campus reach them by URL.
             $subject instanceof Announcement => self::key($subject, 'campus_id'),
+            $subject instanceof ScheduleEntry => self::key($subject, 'campus_id') ?? self::classBatch(self::key($subject, 'class_batch_id')),
             default => null,
         };
     }

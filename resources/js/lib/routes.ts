@@ -186,6 +186,16 @@ export const routes = {
             update: (typeId: number) => `/conduct/types/${typeId}`,
         },
     },
+    schedule: {
+        index: (query?: Record<string, string>) => withQuery('/schedule', query),
+        entries: {
+            create: (query?: Record<string, string>) => withQuery('/schedule/entries/create', query),
+            store: () => '/schedule/entries',
+            edit: (entryId: number) => `/schedule/entries/${entryId}/edit`,
+            update: (entryId: number) => `/schedule/entries/${entryId}`,
+            destroy: (entryId: number) => `/schedule/entries/${entryId}`,
+        },
+    },
     announcements: {
         index: (query?: Record<string, string>) => withQuery('/announcements', query),
         create: () => '/announcements/create',
@@ -273,6 +283,7 @@ export const routes = {
     portal: {
         home: () => '/portal',
         examinations: () => '/portal/examinations',
+        schedule: (query?: Record<string, string>) => withQuery('/portal/schedule', query),
         grades: () => '/portal/grades',
         fitness: () => '/portal/fitness',
         performance: () => '/portal/performance',
