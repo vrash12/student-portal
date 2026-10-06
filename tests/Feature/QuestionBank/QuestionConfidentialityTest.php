@@ -144,14 +144,14 @@ class QuestionConfidentialityTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page->component('portal/home'));
 
         $this->assertDoesNotReveal($response->getContent(), [self::PROMPT, self::RIGHT_CHOICE, self::WRONG_CHOICE, self::EXPLANATION, 'isCorrect', 'is_correct']);
-        // The home page lists examinations and results, never question content.
+        // The home page lists notices, the class schedule, examinations and results, never question content.
         $this->assertSame([], array_diff(
             array_keys($this->propsOf($response)),
-            ['app', 'auth', 'errors', 'flash', 'summary', 'available', 'upcoming', 'performance', 'sections'],
+            ['app', 'auth', 'errors', 'flash', 'summary', 'notices', 'schedule', 'available', 'upcoming', 'performance', 'sections'],
         ));
         // Nor do the other portal pages (Physical Fitness included when it is shown).
         config(['institution.portal.show_fitness' => true]);
-        foreach (['/portal/examinations', '/portal/grades', '/portal/performance', '/portal/fitness', '/portal/profile'] as $url) {
+        foreach (['/portal/examinations', '/portal/schedule', '/portal/grades', '/portal/performance', '/portal/fitness', '/portal/profile'] as $url) {
             $this->assertDoesNotReveal($this->get($url)->assertOk()->getContent(), [self::PROMPT, self::RIGHT_CHOICE, self::WRONG_CHOICE, self::EXPLANATION, 'isCorrect', 'is_correct']);
         }
     }
