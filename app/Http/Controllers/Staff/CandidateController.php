@@ -14,6 +14,7 @@ use App\Models\ConductEntry;
 use App\Models\User;
 use App\Services\Attendance\AttendanceScope;
 use App\Services\CandidateService;
+use App\Services\Completion\CourseCompletion;
 use App\Services\Fitness\FitnessResults;
 use App\Services\Grading\CourseRecordService;
 use App\Services\Grading\GradeCalculationService;
@@ -139,7 +140,7 @@ class CandidateController extends Controller
         return redirect()->route('candidates.show', $candidate);
     }
 
-    public function show(Request $request, Candidate $candidate, GradeCalculationService $grades, CandidateAcademicRecord $record, CandidateProfileRecord $profile, FitnessResults $fitness, CandidatePerformanceRecord $performanceRecord, CourseRecordService $courses): Response
+    public function show(Request $request, Candidate $candidate, GradeCalculationService $grades, CandidateAcademicRecord $record, CandidateProfileRecord $profile, FitnessResults $fitness, CandidatePerformanceRecord $performanceRecord, CourseRecordService $courses, CourseCompletion $completion): Response
     {
         $candidate->load(['user', 'classBatch.academicPeriod']);
         $viewer = $request->user();
@@ -248,6 +249,12 @@ class CandidateController extends Controller
             'qrReissueUrl' => $viewer->can('update', $candidate) ? route('candidates.qr.reissue', $candidate) : null,
             // The ID card page (administrators, owner request 2026-10-05); null for everyone else.
             'idCardUrl' => $viewer->can('viewIdCard', $candidate) ? route('candidates.id-card', $candidate, false) : null,
+            // End of the course (owner request 2026-10-06): CGPA, final course grade, rank and the two documents; administrators only.
+            'completion' => $candidate->classBatch !== null && $viewer->can('issueCompletionDocuments', $candidate) ? [
+                ...$completion->summary($candidate),
+                'transcriptUrl' => route('candidates.transcript', $candidate, false),
+                'certificateUrl' => route('candidates.completion-certificate', $candidate, false),
+            ] : null,
         ]);
     }
 

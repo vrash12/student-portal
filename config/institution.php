@@ -70,6 +70,22 @@ return [
         'role_label' => env('ID_CARD_ROLE_LABEL') ?: 'Candidate',
     ],
 
+    // Course completion documents (owner request, 2026-10-06): the course
+    // named on the transcript and certificate, and who signs them. Each
+    // signatory is "Name|Title"; a blank name prints the title under an empty
+    // signature line, to be signed by hand. Never invent real names here.
+    'completion' => [
+        'course_name' => env('COURSE_NAME') ?: 'Training Course',
+        'signatories' => array_values(array_filter(array_map(
+            function (?string $value): ?array {
+                $parts = array_map('trim', explode('|', (string) $value, 2));
+
+                return ($parts[1] ?? '') === '' ? null : ['name' => $parts[0] === '' ? null : $parts[0], 'title' => $parts[1]];
+            },
+            [env('COMPLETION_SIGNATORY_1', '|Registrar'), env('COMPLETION_SIGNATORY_2', '|Head of School')],
+        ))),
+    ],
+
     // ISO 4217 code of the currency used on Statements of Account, e.g. PHP.
     'currency' => env('INSTITUTION_CURRENCY', 'PHP'),
 

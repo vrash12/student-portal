@@ -35,6 +35,15 @@ class ClassBatchPolicy
             && $actor->campusScope()->allowsRecord($classBatch);
     }
 
+    /** Every certificate of completion of the class (CandidatePolicy::issueCompletionDocuments). */
+    public function printCompletionCertificates(User $actor, ClassBatch $classBatch): bool
+    {
+        return $actor->hasPermission(Permission::AccessStaffArea)
+            && $actor->hasPermission(Permission::ViewAllCandidates)
+            && $actor->hasPermission(Permission::ViewPerformance)
+            && $actor->campusScope()->allowsRecord($classBatch);
+    }
+
     public function printQrCards(User $actor, ClassBatch $classBatch): bool
     {
         return $actor->hasPermission(Permission::ManageClassBatches)

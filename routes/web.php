@@ -36,6 +36,7 @@ use App\Http\Controllers\Staff\CandidateController;
 use App\Http\Controllers\Staff\CandidateIdCardController;
 use App\Http\Controllers\Staff\ClassBatchController;
 use App\Http\Controllers\Staff\ClassSubjectController;
+use App\Http\Controllers\Staff\CompletionDocumentController;
 use App\Http\Controllers\Staff\ConductController;
 use App\Http\Controllers\Staff\ConductTypeController;
 use App\Http\Controllers\Staff\DashboardController;
@@ -435,6 +436,11 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('candidates/{candidate}/id-card', [CandidateIdCardController::class, 'show'])->name('candidates.id-card')->can('viewIdCard', 'candidate');
         Route::get('candidates/{candidate}/id-card/pdf', [CandidateIdCardController::class, 'pdf'])->name('candidates.id-card.pdf')->can('viewIdCard', 'candidate')->middleware('throttle:pdf-downloads');
         Route::get('classes/{classBatch}/id-cards/pdf', [CandidateIdCardController::class, 'classSheet'])->name('classes.id-cards')->whereNumber('classBatch')->can('printIdCards', 'classBatch')->middleware('throttle:pdf-downloads');
+        // End of the course (owner request 2026-10-06): transcript of records and certificate of
+        // completion, issued by administrators (they print the class rank, which is staff only).
+        Route::get('candidates/{candidate}/transcript/pdf', [CompletionDocumentController::class, 'transcript'])->name('candidates.transcript')->can('issueCompletionDocuments', 'candidate')->middleware('throttle:pdf-downloads');
+        Route::get('candidates/{candidate}/completion-certificate/pdf', [CompletionDocumentController::class, 'certificate'])->name('candidates.completion-certificate')->can('issueCompletionDocuments', 'candidate')->middleware('throttle:pdf-downloads');
+        Route::get('classes/{classBatch}/completion-certificates/pdf', [CompletionDocumentController::class, 'classCertificates'])->name('classes.completion-certificates')->whereNumber('classBatch')->can('printCompletionCertificates', 'classBatch')->middleware('throttle:pdf-downloads');
         Route::get('candidates/{candidate}/qr/pdf', [CandidateQrController::class, 'pdf'])->name('candidates.qr.pdf')->can('view', 'candidate')->middleware('throttle:pdf-downloads');
         Route::post('candidates/{candidate}/qr', [CandidateQrController::class, 'reissue'])->name('candidates.qr.reissue')->can('update', 'candidate');
         Route::get('candidates/{candidate}/documents/{type}', [CandidatePdfController::class, 'show'])

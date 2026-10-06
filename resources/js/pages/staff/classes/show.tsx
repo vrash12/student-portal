@@ -1,5 +1,6 @@
-import { Head, Link, useForm } from "@inertiajs/react";
+import { Head, Link, useForm, usePage } from "@inertiajs/react";
 import {
+    Award,
     BookOpen,
     GraduationCap,
     IdCard,
@@ -13,6 +14,7 @@ import {
 import type { FormEvent } from "react";
 import { phaseName, unitsLabel } from "@/components/grading/course-record";
 import { WeightSummary } from "@/components/grading/offering-context";
+import { Alert } from "@/components/ui/alert";
 import { Button, ButtonLink, buttonClasses } from "@/components/ui/button";
 import {
     ClientPagination,
@@ -93,6 +95,7 @@ interface ClassShowProps {
         configureGrading: boolean;
         viewPeriod: boolean;
         printIdCards: boolean;
+        printCompletionCertificates: boolean;
     };
 }
 
@@ -107,6 +110,8 @@ export default function ClassShow({
 }: ClassShowProps) {
     const { singular, plural } = terms.classBatch;
     const offeringPagination = useClientPagination(offerings);
+    // Why the class's certificates could not be printed (no candidate qualifies yet).
+    const completionError = usePage().props.errors.completion;
 
     return (
         <>
@@ -160,6 +165,16 @@ export default function ClassShow({
                                 ID Cards (PDF)
                             </a>
                         )}
+                        {can.printCompletionCertificates && (
+                            <a
+                                href={routes.classes.completionCertificates(classBatch.id)}
+                                className={buttonClasses("secondary")}
+                                title="Certificates of completion of every candidate who completed the course and qualified"
+                            >
+                                <Award className="size-4" aria-hidden="true" />
+                                Certificates (PDF)
+                            </a>
+                        )}
                         <ButtonLink
                             href={routes.classes.edit(classBatch.id)}
                             icon={
@@ -171,6 +186,14 @@ export default function ClassShow({
                     </>
                 }
             />
+
+            {completionError && (
+                <div className="mb-6">
+                    <Alert tone="warning" title="Certificates not printed">
+                        {completionError}
+                    </Alert>
+                </div>
+            )}
 
             <div className="flex flex-col gap-6">
                 <Panel

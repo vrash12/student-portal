@@ -946,6 +946,7 @@ Implemented at the owner's request (details and decisions in `SESSION_HANDOFF.md
 - Candidate medical records with administrator-defined fields in sections (shown to the candidate or staff only); instructors of the candidate's class see the record and its documents view only, a download only with an administrator's approval (2026-10-02)
 - Announcements: notices to every candidate, a campus or a class, posted by administrators and instructors and shown on the candidate portal's home page (2026-10-06)
 - Training schedule: weekly class timetables with subjects, instructors and rooms, combined with examinations, fitness tests and attendance sessions; instructors' own week; the candidate's week and today/tomorrow on the portal (2026-10-06)
+- Course completion documents: Transcript of Records and Certificate of Completion PDFs from the CGPA, final course grade and class rank; certificates of a whole class on one PDF (2026-10-06)
 
 The next planned milestone remains **Milestone 17 — Security Hardening**.
 

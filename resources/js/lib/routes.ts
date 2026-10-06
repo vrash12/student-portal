@@ -80,6 +80,8 @@ export const routes = {
         /** Every QR attendance card of the class, six to a page (PDF). */
         qrCards: (classId: number) => `/classes/${classId}/qr-cards/pdf`,
         idCards: (classId: number) => `/classes/${classId}/id-cards/pdf`,
+        /** Every certificate of completion of the class, one per page (PDF). */
+        completionCertificates: (classId: number) => `/classes/${classId}/completion-certificates/pdf`,
         update: (classId: number) => `/classes/${classId}`,
         addSubject: (classId: number) => `/classes/${classId}/subjects`,
         /** The subject's training phase and units. */

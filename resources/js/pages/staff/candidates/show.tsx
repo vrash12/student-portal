@@ -2,6 +2,7 @@ import { Head, usePage } from '@inertiajs/react';
 import { ChartColumn, IdCard, Pencil } from 'lucide-react';
 import { CandidateBackgroundPanels } from '@/components/candidates/candidate-background';
 import { CandidateInformationPanels } from '@/components/candidates/candidate-information';
+import { CourseCompletionPanel, type CourseCompletionSummary } from '@/components/candidates/course-completion-panel';
 import { RecordDownloads } from '@/components/candidates/record-downloads';
 import { CandidateExaminationResults } from '@/components/candidates/examination-results';
 import { CandidateAttendance } from '@/components/attendance/candidate-attendance';
@@ -99,6 +100,8 @@ interface CandidateShowProps {
     background: CandidateBackground;
     /** The Edit Background page (candidates.manage); null for everyone else. */
     backgroundEditUrl: string | null;
+    /** CGPA, final course grade, rank and the end-of-course documents (administrators); null for everyone else. */
+    completion: CourseCompletionSummary | null;
 }
 
 export default function CandidateShow({
@@ -123,6 +126,7 @@ export default function CandidateShow({
     idCardUrl,
     background,
     backgroundEditUrl,
+    completion,
 }: CandidateShowProps) {
 
     const classTerm = terms.classBatch.singular;
@@ -196,6 +200,7 @@ export default function CandidateShow({
 
                 {/* The long record starts closed; each section opens from its header. */}
                 <StartCollapsed.Provider value>
+                {completion !== null && <CourseCompletionPanel completion={completion} />}
                 <CandidateInformationPanels candidate={candidate} qrReissueUrl={qrReissueUrl} />
                 <CandidateBackgroundPanels background={background} editUrl={backgroundEditUrl} />
 

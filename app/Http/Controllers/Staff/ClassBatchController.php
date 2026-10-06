@@ -186,6 +186,8 @@ class ClassBatchController extends Controller
                 'viewPeriod' => $request->user()->hasPermission(Permission::ManageAcademicPeriods),
                 // Every ID card of the class in one PDF (administrators; candidates in training).
                 'printIdCards' => $request->user()->can('printIdCards', $classBatch),
+                // Every certificate of completion of the class in one PDF (administrators; owner request 2026-10-06).
+                'printCompletionCertificates' => $request->user()->can('printCompletionCertificates', $classBatch),
             ],
         ]);
     }

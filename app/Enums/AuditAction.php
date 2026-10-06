@@ -87,6 +87,8 @@ enum AuditAction: string
     case BackupCreated = 'backup.created';
     case CandidateQrReissued = 'candidate.qr_reissued';
     case CandidateIdCardDownloaded = 'candidate.id_card_downloaded';
+    case TranscriptIssued = 'candidate.transcript_issued';
+    case CompletionCertificateIssued = 'candidate.completion_certificate_issued';
     case CandidateBackgroundUpdated = 'candidate.background_updated';
     case BackupFailed = 'backup.failed';
     case BackupRequested = 'backup.requested';
@@ -226,6 +228,8 @@ enum AuditAction: string
             self::BackupCreated => 'Created a backup',
             self::CandidateQrReissued => 'Issued a new QR code to a candidate',
             self::CandidateIdCardDownloaded => 'Saved ID card PDF',
+            self::TranscriptIssued => 'Issued transcript of records',
+            self::CompletionCertificateIssued => 'Issued certificate of completion',
             self::CandidateBackgroundUpdated => 'Updated a candidate background record',
             self::BackupFailed => 'A backup failed',
             self::BackupRequested => 'Requested a backup operation',

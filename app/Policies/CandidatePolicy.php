@@ -43,6 +43,19 @@ class CandidatePolicy
             && $actor->campusScope()->allows($candidate->campusId());
     }
 
+    /**
+     * The Transcript of Records and Certificate of Completion (owner request
+     * 2026-10-06): administrators who view every candidate of the campus and
+     * see class ranks (both documents print the rank, which is staff only).
+     */
+    public function issueCompletionDocuments(User $actor, Candidate $candidate): bool
+    {
+        return $actor->hasPermission(Permission::AccessStaffArea)
+            && $actor->hasPermission(Permission::ViewAllCandidates)
+            && $actor->hasPermission(Permission::ViewPerformance)
+            && $actor->campusScope()->allows($candidate->campusId());
+    }
+
     /** The picture: whoever may open the candidate, and nutrition staff of the campus (to recognise the candidate). */
     public function viewPhoto(User $actor, Candidate $candidate): bool
     {
